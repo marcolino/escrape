@@ -1,0 +1,50 @@
+<div class="container">
+  <table class="table">
+    <tr ng-repeat="(id, person) in persons">
+      <td>
+        <a href="#" class="img-container">
+          <img ng-src="{{person.photo}}" />
+        </a>
+      </td>
+      <td>
+        {{person.name}}
+      </td>
+      <td>
+        <button type="button" class="btn btn-primary" ng-attr-title="{{person.phone}}">
+          <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone light"></i></a>
+        </button>
+      </td>
+<!--
+      <td>
+        <select ng-model="person.vote" ng-change="setVote(person.vote)">
+          <option></option>
+          <option>0</option>
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+          <option>4</option>
+          <option>5</option>
+          <option>6</option>
+          <option>7</option>
+          <option>8</option>
+          <option>9</option>
+        </select>
+      </td>
+-->
+      <td>
+        <select ng-model="person.vote" ng-change="setVote(id, person.vote)">
+          <option>0</option>
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+          <option>4</option>
+          <option>5</option>
+          <option>6</option>
+          <option>7</option>
+          <option>8</option>
+          <option>9</option>
+        </select>
+      </td>
+    </tr>
+  </table>
+</div>

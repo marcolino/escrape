@@ -1,0 +1,15 @@
+FROM A
+FROM B
+TO
+TO
+
+abc
+
+---
+
+FROM C
+TO
+
+def
+
+---
