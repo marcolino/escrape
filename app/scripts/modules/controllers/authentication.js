@@ -1,8 +1,6 @@
 'use strict';
  
-angular.module('Authentication')
- 
-.controller('LoginController',
+app.controller('LoginCtrl',
   function ($scope, $rootScope, $location, AuthenticationService) {
     // reset login status
     AuthenticationService.ClearCredentials();

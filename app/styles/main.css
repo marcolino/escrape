@@ -29,13 +29,13 @@ body {
 .header,
 .footer {
   padding-left: 15px;
-  NOpadding-right: 15px;
+  padding-right: 15px;
 }
 
 /* Custom page header */
 .header {
   NOborder-bottom: 1px solid red; /*#e5e5e5;*/
-  margin-bottom: .5em;
+  NOmargin-bottom: 2.0em;
 }
 
 .navbar-brand {

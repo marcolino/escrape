@@ -1,8 +1,6 @@
 'use strict';
  
-angular.module('Authentication')
- 
-.factory('AuthenticationService',
+app.factory('AuthenticationService',
   function (Base64, $http, $cookieStore, $rootScope, $timeout) {
     var service = {};
 
@@ -10,13 +8,13 @@ angular.module('Authentication')
 
       /* dummy authentication for testing, uses $timeout to simulate api call
        ----------------------------------------------*/
-      $timeout(function(){
+      $timeout(function() {
         var response = { success: username === 'test' && password === 'test' };
         if(!response.success) {
           response.message = 'Username or password is incorrect';
         }
         callback(response);
-      }, 1000);
+      }, 3000);
 
 
       /* use this for real authentication
