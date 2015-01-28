@@ -4,7 +4,7 @@ app.controller('PersonsCtrl', function($scope, $rootScope, Persons) {
 
   $scope.username = $rootScope.globals.currentUser.username;
   
-	$scope.persons = Persons.query(function(data) {
+	$scope.persons = Persons.get(function(data) {
     console.info(data);
     //return data;
 	});

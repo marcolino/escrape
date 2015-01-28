@@ -22,7 +22,7 @@ class Router {
         $this->app->get('/persons/sync', function() { $this->syncPersons(); });
         $this->app->get('/persons/search/:query', function($query) { $this->searchPersonByName($query); });
         $this->app->get('/persons/update/:id', function($id) { $this->updatePerson($id); });
-        $this->app->get('/persons/insert', function(d) { $this->insertPerson(); });
+        $this->app->get('/persons/insert', function() { $this->insertPerson(); });
         $this->app->get('/persons/delete/:id', function($id) { $this->deletePerson($id); });
         #$this->app->post('/persons',  function() { $this->addPerson(); };
         #$this->app->put('/persons/:id', function($id) { $this->updatePerson($id); });
@@ -115,8 +115,13 @@ class Router {
 
     private function success($value) {
         $response = $this->app->response();
-        $response->header("Access-Control-Allow-Origin", "*"); # TODO: restrict this pragma...
-        $response->header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); # TODO: restrict this pragma...
+        #$response->header("Access-Control-Allow-Origin", "*"); # TODO: restrict this pragma...
+        #$response->header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); # TODO: restrict this pragma...
+        
+        $response->header("Access-Control-Allow-Origin", "http://192.168.1.2:9000");
+        $response->header("Access-Control-Allow-Methods", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+        $response->header("Access-Control-Allow-Headers", "GET, PUT, OPTIONS, X-XSRF-TOKEN");
+
         #$response['X-Powered-By'] = 'escrape/server';
         #$response->status(200);
         $response->body(json_encode($value));

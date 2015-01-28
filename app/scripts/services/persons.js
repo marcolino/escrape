@@ -1,12 +1,13 @@
 'use strict';
 
 app.factory('Persons', function ($resource) {
-  var restUrl = 'http://192.168.1.2/escrape/api';
-  return $resource(restUrl + '/persons/:id',
+  var restUrl = 'http://localhost/escrape/api';
+  return $resource(restUrl + '/persons/get/:id',
     { /*id: '@id'*/ },
     {
-      query:  { method: 'GET', isArray: false },
-      update: { method: 'PUT' },
+      get:  { method: 'GET'/*, isArray: false*/ },
+      //query:  { method: 'GET', isArray: false },
+      //update: { method: 'PUT' },
     }
   );
 });

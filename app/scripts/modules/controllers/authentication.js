@@ -9,7 +9,7 @@ app.controller('LoginCtrl',
       AuthenticationService.Login($scope.username, $scope.password, function(response) {
         if (response.success) {
           AuthenticationService.SetCredentials($scope.username, $scope.password);
-          $location.path('/');
+          $location.path('/#');
         } else {
           $scope.error = response.message;
           $scope.dataLoading = false;
