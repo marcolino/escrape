@@ -1,13 +1,18 @@
+<p>You're logged in as user {{ username }}</p>
+<p><a href="#/login">Logout</a></a></p>
+
 <div class="container">
   <table class="table">
     <tr ng-repeat="(id, person) in persons">
       <td>
         <a href="#" class="img-container">
-          <img ng-src="{{person.photo}}" />
+          <!--<img ng-src="{{person.photo}}" />-->
+          <img ng-src="images/users/user-{{$index}}.jpg" />
         </a>
       </td>
       <td>
-        {{person.name}}
+        <!--{{ person.name }}-->
+        {{ person.name.substr(0,2) }}
       </td>
       <td>
         <button type="button" class="btn btn-primary" ng-attr-title="{{person.phone}}">

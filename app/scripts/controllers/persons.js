@@ -1,7 +1,9 @@
 'use strict';
 
-app.controller('PersonsCtrl', function($scope, Persons) {
+app.controller('PersonsCtrl', function($scope, $rootScope, Persons) {
 
+  $scope.username = $rootScope.globals.currentUser.username;
+  
 	$scope.persons = Persons.query(function(data) {
     console.info(data);
     //return data;

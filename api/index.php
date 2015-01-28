@@ -17,13 +17,19 @@ class Router {
     }
 
     public function run() {
-        $this->app->get('/persons', function() { $this->getPersonsList(); });
-        $this->app->get('/persons/:id', function($id) { $this->getPerson($id); });
-        $this->app->get('/persons/sync/:all', function() { $this->syncPersons(); });
-        $this->app->get('/persons/search/:query', function($query) { $this->searchPersonsByName($query); });
+        $this->app->get('/persons/get', function() { $this->getPersons(); });
+        $this->app->get('/persons/get/:id', function($id) { $this->getPerson($id); });
+        $this->app->get('/persons/sync', function() { $this->syncPersons(); });
+        $this->app->get('/persons/search/:query', function($query) { $this->searchPersonByName($query); });
+        $this->app->get('/persons/update/:id', function($id) { $this->updatePerson($id); });
+        $this->app->get('/persons/insert', function(d) { $this->insertPerson(); });
+        $this->app->get('/persons/delete/:id', function($id) { $this->deletePerson($id); });
         #$this->app->post('/persons',  function() { $this->addPerson(); };
-        $this->app->put('/persons/:id', function($id) { $this->updatePerson($id); });
+        #$this->app->put('/persons/:id', function($id) { $this->updatePerson($id); });
         #$this->app->delete('/persons/:id', function($id) { $this->deletePerson($id); });
+        $this->app->get('/users/register/', function() { $this->registerUser(); });
+        $this->app->get('/users/login/:username/:password', function($username, $password) { $this->loginUser($username, $password); });
+        $this->app->get('/users/delete/:id', function($id) { $this->deleteUser($id); });
         $this->app->run();
     }
 
@@ -41,11 +47,11 @@ class Router {
         }
     }
 
-    private function getPersonsList() {
+    private function getPersons() {
         try {
             $filters = $this->getFilters("range", ["age", "vote"], $this->app->request());
             $persons = new PersonsController($this->app);
-            $this->success($persons->getList($filters));
+            $this->success($persons->getAll($filters));
         } catch (Exception $e) {
             $this->error($e);
         }
@@ -71,10 +77,22 @@ class Router {
         }
     }
 
+    private function insertPerson() {
+        try {
+            $persons = new PersonsController($this->app);
+            $data = json_decode($this->app->request()->getBody());
+            #var_dump($data);
+            $this->success($persons->insert($data));
+        } catch (Exception $e) {
+            $this->error($e);
+        }
+    }
+
     private function searchPersonsByName() {
         try {
             $persons = new PersonsController($this->app);
-            $this->success($persons->searchByName());
+            $query = json_decode($this->app->request()->getBody());
+            $this->success($persons->searchByName($query));
         } catch (Exception $e) {
             $this->error($e);
         }

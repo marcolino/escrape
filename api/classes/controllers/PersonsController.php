@@ -50,7 +50,7 @@ class PersonsController extends AbstractController {
                 "person-description" => "/<meta name=\"description\".*?content=\"(.*?)\".*?\/>/s",
                 "person-phone" => "/<h\d class=\"phone\">\s*(?:<img.*? \/>)\s*(.*?)\s*<\/h\d>/s",
                 "person-phone-vacation" => "/In arrivo dopo le vacanze !!/s",
-                "person-phone-unavailable" => "/In arrivo dopo le vacanze !!/s",
+                "person-phone-unavailable" => "/In arrivo dopo le vacanze !!/s", # TODO
                 "person-photo" => "/<a\s+style=\"cursor:pointer;\"\s+href=\"(.*?)\" rel=\"prettyPhoto\[galleria\]\".*?<\/a>/s",
             ],
         ],
@@ -238,6 +238,7 @@ if ($name == "KAREN") {
         if ($changed) {
             $this->store();
         }
+
         return true;
     }
 
@@ -255,27 +256,27 @@ if ($name == "KAREN") {
         $this->db->store("persons");
     }
 
-    public function getPersons() {
+    public function getAll() {
         return($this->db->data["persons"]);
     }
 
     public function get($id) {
+        if (!$id) {
+            throw new Exception("can't get person: no id specified");
+        }
+        if (!isset($this->db->data["persons"][$id])) {
+            throw new Exception("can't get person: id [$id] not present");
+        }
         return $this->db->data["persons"][$id];
     }
     
-    public function getPerson($id) {
-        return $this->db->data["persons"][$id];
-    }
-    
-    public function setPersons($persons) { # TODO: do we need this ?
-        $this->db->data["persons"] = $persons;
-    }
-
-    public function setPerson($id, $person) {
-        $this->db->data["persons"][$id] = $person;
-    }
-
     public function update($id, $data) {
+        if (!$id) {
+            throw new Exception("can't update person: no id specified");
+        }
+        if (!isset($this->db->data["persons"][$id])) {
+            throw new Exception("can't update person: id [$id] not present");
+        }
         foreach ($data as $field => $value) {
 #print "field = $field, value = $value \n";
             $this->db->data["persons"][$id][$field] = $value;
@@ -283,19 +284,44 @@ if ($name == "KAREN") {
         $this->store();
     }
 
+    public function insert($data) {
+        $id = $data["id"];
+        if (!$id) {
+            throw new Exception("can't insert person: no id specified");
+        }
+        if (isset($this->db->data["persons"][$id])) {
+            throw new Exception("can't insert person: id [$id] already present");
+        }
+        foreach ($data as $field => $value) {
+#print "field = $field, value = $value \n";
+            $this->db->data["persons"][$id][$field] = $value;
+        }
+        $this->store();
+    }
+
+/*
     public function setPersonVote($id, $person, $vote) {
         if (!is_numeric($vote) || $vote < 0 || $vote > 1) {
             throw new Exception("can't set person vote: vote must be a number in range [0-1]");
         }
         $this->db->data["persons"][$id]["vote"] = $vote;
     }
+*/
 
-    public function deletePersons() {
+    public function deleteAll() {
         $this->db->data["persons"] = [];
+        $this->store();
     }
 
-    public function deletePerson($id) {
-        unset($this->db->data["persons"][$id]); # note: unset() leaves empty indexes
+    public function delete($id) {
+        if (!$id) {
+            throw new Exception("can't delete person: no id specified");
+        }
+        if (!isset($this->db->data["persons"][$id])) {
+            throw new Exception("can't delete person: id [$id] not present");
+        }
+        unset($this->db->data["persons"][$id]); # note: unset() is faster (but leaves empty indexes)
+        $this->store();
     }
 
     /**
