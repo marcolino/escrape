@@ -18,6 +18,7 @@ class Router {
 
     public function run() {
         $this->app->get('/persons/get', function() { $this->getPersons(); });
+        //$this->app->options('/persons/get', function() { $this->getPersons(); });
         $this->app->get('/persons/get/:id', function($id) { $this->getPerson($id); });
         $this->app->get('/persons/sync', function() { $this->syncPersons(); });
         $this->app->get('/persons/search/:query', function($query) { $this->searchPersonByName($query); });
@@ -30,6 +31,12 @@ class Router {
         $this->app->get('/users/register/', function() { $this->registerUser(); });
         $this->app->get('/users/login/:username/:password', function($username, $password) { $this->loginUser($username, $password); });
         $this->app->get('/users/delete/:id', function($id) { $this->deleteUser($id); });
+
+        // return HTTP 200 for HTTP OPTIONS requests
+        $this->app->map('/:x+', function($x) {
+            http_response_code(200);
+        })->via('OPTIONS');
+
         $this->app->run();
     }
 
@@ -48,6 +55,13 @@ class Router {
     }
 
     private function getPersons() {
+        $this->success(
+          [
+            'sgi-1' => [ 'name' => 'n1', 'id' => 'sgi-1', 'vote' => 5 ],
+            'sgi-2' => [ 'name' => 'n2', 'id' => 'sgi-2', 'vote' => 7 ],
+          ]
+        );
+/*
         try {
             $filters = $this->getFilters("range", ["age", "vote"], $this->app->request());
             $persons = new PersonsController($this->app);
@@ -55,6 +69,7 @@ class Router {
         } catch (Exception $e) {
             $this->error($e);
         }
+*/
     }
 
     private function getPerson($id) {
@@ -118,7 +133,7 @@ class Router {
         #$response->header("Access-Control-Allow-Origin", "*"); # TODO: restrict this pragma...
         #$response->header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); # TODO: restrict this pragma...
         
-        $response->header("Access-Control-Allow-Origin", "http://192.168.1.2:9000");
+        $response->header("Access-Control-Allow-Origin", "http://192.168.10.30:9000");
         $response->header("Access-Control-Allow-Methods", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
         $response->header("Access-Control-Allow-Headers", "GET, PUT, OPTIONS, X-XSRF-TOKEN");
 
@@ -129,8 +144,9 @@ class Router {
     
     private function error($error) {
         $response = $this->app->response();
-        $response->header("Access-Control-Allow-Origin", "*"); # TODO: restrict this pragma...
-        $response->header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); # TODO: restrict this pragma...
+        $response->header("Access-Control-Allow-Origin", "http://192.168.10.30:9000"); # TODO: restrict this pragma...
+        $response->header("Access-Control-Allow-Methods", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+        $response->header("Access-Control-Allow-Headers: GET, POST, PUT, DELETE, OPTIONS"); # TODO: restrict this pragma...
         $response->body(json_encode([
             'response' => null,
             'error' => [

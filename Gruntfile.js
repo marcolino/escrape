@@ -108,6 +108,15 @@ module.exports = function (grunt) {
           open: true,
           base: '<%= yeoman.dist %>'
         }
+      },
+      server: {
+        proxies: [
+          {
+            context: '/',
+            host: 'http://192.168.10.30',
+            changeOrigin: true
+          }
+        ]
       }
     },
 

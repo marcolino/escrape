@@ -1,104 +1,75 @@
 'use strict';
 
-app.factory('Persons', function ($resource) {
-  var restUrl = 'http://localhost/escrape/api';
-  return $resource(restUrl + '/persons/get/:id',
-    { /*id: '@id'*/ },
-    {
-      get:  { method: 'GET'/*, isArray: false*/ },
-      //query:  { method: 'GET', isArray: false },
-      //update: { method: 'PUT' },
-    }
-  );
-});
+app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
+  /*
+  return({
+    addPerson: addPerson,
+    getPersons: getPersons,
+    removePerson: removePerson
+  });
+  */
+  var apiUrl = 'http://192.168.10.30/escrape/api/persons/';
 
-
-/*
-  var Person = $resource(
-    restUrl + '/persons/:id',
-    { id: '@id' },
-    { set: { method: 'PUT' } }
-  );
-
-  //var personsResource = $resource(s
-  //  restUrl + '/persons'
-  //);
-  var Persons = $resource(
-    restUrl + '/persons',
-    { },
-    {
-      query: { method: 'GET' },
-      cache: true,
-    }
-  );
-*/
-
-/*
-app.factory('Persons', function ($resource) {
-  return $resource(
-    'http://192.168.1.2/escrape/server/persons/list',
-    { 'method': 'getTask', 'q': '???*' }, // query parameters
-    { 'query': { 'method': 'GET' }},
-    { 'setVote': { 'method': 'POST' }}
-  );
-});
-*/
-
-/*
-app.factory('Persons', function ($resource) {
-  return $resource(
-  	'http://192.168.1.2/escrape/server/persons/:id',
-  	{ id: '@id' },
-  	{
-      update: {
-        method: 'PUT' // this method issues a PUT request
-      }
-    }
-  );
-
-$scope.get = function(id) {
-  return = Persons.get({ id: id });
-};
-
-$scope.set = function(person) {
-  if ($scope.persons[person.id]) {
-    Person.update({ id: person.id }, person);
+  // PRIVATE METHODS
+  function handleSuccess(response) {
+    console.info('Person success: ' + response.data);
+    return(response.data);
   }
 
-  $scope.addTodo = function() {
-  todoFactory.save($scope.newTodoModel, backToList);
-}
-$scope.add = function(person) {
-  $scope.post.$save().then(function(response) {
-              $scope.posts.push(response)
-            });
-          }
-          $scope.editing = false;
-          $scope.post = new Post();
-        }
-
-        $scope.delete = function(post) {
-          Post.delete(post)
-          _.remove($scope.posts, post)
-        }
-
-/*
-  return $resource(
-    //'http://192.168.1.2/escrape/server/persons/:action, ',
-    'http://192.168.1.2/escrape/server/persons/:id',
-  	{}, // { action: 'list', param1: 'p1' },
-  	{
-      getList: { method: 'GET', params: { action: 'getList' } },
-      setVote: { method: 'GET', params: { action: 'setVote', key: '@key', vote: '@vote' } },
-      putVote: { method: 'PUT', params: { action: 'setVote', key: '@key', vote: '@vote' } },
-/ *
-  	  query:      { method: 'GET', params: { id: 'id1' } },
-      post:       { method: 'POST' },
-      update:     { method: 'PUT', params: { key: '@key' } },
-      remove:     { method: 'DELETE'}
-* /
+  function handleError(response) {
+    console.info('Person error: ', response);
+    if (
+      ! angular.isObject(response.data) ||
+      ! response.data.message
+      ) {
+      return($q.reject('An unknown error occurred in service Person'));
     }
-  );
-* /
+
+    return($q.reject(response.data.message));
+  }
+
+  return({
+    // PUBLIC METHODS
+
+    getPersons: function () {
+      return $http({
+        method: 'get',
+        url: apiUrl + 'get',
+        data: {
+          flag: 'yes'
+        },
+        transformRequest: TransformRequestAsFormPost,
+      }).then(handleSuccess, handleError);
+    },
+
+    addPerson: function (name) {
+      var request = $http({
+        method: 'post',
+        url: apiUrl + 'add',
+        params: {
+          flag: 'yes'
+        },
+        data: {
+          name: name
+        },
+        transformRequest: TransformRequestAsFormPost,
+      });
+      return(request.then(handleSuccess, handleError));
+    },
+
+    removePerson: function (id) {
+      return $http({
+        method: 'delete',
+        url: apiUrl + 'delete',
+        params: {
+          flag: 'no'
+        },
+        data: {
+          id: id
+        },
+        transformRequest: TransformRequestAsFormPost,
+      }).then(handleSuccess, handleError);
+    }
+  });
+
 });
-*/

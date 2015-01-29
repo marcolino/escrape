@@ -48,6 +48,7 @@ app.run(function ($rootScope, $location, $cookieStore, $http) {
   }
  
   $rootScope.$on('$locationChangeStart', function (event, next, current) {
+    console.info('rootScope.on(locationChangeStart):', 'event:',event, 'next:',next, 'current:',current);
     // redirect to login page if not logged in
     if ($location.path() !== '/login' && !$rootScope.globals.currentUser) {
       $location.path('/login');
