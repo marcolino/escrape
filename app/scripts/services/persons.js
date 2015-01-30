@@ -1,6 +1,6 @@
 'use strict';
 
-app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
+app.service('Persons', function($http, $q) {
   /*
   return({
     addPerson: addPerson,
@@ -8,12 +8,16 @@ app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
     removePerson: removePerson
   });
   */
-  var apiUrl = 'http://192.168.10.30/escrape/api/persons/';
+  var apiUrl = 'http://192.168.10.30/escrape/api' + '/persons/';
 
   // PRIVATE METHODS
   function handleSuccess(response) {
-    console.info('Person success: ' + response.data);
-    return(response.data);
+    console.info('Person success: ', response.data);
+    if (response.data.error) {
+      console.error(response.data.error);
+    } else {
+      return(response.data);
+    }
   }
 
   function handleError(response) {
@@ -22,7 +26,7 @@ app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
       ! angular.isObject(response.data) ||
       ! response.data.message
       ) {
-      return($q.reject('An unknown error occurred in service Person'));
+      return($q.reject('An unknown error occurred in service [Person]'));
     }
 
     return($q.reject(response.data.message));
@@ -38,7 +42,19 @@ app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
         data: {
           flag: 'yes'
         },
-        transformRequest: TransformRequestAsFormPost,
+        //transformRequest: TransformRequestAsFormPost,
+      }).then(handleSuccess, handleError);
+    },
+
+    setProperty: function (name, value) {
+      return $http({
+        method: 'post',
+        url: apiUrl + 'setProperty',
+        data: {
+          name: name,
+          value: value,
+        },
+        //transformRequest: TransformRequestAsFormPost,
       }).then(handleSuccess, handleError);
     },
 
@@ -52,7 +68,7 @@ app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
         data: {
           name: name
         },
-        transformRequest: TransformRequestAsFormPost,
+        //transformRequest: TransformRequestAsFormPost,
       });
       return(request.then(handleSuccess, handleError));
     },
@@ -67,7 +83,7 @@ app.service('Persons', function($http, $q, TransformRequestAsFormPost) {
         data: {
           id: id
         },
-        transformRequest: TransformRequestAsFormPost,
+        //transformRequest: TransformRequestAsFormPost,
       }).then(handleSuccess, handleError);
     }
   });

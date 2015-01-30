@@ -1,7 +1,7 @@
 'use strict';
 
 app.factory('Persons', function ($resource) {
-  var restUrl = 'http://192.168.10.30\:80/escrape/api';
+  var restUrl = 'http://192.168.10.30:9000/api';
   return $resource(restUrl + '/persons/get/:id',
     { /*id: '@id'*/ },
     {
