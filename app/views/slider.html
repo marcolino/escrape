@@ -1,0 +1,13 @@
+<div class="slider noselect">
+  <div class="slide" ng-repeat="image in images" ng-show="image.visible">
+    <img ng-src="img/{{image.src}}" />
+  </div>
+  <div class="arrows">
+    <span class="arrow-prev">
+      <a href="" ng-click="prev()"><img src="../images/prev.png" /></a>
+    </span>
+    <span class="arrow-next">
+      <a href="" ng-click="next()"><img src="../images/next.png" /></a>
+    </span>
+  </div>
+</div>

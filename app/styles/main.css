@@ -166,3 +166,19 @@ body {
   }
 }
 */
+
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.slider-horizontal {
+  white-space: nowrap;
+  overflow: auto;
+  overflow-y: hidden;
+  -ms-overflow-y: hidden;
+}

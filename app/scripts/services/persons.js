@@ -8,7 +8,7 @@ app.service('Persons', function($http, $q) {
     removePerson: removePerson
   });
   */
-  var apiUrl = 'http://192.168.1.71/escrape/api' + '/persons/';
+  var apiUrl = 'http://192.168.10.30/escrape/api' + '/persons/';
 
   // PRIVATE METHODS
   function handleSuccess(response) {
@@ -39,6 +39,18 @@ app.service('Persons', function($http, $q) {
       return $http({
         method: 'GET',
         url: apiUrl + 'get',
+        data: {
+          flag: 'yes'
+        },
+        //transformRequest: TransformRequestAsFormPost,
+      }).then(handleSuccess, handleError);
+    },
+
+    getPerson: function (id) {
+console.info('service getPerson('+id+')');
+      return $http({
+        method: 'GET',
+        url: apiUrl + 'get' + '/' + id,
         data: {
           flag: 'yes'
         },

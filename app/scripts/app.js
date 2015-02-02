@@ -18,6 +18,7 @@ var app = angular.module('escrapeApp', [
     'ngSanitize',
     'ngTouch',
     'ngCookies',
+    'revolunet.stepper',
   ]);
 
 app.config(function ($routeProvider) {
@@ -31,7 +32,7 @@ app.config(function ($routeProvider) {
       templateUrl: 'views/persons.html',
       controller: 'PersonsCtrl'
     })
-    .when('/details', {
+    .when('/details/:personId', {
       templateUrl: 'views/person.html',
       controller: 'PersonsCtrl'
     })

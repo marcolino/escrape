@@ -1,88 +1,124 @@
-DETAIL<br>
-<p>You're logged in as user {{ username }}</p>
-<p><a href="#/login">Logout</a></a></p>
+<p>You're logged in as user {{ username }} ~ <a href="#/login">Logout</a></p>
 
 <div class="container">
-
-<ul class="nav nav-pills">
-  <li class="active"><a href="#tab_a" data-toggle="pill">Main</a></li>
-  <li><a href="#tab_b" data-toggle="pill">Comments</a></li>
-</ul>
-<div class="tab-content col-xs-12">
-        <div class="tab-pane active" id="tab_a">
-             <h4>Pane A</h4>
-            <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames
-                ac turpis egestas.</p>
+  <div class="tabbable tabs-below">
+    <ul class="nav nav-pills">
+      <li ng-class="{active: selectedTab == 'main'}">
+        <a href="" ng-click="selectedTab = 'main';">Main</a>
+      </li>
+      <li ng-class="{active: selectedTab == 'photos'}">
+        <a href="" ng-click="selectedTab = 'photos';">Photos</a>
+      </li>
+      <li ng-class="{active: selectedTab == 'comments'}">
+        <a href="" ng-click="selectedTab = 'comments';">Comments</a>
+      </li>
+      <li ng-class="{active: selectedTab == 'unions', hide: true}">
+        <a href="" ng-click="selectedTab = 'unions';">Unions</a>
+      </li>
+    </ul>
+  
+    <!-- person.id: {{person.id}} -->
+    <div class="tab-content" ng-show="selectedTab == 'main'">
+      <form class="form-horizontal" style="margin-top:5px">
+        <div class="form-group" style="vertical-align:top">
+          <div class="col-xs-12">
+            <div class="slider-horizontal">
+            <span ng-repeat="(id, photo) in person.photos">
+              <span>
+                <img ng-src="images/users/user-{{$index}}.jpg" class="img-rounded img-clip"/>
+                &nbsp;
+              </span>
+            </span>
+            </div>
+          </div>
         </div>
-        <div class="tab-pane" id="tab_b">
-             <h4>Pane B</h4>
-            <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames
-                ac turpis egestas.</p>
+        <div class="form-group">
+          <div class="col-xs-6">
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
+              <input type="text" class="form-control" id="name" placeholder="Name">
+            </div>
+          </div>
+          <div class="col-xs-6">
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-heart"></span></span>
+              <input type="text" class="form-control" id="realname" placeholder="Real name">
+            </div>
+          </div>
         </div>
-</div><!-- tab content -->
+        <div class="form-group">
+          <div class="col-xs-12">
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-pencil"></span></span>
+              <textarea class="form-control" id="description" placeholder="Description"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-hand-right"></span></span>
+              <input type="number" class="form-control" id="vote" min="0" max="9" placeholder="Vote">
+            </div>
+          </div>
+          <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
+            <div class="input-group">
+              <span class="input-group-addon"><a href="tel:3336480983"><span class="glyphicon glyphicon-earphone"></span></a></span>
+              <input type="text" class="form-control" id="phone" placeholder="Phone">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-xs-12">
+            <div class="input-group">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-globe"></span></span>
+              <img ng-src="images/flags/flag_00.png" class="img-flag"/>
+            </div>
+          </div>
+        </div>
 
-  <div class="row row-gap" ng-repeat="(id, person) in persons">
-    <div class="col-xs-4">
-      <a href="#/detail"><span class="img-rounded img-clip-container" ng-click><img ng-src="{{person.photo}}" class="img-rounded img-clip"/></span></a>
+        <div class="form-group" style="vertical-align:bottom">
+          <div class="col-xs-12">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+      <hr>
+
+      <!--
+      <div class="row">
+        <a href=""><div class="img-rounded img-clip-container"><img ng-src="images/users/user-0.jpg" class="img-rounded img-clip"/></div></a>
+      </div>
+      <div class="row">
+        <!- -{{ person.name }}- ->
+        <label>Name:</label>{{person.name.substr(0,2)}}
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-primary" ng-attr-title="{{person.phone}}">
+          <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone light"></i></a>
+        </button>
+      </div>
+      <div class="row">
+        <button type="button" ng-class="{ 'btn': true, 'btn-danger': person.vote < 5, 'btn-success': person.vote >= 5, 'btn-vote': true, 'btn-vote-0': person.vote == 0, 'btn-vote-1': person.vote == 1, 'btn-vote-2': person.vote == 2, 'btn-vote-3': person.vote == 3, 'btn-vote-4': person.vote == 4, 'btn-vote-5': person.vote == 5, 'btn-vote-6': person.vote == 6, 'btn-vote-7': person.vote == 7, 'btn-vote-8': person.vote == 8, 'btn-vote-9': person.vote == 9 }" ng-attr-title="{{person.vote}}">
+          <strong>{{person.vote ? person.vote : " ? "}}</strong>
+        </button>
+      </div>
+      -->
     </div>
-    <div class="col-xs-4">
-      <div class="person-name">
-        <!--{{ person.name }}-->
-        {{person.name.substr(0,32)}}
+     
+    <div class="tab-content" ng-show="selectedTab == 'photos'">
+      <div class="row row-gap" ng-repeat="(id, photo) in person.photos">
+        <a href=""><img ng-src="images/users/user-{{$index}}.jpg" ng-src-KO="{{url(person.url)}}/{{photo}}"/></a>
       </div>
     </div>
-    <div class="col-xs-2">
-      <button type="button" class="btn btn-primary" ng-attr-title="{{person.phone}}">
-        <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone light"></i></a>
-      </button>
+
+    <div class="tab-content" ng-show="selectedTab == 'comments'">
+      comments...
+    </div>
+        
+    <div class="tab-content" ng-show="selectedTab == 'unions'">
+      unions...
     </div>
 
-    <div class="col-xs-2">
-      <button type="button" ng-class="{ 'btn': true, 'btn-danger': person.vote < 5, 'btn-success': person.vote >= 5, 'btn-vote': true, 'btn-vote-0': person.vote == 0, 'btn-vote-1': person.vote == 1, 'btn-vote-2': person.vote == 2, 'btn-vote-3': person.vote == 3, 'btn-vote-4': person.vote == 4, 'btn-vote-5': person.vote == 5, 'btn-vote-6': person.vote == 6, 'btn-vote-7': person.vote == 7, 'btn-vote-8': person.vote == 8, 'btn-vote-9': person.vote == 9 }" ng-attr-title="{{person.vote}}">
-        <strong>{{person.vote ? person.vote : " ? "}}</strong>
-      </button>
-<!--
-      <select ng-model="person.vote" ng-change="setProperty(id, { vote: person.vote })">
-        <option>0</option>
-        <option>1</option>
-        <option>2</option>
-        <option>3</option>
-        <option>4</option>
-        <option>5</option>
-        <option>6</option>
-        <option>7</option>
-        <option>8</option>
-        <option>9</option>
-      </select>
--->
-    </div>
   </div>
-
-<!--
-<div class="container">
-    <div class="img-and-info row">
-        <div class="col-xs-2">
-            <img src="http://dummyimage.com/180x120/" class="img-responsive">
-        </div>
-
-        <div class="info col-xs-10">
-            <div class="row">
-                <div class="col-xs-6">
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam massa elit, lacinia ac dui et. </p>
-                </div>
-                <div class="col-xs-6">Col 2</div>
-            </div>
-            <div class="row">
-                <div class="col-xs-4">Col 1</div>
-                <div class="col-xs-8">Col 2</div>
-            </div>
-            <div class="row">
-                <div class="col-xs-9">Col 1</div>
-                <div class="col-xs-3">Col 2</div>
-            </div>
-        </div>
-    </div>
-</div>
--->
-
 </div>
