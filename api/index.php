@@ -23,7 +23,7 @@ class Router {
         $this->app->get('/persons/get/:id', function($id) { $this->getPerson($id); });
         $this->app->get('/persons/sync', function() { $this->syncPersons(); });
         $this->app->get('/persons/search/:query', function($query) { $this->searchPersonByName($query); });
-        $this->app->get('/persons/update/:id', function($id) { $this->updatePerson($id); });
+        $this->app->put('/persons/setproperty/:id', function($id) { $this->setProperty($id); });
         $this->app->get('/persons/insert', function() { $this->insertPerson(); });
         $this->app->get('/persons/delete/:id', function($id) { $this->deletePerson($id); });
         #$this->app->post('/persons',  function() { $this->addPerson(); };
@@ -33,7 +33,16 @@ class Router {
         $this->app->get('/users/login/:username/:password', function($username, $password) { $this->loginUser($username, $password); });
         $this->app->get('/users/delete/:id', function($id) { $this->deleteUser($id); });
 
-        $this->app->options('/.+', function() { $this->options(); });
+#        $this->app->get('/.+', function() { $this->unforeseen(); });
+#        $this->app->put('/.+', function() { $this->unforeseen(); });
+        $this->app->options('/.+', function() { $this->success(null); });
+$this->app->error(function(Exception $e) {
+    echo("e:"); var_dump($e);
+});
+$this->app->notFound(function() {
+    echo("nf:");
+});
+
         $this->app->run();
     }
 
@@ -53,27 +62,21 @@ class Router {
 
     private function getPersons() {
 /*
-        try {
-            throw new Exception("NOOO!");
-        } catch (Exception $e) {
-            $this->error($e);
-        }
-*/
         $this->success(
             [
                 'sgi-1' => [ 'name' => 'n1', 'id' => 'sgi-1', 'vote' => 5 ],
                 'sgi-2' => [ 'name' => 'n2', 'id' => 'sgi-2', 'vote' => 6 ],
             ]
         );
-/*
+*/
         try {
             $filters = $this->getFilters("range", ["age", "vote"], $this->app->request());
             $persons = new PersonsController($this->app);
-            $this->success($persons->getAll($filters));
+            #$this->success($persons->getAll($filters));
+            $this->success($persons->getList($filters));
         } catch (Exception $e) {
             $this->error($e);
         }
-*/
     }
 
     private function getPerson($id) {
@@ -85,12 +88,27 @@ class Router {
         }
     }
 
-    private function updatePerson($id) {
+    private function setProperty($id) {
+/*
+        $data = json_decode($this->app->request()->getBody());
+        $this->success($data);
+*/
         try {
             $persons = new PersonsController($this->app);
             $data = json_decode($this->app->request()->getBody());
             #var_dump($data);
-            $this->success($persons->update($id, $data));
+            $this->success($persons->setProperty($id, $data));
+        } catch (Exception $e) {
+            $this->error($e);
+        }
+    }
+
+    private function setPropertyPerson($id, $prop) {
+        try {
+            $persons = new PersonsController($this->app);
+            $data = json_decode($this->app->request()->getBody());
+            #var_dump($data);
+            $this->success($persons->setProperty($id, $prop, $data));
         } catch (Exception $e) {
             $this->error($e);
         }
@@ -132,36 +150,50 @@ class Router {
         return $filters;
     }
 
-    private function options() {
+/*
+    private function options($value) {
         $response = $this->app->response();
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            $response->header("Access-Control-Allow-Origin", "{$_SERVER['HTTP_ORIGIN']}");
-            $response->header('Access-Control-Allow-Credentials", "true');
-        }
+        $this->access_control_allow($response);
+        $response->body(json_encode($value));
+        #if (isset($_SERVER['HTTP_ORIGIN'])) {
+        #    $response->header("Access-Control-Allow-Origin", "{$_SERVER['HTTP_ORIGIN']}");
+        #    $response->header('Access-Control-Allow-Credentials", "true');
+        #}
     
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
-            $response->header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");         
-        }
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
-            $response->header("Access-Control-Allow-Headers", "{$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-        }
+        #if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        #    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+        #        $response->header("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");         
+        #    }
+        #    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+        #        $response->header("Access-Control-Allow-Headers", "{$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+        #    }
+        #}
     }
-
+*/
     private function success($value) {
         $response = $this->app->response();
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            $response->header("Access-Control-Allow-Origin", "{$_SERVER['HTTP_ORIGIN']}");
-            $response->header("Access-Control-Allow-Credentials", "true");
-        }
+        $this->access_control_allow($response);
         $response->body(json_encode($value));
     }
     
+    private function unforeseen() {
+        $response = $this->app->response();
+        $this->access_control_allow($response);
+        $response->body(json_encode([
+            'response' => null,
+            'error' => [
+                #'message' => "Unforeseen route [" . $this->app->router()->getMatchedRoutes() . "]",
+            ],
+        ]));
+    }
+
     private function error($error) {
         $response = $this->app->response();
-        if (isset($_SERVER['HTTP_ORIGIN'])) {
-            $response->header("Access-Control-Allow-Origin", "{$_SERVER['HTTP_ORIGIN']}");
-            $response->header("Access-Control-Allow-Credentials", "true");
-        }
+        $this->access_control_allow($response);
+        #if (isset($_SERVER['HTTP_ORIGIN'])) {
+        #    $response->header("Access-Control-Allow-Origin", "{$_SERVER['HTTP_ORIGIN']}");
+        #    $response->header("Access-Control-Allow-Credentials", "true");
+        #}
         $response->body(json_encode([
             'response' => null,
             'error' => [
@@ -174,6 +206,23 @@ class Router {
             'log' => $this->logs,
         ]));
     }
+
+    private function access_control_allow($response) {
+        if (isset($_SERVER['HTTP_ORIGIN'])) {
+            $response->header("Access-Control-Allow-Origin", "{$_SERVER['HTTP_ORIGIN']}");
+            $response->header("Access-Control-Allow-Credentials", "true");
+        }
+    
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+                $response->header("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");         
+            }
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+                $response->header("Access-Control-Allow-Headers", "{$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+            }
+        }
+    }
+
 };
 
 /*

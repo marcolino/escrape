@@ -1,3 +1,7 @@
+/*
+@import url('http://twitter.github.com/bootstrap/assets/css/bootstrap.css');
+*/
+
 html * {
   font-family: 'Droid Sans', sans-serif;
 }
@@ -8,12 +12,15 @@ body {
   padding-bottom: 10px;
 }
 
+/*
 .container {
-  padding-left: 0;
+  padding: 10px 10px 10px 10px;
 }
+*/
+/*
 .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td {
   padding: 2px 5px 2px 5px;
-  line-height: 1.0; /*1.42857;*/
+  line-height: 1.0; /*1.42857;* /
   vertical-align: middle;
   border-top: 1px solid #f0f0f0;
   white-space: wrap;
@@ -24,6 +31,7 @@ body {
   margin-left: 5px;
   margin-bottom: 5px;
 }
+*/
 
 /* Everything but the jumbotron gets side spacing for mobile first views */
 .header,
@@ -55,18 +63,76 @@ body {
   font-size: .88em;
 }
 
+/* Listing page */
+.row-gap {
+  padding: 2px 0 2px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.person-name {
+  font-size: 0.8em;
+}
+.img-clip-container {
+  width: 106px;
+  text-align: center;
+  border: 1px solid #aaa;
+}
+.img-clip {
+  width: auto;
+  max-width: 104px;
+  height: 72px;
+}
+
+.btn-vote {
+  color: #fff;
+  background: lightred; /* TODO: => #... */
+  text-shadow: 1px 1px 1px #222;
+}
+.btn-vote-9 {
+  background: #00ff00;
+}
+.btn-vote-8 {
+  background: #18d800;
+}
+.btn-vote-7 {
+  background: #30b000;
+}
+.btn-vote-6 {
+  background: #489800;
+}
+.btn-vote-5 {
+  background: #608000;
+}
+.btn-vote-4 {
+  background: #786800;
+}
+.btn-vote-3 {
+  background: #905000;
+}
+.btn-vote-2 {
+  background: #a83800;
+}
+.btn-vote-1 {
+  background: #c02000;
+}
+.btn-vote-0 {
+  background: #e80800;
+}
+
 /* Photos preview */
+/*
 .img-container {
   width: 72px;
   height: 96px;
-  display: inline-block;
+  display: block;
   text-align: center;
+  vertical-align: top;
   border: 1px solid #ccc;
-  margin-top: -3px;
+  NOmargin-top: -3px;
 }
 .img-container img {
   max-width: 100%;
 }
+**/
 
 /* Supporting custom content */
 .light, .light a {

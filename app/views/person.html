@@ -1,10 +1,29 @@
+DETAIL<br>
 <p>You're logged in as user {{ username }}</p>
 <p><a href="#/login">Logout</a></a></p>
 
 <div class="container">
+
+<ul class="nav nav-pills">
+  <li class="active"><a href="#tab_a" data-toggle="pill">Main</a></li>
+  <li><a href="#tab_b" data-toggle="pill">Comments</a></li>
+</ul>
+<div class="tab-content col-xs-12">
+        <div class="tab-pane active" id="tab_a">
+             <h4>Pane A</h4>
+            <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames
+                ac turpis egestas.</p>
+        </div>
+        <div class="tab-pane" id="tab_b">
+             <h4>Pane B</h4>
+            <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames
+                ac turpis egestas.</p>
+        </div>
+</div><!-- tab content -->
+
   <div class="row row-gap" ng-repeat="(id, person) in persons">
     <div class="col-xs-4">
-      <a href="#/details"><div class="img-rounded img-clip-container" ng-click><img ng-src="{{person.photo}}" class="img-rounded img-clip"/></div></a>
+      <a href="#/detail"><span class="img-rounded img-clip-container" ng-click><img ng-src="{{person.photo}}" class="img-rounded img-clip"/></span></a>
     </div>
     <div class="col-xs-4">
       <div class="person-name">

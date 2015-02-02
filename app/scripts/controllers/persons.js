@@ -23,11 +23,14 @@ app.controller('PersonsCtrl', function($scope, Persons) {
   loadRemoteData();
 
   // PUBLIC METHODS
-  $scope.setProperty = function(name, value) {
-    Persons.setProperty(name, value).then(
-      loadRemoteData,
-      function(errorMessage) {
-        console.warn(errorMessage);
+  $scope.setProperty = function(id, prop) {
+    console.info('setProperty():', id, prop);
+    Persons.setProperty(id, prop).then(
+      function(data) {
+        console.info('setProperty() success:', data);
+      },
+      function(error) {
+        console.warn(error);
       }
     );
 

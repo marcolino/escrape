@@ -22,14 +22,18 @@ var app = angular.module('escrapeApp', [
 
 app.config(function ($routeProvider) {
   $routeProvider
-    .when('/', {
-      templateUrl: 'views/persons.html',
-      controller: 'PersonsCtrl'
-    })
     .when('/login', {
       templateUrl: 'views/login.html',
       controller: 'LoginCtrl',
       //hideMenus: true
+    })
+    .when('/', {
+      templateUrl: 'views/persons.html',
+      controller: 'PersonsCtrl'
+    })
+    .when('/details', {
+      templateUrl: 'views/person.html',
+      controller: 'PersonsCtrl'
     })
     .when('/about', {
       templateUrl: 'views/about.html',

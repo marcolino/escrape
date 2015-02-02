@@ -231,7 +231,7 @@ if ($name == "KAREN") {
                 { # TODO: merge person...
                     $changed = true;
                     #$this->setPerson($key, $person);
-                    $this->setPerson($id, $person);
+                    $this->db->data["persons"][$id] = $person;
                 }
             }
         }
@@ -270,7 +270,18 @@ if ($name == "KAREN") {
         return $this->db->data["persons"][$id];
     }
     
-    public function update($id, $data) {
+    public function set($id, $person) {
+        if (!$id) {
+            throw new Exception("can't set person: no id specified");
+        }
+        if (!isset($this->db->data["persons"][$id])) {
+            throw new Exception("can't set person: id [$id] not present");
+        }
+        $this->db->data["persons"][$id][$field] = $value;
+        $this->store();
+    }
+
+    public function setProperty($id, $data) {
         if (!$id) {
             throw new Exception("can't update person: no id specified");
         }
@@ -335,12 +346,13 @@ if ($name == "KAREN") {
         // filter persons by column names
 #$n = 0;
 #var_dump($this->getPersons()); exit;
-        foreach ($this->getPersons() as $id => $value) {
+        foreach ($this->getAll() as $id => $value) {
 if (!isset($value["site"])) { continue; } # TODO: skip fake records... remove-me...
             $list[$id] = [
                 "id" => $id,
                 "site" => $value["site"],
                 "name" => $value["name"],
+                #"description" => $value["description"],
                 "phone" => $value["phone"],
                 "vote" => $value["vote"],
                 "age" => $value["age"],
@@ -352,7 +364,8 @@ if (!isset($value["site"])) { continue; } # TODO: skip fake records... remove-me
         }
 
         // filter persons by column values
-        return $this->filter($list, $filter);
+        return $list;
+        #return $this->filter($list, $filter);
 /*
         return [
             "personsDefinition" => $this->getPersonsDefinition(),
