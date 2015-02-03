@@ -108,7 +108,7 @@ module.exports = function (grunt) {
           open: true,
           base: '<%= yeoman.dist %>'
         }
-      },
+      }
     },
 
     // Make sure code styles are up to par and there are no obvious mistakes
@@ -356,9 +356,6 @@ module.exports = function (grunt) {
   });
 
 
-  grunt.loadNpmTasks('grunt-contrib-connect');
-  grunt.loadNpmTasks('grunt-connect-proxy');
-
   grunt.registerTask('serve', 'Compile then start a connect web server', function (target) {
     if (target === 'dist') {
       return grunt.task.run(['build', 'connect:dist:keepalive']);
@@ -369,7 +366,6 @@ module.exports = function (grunt) {
       'wiredep',
       'concurrent:server',
       'autoprefixer',
-      'configureProxies',
       'connect:livereload',
       'watch'
     ]);
@@ -384,7 +380,6 @@ module.exports = function (grunt) {
     'clean:server',
     'concurrent:test',
     'autoprefixer',
-    'configureProxies',
     'connect:test',
     'karma'
   ]);

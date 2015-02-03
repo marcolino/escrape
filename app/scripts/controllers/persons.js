@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsCtrl', function($scope, $routeParams, Persons) {
+app.controller('PersonsCtrl', function($scope, $routeParams, Persons, Countries) {
   $scope.persons = [];
   $scope.person = [];
 console.log('routeParams:', $routeParams);
@@ -9,6 +9,7 @@ console.log('$scope.person:', $scope.person);
 console.log('$scope.personId:', $scope.personId);
 
   $scope.selectedTab = 'main';
+  $scope.countries = Countries;
 
   // ngModel values for form interaction
 /*
@@ -48,6 +49,82 @@ console.log('$scope.personId:', $scope.personId);
   } else {
     Persons.getPerson($scope.personId).then(function(person) {
       $scope.person = person;
+      $scope.person.nationality = {};
+      $scope.person.nationality.code = 'it';
+      $scope.person.nationality.country = $scope.countries[$scope.person.nationality.code];
+      $scope.person.streetAddress = "Torino, Via Carlo Pisacane, 41";
+      $scope.formStreetAddressImageUrl();
+
+      $scope.person.comments = [
+        {
+          'author': 'au1',
+          'date': '2014-27-05 10:33:11',
+          'content': 'Molto efficiente e rapido',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au3',
+          'date': '2014-12-12 22:15:30',
+          'content': 'Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... ',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+        {
+          'author': 'au2',
+          'date': '2014-27-05 11:50:00',
+          'content': 'Poco efficiente e lento',
+          'url': 'http://...',
+        },
+      ];
+      $scope.person.name = $scope.person.name.substr(0, 2); // TODO: REMOVE-ME
+      $scope.person.description = $scope.person.description.substr(0, 2); // TODO: REMOVE-ME
     });
   }
 
@@ -84,6 +161,21 @@ console.log('$scope.personId:', $scope.personId);
   };
 
 
+  $scope.formChangeCountry = function(code) {
+    console.log('formChangeCountry(): ', code);
+    $scope.person.nationality.code = code;
+    $scope.person.nationality.country = $scope.countries[code];
+  }
+
+  $scope.formStreetAddressImageUrl = function() {
+    var url =
+      "https://maps.googleapis.com/maps/api/streetview" + "?" + 
+      "location=" + encodeURIComponent($scope.person.streetAddress) + "&" +
+      "size=" + "800x600"
+    ;
+    $scope.person.streetAddressImageUrl = url;
+    console.info('url:', url);
+  }
 
   // slide show
   $scope.images = [{src:'img1.png',title:'Pic 1'},{src:'img2.jpg',title:'Pic 2'},{src:'img3.jpg',title:'Pic 3'},{src:'img4.png',title:'Pic 4'},{src:'img5.png',title:'Pic 5'}]; 

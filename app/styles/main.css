@@ -176,9 +176,82 @@ body {
   user-select: none;
 }
 
+.flag {
+  display: inline-block;
+  width: 15px;
+  height: 12px;
+  vertical-align: text-top;
+  margin-top: 2px;
+}
+.flag-li {
+  width: 24px;
+  height: 16px;
+  border: 1px solid #ddd;
+}
+
 .slider-horizontal {
   white-space: nowrap;
   overflow: auto;
   overflow-y: hidden;
   -ms-overflow-y: hidden;
 }
+
+.comments {
+  width: 100%;
+  height: 300px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.comment {
+  width: 100%;
+  Xheight: 300px;
+  overflow-y: auto;
+}
+
+@media(max-height: 239px) {
+  .comments {
+    height: 80px;
+  }
+}
+@media(min-height: 240px) {
+  .comments {
+    height: 120px;
+  }
+}
+@media(min-height: 320px) {
+  .comments {
+    height: 170px;
+  }
+}
+@media(min-height: 480px) {
+  .comments {
+    height: 330px;
+  }
+}
+@media(min-height: 768px) {
+  .comments {
+    height: 618px;
+  }
+}
+@media(min-height: 992px) {
+  .comments {
+    height: 842px;
+  }
+}
+@media(min-height: 1200px) {
+  .comments {
+    height: 1050px;
+  }
+}
+
+/*
+@media(max-width: 767px) {
+}
+@media(min-width: 768px) {
+}
+@media(min-width: 992px) {
+}
+@media(min-width: 1200px) {
+}
+*/
