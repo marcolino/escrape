@@ -9,6 +9,31 @@ console.log('$scope.person:', $scope.person);
 console.log('$scope.personId:', $scope.personId);
 
   $scope.selectedTab = 'main';
+//$scope.sites = Sites;
+  $scope.sites = { // TODO: put this in a new 'Sites' service...
+    'sgi': {
+      'url': 'http://www.sexyguidaitalia.com',
+      'path': 'escort/torino',
+      'charset': 'utf-8',
+    },
+    'toe': {
+      'url': 'http://www.torinoerotica.com',
+      'charset': 'CP1252',
+      'path': 'annunci_Escort_singole_Piemonte_Torino.html',
+    },
+  };
+  $scope.myInterval = 13000;
+  $scope.slides = [
+    {
+      image: 'http://lorempixel.com/400/200/food'
+    },
+    {
+      image: 'http://lorempixel.com/400/200/sports'
+    },
+    {
+      image: 'http://lorempixel.com/400/200/people'
+    }
+  ];  
   $scope.countries = Countries;
 
   // ngModel values for form interaction
@@ -52,7 +77,7 @@ console.log('$scope.personId:', $scope.personId);
       $scope.person.nationality = {};
       $scope.person.nationality.code = 'it';
       $scope.person.nationality.country = $scope.countries[$scope.person.nationality.code];
-      $scope.person.streetAddress = "Torino, Via Carlo Pisacane, 41";
+      $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 41';
       $scope.formStreetAddressImageUrl();
 
       $scope.person.comments = [
@@ -165,17 +190,17 @@ console.log('$scope.personId:', $scope.personId);
     console.log('formChangeCountry(): ', code);
     $scope.person.nationality.code = code;
     $scope.person.nationality.country = $scope.countries[code];
-  }
+  };
 
   $scope.formStreetAddressImageUrl = function() {
     var url =
-      "https://maps.googleapis.com/maps/api/streetview" + "?" + 
-      "location=" + encodeURIComponent($scope.person.streetAddress) + "&" +
-      "size=" + "800x600"
+      'https://maps.googleapis.com/maps/api/streetview' + '?' + 
+      'location=' + encodeURIComponent($scope.person.streetAddress) + '&' +
+      'size=' + '800x600'
     ;
     $scope.person.streetAddressImageUrl = url;
     console.info('url:', url);
-  }
+  };
 
   // slide show
   $scope.images = [{src:'img1.png',title:'Pic 1'},{src:'img2.jpg',title:'Pic 2'},{src:'img3.jpg',title:'Pic 3'},{src:'img4.png',title:'Pic 4'},{src:'img5.png',title:'Pic 5'}]; 

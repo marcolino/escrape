@@ -18,6 +18,7 @@ var app = angular.module('escrapeApp', [
     'ngSanitize',
     'ngTouch',
     'ngCookies',
+    'ui.bootstrap',
     'revolunet.stepper',
   ]);
 

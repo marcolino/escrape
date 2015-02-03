@@ -8,7 +8,7 @@ app.service('Persons', function($http, $q) {
     removePerson: removePerson
   });
   */
-  var apiUrl = 'http://192.168.10.30/escrape/api' + '/persons/';
+  var apiUrl = 'http://192.168.1.2/escrape/api' + '/persons/';
 
   // PRIVATE METHODS
   function handleSuccess(response) {

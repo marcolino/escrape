@@ -26,7 +26,8 @@
             <div class="slider-horizontal">
             <span ng-repeat="(id, photo) in person.photos">
               <span>
-                <img ng-src="images/users/user-{{$index}}.jpg" class="img-rounded img-clip"/>
+                <img ng-src="images/users/user-{{$index}}.jpg" class="img-rounded img-clip" />
+                <!--<img ng-src="{{sites[person.site]['url']}}/{{photo}}" class="img-rounded img-clip" />-->
                 &nbsp;
               </span>
             </span>
@@ -59,12 +60,12 @@
           <div class="col-xs-5 col-sm-3 col-md-2 col-lg-2">
             <div class="dropdown">
               <div class="input-group" data-toggle="dropdown">
-                <span class="input-group-addon" title="Nationality"><img ng-src="images/flags/{{person.nationality.code}}.png" class="flag" /></span>
+                <span class="input-group-addon" title="Nationality"><img ng-src="images/flags/{{person.nationality.code}}.png" class="flag noselect" /></span>
                 <input class="form-control" id="query" name="query" type="text" ng-model="person.nationality.country" />
               </div>
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu scrollable-menu" role="menu">
                 <li ng-repeat="(countryCode, countryName) in countries">
-                  <a ng-click="formChangeCountry('{{countryCode}}')"><img ng-src="images/flags/{{countryCode}}.png" class="flag-li" /> {{countryName}}</a>
+                  <a ng-click="formChangeCountry('{{countryCode}}')"><img ng-src="images/flags/{{countryCode}}.png" class="flag-li noselect" /> {{countryName}}</a>
                 </li>
               </ul>
             </div>
@@ -134,9 +135,48 @@
      
     <!-- photos pill -->
     <div class="tab-content" ng-show="selectedTab == 'photos'">
+<!--
       <div class="row row-gap" ng-repeat="(id, photo) in person.photos">
-        <a href=""><img ng-src="images/users/user-{{$index}}.jpg" ng-src-KO="{{url(person.url)}}/{{photo}}"/></a>
+        <!- -<a href=""><img ng-src="images/users/user-{{$index}}.jpg" ng-src-KO="{{url(person.url)}}/{{photo}}"/></a>- ->
+        <a href=""><img ng-src="{{sites[person.site]['url']}}/{{photo}}" />
       </div>
+-->
+<!-- carousel -->
+<!--
+    <div id="slides_control">
+      <carousel interval="myInterval">
+        <slide ng-repeat="slide in slides" active="slide.active">
+          <img ng-src="{{slide.image}}">
+          <div class="carousel-caption">
+            <h4>Slide {{$index+1}}</h4>
+          </div>
+        </slide>
+      </carousel>
+    </div>
+-->
+<div id="Carousel" class="carousel slide">
+<ol class="carousel-indicators" ng-repeat="photo in person.photos">
+    <li data-target="Carousel" data-slide-to="{{ $index }}" ng-class="{ active: $index == 0 }"></li>
+</ol>
+<div class="carousel-inner" ng-repeat="photo in person.photos">
+    <div ng-class="{item: true, active: $index == 0}">
+        <img ng-src="images/slides/slide-{{$index}}.jpg" class="img-responsive" />
+        <!--<img ng-src="{{sites[person.site]['url']}}/{{photo}}" class="img-responsive">-->
+    </div>
+</div>
+
+<!--
+<span class="left carousel-control" data-target="#Carousel" data-slide="prev">
+    <span class="glyphicon glyphicon-chevron-left"></span>
+</span>
+<span class="right carousel-control" data-target="#Carousel" data-slide="next">
+   <span class="glyphicon glyphicon-chevron-right"></span>
+</span>
+-->
+</div>
+
+<!-- /carousel -->
+
     </div>
 
     <!-- comments pill -->

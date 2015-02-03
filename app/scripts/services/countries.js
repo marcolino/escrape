@@ -198,7 +198,7 @@ app.service('Countries', function() {
     'za': 'South africa',
     'zm': 'Zambia',
     'zw': 'Zimbabwe',
-  }
+  };
 
   return(countries);
 });
