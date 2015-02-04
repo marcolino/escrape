@@ -1,38 +1,6 @@
 'use strict';
 
-app.controller('MainCtrl', function ($scope, $modal, $timeout, $rootScope ) {
-  $rootScope.$on('mapsInitialized', function(evt, maps) {
-    $scope.map = maps[0];
-    //console.log('$scope.map', $scope.map);
-  });
-  //console.log("instantiating MainCtrl");
-  $scope.opendialog = function() {
-    // modal window for editing details
-    //console.log("open modal window");
-    $modal.open({
-      templateUrl: 'map_dtl.html',
-      controller: 'MapDtlCtrl' 
-    }).result.then(function() {
-      console.log('Modal opened at: ' + new Date());
-    }, function() {
-      console.log('Modal dismissed at: ' + new Date());
-    });
-    $timeout(function() {
-      google.maps.event.trigger($scope.map, 'resize');
-    }, 500);
-  };
-});
-app.controller("MapDtlCtrl", function($scope, $log, $modalInstance ) {
-            $scope.ok = function() {
-                $log.log('Submiting map info.');
-                $modalInstance.close();
-            };
-            $scope.cancel = function() {
-                $modalInstance.dismiss('cancel');
-            };
-});
-
-app.controller('PersonsCtrl', function($scope, $routeParams, Persons, Countries) {
+app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal, $timeout, Persons, Countries) {
   $scope.persons = [];
   $scope.person = [];
 console.log('routeParams:', $routeParams);
@@ -115,8 +83,10 @@ console.log('$scope.personId:', $scope.personId);
       $scope.person.nationality = {};
       $scope.person.nationality.code = 'it';
       $scope.person.nationality.country = $scope.countries[$scope.person.nationality.code];
-      $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 41';
       $scope.formStreetAddressImageUrl();
+
+      $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 41';
+      $scope.person.streetAddressRegion = 'it';
 
       $scope.person.comments = [
         {
@@ -241,5 +211,28 @@ console.log('$scope.personId:', $scope.personId);
 
   // slide show
   $scope.images = [{src:'img1.png',title:'Pic 1'},{src:'img2.jpg',title:'Pic 2'},{src:'img3.jpg',title:'Pic 3'},{src:'img4.png',title:'Pic 4'},{src:'img5.png',title:'Pic 5'}]; 
+
+  // Google map
+  $rootScope.$on('mapsInitialized', function(event, maps) {
+    $scope.map = maps[0];
+
+    /* global $:false */
+    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function(/*e*/) {
+      $timeout(function() {
+        google.maps.event.trigger($scope.map, 'resize');
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ 'address': $scope.person.streetAddress, 'region': $scope.person.streetAddressRegion }, function(results, status) {
+          if (status === google.maps.GeocoderStatus.OK) {
+            var location = results[0].geometry.location;
+            $scope.person.streetLocation = [ location.k, location.D ];
+            $scope.map.setCenter(location);
+            $scope.$digest(); // to force marker show
+          } else {
+            console.error('Unable to find address ' + $scope.address); // TODO: ? (set center of region?)
+          }
+        });
+      }, 200); // this timeout is needed due to animation delay
+    });
+  });
 
 });

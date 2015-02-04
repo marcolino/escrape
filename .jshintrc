@@ -20,6 +20,7 @@
   "globals": {
     "angular": false,
     "app": true,
-    "toastr": false
+    "toastr": false,
+    "google": false
   }
 }
