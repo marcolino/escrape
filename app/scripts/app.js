@@ -8,6 +8,7 @@
  *
  * Main module of the application.
  */
+
 var app = angular.module('escrapeApp', [
     'ngAnimate',
   //'ngAria',
@@ -19,7 +20,8 @@ var app = angular.module('escrapeApp', [
     'ngTouch',
     'ngCookies',
     'ui.bootstrap',
-    'revolunet.stepper',
+    //'revolunet.stepper',
+    'ngMap',
   ]);
 
 app.config(function ($routeProvider) {

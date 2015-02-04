@@ -13,7 +13,6 @@
     "angular-route": "^1.3.0",
     "angular-sanitize": "^1.3.0",
     "angular-touch": "^1.3.0",
-    "angular-stepper": "~0.0.2",
     "angular-bootstrap": "~0.12.0"
   },
   "devDependencies": {

@@ -1,5 +1,37 @@
 'use strict';
 
+app.controller('MainCtrl', function ($scope, $modal, $timeout, $rootScope ) {
+  $rootScope.$on('mapsInitialized', function(evt, maps) {
+    $scope.map = maps[0];
+    //console.log('$scope.map', $scope.map);
+  });
+  //console.log("instantiating MainCtrl");
+  $scope.opendialog = function() {
+    // modal window for editing details
+    //console.log("open modal window");
+    $modal.open({
+      templateUrl: 'map_dtl.html',
+      controller: 'MapDtlCtrl' 
+    }).result.then(function() {
+      console.log('Modal opened at: ' + new Date());
+    }, function() {
+      console.log('Modal dismissed at: ' + new Date());
+    });
+    $timeout(function() {
+      google.maps.event.trigger($scope.map, 'resize');
+    }, 500);
+  };
+});
+app.controller("MapDtlCtrl", function($scope, $log, $modalInstance ) {
+            $scope.ok = function() {
+                $log.log('Submiting map info.');
+                $modalInstance.close();
+            };
+            $scope.cancel = function() {
+                $modalInstance.dismiss('cancel');
+            };
+});
+
 app.controller('PersonsCtrl', function($scope, $routeParams, Persons, Countries) {
   $scope.persons = [];
   $scope.person = [];
@@ -24,6 +56,12 @@ console.log('$scope.personId:', $scope.personId);
   };
   $scope.myInterval = 13000;
   $scope.slides = [
+    {
+      image: 'http://uploads7.wikiart.org/images/vincent-van-gogh/self-portrait-1887-9.jpg'
+    },
+    {
+      image: 'http://upload.wikimedia.org/wikipedia/commons/7/78/Brorfelde_landscape_2.jpg'
+    },
     {
       image: 'http://lorempixel.com/400/200/food'
     },
@@ -199,7 +237,6 @@ console.log('$scope.personId:', $scope.personId);
       'size=' + '800x600'
     ;
     $scope.person.streetAddressImageUrl = url;
-    console.info('url:', url);
   };
 
   // slide show

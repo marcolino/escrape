@@ -74,7 +74,7 @@
         <div class="form-group">
           <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
             <div class="input-group">
-              <span class="input-group-addon" title="Vote"><span class="glyphicon glyphicon-hand-right"></span></span>
+              <span class="input-group-addon" title="Vote"><span class="glyphicon glyphicon-thumbs-up"></span></span>
               <input type="number" class="form-control" ng-model="person.vote" min="0" max="9" placeholder="Vote">
             </div>
           </div>
@@ -86,13 +86,18 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+          <div class="col-xs-12">
             <div class="input-group">
-              <span class="input-group-addon" title="Street address"><a data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-home"></span></a></span>
+              <span class="input-group-addon" title="Street address photo"><a data-toggle="modal" data-target="#streetAddressModalPopup"><span class="glyphicon glyphicon-home"></span></a></span>
               <input type="text" class="form-control" ng-model="person.streetAddress" placeholder="Street address">
+              <span class="input-group-addon" title="Street address indications"><a data-toggle="modal" data-target="#streetAddressIndicationsModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
             </div>
           </div>
         </div>
+ 
+<div ng-controller="MainCtrl">
+  <a href="#" ng-click="opendialog()">Open map dialog</a>
+</div>
 
         <div class="form-group" style="vertical-align:bottom">
           <div class="col-xs-12">
@@ -101,10 +106,14 @@
         </div>
       </form>
 
-      <!-- street address popup -->
-      <div id="myModal" class="modal fade" tabindex="-1" role="dialog">
+      <!-- street address modal popup -->
+      <div id="streetAddressModalPopup" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog">
           <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">{{ person.streetAddress }}</h4>
+            </div>
             <div class="modal-body">
               <img ng-src="{{ person.streetAddressImageUrl }}" class="img-responsive">
             </div>
@@ -113,95 +122,71 @@
       </div>
 
       <!--
-      <div class="row">
-        <a href=""><div class="img-rounded img-clip-container"><img ng-src="images/users/user-0.jpg" class="img-rounded img-clip"/></div></a>
-      </div>
-      <div class="row">
-        <!- -{{ person.name }}- ->
-        <label>Name:</label>{{person.name.substr(0,2)}}
-      </div>
-      <div class="row">
-        <button type="button" class="btn btn-primary" ng-attr-title="{{person.phone}}">
-          <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone light"></i></a>
-        </button>
-      </div>
-      <div class="row">
-        <button type="button" ng-class="{ 'btn': true, 'btn-danger': person.vote < 5, 'btn-success': person.vote >= 5, 'btn-vote': true, 'btn-vote-0': person.vote == 0, 'btn-vote-1': person.vote == 1, 'btn-vote-2': person.vote == 2, 'btn-vote-3': person.vote == 3, 'btn-vote-4': person.vote == 4, 'btn-vote-5': person.vote == 5, 'btn-vote-6': person.vote == 6, 'btn-vote-7': person.vote == 7, 'btn-vote-8': person.vote == 8, 'btn-vote-9': person.vote == 9 }" ng-attr-title="{{person.vote}}">
-          <strong>{{person.vote ? person.vote : " ? "}}</strong>
-        </button>
-      </div>
+      <a href="" data-toggle="modal" data-target="#myMapModal" OLDdata-target="#streetAddressModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
       -->
-    </div>
-     
-    <!-- photos pill -->
-    <div class="tab-content" ng-show="selectedTab == 'photos'">
-<!--
-      <div class="row row-gap" ng-repeat="(id, photo) in person.photos">
-        <!- -<a href=""><img ng-src="images/users/user-{{$index}}.jpg" ng-src-KO="{{url(person.url)}}/{{photo}}"/></a>- ->
-        <a href=""><img ng-src="{{sites[person.site]['url']}}/{{photo}}" />
-      </div>
--->
-<!-- carousel -->
-<!--
-    <div id="slides_control">
-      <carousel interval="myInterval">
-        <slide ng-repeat="slide in slides" active="slide.active">
-          <img ng-src="{{slide.image}}">
-          <div class="carousel-caption">
-            <h4>Slide {{$index+1}}</h4>
-          </div>
-        </slide>
-      </carousel>
-    </div>
--->
-<div id="Carousel" class="carousel slide">
-<ol class="carousel-indicators" ng-repeat="photo in person.photos">
-    <li data-target="Carousel" data-slide-to="{{ $index }}" ng-class="{ active: $index == 0 }"></li>
-</ol>
-<div class="carousel-inner" ng-repeat="photo in person.photos">
-    <div ng-class="{item: true, active: $index == 0}">
-        <img ng-src="images/slides/slide-{{$index}}.jpg" class="img-responsive" />
-        <!--<img ng-src="{{sites[person.site]['url']}}/{{photo}}" class="img-responsive">-->
-    </div>
-</div>
-
-<!--
-<span class="left carousel-control" data-target="#Carousel" data-slide="prev">
-    <span class="glyphicon glyphicon-chevron-left"></span>
-</span>
-<span class="right carousel-control" data-target="#Carousel" data-slide="next">
-   <span class="glyphicon glyphicon-chevron-right"></span>
-</span>
--->
-</div>
-
-<!-- /carousel -->
-
-    </div>
-
-    <!-- comments pill -->
-    <div class="tab-content" ng-show="selectedTab == 'comments'">
-      <div class="comments">
-        <div ng-repeat="(id, comment) in person.comments" class="row row-gap">
-          <div class="form-group">
-            <div class="col-xs-12">
-              <div class="input-group">
-                <span class="input-group-addon" style="vertical-align:top;" title="Comment">
-                  <div style="font-size:12px; text-align: left">on: <i>{{ comment.date.substr(0, 10) }}</i></div>
-                  <div style="font-size:12px; text-align: left">by: <i>{{ comment.author }}</i></div>
-                </span>
-                <textarea class="form-control" rows="3">{{ comment.content }}</textarea>
+      <!-- street address indications modal popup -->
+      <div class="modal fade" id="streetAddressIndicationsModalPopup">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">{{ person.streetAddress }}</h4>
+            </div>
+            <div class="modal-body">
+              <div class="container">
+                <div class="row">
+                  <div id="map-canvas" class=""></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-        
-    <!-- unions pill -->
-    <div class="tab-content" ng-show="selectedTab == 'unions'">
-      unions...
+
     </div>
 
+    <!-- photos pill -->
+    <div class="tab-content" ng-show="selectedTab == 'photos'">
+      <!-- carousel -->
+      <div class="slides-control">
+        <carousel interval="myInterval" disable-animation="true">
+          <slide ng-repeat="slide in slides" active="slide.active">
+            <img class="slide" ng-src="{{slide.image}}">
+        <!--<img class="slide" ng-src="{{sites[person.site]['url']}}/{{photo}}" />-->
+            <!--
+            <div class="carousel-caption">
+              <h4>Slide {{$index+1}}</h4>
+            </div>
+          -->
+          </slide>
+        </carousel>
+      </div>
+      <!-- /carousel -->
+    </div>
   </div>
+
+  <!-- comments pill -->
+  <div class="tab-content" ng-show="selectedTab == 'comments'">
+    <div class="comments">
+      <div ng-repeat="(id, comment) in person.comments" class="row row-gap">
+        <div class="form-group">
+          <div class="col-xs-12">
+            <div class="input-group">
+              <span class="input-group-addon" style="vertical-align: top;" title="Comment">
+                <div style="font-size:12px; text-align: left; margin-bottom:3px;"><i>Date:</i> {{ comment.date.substr(0, 10) }}</div>
+                <div style="font-size:12px; text-align: left; margin-bottom:3px;"><i>By:</i> {{ comment.author }}</div>
+              </span>
+              <textarea class="form-control" rows="3">{{ comment.content }}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+      
+  <!-- unions pill -->
+  <div class="tab-content" ng-show="selectedTab == 'unions'">
+    unions...
+  </div>
+
 </div>

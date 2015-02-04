@@ -177,21 +177,38 @@ body {
 }
 
 /*** slides *******/
-#slides_control > div{
-  height: 200px;
+.slides-control {
+  text-align: center;
+  width: 100%;
+  left: 50%;
 }
-img{
-  margin:auto;
-  width: 400px;
+.Xslides img {
+  margin: 0 auto;
 }
-#slides_control {
-  p_osition:absolute;
-  width: 400px;
-  left:50%;
-  top:20px;
- margin-left:-200px;
+.carousel-inner > .item > img { /* center carousel slides */
+  margin: 0 auto;
 }
-/******************/
+.carousel-control.left, .carousel-control.right { /* no gradient for carousel controls */
+  color: #337ab7;
+  background-image: none;
+  text-shadow: 1px 1px 0 #fff;
+}
+.carousel-indicators li {
+  opacity: 0.4;
+}
+.carousel-indicators .active {
+  opacity: 0.5;
+}
+
+/* Google maps */
+#map-canvas { /* TODO: do we need this? */
+  margin: 0;
+  padding: 0;
+}
+
+.tab-content {
+  padding: 10px;
+}
 
 .flag {
   display: inline-block;
@@ -230,7 +247,7 @@ img{
   overflow-y: auto;
 }
 
-/* vertical media queries for comments container */
+/* vertical media queries for comments container - TODO: use more blocks, to make it more responsive */
 @media(max-height: 239px) {
   .comments {
     height: 80px;
