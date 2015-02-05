@@ -1,105 +1,84 @@
 'use strict';
 
-app.service('Persons', function($http, $q) {
-  /*
-  return({
-    addPerson: addPerson,
-    getPersons: getPersons,
-    removePerson: removePerson
-  });
-  */
-  var apiUrl = 'http://192.168.1.2/escrape/api' + '/persons/';
+app.service('Persons', function($http, $q, cfg) {
+  var apiUri = cfg.apiUri + '/persons/';
 
-  // PRIVATE METHODS
+  // private methods
   function handleSuccess(response) {
-    console.info('Person success: ', response.data);
+    //console.info('Person success: ', response.data);
     if (response.data.error) {
       console.error(response.data.error);
+      return($q.reject(response.data.error));
     } else {
       return(response.data);
     }
   }
 
   function handleError(response) {
-    console.info('Person error: ', response);
+    //console.info('Person error: ', response);
     if (
       ! angular.isObject(response.data) ||
       ! response.data.message
       ) {
       return($q.reject('An unknown error occurred in service [Person]'));
     }
-
     return($q.reject(response.data.message));
   }
 
+  // public methods
   return({
-    // PUBLIC METHODS
 
     getPersons: function () {
       return $http({
         method: 'GET',
-        url: apiUrl + 'get',
+        url: apiUri + 'get',
         data: {
           flag: 'yes'
         },
-        //transformRequest: TransformRequestAsFormPost,
       }).then(handleSuccess, handleError);
     },
 
     getPerson: function (id) {
-console.info('service getPerson('+id+')');
       return $http({
         method: 'GET',
-        url: apiUrl + 'get' + '/' + id,
+        url: apiUri + 'get' + '/' + id,
         data: {
           flag: 'yes'
         },
-        //transformRequest: TransformRequestAsFormPost,
       }).then(handleSuccess, handleError);
     },
 
-    setProperty: function (id, prop) {
-      console.info('setProperty() - prop:', prop);
+    setProperty: function (id, property) {
       return $http({
         method: 'PUT',
-        url: apiUrl + 'setproperty' + '/' + id,
-        data: prop,
-/*
-        data: {
-          'id': id,
-          'prop': prop,
-        },
-*/
-        //transformRequest: TransformRequestAsFormPost,
+        url: apiUri + 'setproperty' + '/' + id,
+        data: property,
       }).then(handleSuccess, handleError);
     },
 
     addPerson: function (name) {
-      var request = $http({
-        method: 'post',
-        url: apiUrl + 'add',
-        params: {
-          flag: 'yes'
-        },
+      return $http({
+        method: 'POST',
+        url: apiUri + 'add',
         data: {
           name: name
         },
-        //transformRequest: TransformRequestAsFormPost,
-      });
-      return(request.then(handleSuccess, handleError));
+        params: {
+          flag: 'yes'
+        },
+      }).then(handleSuccess, handleError);
     },
 
     removePerson: function (id) {
       return $http({
-        method: 'delete',
-        url: apiUrl + 'delete',
-        params: {
-          flag: 'no'
-        },
+        method: 'DELETE',
+        url: apiUri + 'delete',
         data: {
           id: id
         },
-        //transformRequest: TransformRequestAsFormPost,
+        params: {
+          flag: 'no'
+        },
       }).then(handleSuccess, handleError);
     }
   });

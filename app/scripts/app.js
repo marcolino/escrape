@@ -11,7 +11,7 @@
 
 var app = angular.module('escrapeApp', [
     'ngAnimate',
-  //'ngAria',
+    'ngAria',
     'ngCookies',
     'ngMessages',
     'ngResource',
@@ -19,9 +19,8 @@ var app = angular.module('escrapeApp', [
     'ngSanitize',
     'ngTouch',
     'ngCookies',
-    'ui.bootstrap',
-    //'revolunet.stepper',
     'ngMap',
+    'ui.bootstrap',
   ]);
 
 app.config(function ($routeProvider) {

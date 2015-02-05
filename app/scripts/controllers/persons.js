@@ -1,67 +1,14 @@
 'use strict';
 
-app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal, $timeout, Persons, Countries) {
+app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons) {
   $scope.persons = [];
   $scope.person = [];
-console.log('routeParams:', $routeParams);
   $scope.personId = $routeParams.personId;
-console.log('$scope.person:', $scope.person);
-console.log('$scope.personId:', $scope.personId);
-
   $scope.selectedTab = 'main';
-//$scope.sites = Sites;
-  $scope.sites = { // TODO: put this in a new 'Sites' service...
-    'sgi': {
-      'url': 'http://www.sexyguidaitalia.com',
-      'path': 'escort/torino',
-      'charset': 'utf-8',
-    },
-    'toe': {
-      'url': 'http://www.torinoerotica.com',
-      'charset': 'CP1252',
-      'path': 'annunci_Escort_singole_Piemonte_Torino.html',
-    },
-  };
-  $scope.myInterval = 13000;
-  $scope.slides = [
-    {
-      image: 'http://uploads7.wikiart.org/images/vincent-van-gogh/self-portrait-1887-9.jpg'
-    },
-    {
-      image: 'http://upload.wikimedia.org/wikipedia/commons/7/78/Brorfelde_landscape_2.jpg'
-    },
-    {
-      image: 'http://lorempixel.com/400/200/food'
-    },
-    {
-      image: 'http://lorempixel.com/400/200/sports'
-    },
-    {
-      image: 'http://lorempixel.com/400/200/people'
-    }
-  ];  
   $scope.countries = Countries;
+  $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
 
-  // ngModel values for form interaction
-/*
-  // TODO: form => person, name => id ...
-  $scope.form = {
-    name: ''
-  };
-*/
-
-/*
-  // PRIVATE METHODS
-  function applyRemoteData(newPersons) {
-    $scope.persons = newPersons;
-  }
-
-  function loadRemoteData() {
-    Persons.getPersons().then(function(persons) {
-      applyRemoteData(persons);
-    });
-  }
-*/
+  // private methods
   function applyPersons(newPersons) {
     $scope.persons = newPersons;
   }
@@ -72,96 +19,102 @@ console.log('$scope.personId:', $scope.personId);
     });
   }
 
-  if (!$scope.personId) {
+  if (!$scope.personId) { // load persons list
     Persons.getPersons().then(function(persons) {
       $scope.persons = persons;
     });
-    //loadRemoteData();
-  } else {
+  } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
+      console.log('person:', person);
       $scope.person = person;
       $scope.person.nationality = {};
       $scope.person.nationality.code = 'it';
       $scope.person.nationality.country = $scope.countries[$scope.person.nationality.code];
-      $scope.formStreetAddressImageUrl();
-
-      $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 41';
+      $scope.person.vote = 5;
+      $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
       $scope.person.streetAddressRegion = 'it';
+      $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.streetAddress);
+      $scope.geocode($scope.person.streetAddress, $scope.person.streetAddressRegion);
+      
+      //<!--<img class="slide" ng-src="{{sites[person.site]['url']}}/{{photo}}" />-->
 
-      $scope.person.comments = [
-        {
-          'author': 'au1',
-          'date': '2014-27-05 10:33:11',
-          'content': 'Molto efficiente e rapido',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au3',
-          'date': '2014-12-12 22:15:30',
-          'content': 'Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... ',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-        {
-          'author': 'au2',
-          'date': '2014-27-05 11:50:00',
-          'content': 'Poco efficiente e lento',
-          'url': 'http://...',
-        },
-      ];
-      $scope.person.name = $scope.person.name.substr(0, 2); // TODO: REMOVE-ME
-      $scope.person.description = $scope.person.description.substr(0, 2); // TODO: REMOVE-ME
+      var values = {name: 'misko', gender: 'male'};
+      var log = [];
+      angular.forEach(values, function(value, key) {
+        this.push(key + ': ' + value);
+      }, log);
+      //expect(log).toEqual(['name: misko', 'gender: male']);
+
+/*
+      $scope.person.slides = [];
+      var first = true;
+      var log = [];
+      foreach($scope.person.photos as photo) {
+        $scope.person.slides[] = {
+          image: Sites[$scope.person.site]['url'] + '/' + photo,
+          active: first,
+        };
+        first = false;
+      }
+*/
+      if (cfg.fake || !$scope.person.slides) { // DEBUG ONLY
+        $scope.person.slides = [
+          {
+            image: 'http://uploads7.wikiart.org/images/vincent-van-gogh/self-portrait-1887-9.jpg',
+            active: true,
+          },
+          {
+            image: 'http://upload.wikimedia.org/wikipedia/commons/7/78/Brorfelde_landscape_2.jpg',
+            active: false,
+          },
+          {
+            image: 'http://lorempixel.com/400/200/sports',
+            active: false,
+          },
+        ];
+      }
+      if (cfg.fake || !$scope.person.comments) { // DEBUG ONLY
+        $scope.person.comments = [
+          {
+            'author': 'au1',
+            'date': '2014-27-05 10:33:11',
+            'content': 'Molto efficiente e rapido',
+            'url': 'http://a...',
+          },
+          {
+            'author': 'au2',
+            'date': '2014-27-05 11:50:00',
+            'content': 'Poco efficiente e lento',
+            'url': 'http://b...',
+          },
+          {
+            'author': 'au3',
+            'date': '2014-27-06 12:44:32',
+            'content': 'Abbastanza efficiente ma veloce',
+            'url': 'http://c...',
+          },
+          {
+            'author': 'au4',
+            'date': '2014-27-05 11:50:00',
+            'content': 'Poco efficiente e lento',
+            'url': 'http://d...',
+          },
+          {
+            'author': 'au5',
+            'date': '2014-12-12 22:15:30',
+            'content': 'Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... ',
+            'url': 'http://e...',
+          },
+        ];
+      }
+      if (cfg.fake) { // DEBUG ONLY
+        $scope.person.name = $scope.person.name.substr(0, 2);
+        $scope.person.description = $scope.person.description.substr(0, 2);
+      }
     });
   }
 
-  // PUBLIC METHODS
+  // public methods
   $scope.setProperty = function(id, prop) {
     console.info('setProperty():', id, prop);
     Persons.setProperty(id, prop).then(
@@ -172,9 +125,8 @@ console.log('$scope.personId:', $scope.personId);
         console.warn(error);
       }
     );
-
-    // reset the form once values have been consumed
-    $scope.form.name = '';
+    //// reset the form once values have been consumed
+    //$scope.form.name = '';
   };
 
   $scope.addPerson = function() {
@@ -184,9 +136,8 @@ console.log('$scope.personId:', $scope.personId);
         console.warn(errorMessage);
       }
     );
-
-    // reset the form once values have been consumed
-    $scope.form.name = '';
+    //// reset the form once values have been consumed
+    //$scope.form.name = '';
   };
 
   $scope.removePerson = function(person) {
@@ -200,37 +151,43 @@ console.log('$scope.personId:', $scope.personId);
     $scope.person.nationality.country = $scope.countries[code];
   };
 
-  $scope.formStreetAddressImageUrl = function() {
-    var url =
+  $scope.streetAddressToImageUrl = function(streetAddress) {
+    return(
       'https://maps.googleapis.com/maps/api/streetview' + '?' + 
-      'location=' + encodeURIComponent($scope.person.streetAddress) + '&' +
+      'location=' + encodeURIComponent(streetAddress) + '&' +
       'size=' + '800x600'
-    ;
-    $scope.person.streetAddressImageUrl = url;
+    );
   };
 
-  // slide show
-  $scope.images = [{src:'img1.png',title:'Pic 1'},{src:'img2.jpg',title:'Pic 2'},{src:'img3.jpg',title:'Pic 3'},{src:'img4.png',title:'Pic 4'},{src:'img5.png',title:'Pic 5'}]; 
+  $scope.vote = function(vote) {
+    if (vote > 0) {
+      $scope.person.vote = Math.min(cfg.person.vote.max, $scope.person.vote + vote);
+    } else {
+      $scope.person.vote = Math.max(cfg.person.vote.min, $scope.person.vote + vote);
+    }
+  };
+  
+  $scope.geocode = function(address, region) {
+    var geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ 'address': address, 'region': region }, function(results, status) {
+      if (status === google.maps.GeocoderStatus.OK) {
+        //console.info('Address [' + $scope.person.streetAddress + '] found:', results[0].geometry.location);
+        $scope.person.streetGeometryLocation = results[0].geometry.location;
+        $scope.person.streetLocation = [ $scope.person.streetGeometryLocation.k, $scope.person.streetGeometryLocation.D ];
+      } else {
+        console.error('Unable to find address [' + $scope.person.streetAddress + '], status: ', status); // set center of region is set if no address found
+      }
+    });
+  };
 
-  // Google map
+  // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {
     $scope.map = maps[0];
-
     /* global $:false */
-    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function(/*e*/) {
+    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
       $timeout(function() {
         google.maps.event.trigger($scope.map, 'resize');
-        var geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ 'address': $scope.person.streetAddress, 'region': $scope.person.streetAddressRegion }, function(results, status) {
-          if (status === google.maps.GeocoderStatus.OK) {
-            var location = results[0].geometry.location;
-            $scope.person.streetLocation = [ location.k, location.D ];
-            $scope.map.setCenter(location);
-            $scope.$digest(); // to force marker show
-          } else {
-            console.error('Unable to find address ' + $scope.address); // TODO: ? (set center of region?)
-          }
-        });
+        $scope.map.setCenter($scope.person.streetGeometryLocation);
       }, 200); // this timeout is needed due to animation delay
     });
   });
