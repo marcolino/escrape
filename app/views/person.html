@@ -21,7 +21,7 @@
     <!-- main pill -->
     <div class="tab-content" ng-show="selectedTab == 'main'">
       <form class="form-horizontal" style="margin-top:5px">
-        <div class="form-group" style="vertical-align:top">
+        <div class="form-group">
           <div class="col-xs-12">
             <div class="slider-horizontal">
             <span ng-repeat="(id, photo) in person.photos">
@@ -57,17 +57,29 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="col-xs-5 col-sm-3 col-md-2 col-lg-2">
+          <div class="col-xs-7 col-sm-6 col-md-6 col-lg-6">
             <div class="dropdown">
               <div class="input-group" data-toggle="dropdown">
-                <span class="input-group-addon" title="Nationality"><img ng-src="images/flags/{{person.nationality.code}}.png" class="flag noselect" /></span>
+                <span class="input-group-addon" title="Nationality"><img ng-src="images/flags/{{person.nationality.code}}.png" class="flag-addon noselect" /></span>
                 <input class="form-control" id="query" name="query" type="text" ng-model="person.nationality.country" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
-                <li ng-repeat="(countryCode, countryName) in countries">
-                  <a ng-click="formChangeCountry('{{countryCode}}')"><img ng-src="images/flags/{{countryCode}}.png" class="flag-li noselect" /> {{countryName}}</a>
+                <li ng-repeat="(countryCode, countryName) in countries" class="flag-li">
+                  <a ng-click="formChangeCountry('{{countryCode}}')"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
                 </li>
               </ul>
+            </div>
+          </div>
+          <div class="col-xs-5 col-sm-6 col-md-6 col-lg-6">
+            <div class="input-group">
+              <span class="input-group-addon" title="Referrals sites"><span class="glyphicon glyphicon-cloud-download"></span></span>
+              <div class="form-control">
+                <div class="slider-horizontal">
+                  <span ng-repeat="(id, value) in sites">
+                    <img class="image-referral-site" ng-src="images/referral-sites/{{ id }}.png" ng-attr-title="{{ value.name }}">
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -75,7 +87,7 @@
           <div class="col-xs-5 col-sm-3 col-md-2 col-lg-2">
             <div class="input-group">
               <span class="input-group-addon" title="Vote up" ng-click="vote(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
-              <input type="text" class="form-control" ng-model="person.vote" min="0" max="9" placeholder="Vote">
+              <input type="text" style="min-width: 2.4em" class="form-control" ng-model="person.vote" min="{{cfg.person.vote.min}}" max="{{cfg.person.vote.min}}" placeholder="Vote">
               <span class="input-group-addon" title="Vote down" ng-click="vote(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
             </div>
           </div>

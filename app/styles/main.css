@@ -80,6 +80,7 @@ body {
   width: auto;
   max-width: 104px;
   height: 72px;
+  padding-right: 10px;
 }
 
 .btn-vote {
@@ -210,18 +211,21 @@ body {
   padding: 10px;
 }
 
-.flag {
-  display: inline-block;
-  width: 17px;
-  height: 14px;
-  vertical-align: text-top;
-  margin-top: 1px;
-  border: 1px solid #ddd;
-}
 .flag-li {
-  width: 24px;
-  height: 16px;
-  border: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
+}
+
+.flag-addon {
+  width: 15px;
+  height: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.image-referral-site {
+  margin-top: 0px;
+  width: 20px;
+  height: 20px;  
 }
 
 .slider-horizontal {

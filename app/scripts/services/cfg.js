@@ -6,7 +6,7 @@ app.constant('cfg', {
   person: {
   	vote: {
   	  min: 0,
-  	  max: 0,
+  	  max: 9,
   	},
   },
 });

@@ -7,6 +7,10 @@ app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal,
   $scope.selectedTab = 'main';
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
+  $scope.sites = Sites;
+console.log('sites:', $scope.sites['sgi']);
+  $scope.cfg = {};
+  $scope.cfg.person = cfg.person; // make cfg data available to scope
 
   // private methods
   function applyPersons(newPersons) {
@@ -25,17 +29,39 @@ app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal,
     });
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
-      console.log('person:', person);
+      if (!cfg.fake) { console.log('person:', person); }
       $scope.person = person;
       $scope.person.nationality = {};
       $scope.person.nationality.code = 'it';
       $scope.person.nationality.country = $scope.countries[$scope.person.nationality.code];
       $scope.person.vote = 5;
       $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
-      $scope.person.streetAddressRegion = 'it';
-      $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.streetAddress);
-      $scope.geocode($scope.person.streetAddress, $scope.person.streetAddressRegion);
-      
+      $scope.person.streetRegion = 'it';
+      //$scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
+      $scope.$watch('person.streetAddress', function() {
+         console.log('$watch: Hey, person.streetAddress has changed!');
+         $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.streetAddress);
+         $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
+      });
+/*
+      $scope.$watch('person.streetRegion', function() {
+         console.log('$watch: Hey, person.streetRegion has changed!');
+         $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
+      });
+*/
+
+
+/*
+      $scope.$watchGroup(['person.streetAddress', 'person.streetRegion'], function(newValues, oldValues, scope) {
+        newValues array contains the current values of the watch expressions
+        with the indexes matching those of the watchExpression array
+        i.e.
+        newValues[0] -> $scope.foo 
+        and 
+        newValues[1] -> $scope.bar 
+      });
+*/
+
       //<!--<img class="slide" ng-src="{{sites[person.site]['url']}}/{{photo}}" />-->
 
       var values = {name: 'misko', gender: 'male'};
@@ -174,11 +200,23 @@ app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal,
         //console.info('Address [' + $scope.person.streetAddress + '] found:', results[0].geometry.location);
         $scope.person.streetGeometryLocation = results[0].geometry.location;
         $scope.person.streetLocation = [ $scope.person.streetGeometryLocation.k, $scope.person.streetGeometryLocation.D ];
+        console.log('person.streetLocation is now', $scope.person.streetLocation);
       } else {
-        console.error('Unable to find address [' + $scope.person.streetAddress + '], status: ', status); // set center of region is set if no address found
+        if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+          // got OVER_QUERY_LIMIT status code: retry in a moment...
+          setTimeout(function() {
+            $scope.geocode(address);
+          }, 200);
+        } else {
+          console.error('Unable to find address [' + $scope.person.streetAddress + '], status: ', status); // set center of region is set if no address found
+        }
       }
     });
   };
+
+  $scope.getCountryClass = function(countryCode) {
+    return 'flag flag-32 flag-' + countryCode;
+  }
 
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {
