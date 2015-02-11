@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons) {
+app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons, Comments) {
   $scope.persons = [];
   $scope.person = [];
   $scope.personId = $routeParams.personId;
@@ -9,8 +9,7 @@ app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal,
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   $scope.sites = Sites;
 console.log('sites:', $scope.sites['sgi']);
-  $scope.cfg = {};
-  $scope.cfg.person = cfg.person; // make cfg data available to scope
+  $scope.cfg = cfg; // make cfg data available to scope
 
   // private methods
   function applyPersons(newPersons) {
@@ -43,48 +42,50 @@ console.log('sites:', $scope.sites['sgi']);
          $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.streetAddress);
          $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
       });
-/*
-      $scope.$watch('person.streetRegion', function() {
-         console.log('$watch: Hey, person.streetRegion has changed!');
-         $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
+
+      Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
+        if (!cfg.fake) { console.log('comments for ' + $scope.person.phone + ':', comments); }
+        $scope.person.comments = comments;
+        /*
+        if (cfg.fake || !$scope.person.comments) { // DEBUG ONLY
+          $scope.person.comments = [
+            {
+              'author': 'au1',
+              'date': '2014-27-05 10:33:11',
+              'content': 'Molto efficiente e rapido',
+              'url': 'http://a...',
+            },
+            {
+              'author': 'au2',
+              'date': '2014-27-05 11:50:00',
+              'content': 'Poco efficiente e lento',
+              'url': 'http://b...',
+            },
+            {
+              'author': 'au3',
+              'date': '2014-27-06 12:44:32',
+              'content': 'Abbastanza efficiente ma veloce',
+              'url': 'http://c...',
+            },
+            {
+              'author': 'au4',
+              'date': '2014-27-05 11:50:00',
+              'content': 'Poco efficiente e lento',
+              'url': 'http://d...',
+            },
+            {
+              'author': 'au5',
+              'date': '2014-12-12 22:15:30',
+              'content': 'Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... ',
+              'url': 'http://e...',
+            },
+          ];
+        }
+        */
       });
-*/
 
-
-/*
-      $scope.$watchGroup(['person.streetAddress', 'person.streetRegion'], function(newValues, oldValues, scope) {
-        newValues array contains the current values of the watch expressions
-        with the indexes matching those of the watchExpression array
-        i.e.
-        newValues[0] -> $scope.foo 
-        and 
-        newValues[1] -> $scope.bar 
-      });
-*/
-
-      //<!--<img class="slide" ng-src="{{sites[person.site]['url']}}/{{photo}}" />-->
-
-      var values = {name: 'misko', gender: 'male'};
-      var log = [];
-      angular.forEach(values, function(value, key) {
-        this.push(key + ': ' + value);
-      }, log);
-      //expect(log).toEqual(['name: misko', 'gender: male']);
-
-/*
-      $scope.person.slides = [];
-      var first = true;
-      var log = [];
-      foreach($scope.person.photos as photo) {
-        $scope.person.slides[] = {
-          image: Sites[$scope.person.site]['url'] + '/' + photo,
-          active: first,
-        };
-        first = false;
-      }
-*/
-      if (cfg.fake || !$scope.person.slides) { // DEBUG ONLY
-        $scope.person.slides = [
+      if (cfg.fake || !$scope.person.photos) { // DEBUG ONLY
+        $scope.person.photos = [
           {
             image: 'http://uploads7.wikiart.org/images/vincent-van-gogh/self-portrait-1887-9.jpg',
             active: true,
@@ -96,40 +97,6 @@ console.log('sites:', $scope.sites['sgi']);
           {
             image: 'http://lorempixel.com/400/200/sports',
             active: false,
-          },
-        ];
-      }
-      if (cfg.fake || !$scope.person.comments) { // DEBUG ONLY
-        $scope.person.comments = [
-          {
-            'author': 'au1',
-            'date': '2014-27-05 10:33:11',
-            'content': 'Molto efficiente e rapido',
-            'url': 'http://a...',
-          },
-          {
-            'author': 'au2',
-            'date': '2014-27-05 11:50:00',
-            'content': 'Poco efficiente e lento',
-            'url': 'http://b...',
-          },
-          {
-            'author': 'au3',
-            'date': '2014-27-06 12:44:32',
-            'content': 'Abbastanza efficiente ma veloce',
-            'url': 'http://c...',
-          },
-          {
-            'author': 'au4',
-            'date': '2014-27-05 11:50:00',
-            'content': 'Poco efficiente e lento',
-            'url': 'http://d...',
-          },
-          {
-            'author': 'au5',
-            'date': '2014-12-12 22:15:30',
-            'content': 'Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... ',
-            'url': 'http://e...',
           },
         ];
       }

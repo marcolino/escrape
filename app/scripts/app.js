@@ -23,6 +23,7 @@ var app = angular.module('escrapeApp', [
     'ngTouch',
     'ngCookies',
     'ngMap',
+    'ngOrderObjectBy',
     'ui.bootstrap',
   ]);
 

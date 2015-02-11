@@ -130,7 +130,7 @@ class PersonsController extends AbstractController {
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-if ($n > 3) break;
+#if ($n > 3) break;
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -349,6 +349,7 @@ if (!isset($value["site"])) { continue; } # TODO: skip fake records... remove-me
         "vote" => $value["vote"],
         "age" => $value["age"],
         "photo" => $this->personsDefinition[$value["site"]]["url"] . "/" . $value["photos"][0],
+        "comments-length" => $value["age"],
       ];
 #if (++$n == 227) {var_dump($list[$id]); exit;}
 #if (++$n >= 226) break;
@@ -491,6 +492,7 @@ public function putVote($params) { return $this->setVote($params); }
     }
     return $result;
 */
+    $phone = preg_replace("/[^\d]*/", "", $phone);
     return $phone;
   }
   

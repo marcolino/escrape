@@ -1,8 +1,10 @@
 'use strict';
 
+var fake = false;
+
 app.constant('cfg', {
-  apiUri: 'http://api/escrape/api',
-  fake: true,
+  apiUri: (fake ? 'http://192.168.10.30' : 'http://192.168.1.2') + '/escrape/api',
+  fake: fake,
   person: {
   	vote: {
   	  min: 0,

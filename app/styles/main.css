@@ -80,7 +80,15 @@ body {
   width: auto;
   max-width: 104px;
   height: 72px;
-  padding-right: 10px;
+}
+.img-site-container {
+  width: 24px;
+  text-align: center;
+  border: 1px solid #aaa;
+}
+.img-site {
+  width: auto;
+  max-width: 22px;
 }
 
 .btn-vote {
@@ -177,15 +185,7 @@ body {
   user-select: none;
 }
 
-/*** slides *******/
-.slides-control {
-  text-align: center;
-  width: 100%;
-  left: 50%;
-}
-.Xslides img {
-  margin: 0 auto;
-}
+/* carousel */
 .carousel-inner > .item > img { /* center carousel slides */
   margin: 0 auto;
 }
