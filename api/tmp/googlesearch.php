@@ -30,15 +30,16 @@ function googleSearch($query) {
     "?q=" . $query .
     "&cx=" . $cseNumber .
     "&key=" . $key .
-    "&siteSearch=" . "g.....f.....com" .
+    "&filter=" . "0" .
+    "&siteSearch=" . "gnoccaforum.com" .
     "&start=" . "1" .
-    "&num=" . "9"
+    "&num=" . "1"
   );
   return $result;
 }
 
 #echo googleSearch("38640cb366a690556d0e3e33a6925805");
-echo googleSearch("e");
-
+#echo googleSearch("6a7f2abd4adb93727357304538c60807");
+echo googleSearch("appuntamento");
 ?>
 }
