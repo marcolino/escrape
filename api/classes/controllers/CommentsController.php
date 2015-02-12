@@ -403,6 +403,8 @@ print "googleSearch($query) returning\n"; ob_flush(); flush();
     return $result;
   }
 
+  #$cx = '017714305635346072004:imlke-6wosa';
+
   private function getUrlContents($url) {
     $referer = "http://localhost/escrape";
     $user_agent = "Mozilla";
