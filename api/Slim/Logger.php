@@ -165,7 +165,8 @@ class Slim_Logger {
      * @return string
      */
     public function getFile() {
-        return $this->getDirectory() . strftime('%Y-%m-%d') . '.log';
+       #return $this->getDirectory() . strftime('%Y-%m-%d') . '.log';
+        return $this->getDirectory() . 'slim' . '.log';
     }
 
     /**
@@ -184,7 +185,7 @@ class Slim_Logger {
             throw new RuntimeException("Log directory '$dir' not writable.");
         }
         if ( $level <= $this->getLevel() ) {
-            $this->write(sprintf("[%s] %s - %s\r\n", $this->levels[$level], date('c'), (string)$data));
+            $this->write(sprintf("[%s] %s - %s\r\n", $this->levels[$level], date('r'), (string)$data));
         }
     }
 

@@ -78,8 +78,8 @@ class PersonsController extends AbstractController {
   /**
    * Constructor
    */
-  function __construct($app) {
-    $this->app = $app;
+  function __construct($router) {
+    $this->router = $router;
     $this->setup();
   }
 
@@ -94,7 +94,7 @@ class PersonsController extends AbstractController {
   * @return boolean
   */
   public function sync() {
-    $this->app->log("info", "sync()");
+    $this->router->log("info", "sync()");
 
     $changed = false;
     foreach ($this->personsDefinition as $siteId => $site) {
@@ -103,18 +103,18 @@ class PersonsController extends AbstractController {
 #$url = "http://localhost/escrape/server/debug/sgi.html";
 #if ($siteId != "mor") continue;
 
-      $this->app->log("info", "url: [$url]");
+      $this->router->log("info", "url: [$url]");
       $page = $this->getUrlContents($url, $site["charset"]);
 
       if ($page === FALSE) {
-        $this->app->log("error", "can't get page contents on site [$siteId]");
+        $this->router->log("error", "can't get page contents on site [$siteId]");
         continue;
       }
 /*
       if (preg_match($site["patterns"]["persons"], $page, $matches)) {
         $persons_page = $matches[1];
       } else {
-        $this->app->log("error", persons pattern not found on site [$siteId] [" . $site["patterns"]["persons"] . "]");
+        $this->router->log("error", persons pattern not found on site [$siteId] [" . $site["patterns"]["persons"] . "]");
         continue;
       }
 */
@@ -123,7 +123,7 @@ class PersonsController extends AbstractController {
       if (preg_match_all($site["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
-        $this->app->log("error", "not any person pattern found on site [$siteId]");
+        $this->router->log("error", "not any person pattern found on site [$siteId]");
         continue;
       }
       
@@ -136,22 +136,22 @@ class PersonsController extends AbstractController {
           $id = $matches[1];
           $id = $siteId . "-" . $id;
         } else {
-          $this->app->log("error", "person $n id not found on site [$siteId]");
+          $this->router->log("error", "person $n id not found on site [$siteId]");
           continue;
         }
 
         if (preg_match($site["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
           $details_url = $site["url"] . "/" . $matches[1];
         } else {
-          $this->app->log("error", "person $n details url not found on site [$siteId]");
+          $this->router->log("error", "person $n details url not found on site [$siteId]");
           continue;
         }
 
 #INCOGNITO# #DEBUG#
 #$details_url = "http://192.168.10.30/escrape/server/debug/adv4946.html";
-        $this->app->log("debug", $details_url);
+        $this->router->log("debug", $details_url);
         if (($page_details = $this->getUrlContents($details_url, $site["charset"])) === FALSE) {
-          $this->app->log("error", "can't get person $n url contents on site [$siteId]");
+          $this->router->log("error", "can't get person $n url contents on site [$siteId]");
           continue;
         }
         $timestamp = time(); # current timestamp, we don't have page last modification date...
@@ -160,14 +160,14 @@ class PersonsController extends AbstractController {
         if (preg_match($site["patterns"]["person-name"], $page_details, $matches) >= 1) {
           $name = $this->cleanName($matches[1]);
         } else {
-          $this->app->log("error", "person $n name not found on site [$siteId]");
+          $this->router->log("error", "person $n name not found on site [$siteId]");
           continue;
         }
         
         if (preg_match($site["patterns"]["person-sex"], $page_details, $matches) >= 1) {
           $sex = $matches[1];
         } else {
-          #$this->app->log("warning", "person $n sex not found on site [$siteId]");
+          #$this->router->log("warning", "person $n sex not found on site [$siteId]");
           $sex = "";
           #continue;
         }
@@ -175,7 +175,7 @@ class PersonsController extends AbstractController {
         if (preg_match($site["patterns"]["person-zone"], $page_details, $matches) >= 1) {
           $zone = $matches[1];
         } else {
-          #$this->app->log("warning", "person $n zone not found on site [$siteId]");
+          #$this->router->log("warning", "person $n zone not found on site [$siteId]");
           $zone = "";
           #continue;
         }
@@ -183,7 +183,7 @@ class PersonsController extends AbstractController {
         if (preg_match($site["patterns"]["person-description"], $page_details, $matches) >= 1) {
           $description = $matches[1];
         } else {
-          #$this->app->log("warning", "person $n description not found on site [$siteId]");
+          #$this->router->log("warning", "person $n description not found on site [$siteId]");
           $description = "";
           #continue;
         }
@@ -191,14 +191,14 @@ class PersonsController extends AbstractController {
         if (preg_match($site["patterns"]["person-phone"], $page_details, $matches) >= 1) {
           $phone = $this->normalizePhone($matches[1]);
         } else {
-          $this->app->log("error", "person $n phone not found on site [$siteId]");
+          $this->router->log("error", "person $n phone not found on site [$siteId]");
           continue;
         }
           
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
           $photos = $matches[1];
         } else {
-          $this->app->log("error", "photo pattern not found on site [$siteId]");
+          $this->router->log("error", "photo pattern not found on site [$siteId]");
           continue;
         }
 
@@ -510,7 +510,7 @@ public function putVote($params) { return $this->setVote($params); }
 
 /*
   private function log($level, $value) {
-    $this->logs[$level][] = $value;
+    $this->router->logs[$level][] = $value;
     print "[$level]: " . $value . "<br>\n"; # TODO: remove this line...
   }
 */

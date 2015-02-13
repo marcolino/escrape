@@ -9,9 +9,11 @@
  * Main module of the application.
  */
 
+/*
 function NavBarCtrl($scope) {
   $scope.isCollapsed = true;
 }
+*/
 var app = angular.module('escrapeApp', [
     'ngAnimate',
     'ngAria',
@@ -66,3 +68,19 @@ app.run(function ($rootScope, $location, $cookieStore, $http) {
     }
   });
 });
+
+/**
+ * Prototypes (TODO: where to put these, in a more "Angular" way?)
+ */
+String.prototype.shuffle = function () {
+  var a = this.split(''),
+      n = a.length;
+
+  for (var i = n - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+  }
+  return a.join('');
+}

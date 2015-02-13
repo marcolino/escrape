@@ -8,16 +8,23 @@ require_once 'classes/services/Db.php';
 #require_once 'classes/services/CompareImages.php';
 
 class Router {
-  private $app;
-  public $logs;
+  #private $app;
+  #private $logs;
 
   public function __construct() {
-    $this->app = new Slim();
+    $timezone = "Europe/Rome";
+    $this->logger = new Slim_Logger('./logs', 4);
+    $this->app = new Slim([
+      'log.enable' => true,
+      'log.logger' => $this->logger,
+      'debug' => true,
+      'mode' => 'development',
+    ]);
     $this->logs = [];
+    date_default_timezone_set($timezone);
   }
 
   public function run() {
-
     $this->app->get('/persons/get', function() { $this->getPersons(); });
     $this->app->get('/persons/get/:id', function($id) { $this->getPerson($id); });
     $this->app->get('/persons/sync', function() { $this->syncPersons(); });
@@ -40,8 +47,8 @@ class Router {
 
     $this->app->options('/.+', function() { $this->success(null); }); # TODO: only to allow CORS requests... (grunt)
 
-    $this->app->error(function(Exception $e) { $this->app->error($e); });
-    $this->app->notFound(function() { $this->app->unforeseen(); });
+    $this->app->error(function(Exception $e) { $this->error($e); }); # app->
+    $this->app->notFound(function() { $this->unforeseen(); }); # app->
 
     $this->app->run();
   }
@@ -49,7 +56,7 @@ class Router {
   private function getPersons() {
     try {
       $filters = $this->getFilters("range", ["age", "vote"], $this->app->request());
-      $persons = new PersonsController($this->app);
+      $persons = new PersonsController($this);
       $this->success($persons->getList($filters));
     } catch (Exception $e) {
       $this->error($e);
@@ -58,7 +65,7 @@ class Router {
 
   private function getPerson($id) {
     try {
-      $persons = new PersonsController($this->app);
+      $persons = new PersonsController($this);
       $this->success($persons->get($id));
     } catch (Exception $e) {
       $this->error($e);
@@ -76,7 +83,7 @@ class Router {
 
   private function searchPersonByName() {
     try {
-      $persons = new PersonsController($this->app);
+      $persons = new PersonsController($this);
       $query = json_decode($this->app->request()->getBody());
       $this->success($persons->searchByName($query));
     } catch (Exception $e) {
@@ -87,7 +94,7 @@ class Router {
   private function setProperty($id) {
     #$data = json_decode($this->app->request()->getBody()); $this->success($data);
     try {
-      $persons = new PersonsController($this->app);
+      $persons = new PersonsController($this);
       $data = json_decode($this->app->request()->getBody());
       #var_dump($data);
       $this->success($persons->setProperty($id, $data));
@@ -98,7 +105,7 @@ class Router {
 
   private function insertPerson() {
     try {
-      $persons = new PersonsController($this->app);
+      $persons = new PersonsController($this);
       $data = json_decode($this->app->request()->getBody());
       #var_dump($data);
       $this->success($persons->insert($data));
@@ -109,7 +116,7 @@ class Router {
 
   private function updatePerson($id) {
     try {
-      $persons = new PersonsController($this->app);
+      $persons = new PersonsController($this);
       $data = json_decode($this->app->request()->getBody());
       #var_dump($data);
       $this->success($persons->set($id, $data));
@@ -120,7 +127,7 @@ class Router {
 
   private function getComments() {
     try {
-      $comments = new CommentsController($this->app);
+      $comments = new CommentsController($this);
       $this->success($comments->getAll());
     } catch (Exception $e) {
       $this->error($e);
@@ -129,7 +136,7 @@ class Router {
 
   private function getComment($id) {
     try {
-      $comments = new CommentsController($this->app);
+      $comments = new CommentsController($this);
       $this->success($comments->get($id));
     } catch (Exception $e) {
       $this->error($e);
@@ -138,7 +145,7 @@ class Router {
 
   private function getCommentsByPhone($phone) {
     try {
-      $comments = new CommentsController($this->app);
+      $comments = new CommentsController($this);
       $this->success($comments->getByPhone($phone));
     } catch (Exception $e) {
       $this->error($e);
@@ -181,9 +188,29 @@ class Router {
     ]));
   }
 
+  // protexted ??
   public function log($level, $value) {
+    switch ($level) {
+      default:
+      case "fatal": // FATAL
+        $this->app->getLog()->fatal($value);
+        break;
+      case "error": // ERROR
+        $this->app->getLog()->error($value);
+        break;
+      case "warn": // WARN
+      case "warning": // WARN
+        $this->app->getLog()->warn($value);
+        break;
+      case "info": // INFO
+        $this->app->getLog()->info($value);
+        break;
+      case "debug": // DEBUG
+        $this->app->getLog()->debug($value);
+        break;
+    }
     $this->app->logs[$level][] = $value;
-    print "[$level]: " . $value . "<br>\n"; # TODO: remove this line...
+    #print "LOG [$level]: " . $value . "\n"; # TODO: remove this line...
   }
 
   private function success($value) {

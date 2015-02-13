@@ -10,7 +10,6 @@
  */
 
 require_once('lib/simple_html_dom.php');
-require_once('lib/random_user_agent.php');
 require_once('classes/services/Utilities.php');
 
 class CommentsController extends AbstractController {
@@ -33,14 +32,14 @@ class CommentsController extends AbstractController {
       ),
     ),
   );
-  private $googleSearchMinDelayRange = [ 15, 90 ];
-  private $googleSearchLastTimestamp = 0;
+  private $googleSearchMinDelay = 1200;
 
   /**
    * Constructor
    */
-  function __construct($router) {
-    $this->router = $router;
+  function __construct($app) {
+    $this->app = $app;
+    #print "Constructing " . $this->name . "<br>\n";
     $this->setup();
   }
 
@@ -80,22 +79,16 @@ class CommentsController extends AbstractController {
    * Sync comments
    */
   public function sync() {
-    $this->router->log("debug", "sync()");
+    print "sync()\n";
     $this->load("persons");
-    $this->router->log("debug", "size of persons: " . sizeof($this->db->data["persons"]));
+#$commentsCount = $this->searchByPhone("3270079978");
+print "size of persons: " . sizeof($this->db->data["persons"]) . "\n"; ob_flush(); flush();
     $n = 0;
-$phones = []; # TODO: temporarily using this array to skip duplicate phones...
     foreach ($this->db->data["persons"] as $person) {
-if (array_key_exists($person["phone"], $phones)) {
-  $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "***** skipping");
-  continue; // skip already visited phone
-} else {
-  $phones[$person["phone"]] = 1;
-}
       $id = $person["id"];
-      $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "*****");
+print "\n" . ++$n . "/" . sizeof($this->db->data["persons"]) . "\n\n"; ob_flush(); flush();
       $commentsCount = $this->searchByPhone($person["phone"]);
-      $this->router->log("debug", $person["phone"] . " has " . $commentsCount . " comments\n");
+print $person["phone"] . " has " . $commentsCount . " comments\n\n"; ob_flush(); flush();
       $this->db->data["persons"][$id]["comments_count"] = $commentsCount;
     }
     $this->store("persons");
@@ -108,7 +101,8 @@ if (array_key_exists($person["phone"], $phones)) {
    * @return boolean true: success / false: error
    */
   public function searchByPhone($phone) {
-    $this->router->log("debug", "searchByPhone($phone)");
+    print "searchByPhone($phone)\n"; ob_flush(); flush();
+
     $changed = false;
     $count = 0;
     foreach ($this->commentsDefinition as $commentDefinitionId => $commentDefinition) {
@@ -121,17 +115,16 @@ if (array_key_exists($person["phone"], $phones)) {
       $phoneMd5 = md5($this->normalizePhone($phone));
   
       # search pages containing md5 sum of phone with Google engine
-      $commentPageUrls = $this->googleSearch($phoneMd5, $commentDefinition["domain"]);
+      $commentPageUrls = $this->googleSearch($phoneMd5);
 
       # loop through all comment pages urls returned from google search
       foreach ($commentPageUrls as $url) {
   
-        $this->router->log("info", "url: [$url]");
+        $this->app->log("info", "url: [$url]");
 
-        # TODO: remove this test if domain=$domain works fine...
         # skip result with different domains
         if (parse_url($url)["host"] !== $commentDefinition["domain"]) {
-          $this->router->log("debug", "skipping url because " . parse_url($url)["host"] . " !== " . $commentDefinition["domain"]);
+          $this->app->log("info", "skipping url because " . parse_url($url)["host"] . " !== " . $commentDefinition["domain"]);
           continue;
         }
 
@@ -143,8 +136,9 @@ if (array_key_exists($person["phone"], $phones)) {
         next_comments_page:
         $url = preg_replace("/\/?$/", "", $url); # remove trailing slash
         $url = preg_replace("/\?PHPSESSID=.*/", "", $url); # remove SESSION ID
+        #print "... reading url [$url] ...\n"; #DEBUG
         if (isset($urls[$url])) { # this url has been visited already, skip it
-          $this->router->log("debug", "skipping already visited url");
+          $this->app->log("info", "skipping url because has been visited already");
           continue;
         }
 
@@ -154,7 +148,7 @@ if (array_key_exists($person["phone"], $phones)) {
         #$comment_page = $this->getUrlContents($url);
         #if ($comment_page === FALSE) {
         if (($comment_page = $this->getUrlContents($url)) === FALSE) {
-          $this->router->log("error", "can't get url [$url] contents on site [$commentDefinitionId]");
+          $this->app->log("error", "can't get url [$url] contents on site [$commentDefinitionId]");
           continue;
         }
 
@@ -163,7 +157,7 @@ if (array_key_exists($person["phone"], $phones)) {
           $topic = $matches[1];
         } else {
           $topic = null;
-          $this->router->log("error", "no topic found for comment [$n] on url [$url]...");
+          $this->app->log("error", "no topic found for comment [$n] on url [$url]...");
           continue;
         }
   
@@ -172,7 +166,7 @@ if (array_key_exists($person["phone"], $phones)) {
           $comments_text = $matches[1];
         } else {
           $comments_text = null;
-          $this->router->log("error", "not any comment found on url [$url]...");
+          $this->app->log("error", "not any comment found on url [$url]...");
           return;
         }
   
@@ -186,7 +180,7 @@ if (array_key_exists($person["phone"], $phones)) {
             $author = $this->cleanAuthor($matches[1]);
           } else {
             $author = null;
-            $this->router->log("error", "no author found for comment [$n] on url [$url]...");
+            $this->app->log("error", "no author found for comment [$n] on url [$url]...");
             continue;
           }
       
@@ -195,7 +189,7 @@ if (array_key_exists($person["phone"], $phones)) {
             $date = $this->cleanDate($matches[1]);
           } else {
             $date = null;
-            $this->router->log("error", "no date found for comment [$n] on url [$url]...");
+            $this->app->log("error", "no date found for comment [$n] on url [$url]...");
             continue;
           }
       
@@ -204,7 +198,7 @@ if (array_key_exists($person["phone"], $phones)) {
             $content = $this->cleanContent($matches[1], $commentDefinitionId);
           } else {
             $content = null;
-            $this->router->log("error", "no content found for comment [$n] on url [$url]...");
+            $this->app->log("error", "no content found for comment [$n] on url [$url]...");
             continue;
           }
       
@@ -221,7 +215,7 @@ if (array_key_exists($person["phone"], $phones)) {
             $comment["url"] = $url; # TODO: do we need this?
             $count++;
           } else {
-            #$this->router->log("info", "empty comment found on url [$url]...");
+            $this->app->log("info", "empty comment found on url [$url]...");
             continue;
           }
 
@@ -238,7 +232,7 @@ if (array_key_exists($person["phone"], $phones)) {
         preg_match($commentDefinition["patterns"]["next-link"], $comment_page, $matches);
         if ($matches) {
           $url = $matches[1];
-          #$this->router->log("debug", "doing a supplementary loop with next url [$url]...");
+          $this->app->log("debug", "doing a supplementary loop with next url [$url]...");
           goto next_comments_page; # do a supplementary loop with next url
         }
        
@@ -250,6 +244,7 @@ if (array_key_exists($person["phone"], $phones)) {
       $this->store("comments");
     }
 
+    print "searchByPhone($phone) returning\n"; ob_flush(); flush();
     return $count;
   }
 
@@ -309,40 +304,28 @@ if (array_key_exists($person["phone"], $phones)) {
     return $content;
   }
 
-  private function googleSearch($query, $domain) {
+  private function googleSearch($query) {
     $max_results = 99;
     $result = array();
     $query_encoded = urlencode($query);
     
-    $this->router->log("debug", "googleSearch($query)");
-
-    # wait a minimum seconds delay before repeating a query
-    if ($this->googleSearchLastTimestamp) {
-      $minDelay = rand($this->googleSearchMinDelayRange[0], $this->googleSearchMinDelayRange[1]);
-      $this->router->log("debug", "googleSearch - waiting for $minDelay seconds since last query");
-      time_sleep_until($this->googleSearchLastTimestamp + $minDelay);
-#      while (time() < ($this->googleSearchLastTimestamp + $minDelay)) {
-#        sleep(1);
-#        $this->router->log("debug", "googleSearch - time: " . time());
-#      }
-      $this->router->log("debug", "googleSearch - finished waiting");
-    }
-
-    # obtain the first html page with the formatted url   
-    $data = $this->getUrlContents(
-      "https://www.google.com/search" .
-      "?num=" . $max_results .
-      "&filter=" . "0" .
-      "&domain=" . $domain .
-      "&q=" . $query_encoded,
-      random_user_agent()
-    );
-    if ($data === FALSE) { // should not happen...
+print "googleSearch($query)\n"; ob_flush(); flush();
+    
+    # obtain the first html page with the formatted url
+    # TODO: split and comment...
+    retry:
+    $data = $this->getUrlContents("https://www.google.com/search?num=" . $max_results . "&filter=0" . "&" . "q=" . $query_encoded);
+    if ($data === FALSE) {
       throw new Exception("can't fetch data from Google");
     }
-    $this->googleSearchLastTimestamp = time(); // remember timestamp of last Google search
     if (preg_match("/Our systems have detected unusual traffic from your computer network/", $data)) {
-      throw new Exception("can't fetch data from Google (unusual traffic)");
+      #throw new Exception("can't fetch data from Google (unusual traffic)");
+      # wait a minimum seconds delay before repeating query
+      $googleSearchLastTimestamp = time();
+      do {
+        $timestamp = time(); 
+      } while ($timestamp < $googleSearchLastTimestamp + $this->googleSearchMinDelay);
+      goto retry;
     }
 
     $html = str_get_html($data);
@@ -368,11 +351,16 @@ if (array_key_exists($person["phone"], $phones)) {
     # clean up the memory 
     $html->clear();
 
+print "googleSearch($query) returning\n"; ob_flush(); flush();
     return $result;
   }
 
-  private function getUrlContents($url, $ua = "Mozilla") {
-    $this->router->log("debug", "getUrlContents($url, $ua)");
+  #$cx = '017714305635346072004:imlke-6wosa';
+
+  private function getUrlContents($url) {
+    $referer = "http://localhost/escrape";
+    $user_agent = "Mozilla";
+  
     $ch = curl_init();
     if (($errno = curl_errno($ch))) {
       throw new Exception("can't initialize curl, error $errno");
@@ -380,9 +368,10 @@ if (array_key_exists($person["phone"], $phones)) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_USERAGENT, $ua);
+    curl_setopt($ch, CURLOPT_REFERER, $referer);
+    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
     curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     $output = curl_exec($ch);
     if (($errno = curl_errno($ch))) {
       throw new Exception("can't execute curl to [$url], error $errno");
@@ -392,9 +381,33 @@ if (array_key_exists($person["phone"], $phones)) {
   }
 
   /**
+  * Converts a *localized* date from format
+  * "Year MonthName day, hour:minute:second" to UNIX timestamp
+  *
+  * @param string $date   source date to be converted
+  * @return string      UNIX timestamp conevrsion of the given date
+  */
+/* see in services/Utilities.php
+  protected function date2Timestamp($date) {
+    $timestamp = "0";
+    for ($m = 1; $m <= 12; $m++) {
+      $month_name = ucfirst(strftime("%B", mktime(0, 0, 0, $m)));
+      if (strstr($date, $month_name)) {
+        $date = str_replace($month_name, $m, $date);
+        $date = preg_replace("/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})/", "$1-$2-$3", $date);
+        $timestamp = strtotime($date);
+        break;
+      }
+    }
+    return $timestamp;
+  }
+*/
+
+  /**
    * Destructor
    */
   function __destruct() {
+    #print "Destroying " . $this->name . "<br>\n";
   }
 
 }

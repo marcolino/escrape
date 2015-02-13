@@ -25,6 +25,11 @@ console.log('sites:', $scope.sites['sgi']);
   if (!$scope.personId) { // load persons list
     Persons.getPersons().then(function(persons) {
       $scope.persons = persons;
+      if (cfg.fake) { // DEBUG ONLY
+        angular.forEach($scope.persons, function(person) {
+          person.name = person.name.shuffle();
+        });
+      }
     });
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
