@@ -82,13 +82,13 @@ body {
   height: 72px;
 }
 .img-site-container {
-  width: 24px;
+  height: 20px;
   text-align: center;
   border: 1px solid #aaa;
 }
 .img-site {
   width: auto;
-  max-width: 22px;
+  max-height: 18px;
 }
 
 .btn-vote {

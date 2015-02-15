@@ -216,6 +216,8 @@ class PersonsController extends AbstractController {
         $person["photos"] = [];
         $person["age"] = null; # age
         $person["vote"] = null; # vote ([0-1])
+        $person["comments_count"] = 0; # TODO: merge!
+        $person["comments_last_synced"] = 0; # TODO: merge!
 
         foreach ($photos as $photo) {
           $person["photos"][] = $photo;
@@ -223,6 +225,7 @@ class PersonsController extends AbstractController {
 
         { # TODO: merge person...
           $changed = true;
+          $this->router->log("debug", "id: $id °°°");
           $this->db->data["persons"][$id] = $person;
         }
       }
@@ -338,8 +341,11 @@ class PersonsController extends AbstractController {
     // filter persons by column names
 #$n = 0;
 #var_dump($this->getPersons()); exit;
+
+$comments = new CommentsController($this); # DEBUG: just to recalculate comments_count...
+
     foreach ($this->getAll() as $id => $value) {
-if (!isset($value["site"])) { continue; } # TODO: skip fake records... remove-me...
+$comments_count = $comments->countByPhone($value["phone"]); # DEBUG: just to recalculate comments_count...
       $list[$id] = [
         "id" => $id,
         "site" => $value["site"],
@@ -349,12 +355,12 @@ if (!isset($value["site"])) { continue; } # TODO: skip fake records... remove-me
         "vote" => $value["vote"],
         "age" => $value["age"],
         "photo" => $this->personsDefinition[$value["site"]]["url"] . "/" . $value["photos"][0],
-        "comments-length" => $value["age"],
+        "comments_count" => $comments_count, # DEBUG: just to recalculate comments_count...
+        #"comments_count" => $value["comments_count"],
       ];
-#if (++$n == 227) {var_dump($list[$id]); exit;}
-#if (++$n >= 226) break;
-#var_dump($value); exit;
+$this->db->data["persons"][$id]["comments_count"] = $comments_count;
     }
+$this->store("persons");
 
     // filter persons by column values
     return $list;

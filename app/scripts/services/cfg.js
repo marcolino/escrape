@@ -1,6 +1,6 @@
 'use strict';
 
-var fake = true;
+var fake = false;
 
 app.constant('cfg', {
   apiUri: (fake ? 'http://192.168.10.30' : 'http://192.168.1.2') + '/escrape/api',

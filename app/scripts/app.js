@@ -9,11 +9,9 @@
  * Main module of the application.
  */
 
-/*
 function NavBarCtrl($scope) {
   $scope.isCollapsed = true;
 }
-*/
 var app = angular.module('escrapeApp', [
     'ngAnimate',
     'ngAria',

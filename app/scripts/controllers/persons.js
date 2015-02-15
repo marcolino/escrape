@@ -29,7 +29,7 @@ console.log('sites:', $scope.sites['sgi']);
         angular.forEach($scope.persons, function(person) {
           person.name = person.name.shuffle();
         });
-      }
+      } // /DEBUG ONLY
     });
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
