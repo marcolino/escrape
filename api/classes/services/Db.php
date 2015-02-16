@@ -1,55 +1,127 @@
 <?php
 
+$db = new DB();
+$db->insert("persons", ["name" => "pippo", "age" => 27 ]);
+echo $db->getAll($table);
+
+
+
+class DB extends PDO {
+  
+  define("DB_TYPE", "sqlite");
+  define("DB_NAME", "db/escrape.sqlite");
+
+  public function __construct() {
+    try {
+      parent::__construct(DB_TYPE . ":" . $DB_NAME); #, db_USER, db_PASSWORD);
+time_start = microtime(true);
+      self::createTables();
+$time_end = microtime(true);
+$time = $time_end - $time_start;
+echo "createTables duration: $time seconds\n";
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage()); # ok ???
+    }
+  }
+
+  public static function createTables() {
+    try {
+      $db = new db();
+      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+      $db->exec(
+        "create table if not exists persons (
+          id integer primary key, 
+          name text,
+          site text,
+          url text,
+          timestamp integer,
+          sex text,
+          zone text,
+          description text,
+          phone text,
+          page_sum text,
+          age text,
+          vote integer,
+         )");
+          #photos
+          #comments_count
+          #comments_last_synced
+      $db->exec(
+        "create table if not exists comments (
+          id integer primary key, 
+         )");
+         # ...
+      $db = null;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
+  public static function getAll($table) {
+    $sql = "select * from $table";
+    return self::getBySql($sql);                
+  }
+
+  public static function getBySql($sql) {
+    try {
+      $db = new db();
+      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $statement = $db->query($sql);
+      $statement->setFetchMode(PDO::FETCH_CLASS, __CLASS__);
+      $result = $statement->fetchAll();
+      $db = null;
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }     
+  }
+
+  public static function getById($table, $id) {
+    try {
+      $db = new db();
+      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $sql = "select * from $table where id = :id limit 1";
+      $statement = $db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);       
+      $statement->execute();
+      $statement->setFetchMode(PDO::FETCH_CLASS, __CLASS__);
+      $result = $statement->fetch();
+      $db = null;
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
 /*
-$db = new Db();
-$db->load();
+$db->insert("persons",
+  [
+    "name" => "bob",
+    "age" => 27,
+  ]
+);
 */
-
-class Db {
-  private $dbPath = "db/";
-  private $dbExt = ".db";
-  private $db = [];
-  public $data = [];
-
-  function __construct() {
-    $this->setup();
-  }
-
-  protected function setup() {
-    $this->db["persons"] = $this->dbPath . "persons" . $this->dbExt;
-    $this->db["comments"] = $this->dbPath . "comments" . $this->dbExt;
-    $this->data["persons"] = [];
-    $this->data["comments"] = [];
-  }
-
-  public function load($table) {
-    if (!array_key_exists($table, $this->db)) {
-      throw new Exception("table [$table] does not exist");
-    }
-    if (file_exists($this->db[$table])) {
-      if (($serialized = @file_get_contents($this->db[$table])) === FALSE) {
-        throw new Exception("can't open to read db file [" . $this->db[$table] . "]");
+  public static function insert($table, $data) {   
+    try {
+      $db = new db();
+      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $fields = $values = "";
+      foreach ($data as $key => $value) {
+        $fields .= ($fields ? ", " : "") . $key;
+        $values .= ($values ? ", " : "") . ":" . $key;
       }
-      if (($this->data[$table] = unserialize($serialized)) === FALSE) {
-        throw new Exception("can't unserialize db contents for [$table]");
+      $sql = "insert into $table ($fields) values ($values)";
+      $statement = $db->prepare($sql);
+      foreach ($data as $key => $value) {
+        $statement->bindParam(":" . $key, $value.content); #, PDO::PARAM_STR);
       }
-    } else {
-      $this->data[$table] = [];
-    }
-  }
-
-  public function store($table) {
-    if (!array_key_exists($table, $this->db)) {
-      throw new Exception("table [$table] does not exist");
-    }
-    if (isset($this->data[$table])) {
-      if (($serialized = serialize($this->data[$table])) === FALSE) {
-        throw new Exception("can't serialize data for [$table]");
-      }
-      if (@file_put_contents($this->db[$table], $serialized) === FALSE) {
-        throw new Exception("can't open to write db file [" . $this->db[$table] . "]");
-      }
-    } else {
+      $statement->execute();
+      $count = $statement->rowCount();
+      $db = null;
+      return $count;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
     }
   }
 

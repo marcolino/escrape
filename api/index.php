@@ -8,8 +8,6 @@ require_once 'classes/services/Db.php';
 #require_once 'classes/services/CompareImages.php';
 
 class Router {
-  #private $app;
-  #private $logs;
 
   public function __construct() {
     $timezone = "Europe/Rome";
@@ -25,27 +23,148 @@ class Router {
   }
 
   public function run() {
-    $this->app->get('/persons/get', function() { $this->getPersons(); });
-    $this->app->get('/persons/get/:id', function($id) { $this->getPerson($id); });
-    $this->app->get('/persons/sync', function() { $this->syncPersons(); });
-    $this->app->get('/persons/search/:query', function($query) { $this->searchPersonByName($query); });
-    $this->app->put('/persons/setproperty/:id', function($id) { $this->setProperty($id); });
-    $this->app->get('/persons/insert', function() { $this->insertPerson(); });
-    $this->app->get('/persons/delete/:id', function($id) { $this->deletePerson($id); });
-    #$this->app->post('/persons',  function() { $this->insertPerson(); });
-    #$this->app->put('/persons/:id', function($id) { $this->updatePerson($id); });
-    #$this->app->delete('/persons/:id', function($id) { $this->deletePerson($id); });
+    # ======================
+    # users
+    # ======================
+    $this->app->get('/persons/get', function() {
+      try {
+        $persons = new PersonsController($this);
+        $this->success($persons->getList());
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->get('/persons/get/:id', function($id) {
+      try {
+        $persons = new PersonsController($this);
+        $this->success($persons->get($id));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->get('/persons/sync', function() {
+      try {
+        $persons = new PersonsController($this);
+        $this->success($persons->sync());
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->get('/persons/search/:query', function($query) {
+      try {
+        $persons = new PersonsController($this);
+        #$query = json_decode($this->app->request()->getBody());
+        $this->success($persons->searchByName($query));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->put('/persons/set/:id', function($id) {
+      try {
+        $persons = new PersonsController($this);
+        $data = json_decode($this->app->request()->getBody());
+        $this->success($persons->set($id, $data));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->post('/persons/insert', function() {
+      try {
+        $persons = new PersonsController($this);
+        $data = json_decode($this->app->request()->getBody());
+        $this->success($persons->insert($data));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->delete('/persons/delete/:id', function($id) {
+      try {
+        $persons = new PersonsController($this);
+        $data = json_decode($this->app->request()->getBody());
+        $this->success($persons->delete($id));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
 
-    $this->app->get('/users/register/', function() { $this->registerUser(); });
-    $this->app->get('/users/login/:username/:password', function($username, $password) { $this->loginUser($username, $password); });
-    $this->app->get('/users/delete/:id', function($id) { $this->deleteUser($id); });
+    # ======================
+    # users
+    # ======================
+    $this->app->post('/users/register/', function() {
+      try {
+        $users = new UsersController($this);
+        $data = json_decode($this->app->request()->getBody());
+        $this->success($users->register($data));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->get('/users/login/:username/:password', function($username, $password) {
+      try {
+        $users = new UsersController($this);
+        $this->success($users->login($username, $password));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->delete('/users/delete/:id', function($id) {
+      try {
+        $users = new UsersController($this);
+        $this->success($users->delete($id));
+      } catch (Exception $e) {
+        $this->error($e);
+      }      
+    });
 
-    $this->app->get('/comments/get', function() { $this->getComments(); });
-    $this->app->get('/comments/get/:id', function($id) { $this->getComment($id); });
-    $this->app->get('/comments/getByPhone/:phone', function($phone) { $this->getCommentsByPhone($phone); });
-    $this->app->get('/comments/sync', function() { $this->syncComments(); });
+    # ======================
+    # comments
+    # ======================
+    $this->app->get('/comments/get', function() {
+      try {
+        $comments = new CommentsController($this);
+        $this->success($comments->getAll());
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->get('/comments/get/:id', function($id) {
+      try {
+        $comments = new CommentsController($this);
+        $this->success($comments->get($id));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->get('/comments/getByPhone/:phone', function($phone) {
+      try {
+        $comments = new CommentsController($this);
+        $this->success($comments->getByPhone($phone));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+    # ======================
+    $this->app->post('/comments/sync', function() {
+      try {
+        $comments = new CommentsController($this);
+        $this->success($comments->sync());
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
 
-    $this->app->options('/.+', function() { $this->success(null); }); # TODO: only to allow CORS requests... (grunt)
+    # DEBUG: only to allow *all* CORS requests... (grunt / apache)
+    $this->app->options('/.+', function() { $this->success(null); });
 
     $this->app->error(function(Exception $e) { $this->error($e); }); # app->
     $this->app->notFound(function() { $this->unforeseen(); }); # app->
@@ -53,114 +172,7 @@ class Router {
     $this->app->run();
   }
 
-  private function getPersons() {
-    try {
-      $filters = $this->getFilters("range", ["age", "vote"], $this->app->request());
-      $persons = new PersonsController($this);
-      $this->success($persons->getList($filters));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function getPerson($id) {
-    try {
-      $persons = new PersonsController($this);
-      $this->success($persons->get($id));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function syncPersons() {
-    try {
-      $persons = new PersonsController($this);
-      $this->success($persons->sync());
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function searchPersonByName() {
-    try {
-      $persons = new PersonsController($this);
-      $query = json_decode($this->app->request()->getBody());
-      $this->success($persons->searchByName($query));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function setProperty($id) {
-    #$data = json_decode($this->app->request()->getBody()); $this->success($data);
-    try {
-      $persons = new PersonsController($this);
-      $data = json_decode($this->app->request()->getBody());
-      #var_dump($data);
-      $this->success($persons->setProperty($id, $data));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function insertPerson() {
-    try {
-      $persons = new PersonsController($this);
-      $data = json_decode($this->app->request()->getBody());
-      #var_dump($data);
-      $this->success($persons->insert($data));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function updatePerson($id) {
-    try {
-      $persons = new PersonsController($this);
-      $data = json_decode($this->app->request()->getBody());
-      #var_dump($data);
-      $this->success($persons->set($id, $data));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function getComments() {
-    try {
-      $comments = new CommentsController($this);
-      $this->success($comments->getAll());
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function getComment($id) {
-    try {
-      $comments = new CommentsController($this);
-      $this->success($comments->get($id));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function getCommentsByPhone($phone) {
-    try {
-      $comments = new CommentsController($this);
-      $this->success($comments->getByPhone($phone));
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
-  private function syncComments() {
-    try {
-      $comments = new CommentsController($this);
-      $this->success($comments->sync());
-    } catch (Exception $e) {
-      $this->error($e);
-    }
-  }
-
+  /*
   private function getFilters($type, $params, $request) {
     $filters = [];   
     $paramslist = [];
@@ -175,20 +187,8 @@ class Router {
     }
     return $filters;
   }
+  */
 
-
-  private function unforeseen() {
-    $response = $this->app->response();
-    $this->access_control_allow($response);
-    $response->body(json_encode([
-      'response' => null,
-      'error' => [
-        'message' => "Unforeseen route [" . $this->app->router()->getMatchedRoutes() . "]",
-      ],
-    ]));
-  }
-
-  // protexted ??
   public function log($level, $value) {
     switch ($level) {
       default:
@@ -211,6 +211,17 @@ class Router {
     }
     $this->app->logs[$level][] = $value;
     #print "LOG [$level]: " . $value . "\n"; # TODO: remove this line...
+  }
+
+  private function unforeseen() {
+    $response = $this->app->response();
+    $this->access_control_allow($response);
+    $response->body(json_encode([
+      'response' => null,
+      'error' => [
+        'message' => "Unforeseen route [" . $this->app->router()->getMatchedRoutes() . "]",
+      ],
+    ]));
   }
 
   private function success($value) {

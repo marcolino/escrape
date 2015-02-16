@@ -22176,3 +22176,14 @@
 [DEBUG] Sun, 15 Feb 2015 21:21:46 +0100 - getUrlContents(https://www.google.com/search?num=99&filter=0&as_sitesearch=gnoccaforum.com&q=13fd80f2754046f2a6454c8fe34e8778, $ua)
 [DEBUG] Sun, 15 Feb 2015 21:21:48 +0100 - 3510006959 has 0 comments
 
+[ERROR] Mon, 16 Feb 2015 16:32:23 +0100 - exception 'ErrorException' with message 'Undefined index: REQUEST_METHOD' in /var/www/html/escrape/api/index.php:261
+Stack trace:
+#0 /var/www/html/escrape/api/index.php(261): Slim::handleErrors(8, 'Undefined index...', '/var/www/html/e...', 261, Array)
+#1 /var/www/html/escrape/api/index.php(220): Router->access_control_allow(Object(Slim_Http_Response))
+#2 /var/www/html/escrape/api/index.php(172): Router->unforeseen()
+#3 [internal function]: Router->{closure}()
+#4 /var/www/html/escrape/api/Slim/Slim.php(478): call_user_func(Object(Closure))
+#5 /var/www/html/escrape/api/Slim/Slim.php(1069): Slim->notFound()
+#6 /var/www/html/escrape/api/index.php(174): Slim->run()
+#7 /var/www/html/escrape/api/index.php(274): Router->run()
+#8 {main}
