@@ -84,13 +84,12 @@ class PersonsController extends AbstractController {
    */
   function __construct($router) {
     $this->router = $router;
-    $this->db = new DB();
-#    $this->setup();
+    $this->setup();
   }
 
-#  private function setup() {
-#    $this->load("persons");
-#  }
+  private function setup() {
+    $this->load("persons");
+  }
   
   /**
   * Sync persons
@@ -139,7 +138,7 @@ class PersonsController extends AbstractController {
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
-          $key = $siteId . "-" . $id;
+          $id = $siteId . "-" . $id;
         } else {
           $this->router->log("error", "person $n id not found on site [$siteId]");
           continue;
@@ -208,7 +207,7 @@ class PersonsController extends AbstractController {
         }
 
         $person = [];
-        $person["key"] = $key;
+        $person["id"] = $id;
         $person["name"] = $name;
         $person["site"] = $siteId;
         $person["url"] = $details_url;
@@ -221,24 +220,118 @@ class PersonsController extends AbstractController {
         $person["photos"] = [];
         $person["age"] = null; # age
         $person["vote"] = null; # vote ([0-1])
-        #$person["comments_count"] = 0; # TODO: merge!
-        #$person["comments_last_synced"] = 0; # TODO: merge!
+        $person["comments_count"] = 0; # TODO: merge!
+        $person["comments_last_synced"] = 0; # TODO: merge!
 
-        #foreach ($photos as $photo) {
-        #  $person["photos"][] = $photo;
-        #}
+        foreach ($photos as $photo) {
+          $person["photos"][] = $photo;
+        }
 
-        if (($id = $this->db->getByKey("person", $key))) { # old key, update it
-          $this->router->log("debug", "updating key: $key °°°");
-          $this->db->set("person", $id, $person); # error handling?
-          #$this->db->data["persons"][$id] = $person;
-        } else { # new key, insert it
-          $this->router->log("debug", "inserting key: $key °°°");
-          $this->db->add("person", $person);
+        { # TODO: merge person...
+          $changed = true;
+          $this->router->log("debug", "id: $id °°°");
+          $this->db->data["persons"][$id] = $person;
         }
       }
     }
+    if ($changed) {
+      $this->store();
+    }
+
     return true;
+  }
+
+  public function load() {
+    if (!isset($this->db)) {
+      $this->db = new Db();
+    }
+    $this->db->load("persons");
+  }
+
+  public function store() {
+    if (!isset($this->db)) {
+      throw new Exception("can't store: database is not loaded");
+    }
+    $this->db->store("persons");
+  }
+
+  public function getAll() {
+    return($this->db->data["persons"]);
+  }
+
+  public function get($id) {
+    if (!$id) {
+      throw new Exception("can't get person: no id specified");
+    }
+    if (!isset($this->db->data["persons"][$id])) {
+      throw new Exception("can't get person: id [$id] not present");
+    }
+    return $this->db->data["persons"][$id];
+  }
+  
+  public function set($id, $person) {
+    if (!$id) {
+      throw new Exception("can't set person: no id specified");
+    }
+    if (!isset($this->db->data["persons"][$id])) {
+      throw new Exception("can't set person: id [$id] not present");
+    }
+    $this->db->data["persons"][$id][$field] = $value;
+    $this->store();
+  }
+
+  public function setProperty($id, $data) {
+    if (!$id) {
+      throw new Exception("can't update person: no id specified");
+    }
+    if (!isset($this->db->data["persons"][$id])) {
+      throw new Exception("can't update person: id [$id] not present");
+    }
+    foreach ($data as $field => $value) {
+#print "field = $field, value = $value \n";
+      $this->db->data["persons"][$id][$field] = $value;
+    }
+    $this->store();
+  }
+
+  public function insert($data) {
+    $id = $data["id"];
+    if (!$id) {
+      throw new Exception("can't insert person: no id specified");
+    }
+    if (isset($this->db->data["persons"][$id])) {
+      throw new Exception("can't insert person: id [$id] already present");
+    }
+    foreach ($data as $field => $value) {
+#print "field = $field, value = $value \n";
+      $this->db->data["persons"][$id][$field] = $value;
+    }
+    $this->store();
+  }
+
+/*
+  public function setPersonVote($id, $person, $vote) {
+    if (!is_numeric($vote) || $vote < 0 || $vote > 1) {
+      throw new Exception("can't set person vote: vote must be a number in range [0-1]");
+    }
+    $this->db->data["persons"][$id]["vote"] = $vote;
+  }
+*/
+
+  public function deleteAll() {
+    $this->db->data["persons"] = [];
+    $this->store();
+  }
+
+  public function delete($id) {
+    if (!$id) {
+      throw new Exception("can't delete person: no id specified");
+    }
+    if (!isset($this->db->data["persons"][$id])) {
+      throw new Exception("can't delete person: id [$id] not present");
+    }
+    unset($this->db->data["persons"][$id]); # note: unset() is faster (but leaves empty indexes)
+    $this->store();
   }
 
   /**
@@ -255,7 +348,7 @@ class PersonsController extends AbstractController {
 
 $comments = new CommentsController($this); # DEBUG: just to recalculate comments_count...
 
-    foreach ($this->db->getAll() as $id => $value) {
+    foreach ($this->getAll() as $id => $value) {
 $comments_count = $comments->countByPhone($value["phone"]); # DEBUG: just to recalculate comments_count...
       $list[$id] = [
         "id" => $id,

@@ -1,131 +1,205 @@
 <?php
 
+/*
 $db = new DB();
-$db->insert("persons", ["name" => "pippo", "age" => 27 ]);
-echo $db->getAll($table);
-
-
+$db->add("person", array("name" => "pippo", "key" => "abc", "age" => 27 ));
+$p = $db->getAll("person");
+print_r($p);
+*/
 
 class DB extends PDO {
-  
-  define("DB_TYPE", "sqlite");
-  define("DB_NAME", "db/escrape.sqlite");
+  const DB_TYPE = "sqlite";
+  const DB_NAME = "db/escrape.sqlite";
+  private $db;
 
   public function __construct() {
     try {
-      parent::__construct(DB_TYPE . ":" . $DB_NAME); #, db_USER, db_PASSWORD);
-time_start = microtime(true);
-      self::createTables();
-$time_end = microtime(true);
-$time = $time_end - $time_start;
-echo "createTables duration: $time seconds\n";
+      $this->db = new PDO(self::DB_TYPE . ":" . self::DB_NAME);
+      $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $this->createTables();
     } catch (PDOException $e) {
-      throw new Exception($e->getMessage()); # ok ???
+      throw new Exception($e->getMessage());
     }
   }
 
-  public static function createTables() {
+  public function createTables() {
     try {
-      $db = new db();
-      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-      $db->exec(
-        "create table if not exists persons (
-          id integer primary key, 
-          name text,
+      $this->db->exec(
+        "create table if not exists person (
+          id integer primary key autoincrement,
+          key varchar(16), 
+          name varchar,
           site text,
           url text,
           timestamp integer,
           sex text,
           zone text,
           description text,
-          phone text,
+          phone varchar(16),
           page_sum text,
           age text,
-          vote integer,
-         )");
-          #photos
-          #comments_count
-          #comments_last_synced
-      $db->exec(
-        "create table if not exists comments (
-          id integer primary key, 
-         )");
-         # ...
-      $db = null;
+          vote integer
+         );
+         create unique index if not exists key_idx on person (key);
+        "
+      );
+
+      $this->db->exec(
+        "create table if not exists comment (
+          id integer primary key autoincrement,
+          id_person integer,
+          key varchar(32),
+          phone varchar(16),
+          topic text,
+          timestamp integer,
+          author text,
+          author_karma varchar(16),
+          author_posts integer,
+          content text,
+          content_valutation integer,
+          url text
+         );
+         create unique index if not exists key_idx on comment (key);
+         create unique index if not exists phone_idx on comment (phone);
+         create index if not exists timestamp_idx on comment (timestamp);
+        "
+      );
+
+      $this->db->exec(
+        "create table if not exists photo (
+          id integer primary key autoincrement,
+          id_person integer,
+          truthfulness integer,
+          url text
+         );
+        "
+      );
+
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
   }
 
-  public static function getAll($table) {
+  public function getAll($table) {
     $sql = "select * from $table";
-    return self::getBySql($sql);                
+    return $this->getBySql($sql);                
   }
 
-  public static function getBySql($sql) {
+  /*
+  public function getBySql($sql) {
     try {
-      $db = new db();
-      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      $statement = $db->query($sql);
-      $statement->setFetchMode(PDO::FETCH_CLASS, __CLASS__);
-      $result = $statement->fetchAll();
-      $db = null;
+      $statement = $this->db->query($sql);
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }     
   }
+  */
 
-  public static function getById($table, $id) {
+  public function get($table, $id) {
     try {
-      $db = new db();
-      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       $sql = "select * from $table where id = :id limit 1";
-      $statement = $db->prepare($sql);
-      $statement->bindParam(':id', $id, PDO::PARAM_INT);       
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":id", $id, PDO::PARAM_INT);       
       $statement->execute();
-      $statement->setFetchMode(PDO::FETCH_CLASS, __CLASS__);
-      $result = $statement->fetch();
-      $db = null;
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
   }
 
-/*
-$db->insert("persons",
-  [
-    "name" => "bob",
-    "age" => 27,
-  ]
-);
-*/
-  public static function insert($table, $data) {   
+  public function getByKey($table, $key) {
     try {
-      $db = new db();
-      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $sql = "select * from $table where key = :key limit 1";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":key", $key, PDO::PARAM_STR);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
+  public function getByField($table, $fieldName, $fieldValue) {
+    try {
+      $sql = "select * from $table where $fieldName = :$fieldName";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
+  public function add($table, $data) {
+    try {
       $fields = $values = "";
       foreach ($data as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
       $sql = "insert into $table ($fields) values ($values)";
-      $statement = $db->prepare($sql);
-      foreach ($data as $key => $value) {
-        $statement->bindParam(":" . $key, $value.content); #, PDO::PARAM_STR);
+      $statement = $this->db->prepare($sql);
+      foreach ($data as $key => &$value) {
+        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();
       $count = $statement->rowCount();
-      $db = null;
       return $count;
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
   }
 
+  public function set($table, $id, $data) {
+    try {
+      $set = "";
+      foreach ($data as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . "=" . " " . ":" . $key;
+      }
+      $sql = "update $table set $set where id = :id";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);       
+      foreach ($data as $key => &$value) {
+        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+      }
+      $statement->execute();
+      $count = $statement->rowCount();
+      return $count;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
+  public function delete($table, $id) {
+    try {
+      $sql = "delete from $table where id = :id";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);       
+      $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+      $statement->execute();
+      $count = $statement->rowCount();
+      return $count;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
+  private function profile($method) {
+    $time_start = microtime(true);
+    call($method);
+    $time_end = microtime(true);
+    $time = $time_end - $time_start;
+    return $time;
+  }
+
   function __destruct() {
+    $this->db = null;
   }
 }
 ?>
