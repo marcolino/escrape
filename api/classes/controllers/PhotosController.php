@@ -1,0 +1,199 @@
+<?php
+/**
+ * Photos controller
+ * 
+ * @package PhotosController
+ * @author  Marco Solari <marcosolari@gmail.com>
+ */
+
+class PhotosController extends AbstractController {
+  const DB_PHOTOS_PATH = "db/photos/";
+  const DB_PHOTOS_FULL_PATH = DB_PHOTOS_PATH . "full/";
+  const DB_PHOTOS_THUMBNAIL_PATH = DB_PHOTOS_PATH . "thumb/";
+
+  public function __construct() {
+    $pathName = self::DB_PHOTOS_PATH;
+    if (!file_exists($pathName)) {
+      if (!mkdir($pathName, 0766)) {
+        throw new Exception("can't create folder $pathName");
+      }
+      $this->router->log("debug", "the directory $pathName has been created";
+    } else {
+      ; # directory already exists, not the first time here
+    }
+  }
+
+  /**
+  * Add a photo
+  *
+  * @param  array: photo object
+  * @return integer: -1   if duplicated photo (not added)
+  *                  >= 0 id of added photo
+  */
+  public function add($photo) {
+    # download photo
+    $bitmap = $this->getUrlContents($photo["url"]);
+
+    # get all photos for the person id of the photo
+    $photos = $this->getPhotosByPerson($photo["id_person"]);
+
+    # check for photo duplication
+    $imagesTool = new ImagesTools();
+    $signature = $imagesTool->getSignaturefromBitmap($bitmap);
+    $signatures = [];
+    foreach ($photos a $photo) {
+      $signatures[] = $photo["signature"];
+    }
+    if ($imagesTool->checkImageSignatureDuplication($signature, $signatures)) {
+      $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " is a duplicate");
+      return -1; // duplicate found
+    }
+    $photo["signature"] = $signature;
+
+    # check for photo truthfulness
+    if ($imagesTool->checkImageThruthfulness($photo["url"])) {
+      $photo["thruthful"] = true;
+    } else {
+      $photo["thruthful"] = false;
+      $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " does not seem thrutful");
+    }
+
+    $photo["type"] = $this->getTypeFromUrl($photo["url"]);
+    $photo["sum"] = md5($bitmap);
+    $photo["name"] = $photo["sum"]; # TODO: ???
+
+    # assert photos full path existence
+    $pathNameFull = self::DB_PHOTOS_FULL_PATH . $photo["id_person"] . "/";
+    if (!file_exists($pathNameFull)) {
+      if (!mkdir($pathNameFull, 0766)) {
+        throw new Exception("can't create folder $pathNameFull");
+      }
+      $this->router->log("debug", "the directory $pathNameFull has been created";
+    } else {
+      ; # directory already exists, not the first photo full for this person
+    }
+
+    # save photo full
+    $bitmapFull = $bitmap;
+    $photoPathFull = $this->photoToPath($photo, "full");
+    if (file_exists($photoPathFull)) {
+      $this->router->log("error", "the photo file $photoPathFull exists already, overwriting";
+    }
+    if (file_put_contents($photoPathFull, $bitmapFull, LOCK_EX) === FALSE) {
+      throw new Exception("can't save photo to file $photoPathFull");
+    }
+
+    # assert photos thumbnail path existence
+    $pathNameThumbnail = self::DB_PHOTOS_THUMBNAIL_PATH . $photo["id_person"] . "/";
+    if (!file_exists($pathNameThumbnail)) {
+      if (!mkdir($pathNameThumbnail, 0766)) {
+        throw new Exception("can't create folder $pathNameThumbnail");
+      }
+      $this->router->log("debug", "the directory $pathNameThumbnail has been created";
+    } else {
+      ; # directory already exists, not the first photo thumbnail for this person
+    }
+
+    # save photo thumbnail
+    $bitmapThumbnail = $this->scaleBitmap($bitmap, "thumbnail");
+    $photoPathThumbnail = $this->photoToPath($photo, "thumbnail");
+    if (file_exists($photoPathThumbnail)) {
+      $this->router->log("error", "the photo file $photoPathThumbnail exists already, overwriting";
+    }
+    if (file_put_contents($photoPathThumbnail, $bitmapThumbnail, LOCK_EX) === FALSE) {
+      throw new Exception("can't save photo to file $photoPathThumbnail");
+    }
+
+    # add photo to db
+    return $this->db->add("photo", $photo);
+  }
+  
+  public function get($id) {
+    return $this->db->get("photo", "id");
+  }
+
+  public function set($id, $photo) {
+    # TODO: check if we need to change some properties of image on disk...
+    return $this->db->set("photo", $id, $photo);
+  }
+
+  public function delete($id) {
+    $photo = $this->get($id);
+    $pathFull = photoToPath($photo, "full");
+    if (file_exists($pathFull)) {
+      if (unlink($pathFull) === false) {
+        $this->router->log("warning", "the photo at path $pathFull can't be deleted: " .  error_get_last()["message"]);
+      }
+    } else {
+      $this->router->log("warning", "the photo at path $pathFull can't be deleted, it does not exist";
+    }
+    return $this->db->delete("photo", $id);
+  }
+
+  public function deleteByPerson($idPerson) {
+    $photos = $this->getPhotosByPerson($idPerson);
+    foreach ($photos a $photo) {
+      $this->delete($photo["id"]);
+    }
+  }
+  public function getPhotosByPerson($idPerson) {
+    return $this->db->getByField("photo", "id_person", $idPerson);
+  }
+
+  private function photoToPath($photo, $mode) {
+    switch ($mode) {
+      case "full":
+        $pathName = self::DB_PHOTOS_FULL_PATH;
+        break;
+      case "thumbnail":
+        $pathName = self::DB_PHOTOS_THUMBNAIL_PATH;
+        break;
+      default:
+        throw new Exception("photoToPath unforeseen mode $mode");
+    }
+    return
+      $pathName . 
+      $photo["id_person"] .
+      "/" .
+      $photo["name"] .
+      "." .
+      $photo["type"]
+    ;
+  }
+
+  private function getTypeFromUrl($url) {
+    $url_components = parse_url($url); // parse the URL
+    $url_path = $url_components['path']; // get the path component
+    $ext = pathinfo($url_path, PATHINFO_EXTENSION); // use pathinfo()
+    return $ext;
+  }
+
+  private function getUrlContents($url) {
+    $user_agent = "Mozilla";
+    $ch = curl_init();
+    if (($errno = curl_errno($ch))) {
+      $this->router->log("error", "can't initialize curl, " . curl_strerror($errno));
+      throw new Exception("can't initialize curl, " . curl_strerror($errno));
+    }
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+    $output = curl_exec($ch);
+    if (($errno = curl_errno($ch))) {
+      $this->router->log("error", "can't execute curl to [$url], " . curl_strerror($errno));
+      throw new Exception("can't execute curl to [$url], " . curl_strerror($errno));
+    }
+    curl_close($ch);
+    return $output;
+  }
+
+  /**
+   * Destructor
+   */
+  function __destruct() {
+  }
+
+}

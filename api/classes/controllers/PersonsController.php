@@ -201,7 +201,7 @@ class PersonsController extends AbstractController {
         }
           
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
-          $photos = $matches[1];
+          $photosUrl = $matches[1];
         } else {
           $this->router->log("error", "photo pattern not found on site [$siteId]");
           continue;
@@ -215,32 +215,62 @@ class PersonsController extends AbstractController {
         $person["timestamp"] = $timestamp;
         $person["sex"] = $sex;
         $person["zone"] = $zone;
+        $person["address"] = null;
         $person["description"] = $description;
         $person["phone"] = $phone;
         $person["page_sum"] = $page_sum;
-        $person["photos"] = [];
         $person["age"] = null; # age
-        $person["vote"] = null; # vote ([0-1])
-        #$person["comments_count"] = 0; # TODO: merge!
-        #$person["comments_last_synced"] = 0; # TODO: merge!
+        $person["vote"] = null; # vote ([0-9])
 
         #foreach ($photos as $photo) {
         #  $person["photos"][] = $photo;
         #}
 
         if (($id = $this->db->getByKey("person", $key))) { # old key, update it
-          $this->router->log("debug", "updating key: $key °°°");
-          $this->db->set("person", $id, $person); # error handling?
+          $this->router->log("debug", "updating person: $key °°°");
+          $this->set($id, $person); # error handling?
+          $photos = new PhotosController();
+          foreach ($photosUrl as $photoUrl) {
+            $photo = [];
+            $photo["id_person"] = $id;
+            $photo["url"] = $photoUrl;
+            $photos->set($photo);
+          }
           #$this->db->data["persons"][$id] = $person;
         } else { # new key, insert it
-          $this->router->log("debug", "inserting key: $key °°°");
-          $this->db->add("person", $person);
+          $this->router->log("debug", "inserting person: $key °°°");
+          $id = $this->add($person);
+          $num = 0;
+          foreach ($photosUrl as $photoUrl) {
+            $photo = [];
+            $photo["id_person"] = $id;
+            $photo["showcase"] = ($num === 0);
+            $photo["url"] = $photoUrl;
+            $photos->add($photo);
+            $num++;
+          }
         }
       }
     }
     return true;
   }
 
+  public function get($id) {
+    return $this->db->get("person", $id);
+  }
+  
+  public function add($person) {
+    return $this->db->add("person", $person);
+  }
+  
+  public function set($id, $person) {
+    return $this->db->set("person", $id, $person);
+  }
+
+  public function delete($id) {
+    return $this->db->delete("person", $id);
+  }
+  
   /**
    * get persons list
    *
@@ -249,39 +279,28 @@ class PersonsController extends AbstractController {
    */
   public function getList($filter) {
     $list = [];
-    // filter persons by column names
-#$n = 0;
-#var_dump($this->getPersons()); exit;
+    $comments = new CommentsController();
+    $photos = new PhotosController();
 
-$comments = new CommentsController($this); # DEBUG: just to recalculate comments_count...
-
-    foreach ($this->db->getAll() as $id => $value) {
-$comments_count = $comments->countByPhone($value["phone"]); # DEBUG: just to recalculate comments_count...
+    foreach ($this->db->getAll("person") as $person_id => $person) {
+      #$comments_count = $this->db->countByField("comment", "phone", $value["phone"]);
+      #$comments_count = $comments->countByPhone($value["phone"]);
       $list[$id] = [
-        "id" => $id,
-        "site" => $value["site"],
-        "name" => $value["name"],
-        #"description" => $value["description"],
-        "phone" => $value["phone"],
-        "vote" => $value["vote"],
-        "age" => $value["age"],
-        "photo" => $this->personsDefinition[$value["site"]]["url"] . "/" . $value["photos"][0],
-        "comments_count" => $comments_count, # DEBUG: just to recalculate comments_count...
-        #"comments_count" => $value["comments_count"],
+        "id" => $person_id,
+        "key" => $person["key"],
+        "site" => $person["site"],
+        "name" => $person["name"],
+        "phone" => $person["phone"],
+        "vote" => $person["vote"],
+        "age" => $person["age"],
+        "photo" => $photos->getPhotoShowcase($person_id),
+        "comments_count" => $comments->countByPerson($person_id),
+        "comments_average_valutation" => $comments->getAverageValutationByPerson($person_id),
       ];
-$this->db->data["persons"][$id]["comments_count"] = $comments_count;
     }
-$this->store("persons");
 
     // filter persons by column values
     return $list;
-    #return $this->filter($list, $filter);
-/*
-    return [
-      "personsDefinition" => $this->getPersonsDefinition(),
-      "personsList" => $this->filter($list, $filter),
-    ];
-*/
   }
 
 public function putVote($params) { return $this->setVote($params); }
@@ -371,20 +390,24 @@ public function putVote($params) { return $this->setVote($params); }
   }
 
   private function getUrlContents($url, $charset) {
-    $referer = "http://localhost/escrape";
-    $user_agent = "Mozilla";
-  
+    $user_agent = "Mozilla"; 
     $ch = curl_init();
+    if (($errno = curl_errno($ch))) {
+      $this->router->log("error", "can't initialize curl, " . curl_strerror($errno));
+      throw new Exception("can't initialize curl, " . curl_strerror($errno));
+    }
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_REFERER, $referer);
     curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_TIMEOUT, 12);
     $output = curl_exec($ch);
+    if (($errno = curl_errno($ch))) {
+      $this->router->log("error", "can't execute curl to [$url], " . curl_strerror($errno));
+      throw new Exception("can't execute curl to [$url], " . curl_strerror($errno));
+    }
     curl_close($ch);
-
     return ($charset == "utf-8") ? $output : iconv($charset, "utf-8", $output);
   }
 

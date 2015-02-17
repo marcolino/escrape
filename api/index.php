@@ -5,7 +5,7 @@ require_once 'classes/controllers/AbstractController.php';
 require_once 'classes/controllers/PersonsController.php';
 require_once 'classes/controllers/CommentsController.php';
 require_once 'classes/services/Db.php';
-#require_once 'classes/services/CompareImages.php';
+require_once 'classes/services/ImagesTools.php';
 
 class Router {
 

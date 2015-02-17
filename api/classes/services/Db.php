@@ -25,15 +25,25 @@ class DB extends PDO {
   public function createTables() {
     try {
       $this->db->exec(
+        "create table if not exists user (
+          id integer primary key autoincrement,
+          name varchar,
+          email text
+         );
+        "
+      );
+
+      $this->db->exec(
         "create table if not exists person (
           id integer primary key autoincrement,
-          key varchar(16), 
+          key varchar(16),
           name varchar,
           site text,
           url text,
           timestamp integer,
           sex text,
           zone text,
+          address text,
           description text,
           phone varchar(16),
           page_sum text,
@@ -48,20 +58,21 @@ class DB extends PDO {
         "create table if not exists comment (
           id integer primary key autoincrement,
           id_person integer,
-          key varchar(32),
+          --key varchar(32),
           phone varchar(16),
           topic text,
           timestamp integer,
-          author text,
+          author_nick text,
           author_karma varchar(16),
           author_posts integer,
           content text,
           content_valutation integer,
           url text
          );
-         create unique index if not exists key_idx on comment (key);
+         --create unique index if not exists key_idx on comment (key);
          create unique index if not exists phone_idx on comment (phone);
          create index if not exists timestamp_idx on comment (timestamp);
+         create index if not exists topic_idx on comment (topic);
         "
       );
 
@@ -69,6 +80,8 @@ class DB extends PDO {
         "create table if not exists photo (
           id integer primary key autoincrement,
           id_person integer,
+          num integer,
+          showcase integer,
           truthfulness integer,
           url text
          );
@@ -85,8 +98,7 @@ class DB extends PDO {
     return $this->getBySql($sql);                
   }
 
-  /*
-  public function getBySql($sql) {
+  public function getViaSQL($sql) {
     try {
       $statement = $this->db->query($sql);
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -95,7 +107,6 @@ class DB extends PDO {
       throw new Exception($e->getMessage());
     }     
   }
-  */
 
   public function get($table, $id) {
     try {
@@ -136,6 +147,32 @@ class DB extends PDO {
     }
   }
 
+  public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
+    try {
+      $sql = "select avg($fieldname) from $table where id_person = :id_person";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . "id_person", $idPerson); #, PDO::PARAM_STR);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
+  public function countByField($table, $fieldName, $fieldValue) {
+    try {
+      $sql = "count(*) from $table where $fieldName = :$fieldName";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception($e->getMessage());
+    }
+  }
+
   public function add($table, $data) {
     try {
       $fields = $values = "";
@@ -149,8 +186,10 @@ class DB extends PDO {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();
-      $count = $statement->rowCount();
-      return $count;
+      if ($statement->rowCount() != 1) {
+        throw new Exception("insert into table $table did not insert one record");
+      }
+      return sqlite_last_insert_rowid();
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
@@ -170,7 +209,10 @@ class DB extends PDO {
       }
       $statement->execute();
       $count = $statement->rowCount();
-      return $count;
+      if ($statement->rowCount() != 1) {
+        throw new Exception("update table $table did not update one record");
+      }
+      return $id;
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
@@ -184,7 +226,10 @@ class DB extends PDO {
       $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       $statement->execute();
       $count = $statement->rowCount();
-      return $count;
+      if ($statement->rowCount() != 1) {
+        throw new Exception("delete from $table did not delete one record");
+      }
+      return true;
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }

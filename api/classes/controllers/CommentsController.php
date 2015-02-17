@@ -36,7 +36,7 @@ class CommentsController extends AbstractController {
     ),
   );
   private $googleSearchMinDelayRange = [ 30, 75 ]; // range for random delay
-  private $googleSearchDelayAfterUnusualTraffic = 3600; // 60 minutes
+  private $googleSearchDelayAfterUnusualTraffic = 7200; // 120 minutes
   private $googleSearchLastTimestamp = 0; // last query timestamp
 
   /**
@@ -44,15 +44,11 @@ class CommentsController extends AbstractController {
    */
   function __construct($router) {
     $this->router = $router;
-    $this->setup();
-  }
-
-  private function setup() {
-    $this->load("comments");
+    $this->db = new DB();
   }
 
   public function getAll() {
-    return($this->db->data["comments"]);
+    return $this->db->getAll("comment");
   }
 
   public function get($id) {
@@ -79,6 +75,7 @@ class CommentsController extends AbstractController {
     return $comments;
   }
   
+/*
   public function countByPhone($phone) {
     if (!$phone) {
       throw new Exception("can't get comments by phone: no phone specified");
@@ -92,7 +89,22 @@ class CommentsController extends AbstractController {
     }
     return $n;
   }
-  
+*/
+
+  public function countByPerson($idPerson) {
+    if (!$idPerson) {
+      throw new Exception("can't get comments count by person: no person id specified");
+    }
+    return $this->db->countByField("comment", "id_person", $idPerson) {
+  }
+
+  public function getAverageValutationByPerson($idPerson) {
+    if (!$idPerson) {
+      throw new Exception("can't get comments average valutation by person: no person id specified");
+    }
+    return $this->db->getAverageFieldByPerson("comment", $idPerson, "content_valutation") {
+  }
+
   /**
    * Sync comments
    */
@@ -309,20 +321,6 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
     return $count;
   }
 
-  public function load($table) {
-    if (!isset($this->db)) {
-      $this->db = new Db();
-    }
-    $this->db->load($table);
-  }
-
-  public function store($table) {
-    if (!isset($this->db)) {
-      throw new Exception("can't store: database is not loaded");
-    }
-    $this->db->store($table);
-  }
-
   private function normalizePhone($phone) {
     $result = preg_replace("/[^\d]*/", "", $phone);
     return $result;
@@ -352,7 +350,7 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
       }
     }
 
-    # strip quotes  # TODO!!!
+    # strip quotes (TODO!!!)
     if (preg_match($this->commentsDefinition[$definitionId]["patterns"]["quote-signature"], $content, $matches)) {
       $content = $matches[1]; # comment with quotes stripped off
     } else {
@@ -437,7 +435,10 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
   }
 
   private function getUrlContents($url, $ua = "Mozilla") {
+    $retry = 0;
+    $retryMax = 3;
     $this->router->log("debug", "getUrlContents($url, \$ua)");
+    retry:
     $ch = curl_init();
     if (($errno = curl_errno($ch))) {
       $this->router->log("error", "can't initialize curl, " . curl_strerror($errno));
@@ -451,6 +452,14 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
     curl_setopt($ch, CURLOPT_TIMEOUT, 120);
     $output = curl_exec($ch);
     if (($errno = curl_errno($ch))) {
+      # handle timeouts with some retries
+      if ($errno === CURLE_OPERATION_TIMEDOUT) { // timeouts can be probably recovered...
+        $retry++;
+        $this->router->log("warning", "timeout executing curl to [$url], retry n." . $retry);
+        if ($retry <= $retryMax) {
+          goto retry;
+        }
+      }
       $this->router->log("error", "can't execute curl to [$url], " . curl_strerror($errno));
       throw new Exception("can't execute curl to [$url], " . curl_strerror($errno));
     }
