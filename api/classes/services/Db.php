@@ -9,14 +9,17 @@ print_r($p);
 
 class DB extends PDO {
   const DB_TYPE = "sqlite";
-  const DB_NAME = "db/escrape.sqlite";
+  const DB_PATH = "db/escrape.sqlite";
   private $db;
 
   public function __construct() {
     try {
-      $this->db = new PDO(self::DB_TYPE . ":" . self::DB_NAME);
+      $new = !file_exists(self::DB_PATH);
+      $this->db = new PDO(self::DB_TYPE . ":" . self::DB_PATH);
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      $this->createTables();
+      if ($new) { // db doesn't exist, create tables...
+        $this->createTables();
+      }
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
@@ -80,7 +83,7 @@ class DB extends PDO {
         "create table if not exists photo (
           id integer primary key autoincrement,
           id_person integer,
-          num integer,
+          name varchar(32),
           showcase integer,
           truthfulness integer,
           url text
@@ -95,10 +98,10 @@ class DB extends PDO {
 
   public function getAll($table) {
     $sql = "select * from $table";
-    return $this->getBySql($sql);                
+    return $this->getViaSql($sql);                
   }
 
-  public function getViaSQL($sql) {
+  public function getViaSQL($sql) { # TODO: is this safe?
     try {
       $statement = $this->db->query($sql);
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -121,6 +124,7 @@ class DB extends PDO {
     }
   }
 
+/*
   public function getByKey($table, $key) {
     try {
       $sql = "select * from $table where key = :key limit 1";
@@ -133,6 +137,7 @@ class DB extends PDO {
       throw new Exception($e->getMessage());
     }
   }
+*/
 
   public function getByField($table, $fieldName, $fieldValue) {
     try {
@@ -187,9 +192,9 @@ class DB extends PDO {
       }
       $statement->execute();
       if ($statement->rowCount() != 1) {
-        throw new Exception("insert into table $table did not insert one record");
+        throw new Exception("insert into table $table did insert " . ($statement->rowCount() . " records");
       }
-      return sqlite_last_insert_rowid();
+      return $this->db->lastInsertId();
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
@@ -210,7 +215,7 @@ class DB extends PDO {
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("update table $table did not update one record");
+        throw new Exception("update into table $table did update " . ($statement->rowCount() . " records");
       }
       return $id;
     } catch (PDOException $e) {
@@ -227,7 +232,7 @@ class DB extends PDO {
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("delete from $table did not delete one record");
+        throw new Exception("delete from table $table did delete " . ($statement->rowCount() . " records");
       }
       return true;
     } catch (PDOException $e) {
@@ -235,7 +240,7 @@ class DB extends PDO {
     }
   }
 
-  private function profile($method) {
+  private function profile($method) { # TODO: to be tested...
     $time_start = microtime(true);
     call($method);
     $time_end = microtime(true);

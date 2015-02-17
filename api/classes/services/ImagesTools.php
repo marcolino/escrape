@@ -13,27 +13,11 @@ class ImagesTools {
     }
   }
 
-  /**
-  * Check for image truthfulness
-  *
-  * @param  string: photo url
-  * @return boolean: true    if photo is not duplicated on the web
-  *                  false   if photo is duplicated on the web
-  */
-  public function checkImageThruthfulness($imageUrl) {
-    $similarUrls = googleSearchImage($imageUrl);
-    if ($thrutfulness <= PHOTO_MIN_DISTANCE) { // same image found
-      return false;
-    }
-    return true;
-  }
-
   public function googleSearchImage($imageUrl, $domain) {
     $max_results = 99;
     $result = array();
     $query_encoded = urlencode($query);
     
-    # obtain the first html page with the formatted url
     $data = $this->getUrlContents(
       "https://www.google.it/searchbyimage" .
       "?site=" . "imghp" .
@@ -58,16 +42,32 @@ class ImagesTools {
       $link = preg_replace("/^\/url\?q=/", "", $link);
       $link = preg_replace("/&amp;sa=U.*/", "", $link);
       $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
-      if (parse_url($link)['host'] === $domain) {
-        continue; // skip images in the same domain
+      if (parse_url($link)['host'] !== $domain) {
+        $result[] = $link; // consider only images from different domains
       }
-      $result[] = $link;
     }
      
     # clean up the memory 
     $html->clear();
     
     return $result;
+  }
+
+  /**
+   * Check for image truthfulness
+   *
+   * @param  string: photo url
+   * @return boolean: true    if photo is not duplicated on the web
+   *                  false   if photo is duplicated on the web
+   */
+  public function checkImageThruthfulness($imageUrl) {
+    $similarUrls = googleSearchImage($imageUrl, $domain);
+    if (count($similarUrls) > 0) { // same image found
+      $this->router->log("info", "found images similar to $imageUrl, it's probably non true...");
+      return false;
+    }
+    $this->router->log("info", "found no images similar to $imageUrl, it's probably true...");
+    return true;
   }
 
   /**
@@ -79,6 +79,7 @@ class ImagesTools {
       $sig2 = $this->getSignatureFromUrl($image);
       $distance = $this->compareSignatures($sig1, $sig2);
       if ($distance <= IMAGE_MIN_DISTANCE) { // duplicate found
+        $this->router->log("info", "image $img is similar to $image, it's probably a duplicate...");
         return true;
       }
     }
@@ -92,6 +93,7 @@ class ImagesTools {
     foreach ($sigs as $sign) {
       $distance = $this->compareSignatures($sig, $sign);
       if ($distance <= IMAGE_MIN_DISTANCE) { // duplicate found
+        $this->router->log("info", "image signature $sig is similar to $sign, it's probably a duplicate...");
         return true;
       }
     }
@@ -139,14 +141,14 @@ class ImagesTools {
    * Returns the hammering distance of two images signatures
    */
   public function compareSignatures($sig1, $sig2) {
-    $hammeringDistance = 0;
+    $hammingDistance = 0;
     $pixels = $this->pixelsPerSide * $this->pixelsPerSide;
     for ($a = 0; $a < $pixels; $a++) {
       if (substr($sig1, $a, 1) != substr($sig2, $a, 1)) {
-        $hammeringDistance++;
+        $hammingDistance++;
       }
     }
-    return ($pixels - $hammeringDistance) / $pixels; # returned value is in the range 0 -> 1
+    return ($pixels - $hammingDistance) / $pixels; # returned value is in the range 0 -> 1
   }
 
   /**
