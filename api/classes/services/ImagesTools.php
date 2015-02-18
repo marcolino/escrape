@@ -1,29 +1,32 @@
 <?php
 
 class ImagesTools {
-  const PIXELS_PER_SIDE = 10;
+  const SIGNATURE_PIXELS_PER_SIDE = 10;
   const IMAGE_MIN_DISTANCE = 0.4; # TODO: tune-me
 
   /**
    * Class constructor
    */
-  function __construct($pixelsPerSide = 0) {
-    if ($pixelsPerSide) {
-      $this->pixelsPerSide = $pixelsPerSide;
+  function __construct($router, $options = []) {
+    $this->router = $router;
+    if (isset($options["signaturePixelsPerSide"])) {
+      $this->signaturePixelsPerSide = $options["signaturePixelsPerSide"];
+    } else {
+      $this->signaturePixelsPerSide = self::SIGNATURE_PIXELS_PER_SIDE;
     }
   }
 
   public function googleSearchImage($imageUrl, $domain) {
-    $max_results = 99;
+    $maxResults = 99;
     $result = array();
-    $query_encoded = urlencode($query);
+    #$query_encoded = urlencode($query);
     
     $data = $this->getUrlContents(
       "https://www.google.it/searchbyimage" .
       "?site=" . "imghp" .
-      "&image_url=" . $image_url
-      "&num=" . $max_results . 
-      "&filter=" . "0" .
+      "&image_url=" . $imageUrl .
+      "&num=" . $maxResults . 
+      "&filter=" . "0"
     );
     $html = str_get_html($data);
      
@@ -54,6 +57,25 @@ class ImagesTools {
   }
 
   /**
+   * Check for image duplication
+   *
+   * @param  array: image
+   * @param  string: image sum
+   * @return boolean: true    if image is a duplicate
+   *                  false   if image is not a fuplicate
+   */
+  public function checkImageDuplication($images, $sum) {
+var_dump($images);
+return;
+    foreach ($images as $image) {
+      if ($image["sum"] === $sum) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Check for image truthfulness
    *
    * @param  string: photo url
@@ -61,7 +83,8 @@ class ImagesTools {
    *                  false   if photo is duplicated on the web
    */
   public function checkImageThruthfulness($imageUrl) {
-    $similarUrls = googleSearchImage($imageUrl, $domain);
+    $domain = parse_url($imageUrl)['host'];
+    $similarUrls = $this->googleSearchImage($imageUrl, $domain);
     if (count($similarUrls) > 0) { // same image found
       $this->router->log("info", "found images similar to $imageUrl, it's probably non true...");
       return false;
@@ -73,6 +96,7 @@ class ImagesTools {
   /**
    * Checks if an image is a duplication of other images
    */
+/*
   public function checkImageDuplication($img, $images) {
     $sig1 = $this->getSignatureFromUrl($img);
     foreach ($images as $image) {
@@ -85,10 +109,11 @@ class ImagesTools {
     }
     return false;
   }
-
+*/
   /**
    * Checks if an image signature is a duplication of other images signatures
    */
+/*
   public function checkImageSignatureDuplication($sig, $sigs) {
     foreach ($sigs as $sign) {
       $distance = $this->compareSignatures($sig, $sign);
@@ -99,38 +124,50 @@ class ImagesTools {
     }
     return false;
   }
+*/
+  public function checkImageSimilarity($signature, $photos) {
+var_dump($photos); return;
+    foreach ($photos as $photo) {
+      $distance = $this->compareSignatures($signature, $photo["signature"]);
+      if ($distance <= IMAGE_MIN_DISTANCE) { // duplicate found
+        $this->router->log("info", "image signature $signature is similar to " . $photo["signature"] . " ($distance), it's probably a duplicate...");
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Returns the hammering distance of two images (files or urls) signatures
    */
-  public function compareImages($img1, $img2) {
-    $sig1 = $this->getSignature($img1);
-    $sig2 = $this->getSignature($img2);
+  public function compareImages($imgUrl1, $imgUrl2) {
+    $sig1 = $this->getSignatureFromUrl($imgUrl1);
+    $sig2 = $this->getSignatureFromUrl($imgUrl2);
     return $this->compareSignatures($sig1, $sig2);
   }
 
   /**
    * Returns the string of bits representing the signature of an image file or url
    */
-  public function getSignaturefromUrl($image) {
-    return getSignature($this->createImage($image));
+  public function getSignaturefromUrl($imageUrl) {
+    return $this->getSignature($this->createImage($imageUrl), imageSize($imageUrl));
   }
 
   /**
    * Returns the string of bits representing the signature of an image bitmap
    */
-  public function getSignaturefromBitmap($bitmap) {
-    return getSignature(imagecreatefromstring($bitmap));
+  public function getSignaturefromBitmap($bitmap, $imageUrl) {
+    return $this->getSignature(imagecreatefromstring($bitmap), $this->imageSize($imageUrl));
   }
 
   /**
    * Returns the string of bits representing the signature of an image
    */
-  public function getSignature($image) {
+  public function getSignature($i, $size) {
     if (!$i) {
       return false;
     }
-    $i = $this->resizeImage($i, $image);
+    $i = $this->resizeImage($i, $size);
     imagefilter($i, IMG_FILTER_GRAYSCALE);
     $colorMean = $this->colorMeanValue($i);
     $bits = $this->bits($colorMean);
@@ -152,33 +189,36 @@ class ImagesTools {
   }
 
   /**
-   * Returns array with mime type and if its jpg or png, or false if it isn't jpg nor png
+   * Returns the mime type of the image url if its jpg or png, or false otherwise
    */
-  private function mimeType($i) {
-    $mime = getimagesize($i);
-    $return = array($mime[0], $mime[1]);
-    
-    switch ($mime['mime']) {
-      case 'image/jpeg':
-        $return[] = 'jpg';
-        return $return;
-      case 'image/png':
-        $return[] = 'png';
-        return $return;
+  private function mimeType($imageUrl) {
+    $info = getimagesize($imageUrl);   
+    switch ($info["mime"]) {
+      case "image/jpeg":
+        return "jpg";
+      case "image/png":
+        return "png";
       default:
         return false;
     }
   }  
   
   /**
+   * Returns the size of the image url
+   */
+  private function imageSize($imageUrl) {
+    $info = getimagesize($imageUrl);   
+    return [ $info[0], $info[1] ];
+  }  
+  /**
    * Retuns image resource, or false if its not jpg nor png
    */
-  private function createImage($i) {
-    $mime = $this->mimeType($i);
-    if ($mime[2] == 'jpg') {
-      return imagecreatefromjpeg($i);
-    } else if ($mime[2] == 'png') {
-      return imagecreatefrompng($i);
+  private function createImage($imageUrl) {
+    $type = $this->mimeType($imageUrl);
+    if ($type === "jpg") {
+      return imagecreatefromjpeg($imageUrl);
+    } else if ($type === "png") {
+      return imagecreatefrompng($imageUrl);
     } else {
       return false; 
     } 
@@ -187,11 +227,11 @@ class ImagesTools {
   /**
    * Resizes the image to a square and returns as image resource
    */
-  private function resizeImage($i, $source) {
-    $mime = $this->mimeType($source);
-    $t = imagecreatetruecolor($this->pixelsPerSide, $this->pixelsPerSide);
-    $source = $this->createImage($source);
-    imagecopyresized($t, $source, 0, 0, 0, 0, $this->pixelsPerSide, $this->pixelsPerSide, $mime[0], $mime[1]);
+  private function resizeImage($i, $size) {
+    #$mime = $this->mimeType($i);
+    $t = imagecreatetruecolor($this->signaturePixelsPerSide, $this->signaturePixelsPerSide);
+    #$i = $this->createImage($i);
+    imagecopyresized($t, $i, 0, 0, 0, 0, $this->signaturePixelsPerSide, $this->signaturePixelsPerSide, $size[0], $size[1]);
     return $t;
   }
   
@@ -201,14 +241,14 @@ class ImagesTools {
   private function colorMeanValue($i) {
     $colorList = array();
     $colorSum = 0;
-    for ($a = 0; $a < $this->pixelsPerSide; $a++) {
-      for ($b = 0; $b < $this->pixelsPerSide; $b++) {
+    for ($a = 0; $a < $this->signaturePixelsPerSide; $a++) {
+      for ($b = 0; $b < $this->signaturePixelsPerSide; $b++) {
         $rgb = imagecolorat($i, $a, $b);
         $colorList[] = $rgb & 0xFF;
         $colorSum += $rgb & 0xFF;
       }
     }
-    return array($colorSum / ($this->pixelsPerSide * $this->pixelsPerSide), $colorList);
+    return array($colorSum / ($this->signaturePixelsPerSide * $this->signaturePixelsPerSide), $colorList);
   }
   
   /**

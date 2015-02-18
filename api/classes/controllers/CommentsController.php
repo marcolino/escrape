@@ -44,7 +44,7 @@ class CommentsController extends AbstractController {
    */
   function __construct($router) {
     $this->router = $router;
-    $this->db = new DB();
+    $this->db = $this->router->db;
   }
 
   public function getAll() {
@@ -95,14 +95,14 @@ class CommentsController extends AbstractController {
     if (!$idPerson) {
       throw new Exception("can't get comments count by person: no person id specified");
     }
-    return $this->db->countByField("comment", "id_person", $idPerson) {
+    return $this->db->countByField("comment", "id_person", $idPerson);
   }
 
   public function getAverageValutationByPerson($idPerson) {
     if (!$idPerson) {
       throw new Exception("can't get comments average valutation by person: no person id specified");
     }
-    return $this->db->getAverageFieldByPerson("comment", $idPerson, "content_valutation") {
+    return $this->db->getAverageFieldByPerson("comment", $idPerson, "content_valutation");
   }
 
   /**

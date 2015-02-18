@@ -3,6 +3,7 @@
 require_once 'Slim/Slim.php';
 require_once 'classes/controllers/AbstractController.php';
 require_once 'classes/controllers/PersonsController.php';
+require_once 'classes/controllers/PhotosController.php';
 require_once 'classes/controllers/CommentsController.php';
 require_once 'classes/services/Db.php';
 require_once 'classes/services/ImagesTools.php';
@@ -18,13 +19,26 @@ class Router {
       'debug' => true,
       'mode' => 'development',
     ]);
+    $this->db = new DB();
     $this->logs = [];
     date_default_timezone_set($timezone);
   }
 
   public function run() {
     # ======================
-    # users
+    # test
+    # ======================
+    $this->app->get('/persons/test', function() {
+      try {
+        $persons = new PersonsController($this);
+        $this->success($persons->test());
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+
+    # ======================
+    # persons
     # ======================
     $this->app->get('/persons/get', function() {
       try {
@@ -244,7 +258,7 @@ class Router {
         'code' => $error->getCode(),
         'file' => $error->getFile(),
         'line' => $error->getLine(),
-        #'trace' => $e->getTrace(), #AsString(),
+        'trace' => $error->getTraceAsString(),
       ],
       'log' => $this->logs,
     ]));

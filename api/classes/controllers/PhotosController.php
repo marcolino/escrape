@@ -8,16 +8,18 @@
 
 class PhotosController extends AbstractController {
   const DB_PHOTOS_PATH = "db/photos/";
-  const DB_PHOTOS_FULL_PATH = DB_PHOTOS_PATH . "full/";
-  const DB_PHOTOS_THUMBNAIL_PATH = DB_PHOTOS_PATH . "thumb/";
+  const DB_PHOTOS_FULL_PATH = self::DB_PHOTOS_PATH . "full/";
+  const DB_PHOTOS_THUMBNAIL_PATH = self::DB_PHOTOS_PATH . "thumb/";
 
-  public function __construct() {
+  public function __construct($router) {
+    $this->router = $router;
+    $this->db = $router->db;
     $pathName = self::DB_PHOTOS_PATH;
     if (!file_exists($pathName)) {
-      if (!mkdir($pathName, 0766)) {
+      if (!@mkdir($pathName, 0766, true)) {
         throw new Exception("can't create folder $pathName");
       }
-      $this->router->log("debug", "the directory $pathName has been created";
+      $this->router->log("debug", "the directory $pathName has been created");
     } else {
       ; # directory already exists, not the first time here
     }
@@ -34,18 +36,25 @@ class PhotosController extends AbstractController {
     # download photo
     $bitmap = $this->getUrlContents($photo["url"]);
 
+    # check for photo duplication
+    $imagesTool = new ImagesTools($this->router);
+
     # get all photos for the person id of the photo
     $photos = $this->getPhotosByPerson($photo["id_person"]);
 
     # check for photo duplication
-    $imagesTool = new ImagesTools();
-    $signature = $imagesTool->getSignaturefromBitmap($bitmap);
-    $signatures = [];
-    foreach ($photos a $photo) {
-      $signatures[] = $photo["signature"];
-    }
-    if ($imagesTool->checkImageSignatureDuplication($signature, $signatures)) {
+    $sum = md5($bitmap);
+var_dump($photos);
+    if ($imagesTool->checkImageDuplication($photos, $sum)) {
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " is a duplicate");
+      return -1; // duplicate found
+    }
+    $photo["sum"] = $sum;
+
+    # check for photo similarity
+    $signature = $imagesTool->getSignaturefromBitmap($bitmap, $photo["url"]);
+    if ($imagesTool->checkImageSimilarity($signature, $photos)) {
+      $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " has a similar photo");
       return -1; // duplicate found
     }
     $photo["signature"] = $signature;
@@ -59,16 +68,15 @@ class PhotosController extends AbstractController {
     }
 
     $photo["type"] = $this->getTypeFromUrl($photo["url"]);
-    $photo["sum"] = md5($bitmap);
     $photo["name"] = $photo["sum"]; # TODO: ???
 
     # assert photos full path existence
     $pathNameFull = self::DB_PHOTOS_FULL_PATH . $photo["id_person"] . "/";
     if (!file_exists($pathNameFull)) {
-      if (!mkdir($pathNameFull, 0766)) {
+      if (!@mkdir($pathNameFull, 0766, true)) {
         throw new Exception("can't create folder $pathNameFull");
       }
-      $this->router->log("debug", "the directory $pathNameFull has been created";
+      $this->router->log("debug", "the directory $pathNameFull has been created");
     } else {
       ; # directory already exists, not the first photo full for this person
     }
@@ -77,19 +85,19 @@ class PhotosController extends AbstractController {
     $bitmapFull = $bitmap;
     $photoPathFull = $this->photoToPath($photo, "full");
     if (file_exists($photoPathFull)) {
-      $this->router->log("error", "the photo file $photoPathFull exists already, overwriting";
+      $this->router->log("error", "the photo file $photoPathFull exists already, overwriting");
     }
-    if (file_put_contents($photoPathFull, $bitmapFull, LOCK_EX) === FALSE) {
+    if (@file_put_contents($photoPathFull, $bitmapFull, LOCK_EX) === FALSE) {
       throw new Exception("can't save photo to file $photoPathFull");
     }
 
     # assert photos thumbnail path existence
     $pathNameThumbnail = self::DB_PHOTOS_THUMBNAIL_PATH . $photo["id_person"] . "/";
     if (!file_exists($pathNameThumbnail)) {
-      if (!mkdir($pathNameThumbnail, 0766)) {
+      if (!@mkdir($pathNameThumbnail, 0766, true)) {
         throw new Exception("can't create folder $pathNameThumbnail");
       }
-      $this->router->log("debug", "the directory $pathNameThumbnail has been created";
+      $this->router->log("debug", "the directory $pathNameThumbnail has been created");
     } else {
       ; # directory already exists, not the first photo thumbnail for this person
     }
@@ -98,14 +106,13 @@ class PhotosController extends AbstractController {
     $bitmapThumbnail = $this->scaleBitmap($bitmap, "thumbnail");
     $photoPathThumbnail = $this->photoToPath($photo, "thumbnail");
     if (file_exists($photoPathThumbnail)) {
-      $this->router->log("error", "the photo file $photoPathThumbnail exists already, overwriting";
+      $this->router->log("error", "the photo file $photoPathThumbnail exists already, overwriting");
     }
-    if (file_put_contents($photoPathThumbnail, $bitmapThumbnail, LOCK_EX) === FALSE) {
+    if (@file_put_contents($photoPathThumbnail, $bitmapThumbnail, LOCK_EX) === FALSE) {
       throw new Exception("can't save photo to file $photoPathThumbnail");
     }
 
-    # add photo to db
-    return $this->db->add("photo", $photo);
+    return true;
   }
   
   public function get($id) {
@@ -121,23 +128,37 @@ class PhotosController extends AbstractController {
     $photo = $this->get($id);
     $pathFull = photoToPath($photo, "full");
     if (file_exists($pathFull)) {
-      if (unlink($pathFull) === false) {
+      if (@unlink($pathFull) === false) {
         $this->router->log("warning", "the photo at path $pathFull can't be deleted: " .  error_get_last()["message"]);
       }
     } else {
-      $this->router->log("warning", "the photo at path $pathFull can't be deleted, it does not exist";
+      $this->router->log("warning", "the photo at path $pathFull can't be deleted, it does not exist");
     }
     return $this->db->delete("photo", $id);
   }
 
   public function deleteByPerson($idPerson) {
     $photos = $this->getPhotosByPerson($idPerson);
-    foreach ($photos a $photo) {
+    foreach ($photos as $photo) {
       $this->delete($photo["id"]);
     }
   }
   public function getPhotosByPerson($idPerson) {
     return $this->db->getByField("photo", "id_person", $idPerson);
+  }
+
+  private function scaleBitmap($bitmap, $mode) {
+    switch ($mode) {
+      case "full":
+        ;
+        break;
+      case "thumbnail":
+        $bitmap = $bitmap;  # TODO: .............
+        break;
+      default:
+        throw new Exception("scaleBitmap unforeseen mode $mode");
+    }
+    return $bitmap;
   }
 
   private function photoToPath($photo, $mode) {

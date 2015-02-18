@@ -84,7 +84,8 @@ class PersonsController extends AbstractController {
    */
   function __construct($router) {
     $this->router = $router;
-    $this->db = new DB();
+    $this->db = $router->db;
+    #$this->db = new DB();
 #    $this->setup();
   }
 
@@ -201,7 +202,7 @@ class PersonsController extends AbstractController {
         }
           
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
-          $photosUrl = $matches[1];
+          $photoUrls = $matches[1];
         } else {
           $this->router->log("error", "photo pattern not found on site [$siteId]");
           continue;
@@ -229,8 +230,8 @@ class PersonsController extends AbstractController {
         if (($id = $this->db->getByKey("person", $key))) { # old key, update it
           $this->router->log("debug", "updating person: $key °°°");
           $this->set($id, $person); # error handling?
-          $photos = new PhotosController();
-          foreach ($photosUrl as $photoUrl) {
+          $photos = new PhotosController($this->router);
+          foreach ($photoUrls as $photoUrl) {
             $photo = [];
             $photo["id_person"] = $id;
             $photo["url"] = $photoUrl;
@@ -277,10 +278,10 @@ class PersonsController extends AbstractController {
    * @param  array $filter
    * @return array
    */
-  public function getList($filter) {
+  public function getList() {
     $list = [];
-    $comments = new CommentsController();
-    $photos = new PhotosController();
+    $comments = new CommentsController($this->router);
+    $photos = new PhotosController($this->router);
 
     foreach ($this->db->getAll("person") as $person_id => $person) {
       #$comments_count = $this->db->countByField("comment", "phone", $value["phone"]);
@@ -298,8 +299,6 @@ class PersonsController extends AbstractController {
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person_id),
       ];
     }
-
-    // filter persons by column values
     return $list;
   }
 
@@ -459,6 +458,62 @@ public function putVote($params) { return $this->setVote($params); }
    * Destructor
    */
   function __destruct() {
+  }
+
+  public function test() {
+    $photoUrls = [
+      "http://img1.wikia.nocookie.net/__cb20130913040728/disney/images/0/0e/595157-alice1_large.jpg",
+      "http://planetpesca.com/files/2009/04/sardina.gif",
+    ];
+
+    $person = [];
+    $person["key"] = "toe-12345";
+    $person["name"] = "Alice";
+    $person["site"] = "toe";
+    $person["url"] = "www.toe.com/12345/";
+    $person["timestamp"] = 1424248678;
+    $person["sex"] = "F";
+    $person["zone"] = "centro";
+    $person["address"] = "Via Roma, 0, Torino";
+    $person["description"] = "super";
+    $person["phone"] = "3336480983";
+    $person["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
+    $person["age"] = 27;
+    $person["vote"] = 7;
+
+    $photos = new PhotosController($this->router);
+    if (($person = $this->db->getByField("person", "key", $person["key"]))) { # old key, update it
+      $id = $person["id"];
+      $this->router->log("debug", "updating person: " . $person["key"] . " ^^^");
+      $this->set($id, $person); # error handling?
+      $num = 0;
+      foreach ($photoUrls as $photoUrl) {
+        $photo = [];
+        $photo["id_person"] = $id;
+        $photo["showcase"] = ($num === 0);
+        $photo["url"] = $photoUrl;
+        if ($photos->add($photo)) { # photo is new, has not similarities, is thruthful, and has been saved
+          return $this->db->add("photo", $photo); # add photo to db
+        }
+        $num++;
+      }
+      #$this->db->data["persons"][$id] = $person;
+    } else { # new key, insert it
+      $this->router->log("debug", "inserting person: " . $person["key"] . " °°°");
+      $id = $this->add($person);
+      $num = 0;
+      foreach ($photoUrls as $photoUrl) {
+        $photo = [];
+        $photo["id_person"] = $id;
+        $photo["showcase"] = ($num === 0);
+        $photo["url"] = $photoUrl;
+        if ($photos->add($photo)) { # photo is new, has not similarities, is thruthful, and has been saved
+          return $this->db->add("photo", $photo); # add photo to db
+        }
+        $num++;
+      }
+    }
+    return true;
   }
 
 }

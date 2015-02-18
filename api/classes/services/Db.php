@@ -61,7 +61,7 @@ class DB extends PDO {
         "create table if not exists comment (
           id integer primary key autoincrement,
           id_person integer,
-          --key varchar(32),
+          key varchar(32),
           phone varchar(16),
           topic text,
           timestamp integer,
@@ -72,7 +72,7 @@ class DB extends PDO {
           content_valutation integer,
           url text
          );
-         --create unique index if not exists key_idx on comment (key);
+         create unique index if not exists key_idx on comment (key);
          create unique index if not exists phone_idx on comment (phone);
          create index if not exists timestamp_idx on comment (timestamp);
          create index if not exists topic_idx on comment (topic);
@@ -192,7 +192,7 @@ class DB extends PDO {
       }
       $statement->execute();
       if ($statement->rowCount() != 1) {
-        throw new Exception("insert into table $table did insert " . ($statement->rowCount() . " records");
+        throw new Exception("insert into table $table did insert " . $statement->rowCount() . " records");
       }
       return $this->db->lastInsertId();
     } catch (PDOException $e) {
@@ -215,7 +215,7 @@ class DB extends PDO {
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("update into table $table did update " . ($statement->rowCount() . " records");
+        throw new Exception("update into table $table did update " . $statement->rowCount() . " records");
       }
       return $id;
     } catch (PDOException $e) {
@@ -232,7 +232,7 @@ class DB extends PDO {
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("delete from table $table did delete " . ($statement->rowCount() . " records");
+        throw new Exception("delete from table $table did delete " . $statement->rowCount() . " records");
       }
       return true;
     } catch (PDOException $e) {
