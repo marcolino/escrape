@@ -240,6 +240,7 @@ class PersonsController extends AbstractController {
           #$this->db->data["persons"][$id] = $person;
         } else { # new key, insert it
           $this->router->log("debug", "inserting person: $key °°°");
+$this->router->log("debug", "inserting person: $prson"); return;
           $id = $this->add($person);
           $num = 0;
           foreach ($photosUrl as $photoUrl) {
@@ -466,52 +467,39 @@ public function putVote($params) { return $this->setVote($params); }
       "http://planetpesca.com/files/2009/04/sardina.gif",
     ];
 
-    $person = [];
-    $person["key"] = "toe-12345";
-    $person["name"] = "Alice";
-    $person["site"] = "toe";
-    $person["url"] = "www.toe.com/12345/";
-    $person["timestamp"] = 1424248678;
-    $person["sex"] = "F";
-    $person["zone"] = "centro";
-    $person["address"] = "Via Roma, 0, Torino";
-    $person["description"] = "super";
-    $person["phone"] = "3336480983";
-    $person["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
-    $person["age"] = 27;
-    $person["vote"] = 7;
+    $newPerson = [];
+    $newPerson["key"] = "toe-123456";
+    $newPerson["name"] = "Alice";
+    $newPerson["site"] = "toe";
+    $newPerson["url"] = "www.toe.com/12345/";
+    $newPerson["timestamp"] = 1424248678;
+    $newPerson["sex"] = "F";
+    $newPerson["zone"] = "centro";
+    $newPerson["address"] = "Via Roma, 0, Torino";
+    $newPerson["description"] = "super";
+    $newPerson["phone"] = "3336480983";
+    $newPerson["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
+    $newPerson["age"] = 27;
+    $newPerson["vote"] = 7;
 
     $photos = new PhotosController($this->router);
-    if (($person = $this->db->getByField("person", "key", $person["key"]))) { # old key, update it
+    if (($person = $this->db->getByField("person", "key", $newPerson["key"]))) { # old key, update it
       $id = $person["id"];
       $this->router->log("debug", "updating person: " . $person["key"] . " ^^^");
-      $this->set($id, $person); # error handling?
-      $num = 0;
-      foreach ($photoUrls as $photoUrl) {
-        $photo = [];
-        $photo["id_person"] = $id;
-        $photo["showcase"] = ($num === 0);
-        $photo["url"] = $photoUrl;
-        if ($photos->add($photo)) { # photo is new, has not similarities, is thruthful, and has been saved
-          return $this->db->add("photo", $photo); # add photo to db
-        }
-        $num++;
-      }
+      $this->set($id, $newPerson); # error handling?
       #$this->db->data["persons"][$id] = $person;
     } else { # new key, insert it
-      $this->router->log("debug", "inserting person: " . $person["key"] . " °°°");
-      $id = $this->add($person);
-      $num = 0;
-      foreach ($photoUrls as $photoUrl) {
-        $photo = [];
-        $photo["id_person"] = $id;
-        $photo["showcase"] = ($num === 0);
-        $photo["url"] = $photoUrl;
-        if ($photos->add($photo)) { # photo is new, has not similarities, is thruthful, and has been saved
-          return $this->db->add("photo", $photo); # add photo to db
-        }
-        $num++;
-      }
+      $this->router->log("debug", "inserting person: " . $newPerson["key"] . " °°°");
+      $id = $this->add($newPerson);
+    }
+    $num = 0;
+    foreach ($photoUrls as $photoUrl) {
+      $photo = [];
+      $photo["id_person"] = $id;
+      $photo["showcase"] = ($num === 0);
+      $photo["url"] = $photoUrl;
+      $photos->add($photo);
+      $num++;
     }
     return true;
   }

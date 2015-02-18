@@ -258,7 +258,7 @@ class Router {
         'code' => $error->getCode(),
         'file' => $error->getFile(),
         'line' => $error->getLine(),
-        'trace' => $error->getTraceAsString(),
+        'trace' => $error->getTrace(), #AsString(),
       ],
       'log' => $this->logs,
     ]));

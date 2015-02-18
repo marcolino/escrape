@@ -84,8 +84,11 @@ class DB extends PDO {
           id integer primary key autoincrement,
           id_person integer,
           name varchar(32),
+          sum varchar(32),
+          signature varchar(256),
+          type varchar(8),
           showcase integer,
-          truthfulness integer,
+          thruthfulness integer,
           url text
          );
         "

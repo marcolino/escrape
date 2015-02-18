@@ -38,10 +38,10 @@ class ImagesTools {
        * links are in the href of the anchor contained in the "<h3>...</h3>";
        * summaries are stored in a div with a classname of "s"
        */
-      $h3 = $g->find('h3.r', 0);
-      $s = $g->find('div.s', 0);
-      $a = $h3->find('a', 0);
+      $srg = $g->find('div.srg', 0);
+      $a = $srg->find('a', 0);
       $link = $a->href;
+print "link: [$link]\n";
       $link = preg_replace("/^\/url\?q=/", "", $link);
       $link = preg_replace("/&amp;sa=U.*/", "", $link);
       $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
@@ -65,8 +65,10 @@ class ImagesTools {
    *                  false   if image is not a fuplicate
    */
   public function checkImageDuplication($images, $sum) {
-var_dump($images);
-return;
+    if (!$images) {
+      return false;
+    }
+print "IMAGES:\n"; var_dump($images);
     foreach ($images as $image) {
       if ($image["sum"] === $sum) {
         return true;
@@ -125,12 +127,14 @@ return;
     return false;
   }
 */
-  public function checkImageSimilarity($signature, $photos) {
-var_dump($photos); return;
-    foreach ($photos as $photo) {
-      $distance = $this->compareSignatures($signature, $photo["signature"]);
+  public function checkImageSimilarity($signature, $images) {
+    if (!$images) {
+      return false;
+    }
+    foreach ($images as $image) {
+      $distance = $this->compareSignatures($signature, $image["signature"]);
       if ($distance <= IMAGE_MIN_DISTANCE) { // duplicate found
-        $this->router->log("info", "image signature $signature is similar to " . $photo["signature"] . " ($distance), it's probably a duplicate...");
+        $this->router->log("info", "image signature $signature is similar to " . $image["signature"] . " ($distance), it's probably a duplicate...");
         return true;
       }
     }

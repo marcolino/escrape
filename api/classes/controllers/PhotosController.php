@@ -8,8 +8,8 @@
 
 class PhotosController extends AbstractController {
   const DB_PHOTOS_PATH = "db/photos/";
-  const DB_PHOTOS_FULL_PATH = self::DB_PHOTOS_PATH . "full/";
-  const DB_PHOTOS_THUMBNAIL_PATH = self::DB_PHOTOS_PATH . "thumb/";
+  const DB_PHOTOS_PATH_FULL = "db/photos/full/";
+  const DB_PHOTOS_PATH_THUMBNAIL = "db/photos/thumb/";
 
   public function __construct($router) {
     $this->router = $router;
@@ -41,29 +41,29 @@ class PhotosController extends AbstractController {
 
     # get all photos for the person id of the photo
     $photos = $this->getPhotosByPerson($photo["id_person"]);
+print "PHOTOS:"; var_dump($photos);
 
     # check for photo duplication
     $sum = md5($bitmap);
-var_dump($photos);
+    $photo["sum"] = $sum;
     if ($imagesTool->checkImageDuplication($photos, $sum)) {
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " is a duplicate");
       return -1; // duplicate found
     }
-    $photo["sum"] = $sum;
 
     # check for photo similarity
     $signature = $imagesTool->getSignaturefromBitmap($bitmap, $photo["url"]);
+    $photo["signature"] = $signature;
     if ($imagesTool->checkImageSimilarity($signature, $photos)) {
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " has a similar photo");
       return -1; // duplicate found
     }
-    $photo["signature"] = $signature;
 
     # check for photo truthfulness
     if ($imagesTool->checkImageThruthfulness($photo["url"])) {
-      $photo["thruthful"] = true;
+      $photo["thruthfulness"] = true;
     } else {
-      $photo["thruthful"] = false;
+      $photo["thruthfulness"] = false;
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " does not seem thrutful");
     }
 
@@ -71,7 +71,7 @@ var_dump($photos);
     $photo["name"] = $photo["sum"]; # TODO: ???
 
     # assert photos full path existence
-    $pathNameFull = self::DB_PHOTOS_FULL_PATH . $photo["id_person"] . "/";
+    $pathNameFull = self::DB_PHOTOS_PATH_FULL . $photo["id_person"] . "/";
     if (!file_exists($pathNameFull)) {
       if (!@mkdir($pathNameFull, 0766, true)) {
         throw new Exception("can't create folder $pathNameFull");
@@ -92,7 +92,7 @@ var_dump($photos);
     }
 
     # assert photos thumbnail path existence
-    $pathNameThumbnail = self::DB_PHOTOS_THUMBNAIL_PATH . $photo["id_person"] . "/";
+    $pathNameThumbnail = self::DB_PHOTOS_PATH_THUMBNAIL . $photo["id_person"] . "/";
     if (!file_exists($pathNameThumbnail)) {
       if (!@mkdir($pathNameThumbnail, 0766, true)) {
         throw new Exception("can't create folder $pathNameThumbnail");
@@ -112,7 +112,7 @@ var_dump($photos);
       throw new Exception("can't save photo to file $photoPathThumbnail");
     }
 
-    return true;
+    return $this->db->add("photo", $photo); # add photo to db
   }
   
   public function get($id) {
@@ -164,10 +164,10 @@ var_dump($photos);
   private function photoToPath($photo, $mode) {
     switch ($mode) {
       case "full":
-        $pathName = self::DB_PHOTOS_FULL_PATH;
+        $pathName = self::DB_PHOTOS_PATH_FULL;
         break;
       case "thumbnail":
-        $pathName = self::DB_PHOTOS_THUMBNAIL_PATH;
+        $pathName = self::DB_PHOTOS_PATH_THUMBNAIL;
         break;
       default:
         throw new Exception("photoToPath unforeseen mode $mode");

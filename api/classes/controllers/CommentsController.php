@@ -55,24 +55,14 @@ class CommentsController extends AbstractController {
     if (!$id) {
       throw new Exception("can't get comment: no id specified");
     }
-    if (!isset($this->db->data["comments"][$id])) {
-      throw new Exception("can't get comment: id [$id] not present");
-    }
-    return $this->db->data["comments"][$id];
+    return $this->db->get("comment", $id);
   }
   
   public function getByPhone($phone) {
     if (!$phone) {
       throw new Exception("can't get comments by phone: no phone specified");
     }
-    $phoneMd5 = md5($phone);
-    $comments = [];
-    foreach ($this->db->data["comments"] as $comment) {
-      if ($comment["phoneMd5"] === $phoneMd5) {
-        $comments[] = $comment;
-      }
-    }
-    return $comments;
+    return $this->db->getByField("comment", "phone", $phone);
   }
   
 /*
