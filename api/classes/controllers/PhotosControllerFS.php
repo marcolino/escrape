@@ -7,9 +7,22 @@
  */
 
 class PhotosController extends AbstractController {
+  const DB_PHOTOS_PATH = "db/photos/";
+  const DB_PHOTOS_PATH_FULL = "db/photos/full/";
+  const DB_PHOTOS_PATH_THUMBNAIL = "db/photos/thumb/";
+
   public function __construct($router) {
     $this->router = $router;
     $this->db = $router->db;
+    $pathName = self::DB_PHOTOS_PATH;
+    if (!file_exists($pathName)) {
+      if (!@mkdir($pathName, 0766, true)) {
+        throw new Exception("can't create folder $pathName");
+      }
+      $this->router->log("debug", "the directory $pathName has been created");
+    } else {
+      ; # directory already exists, not the first time here
+    }
   }
 
   /**
@@ -20,10 +33,15 @@ class PhotosController extends AbstractController {
   *                  >= 0 id of added photo
   */
   public function add($photo) {
-    $photo = new Image();
+    # download photo
+    $bitmap = $this->getUrlContents($photo["url"]);
+
+    # check for photo duplication
+    $imagesTool = new ImagesTools($this->router);
 
     # get all photos for the person id of the photo
     $photos = $this->getPhotosByPerson($photo["id_person"]);
+print "PHOTOS:"; var_dump($photos);
 
     # check for photo duplication
     $sum = md5($bitmap);

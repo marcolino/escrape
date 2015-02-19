@@ -83,6 +83,7 @@ class DB extends PDO {
         "create table if not exists photo (
           id integer primary key autoincrement,
           id_person integer,
+          bitmap varchar,
           name varchar(32),
           sum varchar(32),
           signature varchar(256),
@@ -127,29 +128,14 @@ class DB extends PDO {
     }
   }
 
-/*
-  public function getByKey($table, $key) {
-    try {
-      $sql = "select * from $table where key = :key limit 1";
-      $statement = $this->db->prepare($sql);
-      $statement->bindParam(":key", $key, PDO::PARAM_STR);
-      $statement->execute();
-      $result = $statement->fetch(PDO::FETCH_ASSOC);
-      return $result;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
-  }
-*/
-
   public function getByField($table, $fieldName, $fieldValue) {
     try {
       $sql = "select * from $table where $fieldName = :$fieldName";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
       $statement->execute();
-      $result = $statement->fetch(PDO::FETCH_ASSOC);
-      return $result;
+      $results = $statement->fetchAll(PDO::FETCH_ASSOC);
+      return $results;
     } catch (PDOException $e) {
       throw new Exception($e->getMessage());
     }
@@ -181,19 +167,25 @@ class DB extends PDO {
     }
   }
 
-  public function add($table, $data) {
+  public function add($table, $array) {
+print "add($table)\n";
     try {
       $fields = $values = "";
-      foreach ($data as $key => $value) {
+      foreach ($array as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
+print "add(a)\n";
       $sql = "insert into $table ($fields) values ($values)";
+print "add(a1)\n";
       $statement = $this->db->prepare($sql);
-      foreach ($data as $key => &$value) {
+print "add(a2)\n";
+      foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
+print "add(b)\n";
       $statement->execute();
+print "add(c): " . $statement->rowCount();
       if ($statement->rowCount() != 1) {
         throw new Exception("insert into table $table did insert " . $statement->rowCount() . " records");
       }
@@ -203,16 +195,16 @@ class DB extends PDO {
     }
   }
 
-  public function set($table, $id, $data) {
+  public function set($table, $id, $array) {
     try {
       $set = "";
-      foreach ($data as $key => $value) {
+      foreach ($array as $key => $value) {
         $set .= ($set ? ", " : "") . $key . "=" . " " . ":" . $key;
       }
       $sql = "update $table set $set where id = :id";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);       
-      foreach ($data as $key => &$value) {
+      foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();

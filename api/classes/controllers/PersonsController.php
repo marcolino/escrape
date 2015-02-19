@@ -462,10 +462,17 @@ public function putVote($params) { return $this->setVote($params); }
   }
 
   public function test() {
-    $photoUrls = [
+   $photoUrls = [
       "http://img1.wikia.nocookie.net/__cb20130913040728/disney/images/0/0e/595157-alice1_large.jpg",
       "http://planetpesca.com/files/2009/04/sardina.gif",
     ];
+/*
+$img = new Image();
+$img->createFromUrl("http://img1.wikia.nocookie.net/__cb20130913040728/disney/images/0/0e/595157-alice1_large.jpg");
+header("Content-Type: " . $img->mime);
+print $img->bitmap;
+exit;
+*/
 
     $newPerson = [];
     $newPerson["key"] = "toe-123456";
@@ -483,9 +490,10 @@ public function putVote($params) { return $this->setVote($params); }
     $newPerson["vote"] = 7;
 
     $photos = new PhotosController($this->router);
-    if (($person = $this->db->getByField("person", "key", $newPerson["key"]))) { # old key, update it
-      $id = $person["id"];
-      $this->router->log("debug", "updating person: " . $person["key"] . " ^^^");
+    if (($persons = $this->db->getByField("person", "key", $newPerson["key"]))) { # old key, update it
+#var_dump($person); exit;
+      $id = $persons[0]["id"];
+      $this->router->log("debug", "updating person: " . $persons[0]["key"] . " ^^^");
       $this->set($id, $newPerson); # error handling?
       #$this->db->data["persons"][$id] = $person;
     } else { # new key, insert it
@@ -494,14 +502,65 @@ public function putVote($params) { return $this->setVote($params); }
     }
     $num = 0;
     foreach ($photoUrls as $photoUrl) {
-      $photo = [];
-      $photo["id_person"] = $id;
-      $photo["showcase"] = ($num === 0);
-      $photo["url"] = $photoUrl;
-      $photos->add($photo);
+      $showcase = ($num === 0); # TODO: how to handle showcase when adding photos?
+      $this->photoAdd($id, $photoUrl, $showcase);
       $num++;
     }
     return true;
   }
 
+  /**
+   * Add a photo
+   *
+   * @param  integer $idPerson the id of the person's photo
+   * @param  string $photoUrl  the url of the photo
+   * @param  string $showcase  flag to denote showcase photo
+   * @return integer: -1   if duplicated photo (not added)
+   *                  >= 0 id of added photo
+   */
+  public function photoAdd($idPerson, $photoUrl, $showcase) {
+    $photo = new Image();
+    $photo->createFromUrl($photoUrl);
+    $photo->setShowcase($showcase);
+
+    if ($this->photoCheckDuplication($idPerson, $photo)) {
+      $this->router->log("info", "photo " . $photo->url . " for person id " . $idPerson . " is a duplicate");
+      return -1; // duplicate found
+    }
+print "add";
+    return $this->db->add("photo", [
+      "id_person" => $idPerson,
+      "url" => $photo->url,
+      "domain" => $photo->domain,
+      "bitmap" => $photo->bitmap,
+      "sum" => $photo->sum,
+      "size" => $photo->size,
+      "signature" => $photo->signature,
+      "type" => $photo->type,
+      "mime" => $photo->mime,
+      "name" => $photo->sum,
+      "thruthfulness" => $photo->thruthfulness,
+    ]);
+  }
+
+  /**
+   * Check for photo duplication
+   *
+   * @param  array: photo
+   * @param  string: photo sum
+   * @return boolean: true    if photo is a duplicate
+   *                  false   if photo is not a fuplicate
+   */
+  private function photoCheckDuplication($idPerson, $photo) {
+    $photos = $this->db->get("photo", $idPerson);
+#print "PHOTOS:\n"; var_dump($photos);
+    if ($photos) {
+      foreach ((array)$photos as $p) {
+        if ($p["sum"] === $photo->sum) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
