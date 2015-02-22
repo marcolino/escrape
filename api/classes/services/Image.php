@@ -37,15 +37,24 @@ class Image {
   */
   public function fromUrl($url) {
     $this->url = $url;
+<<<<<<< HEAD
     $this->bitmap = $this->getUrlContents($url); // download image
+=======
+    $this->bitmap = $this->getUrlContents(url); // download image
+    $this->bitmapFull = $this->convert($this->options["internalType"]); // convert image to internal type
+    $this->bitmapSmall = $this->scale($this->options["thumbnailSmallWidth"]);
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     $info = getimagesize($url);
     $this->width = $info[0];
     $this->height = $info[1];
     $this->type = $info[2];
     $this->mime = $info["mime"];
     $this->signature = $this->signature();
+<<<<<<< HEAD
     $this->bitmapFull = $this->convert($this->options["internalType"]); // convert image to internal type
     $this->bitmapSmall = $this->scale($this->options["thumbnailSmallWidth"]);
+=======
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
   }
 
   /**
@@ -57,13 +66,21 @@ class Image {
   public function fromArray($array) {
     $this->url = $array["url"];
     $this->bitmap = $array["bitmap"];
+<<<<<<< HEAD
+=======
+    $this->bitmapFull = $array["bitmapFull"];
+    $this->bitmapSmall = $array["bitmapSmall"];
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     $this->width = $array["width"];
     $this->height = $array["height"];
     $this->type = $array["type"];
     $this->mime = $array["mime"];
     $this->signature = $array["signature"];
+<<<<<<< HEAD
     $this->bitmapFull = $array["bitmapFull"];
     $this->bitmapSmall = $array["bitmapSmall"];
+=======
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
   }
 
   /**
@@ -75,13 +92,21 @@ class Image {
     $array = [];
     $array["url"] = $this->url;
     $array["bitmap"] = $this->bitmap;
+<<<<<<< HEAD
+=======
+    $array["bitmapFull"] = $this->bitmapFull;
+    $array["bitmapSmall"] = $this->bitmapSmall;
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     $array["width"] = $this->width;
     $array["height"] = $this->height;
     $array["type"] = $this->type;
     $array["mime"] = $this->mime;
     $array["signature"] = $this->signature;
+<<<<<<< HEAD
     $array["bitmapFull"] = $this->bitmapFull;
     $array["bitmapSmall"] = $this->bitmapSmall;
+=======
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     return $array;
   }
 
@@ -107,7 +132,11 @@ class Image {
       return $this->bitmap;
     }
     // create the image from the bitmap
+<<<<<<< HEAD
     $img = imagecreatefromstring($this->bitmap);
+=======
+    $img = imagecreatefromstring($this->bitmap));
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     // produce the new bitmap
     ob_start();
     switch ($type) {
@@ -139,7 +168,11 @@ class Image {
    */
   private function scale($width) {
     // create the image from the bitmap
+<<<<<<< HEAD
     $img = imagecreatefromstring($this->bitmapFull);
+=======
+    $img = imagecreatefromstring($this->bitmapFull));
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     // calculate the new height to keep the same proportions
     $height = (($this->height * $width) / $this->width);
     // generate the new image container with the new size

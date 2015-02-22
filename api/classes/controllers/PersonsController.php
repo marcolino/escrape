@@ -524,30 +524,49 @@ public function putVote($params) { return $this->setVote($params); }
     $image->fromUrl($photoUrl);
     $photo = $image->toArray();
     unset($image);
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     // check if image is an exact duplicate
     if ($this->photoCheckDuplication($idPerson, $photo)) {
       $this->router->log("info", "photo " . $photo->url . " for person id " . $idPerson . " is a duplicate");
       return -1; // duplicate found
     }
+<<<<<<< HEAD
     $this->router->log("debug", "photoAdd - not a duplicate");
+=======
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
 
     // check if image has similarities
     if ($this->photoCheckSimilarity($idPerson, $photo)) {
       $this->router->log("info", "photo " . $photo->url . " for person id " . $idPerson . " is a similarity");
       return -2; // similarity found
     }
+<<<<<<< HEAD
     $this->router->log("debug", "photoAdd - not a similarity");
 
     $photo["id_person"] = $idPerson;
     $photo["timestamp_creation"] = time();
     $photo["domain"] = parse_url($photo["url"])["host"];
     $photo["sum"] = md5($photo["bitmap"]);
+=======
+
+    $photo["id_person"] = $idPerson;
+    $photo["timestamp_creation"] = time();
+    $photo["domain"] = parse_url($photo["url"])['host'];
+    $photo["sum"] = md5($photo["bitmap"];
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     $photo["thruthfulness"] = null; // this is an offline property (it's very expensive to calculate)
     $photo["showcase"] = $showcase;
    
     // store this photo 
+<<<<<<< HEAD
     if (($number = $this->photoStore($idPerson, $photo)) < 0) {
+=======
+    if (($number = $this->photoStore($photo)) < 0) {
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $idPerson . " could not be stored locally");
       return -3; // error storing photo locally
     }
@@ -633,6 +652,7 @@ public function putVote($params) { return $this->setVote($params); }
    */
   private function photoStore($idPerson, $photo) {
     $person = $this->db->get("person", $idPerson);
+<<<<<<< HEAD
     $personPhotosCount = $this->db->countByField("photo", "id_person", $idPerson);
     $number = ++$personPhotosCount;
     $dirname = self::PHOTOS_PATH . $idPerson . "-" . $person["key"] . "/";
@@ -642,6 +662,17 @@ public function putVote($params) { return $this->setVote($params); }
     # assure photos full path existence
     if (!file_exists($dirname)) {
       if (!@mkdir($dirname, 0777, true)) {
+=======
+    $personPhotosCount = $this->db->countByField("photos", "id_person", $idPerson);
+    $number = ++$personPhotosCount;
+    $dirname = self::PHOTOS_PATH . $idPerson . "-" . $person["key"] . "/";
+    $filename = sprintf("%03d", $photo["number"]);
+    $fileext = $photo["type"];
+
+    # assure photos full path existence
+    if (!file_exists($dirname)) {
+      if (!@mkdir($dirname, 0766, true)) {
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
         throw new Exception("can't create folder $dirname");
       }
       $this->router->log("debug", "the directory $dirname has been created");
@@ -649,9 +680,15 @@ public function putVote($params) { return $this->setVote($params); }
       ; # directory already exists, not the first photo for this person
     }
 
+<<<<<<< HEAD
     $pathnameFull = $dirname . "full" . "-" . $filename . $fileext;
     @file_put_contents($pathnameFull, $photo["bitmapFull"]);
     $pathnameSmall = $dirname . "small" . "-" . $filename . $fileext;
+=======
+    $pathnameFull = $dirname . $filename . "-" . "full" . "." . $fileext;
+    @file_put_contents($pathnameFull, $photo["bitmapFull"]);
+    $pathnameSmall = $dirname . $filename . "-" . "small" . "." . $fileext;
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     @file_put_contents($pathnameSmall, $photo["bitmapSmall"]);
 
     return $number;
@@ -740,7 +777,10 @@ public function putVote($params) { return $this->setVote($params); }
     $num = 0;
     foreach ($photoUrls as $photoUrl) {
       $showcase = ($num === 0); # TODO: how to handle showcase when adding photos?
+<<<<<<< HEAD
 $this->router->log("info", "calling photoAdd: " . $photoUrl);
+=======
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
       $this->photoAdd($id, $photoUrl, $showcase);
       $num++;
     }

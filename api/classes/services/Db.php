@@ -89,7 +89,11 @@ class DB extends PDO {
           sum varchar(32),
           signature varchar(256),
           showcase integer,
+<<<<<<< HEAD
           thruthfulness integer
+=======
+          thruthfulness integer,
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
          );
         "
       );
@@ -167,18 +171,30 @@ class DB extends PDO {
   }
 
   public function add($table, $array) {
+<<<<<<< HEAD
+=======
+#print "add($table)\n";
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     try {
       $fields = $values = "";
       foreach ($array as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
+#print "add(a)\n";
       $sql = "insert into $table ($fields) values ($values)";
+#print "add(a1)\n";
       $statement = $this->db->prepare($sql);
+<<<<<<< HEAD
+=======
+#print "add(a2)\n";
+>>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
       foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
+#print "add(b)\n";
       $statement->execute();
+#print "add(c): " . $statement->rowCount();
       if ($statement->rowCount() != 1) {
         throw new Exception("insert into table $table did insert " . $statement->rowCount() . " records");
       }
