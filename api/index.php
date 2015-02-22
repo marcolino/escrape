@@ -1,12 +1,16 @@
 <?php
 
+ini_set('display_errors', 'On');
+error_reporting(E_ALL);
+
 require_once 'Slim/Slim.php';
 require_once 'classes/controllers/AbstractController.php';
 require_once 'classes/controllers/PersonsController.php';
 require_once 'classes/controllers/PhotosController.php';
 require_once 'classes/controllers/CommentsController.php';
 require_once 'classes/services/Db.php';
-require_once 'classes/services/ImagesTools.php';
+#require_once 'classes/services/ImagesTools.php';
+require_once 'classes/services/Image.php';
 
 class Router {
 
