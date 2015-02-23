@@ -8,9 +8,8 @@ app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal,
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   $scope.sites = Sites;
+console.log('sites:', $scope.sites.sgi);
   $scope.cfg = cfg; // make cfg data available to scope
-if (!cfg.fake) { console.log('sites:', $scope.sites); }
-$scope.username = $rootScope.username;
 
   // private methods
   function applyPersons(newPersons) {

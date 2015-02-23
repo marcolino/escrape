@@ -1,64 +1,127 @@
 'use strict';
  
-app.factory('AuthenticationService',
-  function (Base64, $http, $cookieStore, $rootScope, $timeout) {
-    var service = {};
+app.factory('AuthenticationService', function (Base64, $http, $cookieStore, $rootScope, $q, cfg) {
+  var apiUri = cfg.apiUri + '/users/';
+  var service = {};
 
-    service.Login = function (username, password, callback) {
+/*
+  // private methods
+  function handleSuccess(response) {
+    //console.info('Person success: ', response.data);
+    if (response.data.error) {
+      console.error(response.data.error);
+      return($q.reject(response.data.error));
+    } else {
+      return(response.data);
+    }
+  }
 
-      /* dummy authentication for testing, uses $timeout to simulate api call
-       ----------------------------------------------*/
-      $timeout(function() {
-        var response = { success: username === 'test' && password === 'test' };
-        if(!response.success) {
-          response.message = 'Username or password is incorrect';
-        }
-        callback(response);
-      }, 3000);
+  function handleError(response) {
+    //console.info('Person error: ', response);
+    if (
+      ! angular.isObject(response.data) ||
+      ! response.data.message
+      ) {
+      return($q.reject('An unknown error occurred in service [Person]'));
+    }
+    return($q.reject(response.data.message));
+  }
+*/
+
+  service.Register = function (username, password, callback) {
+    $http.post(apiUri + 'register', { username: username, password: password })
+    .success(function (response) {
+      if (!response.success) {
+        console.log(response);
+        //response.message = 'Incorrect registration...';
+      }
+console.log('register - ', response);
+      callback(response);
+    })
+    .error(function (response) {
+console.log('error:', response);
+      if (
+        ! angular.isObject(response.data) ||
+        ! response.data.message
+      ) {
+        return($q.reject('An unknown error occurred in service [Authentication]'));
+      }
+      return($q.reject(response.data.message));
+    });
+  };
+
+  service.Login = function (username, password, callback) {
 
 
-      /* use this for real authentication
-       ----------------------------------------------*/
-      //$http.post('/api/authenticate', { username: username, password: password })
-      //  .success(function (response) {
-      //    callback(response);
-      //  });
+    /* dummy authentication for testing, uses $timeout to simulate api call
+     ----------------------------------------------*/
+    /*
+    $timeout(function() {
+      var response = { success: username === 'marco' && password === 'marco' };
+      if(!response.success) {
+        response.message = 'Username or password is incorrect';
+      }
+      callback(response);
+    }, 2000);
+    */
+    /* use this for real authentication
+     ----------------------------------------------*/
+    //$http.post('/api/authenticate', { username: username, password: password })
+    //  .success(function (response) {
+    //    callback(response);
+    //  });
+    
+    $http.post(apiUri + 'login', { username: username, password: password })
+    .success(function (response) {
+      if (!response.success) {
+        response.message = 'Incorrect username or password';
+      }
+      callback(response);
+    })
+    .error(function (response) {
+console.log('error:', response);
+      if (
+        ! angular.isObject(response.data) ||
+        ! response.data.message
+      ) {
+        return($q.reject('An unknown error occurred in service [Authentication]'));
+      }
+      return($q.reject(response.data.message));
+    });
+  };
 
+  service.SetCredentials = function (username, password) {
+    var authdata = Base64.encode(username + ':' + password);
+
+    $rootScope.globals = {
+      currentUser: {
+        username: username,
+        authdata: authdata
+      }
     };
- 
-    service.SetCredentials = function (username, password) {
-      var authdata = Base64.encode(username + ':' + password);
- 
-      $rootScope.globals = {
-        currentUser: {
-          username: username,
-          authdata: authdata
-        }
-      };
- 
-      $http.defaults.headers.common['Authorization'] = 'Basic ' + authdata; // jshint ignore:line
-      $cookieStore.put('globals', $rootScope.globals);
-    };
- 
-    service.ClearCredentials = function () {
-      $rootScope.globals = {};
-      $cookieStore.remove('globals');
-      $http.defaults.headers.common.Authorization = 'Basic ';
-    };
- 
-    return service;
-  })
+
+    $http.defaults.headers.common['Authorization'] = 'Basic ' + authdata; // jshint ignore:line
+    $cookieStore.put('globals', $rootScope.globals);
+  };
+
+  service.ClearCredentials = function () {
+    $rootScope.globals = {};
+    $cookieStore.remove('globals');
+    $http.defaults.headers.common.Authorization = 'Basic ';
+  };
+
+  return service;
+})
  
 .factory('Base64', function () {
-  /* jshint ignore:start */
- 
+  /* jshint bitwise: false */
   var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
  
   return {
     encode: function (input) {
-      var output = "";
-      var chr1, chr2, chr3 = "";
-      var enc1, enc2, enc3, enc4 = "";
+      var output = '';
+      var chr1, chr2, chr3 = '';
+      var enc1, enc2, enc3, enc4 = '';
       var i = 0;
  
       do {
@@ -82,27 +145,29 @@ app.factory('AuthenticationService',
           keyStr.charAt(enc2) +
           keyStr.charAt(enc3) +
           keyStr.charAt(enc4);
-        chr1 = chr2 = chr3 = "";
-        enc1 = enc2 = enc3 = enc4 = "";
+        chr1 = chr2 = chr3 = '';
+        enc1 = enc2 = enc3 = enc4 = '';
       } while (i < input.length);
  
       return output;
     },
  
     decode: function (input) {
-      var output = "";
-      var chr1, chr2, chr3 = "";
-      var enc1, enc2, enc3, enc4 = "";
+      var output = '';
+      var chr1, chr2, chr3 = '';
+      var enc1, enc2, enc3, enc4 = '';
       var i = 0;
  
       // remove all characters that are not A-Z, a-z, 0-9, +, /, or =
       var base64test = /[^A-Za-z0-9\+\/\=]/g;
       if (base64test.exec(input)) {
-        window.alert("There were invalid base64 characters in the input text.\n" +
-          "Valid base64 characters are A-Z, a-z, 0-9, '+', '/',and '='\n" +
-          "Expect errors in decoding.");
+        window.alert(
+          'There were invalid base64 characters in the input text.\n' +
+          'Valid base64 characters are A-Z, a-z, 0-9, \'+\', \'/\',and \'=\'\n' +
+          'Expect errors in decoding.'
+        );
       }
-      input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+      input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
  
       do {
         enc1 = keyStr.indexOf(input.charAt(i++));
@@ -116,15 +181,15 @@ app.factory('AuthenticationService',
  
         output = output + String.fromCharCode(chr1);
  
-        if (enc3 != 64) {
+        if (enc3 !== 64) {
           output = output + String.fromCharCode(chr2);
         }
-        if (enc4 != 64) {
+        if (enc4 !== 64) {
           output = output + String.fromCharCode(chr3);
         }
  
-        chr1 = chr2 = chr3 = "";
-        enc1 = enc2 = enc3 = enc4 = "";
+        chr1 = chr2 = chr3 = '';
+        enc1 = enc2 = enc3 = enc4 = '';
  
       } while (i < input.length);
  
@@ -132,5 +197,5 @@ app.factory('AuthenticationService',
     }
   };
  
-  /* jshint ignore:end */
+  /* jshint bitwise: true */
 });

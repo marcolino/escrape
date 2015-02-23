@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 
 require_once 'Slim/Slim.php';
 require_once 'classes/controllers/AbstractController.php';
+require_once 'classes/controllers/UsersController.php';
 require_once 'classes/controllers/PersonsController.php';
 require_once 'classes/controllers/PhotosController.php';
 require_once 'classes/controllers/CommentsController.php';
@@ -37,6 +38,8 @@ class Router {
         $persons = new PersonsController($this);
         $this->success($persons->test());
       } catch (Exception $e) {
+        $this->error($e);
+      } catch (PDOException $e) {
         $this->error($e);
       }
     });
@@ -114,17 +117,31 @@ class Router {
     # ======================
     # users
     # ======================
-    $this->app->post('/users/register/', function() {
+    $this->app->post('/users/register', function() {
       try {
         $users = new UsersController($this);
         $data = json_decode($this->app->request()->getBody());
-        $this->success($users->register($data));
+        $this->success($users->register($data->username, $data->password));
       } catch (Exception $e) {
         $this->error($e);
       }
     });
     # ======================
-    $this->app->get('/users/login/:username/:password', function($username, $password) {
+    $this->app->post('/users/login', function() {
+    //$this->app->post('/users/login', function() {
+      //$username = "u"; $password = "p";
+      $data = json_decode($this->app->request()->getBody());
+      try {
+        $users = new UsersController($this);
+        $this->success($users->login($data->username, $data->password));
+      } catch (Exception $e) {
+        $this->error($e);
+      }
+    });
+//  $this->app->post('/users/login/:username/:password', function($username, $password) {
+/*
+    $this->app->post('/users/login', function() {
+      $username = "u"; $password = "p";
       try {
         $users = new UsersController($this);
         $this->success($users->login($username, $password));
@@ -132,6 +149,7 @@ class Router {
         $this->error($e);
       }
     });
+*/
     # ======================
     $this->app->delete('/users/delete/:id', function($id) {
       try {

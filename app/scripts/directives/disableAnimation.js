@@ -11,5 +11,5 @@ app.directive('disableAnimation', function($animate) {
         $animate.enabled(!value, $element);
       });
     }
-  }
+  };
 });

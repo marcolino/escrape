@@ -125,8 +125,13 @@ class PhotosController extends AbstractController {
       $this->delete($photo["id"]);
     }
   }
+
   public function getPhotosByPerson($idPerson) {
     return $this->db->getByField("photo", "id_person", $idPerson);
+  }
+
+  public function getPhotoShowcase($idPerson) {
+    return 0; # TODO...
   }
 
   private function scaleBitmap($bitmap, $mode) {

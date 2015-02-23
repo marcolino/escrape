@@ -17,12 +17,11 @@ class DB extends PDO {
       $new = !file_exists(self::DB_PATH);
       $this->db = new PDO(self::DB_TYPE . ":" . self::DB_PATH);
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
       if ($new) { // db doesn't exist, create tables...
         $this->createTables();
       }
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (Exception $e) { /* caught by router */ }
   }
 
   public function createTables() {
@@ -30,9 +29,11 @@ class DB extends PDO {
       $this->db->exec(
         "create table if not exists user (
           id integer primary key autoincrement,
-          name varchar,
+          username varchar,
+          password varchar,
           email text
          );
+         create unique index if not exists username_idx on user (username);
         "
       );
 
@@ -89,18 +90,12 @@ class DB extends PDO {
           sum varchar(32),
           signature varchar(256),
           showcase integer,
-<<<<<<< HEAD
           thruthfulness integer
-=======
-          thruthfulness integer,
->>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
          );
         "
       );
  
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function getAll($table) {
@@ -113,9 +108,7 @@ class DB extends PDO {
       $statement = $this->db->query($sql);
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $result;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }     
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function get($table, $id) {
@@ -126,9 +119,7 @@ class DB extends PDO {
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function getByField($table, $fieldName, $fieldValue) {
@@ -139,22 +130,18 @@ class DB extends PDO {
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
     try {
-      $sql = "select avg($fieldname) from $table where id_person = :id_person";
+      $sql = "select avg($fieldName) from $table where id_person = :id_person";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . "id_person", $idPerson); #, PDO::PARAM_STR);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function countByField($table, $fieldName, $fieldValue) {
@@ -165,43 +152,27 @@ class DB extends PDO {
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result ? count($result) : 0;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function add($table, $array) {
-<<<<<<< HEAD
-=======
-#print "add($table)\n";
->>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
     try {
       $fields = $values = "";
       foreach ($array as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
-#print "add(a)\n";
       $sql = "insert into $table ($fields) values ($values)";
-#print "add(a1)\n";
       $statement = $this->db->prepare($sql);
-<<<<<<< HEAD
-=======
-#print "add(a2)\n";
->>>>>>> 5811d8ec08ca3cbcc82e16fbb700a4752581207c
       foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
-#print "add(b)\n";
       $statement->execute();
-#print "add(c): " . $statement->rowCount();
       if ($statement->rowCount() != 1) {
         throw new Exception("insert into table $table did insert " . $statement->rowCount() . " records");
       }
       return $this->db->lastInsertId();
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function set($table, $id, $array) {
@@ -222,9 +193,7 @@ class DB extends PDO {
         throw new Exception("update into table $table did update " . $statement->rowCount() . " records");
       }
       return $id;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   public function delete($table, $id) {
@@ -239,9 +208,7 @@ class DB extends PDO {
         throw new Exception("delete from table $table did delete " . $statement->rowCount() . " records");
       }
       return true;
-    } catch (PDOException $e) {
-      throw new Exception($e->getMessage());
-    }
+    } catch (PDOException $e) { /* caught by router */ }
   }
 
   private function profile($method) { # TODO: to be tested...

@@ -9,9 +9,11 @@
  * Main module of the application.
  */
 
+/*
 function NavBarCtrl($scope) {
   $scope.isCollapsed = true;
 }
+*/
 var app = angular.module('escrapeApp', [
     'ngAnimate',
     'ngAria',
@@ -29,9 +31,14 @@ var app = angular.module('escrapeApp', [
 
 app.config(function ($routeProvider) {
   $routeProvider
+    .when('/register', {
+      templateUrl: 'views/register.html',
+      controller: 'AuthenticationCtrl',
+      //hideMenus: true
+    })
     .when('/login', {
       templateUrl: 'views/login.html',
-      controller: 'LoginCtrl',
+      controller: 'AuthenticationCtrl',
       //hideMenus: true
     })
     .when('/', {
@@ -61,7 +68,10 @@ app.run(function ($rootScope, $location, $cookieStore, $http) {
   $rootScope.$on('$locationChangeStart', function (event, next, current) {
     console.info('rootScope.on(locationChangeStart):', 'event:',event, 'next:',next, 'current:',current);
     // redirect to login page if not logged in
-    if ($location.path() !== '/login' && !$rootScope.globals.currentUser) {
+    if (
+      (!$rootScope.globals.currentUser) &&
+      ($location.path() !== '/login' && $location.path() !== '/register')
+    ) {
       $location.path('/login');
     }
   });
@@ -81,4 +91,4 @@ String.prototype.shuffle = function () {
     a[j] = tmp;
   }
   return a.join('');
-}
+};
