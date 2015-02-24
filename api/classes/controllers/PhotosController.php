@@ -131,10 +131,10 @@ class PhotosController {
   }
 
   public function getPhotoShowcase($idPerson) {
-    return 0; # TODO...
+    return "http://localhost/escrape/api/db/photos/1-toe-123456/small-001.jpeg"; # TODO...
   }
 
-  private function scaleBitmap($bitmap, $mode) {
+  private function scaleBitmap($bitmap, $mode) { # TODO: REMOVE-ME...
     switch ($mode) {
       case "full":
         ;
