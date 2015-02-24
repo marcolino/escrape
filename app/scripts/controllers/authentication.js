@@ -9,6 +9,7 @@ app.controller('AuthenticationCtrl',
       AuthenticationService.Register($scope.username, $scope.password, function(response) {
         if (response.success) {
           AuthenticationService.SetCredentials($scope.username, $scope.password); // TODO: set credentials on registration?
+          $rootScope.username = $scope.username;
           $location.path('/#');
         } else {
           $scope.error = response.message;
@@ -21,8 +22,7 @@ app.controller('AuthenticationCtrl',
       AuthenticationService.Login($scope.username, $scope.password, function(response) {
         if (response.success) {
           AuthenticationService.SetCredentials($scope.username, $scope.password);
-$rootScope.username = $scope.username;
-$rootScope.password = $scope.password;
+          $rootScope.username = $scope.username;
           $location.path('/#');
         } else {
           $scope.error = response.message;

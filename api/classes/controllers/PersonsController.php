@@ -9,7 +9,7 @@
 # TODO:
 #  - normalizePhone(), ... etc ...: in a common class...
 
-class PersonsController extends AbstractController {
+class PersonsController {
 
   private $personsDefinition = [
     "sgi" => [

@@ -13,7 +13,7 @@ require_once('lib/simple_html_dom.php');
 require_once('lib/random_user_agent.php');
 require_once('classes/services/Utilities.php');
 
-class CommentsController extends AbstractController {
+class CommentsController {
 
   private $commentsDefinition = array(
     "gnf" => array(

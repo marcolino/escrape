@@ -31,60 +31,34 @@ app.factory('AuthenticationService', function (Base64, $http, $cookieStore, $roo
   service.Register = function (username, password, callback) {
     $http.post(apiUri + 'register', { username: username, password: password })
     .success(function (response) {
-      if (!response.success) {
-        console.log(response);
-        //response.message = 'Incorrect registration...';
-      }
-console.log('register - ', response);
       callback(response);
     })
     .error(function (response) {
-console.log('error:', response);
       if (
         ! angular.isObject(response.data) ||
         ! response.data.message
       ) {
-        return($q.reject('An unknown error occurred in service [Authentication]'));
+        return($q.reject('An unknown error occurred in registration service'));
       }
       return($q.reject(response.data.message));
     });
   };
 
   service.Login = function (username, password, callback) {
-
-
-    /* dummy authentication for testing, uses $timeout to simulate api call
-     ----------------------------------------------*/
-    /*
-    $timeout(function() {
-      var response = { success: username === 'marco' && password === 'marco' };
-      if(!response.success) {
-        response.message = 'Username or password is incorrect';
-      }
-      callback(response);
-    }, 2000);
-    */
-    /* use this for real authentication
-     ----------------------------------------------*/
-    //$http.post('/api/authenticate', { username: username, password: password })
-    //  .success(function (response) {
-    //    callback(response);
-    //  });
-    
     $http.post(apiUri + 'login', { username: username, password: password })
     .success(function (response) {
       if (!response.success) {
-        response.message = 'Incorrect username or password';
+console.log(response);
+//        response.message = 'Incorrect username or password';
       }
       callback(response);
     })
     .error(function (response) {
-console.log('error:', response);
       if (
         ! angular.isObject(response.data) ||
         ! response.data.message
       ) {
-        return($q.reject('An unknown error occurred in service [Authentication]'));
+        return($q.reject('An unknown error occurred in login service'));
       }
       return($q.reject(response.data.message));
     });

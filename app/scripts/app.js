@@ -66,7 +66,8 @@ app.run(function ($rootScope, $location, $cookieStore, $http) {
   }
  
   $rootScope.$on('$locationChangeStart', function (event, next, current) {
-    console.info('rootScope.on(locationChangeStart):', 'event:',event, 'next:',next, 'current:',current);
+    //console.info('rootScope.on(locationChangeStart):', 'event:',event, 'next:',next, 'current:',current);
+/*
     // redirect to login page if not logged in
     if (
       (!$rootScope.globals.currentUser) &&
@@ -74,6 +75,7 @@ app.run(function ($rootScope, $location, $cookieStore, $http) {
     ) {
       $location.path('/login');
     }
+*/
   });
 });
 

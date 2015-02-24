@@ -6,8 +6,10 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
-class UsersController extends AbstractController {
-  const PASSWORD_MINIMUM_LENGTH = 4;
+class UsersController {
+  const USERNAME_MAXIMUM_LENGTH = 16;
+  const PASSWORD_MINIMUM_LENGTH = 5;
+  const MD5_SALT = "urYa8RnPs:4*K-Q";
 
   /**
    * Constructor
@@ -18,23 +20,26 @@ class UsersController extends AbstractController {
   }
 
   public function register($username, $password) {
+    if (strlen($username) > self::USERNAME_MAXIMUM_LENGTH) {
+      return [ "message" => "Sorry, username maximum length is " . self::USERNAME_MAXIMUM_LENGTH . " bytes" ];
+    }
     $user = $this->db->getByField("user", "username", $username);
     if (count($user) === 1) {
-      return [ "message" => "Sorry, this user name is already registered" ];
+      return [ "message" => "Sorry, this username is already registered" ];
     }
     if (!$this->checkPasswordStrength($password)) {
       return [ "message" => "Password too weak, please choose a stronger one" ];
     }
-    $this->db->add("user", [ "username" => $username, "password" => md5($password) ]);
+    $this->db->add("user", [ "username" => $username, "password" => $this->scramblePassword($password), "role" => "user" ]);
     return [ "success" => true ];
   }
 
   public function login($username, $password) {
-    $user = $this->db->getByField("user", "username", $username);
+    $user = $this->db->getByFields("user", [ "username" => $username, "password" => $this->scramblePassword($password) ]);
     if (count($user) === 1) {
       return [ "success" => true ];
     } else {
-      return [ "message" => "Password too weak... Please choose a stronger one" ];
+      return [ "message" => "Wrong username/password, please try again" ];
     }
   }
 
@@ -47,8 +52,12 @@ class UsersController extends AbstractController {
     return [ "success" => true ];
   }
 
+  private function scramblePassword($password) {
+    return self::MD5_SALT . md5($password);
+  }
+
   private function checkPasswordStrength($password) {
-    if (strlen($password) <= self::PASSWORD_MINIMUM_LENGTH) {
+    if (strlen($password) < self::PASSWORD_MINIMUM_LENGTH) {
       return false;
     }
     # TODO: check more properties?

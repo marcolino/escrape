@@ -1,22 +1,18 @@
 <?php
 
-ini_set('display_errors', 'On');
-error_reporting(E_ALL);
-
 require_once 'Slim/Slim.php';
-require_once 'classes/controllers/AbstractController.php';
 require_once 'classes/controllers/UsersController.php';
 require_once 'classes/controllers/PersonsController.php';
 require_once 'classes/controllers/PhotosController.php';
 require_once 'classes/controllers/CommentsController.php';
 require_once 'classes/services/Db.php';
-#require_once 'classes/services/ImagesTools.php';
 require_once 'classes/services/Image.php';
 
 class Router {
 
   public function __construct() {
     $timezone = "Europe/Rome";
+    date_default_timezone_set($timezone);
     $this->logger = new Slim_Logger('./logs', 4);
     $this->app = new Slim([
       'log.enable' => true,
@@ -26,7 +22,6 @@ class Router {
     ]);
     $this->db = new DB();
     $this->logs = [];
-    date_default_timezone_set($timezone);
   }
 
   public function run() {
@@ -128,8 +123,6 @@ class Router {
     });
     # ======================
     $this->app->post('/users/login', function() {
-    //$this->app->post('/users/login', function() {
-      //$username = "u"; $password = "p";
       $data = json_decode($this->app->request()->getBody());
       try {
         $users = new UsersController($this);
@@ -138,18 +131,6 @@ class Router {
         $this->error($e);
       }
     });
-//  $this->app->post('/users/login/:username/:password', function($username, $password) {
-/*
-    $this->app->post('/users/login', function() {
-      $username = "u"; $password = "p";
-      try {
-        $users = new UsersController($this);
-        $this->success($users->login($username, $password));
-      } catch (Exception $e) {
-        $this->error($e);
-      }
-    });
-*/
     # ======================
     $this->app->delete('/users/delete/:id', function($id) {
       try {
@@ -304,6 +285,7 @@ class Router {
 
 };
 
+#ini_set('display_errors', 'On'); error_reporting(E_ALL);
 $router = new Router();
 $router->run();
 

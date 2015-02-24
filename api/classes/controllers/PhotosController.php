@@ -6,7 +6,7 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
-class PhotosController extends AbstractController {
+class PhotosController {
   public function __construct($router) {
     $this->router = $router;
     $this->db = $router->db;

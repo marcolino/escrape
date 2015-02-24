@@ -17,7 +17,7 @@ class DB extends PDO {
       $new = !file_exists(self::DB_PATH);
       $this->db = new PDO(self::DB_TYPE . ":" . self::DB_PATH);
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+      chmod(self::DB_PATH, 0644); # TODO: debug only!
       if ($new) { // db doesn't exist, create tables...
         $this->createTables();
       }
@@ -29,9 +29,10 @@ class DB extends PDO {
       $this->db->exec(
         "create table if not exists user (
           id integer primary key autoincrement,
-          username varchar,
-          password varchar,
-          email text
+          username varchar(16),
+          password varchar(32),
+          email text,
+          role text
          );
          create unique index if not exists username_idx on user (username);
         "
@@ -127,6 +128,23 @@ class DB extends PDO {
       $sql = "select * from $table where $fieldName = :$fieldName";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
+      $statement->execute();
+      $results = $statement->fetchAll(PDO::FETCH_ASSOC);
+      return $results;
+    } catch (PDOException $e) { /* caught by router */ }
+  }
+
+  public function getByFields($table, $array) {
+    try {
+      $where = "";
+      foreach ($array as $key => $value) {
+        $where .= ($where ? " and " : "") . $key . " = " . ":" . $key;
+      }
+      $sql = "select * from $table where $where";
+      $statement = $this->db->prepare($sql);
+      foreach ($array as $key => &$value) {
+        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+      }
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
