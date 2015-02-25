@@ -97,6 +97,13 @@ console.info('TODO: SEARCHING...');
       //$('#navbar-collapse-1').trigger('click');
     };
 
+    $scope.activeCountries = function () {
+      return {
+        'it': 'Italy',
+        'ru': 'Russia',
+      };
+    };
+
     $scope.setFilterNationalityCountry = function (code) {
 console.log('$scope.setFilterNationalityCountry:', code);
       $scope.filter.nationality.countryCode = code;
