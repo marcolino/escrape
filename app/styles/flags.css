@@ -7,6 +7,7 @@
   background-image: url('sprite-flags-32x32.png'); 
   background-repeat: no-repeat;
  }
+.flag-32.flag- { background-position: -224px -480px; } /* empty country flag */
 .flag-32.flag-ad { background-position: -64px -32px; }
 .flag-32.flag-ae { background-position: -96px -32px; }
 .flag-32.flag-af { background-position: -128px -32px; }

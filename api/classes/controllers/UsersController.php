@@ -30,14 +30,22 @@ class UsersController {
     if (!$this->checkPasswordStrength($password)) {
       return [ "message" => "Password too weak, please choose a stronger one" ];
     }
-    $this->db->add("user", [ "username" => $username, "password" => $this->scramblePassword($password), "role" => "user" ]);
-    return [ "success" => true ];
+    $user = [
+      "username" => $username,
+      "password" => $this->scramblePassword($password),
+      "role" => "user",
+    ];
+    $this->db->add("user", $user);
+    return [ "success" => true, "user" => $user ];
   }
 
   public function login($username, $password) {
-    $user = $this->db->getByFields("user", [ "username" => $username, "password" => $this->scramblePassword($password) ]);
+    $user = $this->db->getByFields("user", [
+      "username" => $username,
+      "password" => $this->scramblePassword($password)
+    ]);
     if (count($user) === 1) {
-      return [ "success" => true ];
+      return [ "success" => true, "user" => $user[0] ];
     } else {
       return [ "message" => "Wrong username/password, please try again" ];
     }

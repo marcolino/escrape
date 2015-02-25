@@ -12,6 +12,7 @@
     <!-- endbower -->
     <!-- endbuild -->
     <!-- build:css(.tmp) styles/main.css -->
+    <link href="styles/submenus.css" rel="stylesheet" type='text/css'>
     <link href="styles/main.css" rel="stylesheet" type='text/css'>
     <link href="styles/flags.css" rel="stylesheet" type='text/css'>
     <link href='//fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
@@ -25,15 +26,6 @@
     <div ng-include="'views/header.html'"></div>
 
     <div class="container">
-<!--
-      <div class="header">
-        <ul class="nav nav-pills pull-right">
-          <li class="active"><a ng-href="#/">Home</a></li>
-          <li><a ng-href="#/about">About</a></li>
-        </ul>
-        <div class="navbar-brand"></div>
-      </div>
--->
       <div ng-view=""></div>
     </div>
 

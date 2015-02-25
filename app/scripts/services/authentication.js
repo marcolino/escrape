@@ -1,34 +1,10 @@
 'use strict';
  
-app.factory('AuthenticationService', function (Base64, $http, $cookieStore, $rootScope, $q, cfg) {
+app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg) {
   var apiUri = cfg.apiUri + '/users/';
   var service = {};
 
-/*
-  // private methods
-  function handleSuccess(response) {
-    //console.info('Person success: ', response.data);
-    if (response.data.error) {
-      console.error(response.data.error);
-      return($q.reject(response.data.error));
-    } else {
-      return(response.data);
-    }
-  }
-
-  function handleError(response) {
-    //console.info('Person error: ', response);
-    if (
-      ! angular.isObject(response.data) ||
-      ! response.data.message
-      ) {
-      return($q.reject('An unknown error occurred in service [Person]'));
-    }
-    return($q.reject(response.data.message));
-  }
-*/
-
-  service.Register = function (username, password, callback) {
+  service.register = function (username, password, callback) {
     $http.post(apiUri + 'register', { username: username, password: password })
     .success(function (response) {
       callback(response);
@@ -44,12 +20,10 @@ app.factory('AuthenticationService', function (Base64, $http, $cookieStore, $roo
     });
   };
 
-  service.Login = function (username, password, callback) {
+  service.login = function (username, password, callback) {
     $http.post(apiUri + 'login', { username: username, password: password })
     .success(function (response) {
       if (!response.success) {
-console.log(response);
-//        response.message = 'Incorrect username or password';
       }
       callback(response);
     })
@@ -64,24 +38,25 @@ console.log(response);
     });
   };
 
-  service.SetCredentials = function (username, password) {
+  service.setCredentials = function (username, password, role) {
     var authdata = Base64.encode(username + ':' + password);
 
     $rootScope.globals = {
       currentUser: {
         username: username,
+        role: role,
         authdata: authdata
       }
     };
 
-    $http.defaults.headers.common['Authorization'] = 'Basic ' + authdata; // jshint ignore:line
+    $http.defaults.headers.common['Authorization'] = 'Basic' + ' ' + authdata; // jshint ignore:line
     $cookieStore.put('globals', $rootScope.globals);
   };
 
-  service.ClearCredentials = function () {
+  service.clearCredentials = function () {
     $rootScope.globals = {};
     $cookieStore.remove('globals');
-    $http.defaults.headers.common.Authorization = 'Basic ';
+    $http.defaults.headers.common.Authorization = 'Basic'; // + ' '; # ???
   };
 
   return service;

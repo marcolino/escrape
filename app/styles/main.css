@@ -1,7 +1,3 @@
-/*
-@import url('http://twitter.github.com/bootstrap/assets/css/bootstrap.css');
-*/
-
 html * {
   font-family: 'Droid Sans', sans-serif;
 }
@@ -62,6 +58,29 @@ body {
   color: #888;
   border-top: 1px solid #e0e0e0;
   font-size: .88em;
+}
+
+/*
+.btn-admin {
+  background-color: lightgreen;
+}
+*/
+.btn-spaced {
+  margin-left: 5px;
+}
+
+.rotate90cw {
+  -webkit-transform:rotate(90deg);
+  -moz-transform:rotate(90deg);
+  -o-transform:rotate(90deg);
+  -ms-transform:rotate(90deg);        
+}
+
+.rotate90ccw {
+  -webkit-transform:rotate(270deg);
+  -moz-transform:rotate(270deg);
+  -o-transform:rotate(270deg);
+  -ms-transform:rotate(270deg);        
 }
 
 /* Listing page */

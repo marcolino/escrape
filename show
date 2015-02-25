@@ -1,7 +1,0 @@
-#!/bin/sh
-
-dbPath="api/db.json/"
-table="${1:-persons}"
-
-php api/debug/unserialize.php
-cat "${dbPath}${table}.json" | python -m json.tool 2>/dev/null | less

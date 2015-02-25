@@ -2,12 +2,10 @@
 
 /**
  * @ngdoc function
- * @name escrapeApp.controller:AboutCtrl
+ * @name escrapeApp.controller:AboutController
  * @description
- * # AboutCtrl
+ * # AboutController
  * Controller of the escrapeApp
  */
-/*
-app.controller('AboutCtrl', function ($scope) {
+app.controller('AboutController', function (/*$scope*/) {
 });
-*/

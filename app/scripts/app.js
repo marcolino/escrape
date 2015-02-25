@@ -10,7 +10,7 @@
  */
 
 /*
-function NavBarCtrl($scope) {
+function NavBarController($scope) {
   $scope.isCollapsed = true;
 }
 */
@@ -33,25 +33,25 @@ app.config(function ($routeProvider) {
   $routeProvider
     .when('/register', {
       templateUrl: 'views/register.html',
-      controller: 'AuthenticationCtrl',
+      controller: 'AuthenticationController',
       //hideMenus: true
     })
     .when('/login', {
       templateUrl: 'views/login.html',
-      controller: 'AuthenticationCtrl',
+      controller: 'AuthenticationController',
       //hideMenus: true
     })
     .when('/', {
       templateUrl: 'views/persons.html',
-      controller: 'PersonsCtrl'
+      controller: 'PersonsController'
     })
     .when('/details/:personId', {
       templateUrl: 'views/person.html',
-      controller: 'PersonsCtrl'
+      controller: 'PersonsController'
     })
     .when('/about', {
       templateUrl: 'views/about.html',
-      controller: 'AboutCtrl'
+      controller: 'AboutController'
     })
     .otherwise({
       redirectTo: '/'

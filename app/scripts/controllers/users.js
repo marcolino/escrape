@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsCtrl', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons, Comments) {
   $scope.persons = [];
   $scope.person = [];
   $scope.personId = $routeParams.personId;
