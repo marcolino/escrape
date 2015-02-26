@@ -108,13 +108,17 @@ console.info('TODO: SEARCHING...');
 console.log('$scope.setFilterNationalityCountry:', code);
       $scope.filter.nationality.countryCode = code;
       $scope.filter.nationality.countryName = $scope.countries[code];
-      //$event.stopPropagation();
+      closeNavbarCollapseMenu();
     };
 
     // TODO: this function is in person controller: hot to have only one instance?
     $scope.getCountryClass = function(countryCode) {
       return 'flag flag-32 flag-' + countryCode;
     };
+
+    function closeNavbarCollapseMenu () {
+      $('#navbar-collapse-0').trigger('click');
+    }
 
     function setCredentials (response) {
       Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
