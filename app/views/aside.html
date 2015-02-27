@@ -1,0 +1,79 @@
+<div ng-controller="AuthenticationController">
+
+  <!--
+  <div class="modal-header">
+    <h4 class="modal-title">Options</h4>
+  </div>
+  -->
+  
+  <div class="modal-body">
+    <accordion close-others="true">
+      <button class="btn btn-primary btn-block" style="text-align:left;" ng-click="about()">
+        About
+      </button>
+
+      <p style="margin: 10px;"></p>
+
+      <accordion-group is-open="status.open">
+        <accordion-heading>
+          Filters <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': status.open, 'glyphicon-chevron-right': !status.open}"></i>
+        </accordion-heading>
+  
+        Only persons with mimumum vote:<br>
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon" title="Vote up" ng-click="setFilterVoteMin(+1)"><span class="glyphicon glyphicon-thumbs-up"></span></span>
+            <input type="text" class="form-control" ng-model="filter.voteMin">
+            <span class="input-group-addon" title="Vote down" ng-click="setFilterVoteMin(-1)"><span class="glyphicon glyphicon-thumbs-down"></span></span>
+          </div>
+        </div>
+  
+        Only persons with minimum comments:<br>
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+10)"><span class="glyphicon glyphicon-bullhorn rotate90ccw"></span></span>
+            <input type="text" class="form-control" ng-model="filter.commentsCountMin">
+            <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-10)"><span class="glyphicon glyphicon-bullhorn rotate90cw"></span></span>
+          </div>
+        </div>
+
+        Only persons from country:<br>
+        <div class="btn-group">
+          <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+            <i ng-class="getCountryClass(filter.nationality.countryCode)"></i> {{filter.nationality.countryName}} <span class="caret"></span>
+<!--
+            <img ng-src="images/flags/{{filter.nationality.countryCode}}.png"> {{filter.nationality.countryName}} <span class="caret"></span>
+-->
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li class="flag-li">
+              <a href="#/" ng-click="setFilterNationalityCountry()"><i ng-class="getCountryClass(filter.nationality.countryCode)"></i> <i>{{'any country'}}</i></a>
+            </li>
+            <li ng-repeat="(countryCode, countryName) in activeCountries()" class="flag-li">
+              <a href="#/" ng-click="setFilterNationalityCountry(countryCode)"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
+            </li>
+          </ul>
+        </div>
+
+        <p style="margin: 10px;"></p>
+
+        <br>
+        <div class="btn-group pull-right">
+          <button class="btn btn-primary btn-block" style="text-align:left;" ng-click="about()">
+            Reset all filters
+          </button>
+        </div>
+
+      </accordion-group>
+    </accordion>
+  </div>
+  
+  <div class="modal-footer">
+    <button class="btn btn-primary" ng-click="ok($event)">Close</button>
+  <!--
+    <button class="btn btn-primary" ng-click="ok($event)">OK</button>
+    <button class="btn btn-warning" ng-click="cancel($event)">Cancel</button>
+  -->
+  </div>
+
+</div>

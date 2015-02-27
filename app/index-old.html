@@ -9,13 +9,13 @@
     <!-- build:css(.) styles/vendor.css -->
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
-    <link rel="stylesheet" href="bower_components/angular-aside/dist/css/angular-aside.css" />
     <!-- endbower -->
     <!-- endbuild -->
     <!-- build:css(.tmp) styles/main.css -->
     <link href="styles/main.css" rel="stylesheet" type='text/css'>
     <link href="styles/navbar.css" rel="stylesheet" type='text/css'>
     <link href="styles/flags.css" rel="stylesheet" type='text/css'>
+    <link href="bower_components/angular-snap/angular-snap.css" rel="stylesheet" type='text/css'>
 
     <link href='//fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
     <!-- endbuild -->
@@ -26,6 +26,23 @@
     <![endif]-->
 
     <div ng-include="'views/header.html'"></div>
+    
+<snap-drawers>
+      <snap-drawer>
+        <p>Hello from drawer!</p>
+      </snap-drawer>
+      
+      <div snap-drawer="left">
+        <p>Hello from the right drawer!</p>
+      </div>
+</snap-drawers>
+    
+<snap-content>
+      <p>Hello {{name}}!</p>
+      <p>The demo shows how to work with both left and right side drawers</p>
+      
+    <button snap-close>Close Snap</button>
+</snap-content>
 
     <div class="container">
       <div ng-view=""></div>
@@ -69,7 +86,8 @@
     <script src="bower_components/angular-touch/angular-touch.js"></script>
     <script src="bower_components/ngmap/build/scripts/ng-map.js"></script>
     <script src="bower_components/angular-order-object-by/src/ng-order-object-by.js"></script>
-    <script src="bower_components/angular-aside/dist/js/angular-aside.js"></script>
+    <script src="bower_components/snapjs/snap.js"></script>
+    <script src="bower_components/angular-snap/angular-snap.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
 
@@ -88,7 +106,6 @@
     <script src="scripts/services/persons.js"></script>
     <script src="scripts/services/comments.js"></script>
     <script src="scripts/services/countries.js"></script>
-    <script src="scripts/services/filter.js"></script>
     <!-- endbuild -->
 </body>
 </html>

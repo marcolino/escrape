@@ -1,236 +1,45 @@
 <header ng-controller="AuthenticationController">
   <div class="navbar navbar-default">
-    <div class="container-fluid">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle" style="margin-left: 10px" data-toggle="collapse" data-target=".navbar-collapse" title="Expand menu">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand hidden-xs" href="#/" ng-attr-title="{{cfg.site.description}}">
-          <span style="color:darkred"><img src="/images/logo.png" width="21px"> {{cfg.site.name}}</span>
-        </a>
-        <a class="navbar-brand visible-xs" href="#/" ng-attr-title="{{cfg.site.description}}">
-          <span style="color:darkred"><img src="/images/logo.png" width="21x"> {{cfg.site.name}}</span>
-        </a>
+    <div class="container"> <!-- -fluid"> -->
 
-        <!-- login / register / user buttons (when collapsed) -->
-        <span class="visible-xs pull-right">
-          <div ng-show="!signedIn()">
-            <a href="#/login" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Sign-in (you need an account)">
-              sign-in <span class="glyphicon glyphicon-log-in"></span>
-            </a>
-            <a href="#/register" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Sign-up (if you don't have an account yet)">
-              sign-up <span class="glyphicon glyphicon-new-window"></span>
-            </a>
-          </div>
+      <!-- aside menu open -->
+      <a href="#/" type="button" class="btn btn-default btn-spaced navbar-btn" title="Open side menu" ng-click="openAside('left')">
+        <span class="glyphicon glyphicon-align-justify"></span>
+      </a>
+
+      <!-- navbar brand -->
+      <a class="navbar-brand" href="#/" ng-attr-title="{{cfg.site.description}}">
+        <span style="color:darkred"><img src="/images/logo.png" width="21px"> {{cfg.site.name}}</span>
+      </a>
+
+      <span class="pull-right">
+
+        <span ng-show="!signedIn()">
+          <!-- login button -->
+          <a href="#/login" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Sign-in (you need an account)">
+            sign-in <span class="glyphicon glyphicon-log-in"></span>
+          </a>
+
+          <!-- register button -->
+          <a href="#/register" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Sign-up (if you don't have an account yet)">
+            sign-up <span class="glyphicon glyphicon-new-window"></span>
+          </a>
+        </span>
   
-          <div ng-show="signedIn()">
-<!--
-GOOD OLD BUTTON, BUTWITHOUT REDIRECTION TO PROFILE...
-            <button ng-class="{'btn':1, 'btn-default':1, 'navbar-btn':1, 'navbar-right':1, 'btn-primary': getUserRole() === 'admin', }" ng-attr-title="Welcome, {{getUserName()}}"><span class="glyphicon glyphicon-user"></span> {{getUserName()}}</button>
--->
-            <a href="#/users/id" ng-class="{'btn':1, 'btn-default':1, 'navbar-btn':1, 'navbar-right':1, 'btn-primary': getUserRole() === 'admin', }" ng-attr-title="Welcome, {{getUserName()}}"><span class="glyphicon glyphicon-user"></span> {{getUserName()}}</a>
+        <span ng-show="signedIn()">
+          <!-- logout button -->
+          <a href="#/" ng-click="logout()" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Logout">
+            <span class="glyphicon glyphicon-log-out"></span>
+          </a>
 
-            <a href="#/" ng-click="logout()" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Logout">
-              <span class="glyphicon glyphicon-log-out"></span>
-            </a>
-          </div>
-        </span><!-- /.visible-xs -->
+            <!-- user profile button -->
+          <a href="#/users/id" ng-class="{'btn':1, 'btn-default':1, 'btn-spaced':1, 'navbar-btn':1, 'navbar-right':1, 'btn-primary': getUserRole() === 'admin', }" ng-attr-title="Welcome, {{getUserName()}}">
+            <span class="glyphicon glyphicon-user"></span> {{getUserName()}}
+          </a>
+        </span>
 
-      </div><!-- /.navbar-header -->
+      </span><!-- /.visible-xs -->
 
-      <!--
-        <ul class="nav navbar-nav pull-right">
-          <li class="dropdown pull-right">
-            <a href="#" data-toggle="dropdown" NOstyle="margin-top: 5px;" class="dropdown-toggle"><span class="glyphicon glyphicon-user" style="color:darkblue"> </span> Marco <b class="caret"></b></a>
-            <ul class="dropdown-menu" role="menu">
-              <li><a href="#/users/id" title="Profile">Profile</a></li>
-              <li><a href="#/logout" title="Logout">Logout</a></li>
-            </ul>
-          </li>
-        </ul>
--->
-
-      <div class="navbar-collapse collapse">
-
-        <ul class="nav navbar-nav navbar-right">
-
-          <li class="dropdown">
-            <a href="#/" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Actions <span class="caret"></span></a>
-            <ul class="dropdown-menu" role="menu">
-              <li><a href="#/about">About</a></li>
-            </ul>
-          </li>
-
-          <li class="dropdown">
-            <a href="#/" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Filter <span class="caret"></span></a>
-            <ul class="dropdown-menu" role="menu">
-              <li><a href="#/">Show all persons</a></li>
-              <li><a href="#/">Show only inactive persons</a></li>
-              <li><a href="#/">Show only persons with no vote</a></li>
-              <li class="divider"></li>
-              <li>
-                <a href="#/">Show only persons with min vote:
-                  <form class="navbar-form form-horizontal">
-                    <div class="form-group">
-                      <div class="input-group">
-                        <span class="input-group-addon" title="Vote up" ng-click="setFilterVoteMin(+1)"><span class="glyphicon glyphicon-thumbs-up"></span></span>
-                        <input type="text" class="form-control" ng-model="filter.voteMin">
-                        <span class="input-group-addon" title="Vote down" ng-click="setFilterVoteMin(-1)"><span class="glyphicon glyphicon-thumbs-down"></span></span>
-                      </div>
-                    </div>
-                  </form>
-                </a>
-              </li>
-              <li class="divider"></li>
-              <li>
-                <a href="#/">Show only persons with min comments:
-                  <form class="navbar-form form-horizontal">
-                    <div class="form-group">
-                      <div class="input-group">
-                        <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+10)"><span class="glyphicon glyphicon-bullhorn rotate90ccw"></span></span>
-                        <input type="text" class="form-control" ng-model="filter.commentsCountMin">
-                        <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-10)"><span class="glyphicon glyphicon-bullhorn rotate90cw"></span></span>
-                      </div>
-                    </div>
-                  </form>
-                </a>
-              </li>
-              <li class="divider"></li>
-              <li>
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Show only persons from country <span><i ng-class="getCountryClass(filter.nationality.countryCode)"></i> {{filter.nationality.countryName}}</span>
-                  <form class="navbar-form form-horizontal">
-                    <div class="form-group">
-                      <div class="input-group">
-                        <span class="input-group-addon" title="Previous country" ng-click="setFilterCountry(+1)"><span class="glyphicon glyphicon-globe rotate90ccw"></span></span>
-                        <input type="text" class="form-control" ng-model="filter.country">
-                        <span class="input-group-addon" title="Next country" ng-click="setFilterCountry(-1)"><span class="glyphicon glyphicon-globe rotate90cw"></span></span>
-                      </div>
-                    </div>
-                  </form>
-<!--
-                  <form class="navbar-form form-horizontal">
-                    <div class="form-group">
-                      <div class="dropdown">
-                        <div class="input-group" NOdata-toggle="dropdown">
-                          <span class="input-group-addon" title="Nationality"><img ng-src="images/flags/{{person.nationality.code}}.png" class="flag-addon noselect" /></span>
-                          <input class="form-control" id="query" name="query" type="text" ng-model="person.nationality.country" />
-                        </div>
-                        <ul class="dropdown-menu scrollable-menu" role="menu">
-                          <li ng-repeat="(countryCode, countryName) in activeCountries()" NOclass="flag-li">
-                            <a ng-click="formChangeCountry('{{countryCode}}')"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </form>
--->
-                </a>
-<!--
-                <h4>Tag Picker</h4>
-                  <select id="mySel2" class="form-control" multiple="multiple">
-                    <option ng-repeat="item in items" ng-selected="item.selected" ng-model="item.tag">{{item.tag}}</option>
-                  </select>
--->
-<!--
-                <form class="navbar-form form-horizontal">
-                  <Xdiv class="form-group">
-                    <select ng-repeat="(countryCode, countryName) in activeCountries()">
-                      <option>{{countryName}}</option>
-                    </select>
-                  </Xdiv>
-                </form>
-              </li>
--->
-<!--
-                <li class="menu-item dropdown dropdown-submenu">
-                  <div class="dropdown">
-                <div class="input-group" data-toggle="dropdown">
-                  <span class="input-group-addon" title="Nationality"><img ng-src="images/flags/{{person.nationality.code}}.png" class="flag-addon noselect" /></span>
-                  <input class="form-control" id="query" name="query" type="text" ng-model="person.nationality.country" />
-                </div>
-                <ul class="dropdown-menu scrollable-menu" role="menu">
-                  <li ng-repeat="(countryCode, countryName) in countries" class="flag-li">
-                    <a ng-click="formChangeCountry('{{countryCode}}')"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
-                  </li>
-                </ul>
-              </li>
--->
-                <!--
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Show only persons from country <span><i ng-class="getCountryClass(filter.nationality.countryCode)"></i> {{filter.nationality.countryName}}</span></a>
-                <ul c_lass="dropdown-menu">
-                  <li class="flag-li">
-                    <a href="#/" ng-click="setFilterNationalityCountry(null)"><i ng-class="getCountryClass(null)"></i><i> any country </i></a>
-                  </li>
-                  <li ng-repeat="(countryCode, countryName) in activeCountries()" class="flag-li">
-                    <a href="#/" ng-click="setFilterNationalityCountry(countryCode)"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
-                  </li>
-                </ul>
-              -->
-              </li>
-              <span class="visible-xs">
-                <li class="divider"></li>
-              </span>
-            </ul>
-          </li><!-- /.dropdown -->
-          <li class="menu-item">
-            <form class="navbar-form" role="search"> 
-              <div class="input-group" style="padding-left:10px">
-                <input type="text" class="form-control" placeholder="Search" name="srch-term" id="srch-term">
-                <div class="input-group-btn">
-                  <button class="btn btn-default" ng-click="search()"><i class="glyphicon glyphicon-search"></i></button>
-                </div>
-              </div>
-            </form>
-          </li>
-
-<!--
-        <ul class="nav navbar-nav navbar-right">
-          <li><a href="#">Home</a></li>
-          <li><a href="#about">Browse Courses</a></li>
-          <li class="divider"></li>
-          <li><a href="#contact">Active Courses</a></li>
-          <li>
-            <form class="navbar-form" role="search">
-              <div class="input-group">
-                <input type="text" class="form-control" placeholder="Search">
-                <div class="input-group-btn">
-                  <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
-                </div>
-              </div>
-            </form>
-          </li>
--->
-          <!-- login / register / user buttons (when not collapsed) -->
-          <span class="hidden-xs pull-right">
-            <div ng-show="!signedIn()">
-              <a href="#/login" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Sign-in (you need an account)">
-                sign-in <span class="glyphicon glyphicon-log-in"></span>
-              </a>
-              <a href="#/register" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Sign-up (if you don't have an account yet)">
-                sign-up <span class="glyphicon glyphicon-new-window"></span>
-              </a>
-            </div>
-    
-            <div ng-show="signedIn()">
-              <a href="#/" ng-click="logout()" type="button" class="btn btn-default btn-spaced navbar-btn navbar-right" title="Logout">
-                <span class="glyphicon glyphicon-log-out"></span>
-              </a>
-<!--
-GOOD OLD BUTTON, BUTWITHOUT REDIRECTION TO PROFILE...
-              <button ng-class="{'btn':1, 'btn-default':1, 'navbar-btn':1, 'navbar-right':1, 'btn-primary': getUserRole() === 'admin', }" ng-attr-title="Welcome, {{getUserName()}}"><span class="glyphicon glyphicon-user" NOstyle="color:darkblue"></span> {{getUserName()}}</button>
--->
-              <a href="#/users/id" ng-class="{'btn':1, 'btn-default':1, 'navbar-btn':1, 'navbar-right':1, 'btn-primary': getUserRole() === 'admin', }" ng-attr-title="Welcome, {{getUserName()}}"><span class="glyphicon glyphicon-user"></span> {{getUserName()}}</a>
-
-            </div>
-          </span><!-- /.hidden-xs -->
-
-<!--
-        </ul>
--->
-        </ul>
-      </div><!-- /.navbar-collapse -->
-     </div><!-- /.container -->
+    </div><!-- /.container-fluid -->
   </div><!-- /.navbar -->
 </header>

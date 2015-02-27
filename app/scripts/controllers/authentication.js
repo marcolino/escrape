@@ -1,21 +1,56 @@
 'use strict';
  
 app.controller('AuthenticationController',
-  function ($scope, $rootScope, $location, cfg, Authentication, Countries) {
+  function ($scope, $rootScope, $location, $aside, $cookieStore, cfg, Authentication, Countries) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
+    //$scope.filter = Filter;
     console.info('AUTH CTRL start, countries:', $scope.countries);
-    var countryCode = '';
-    $scope.filter = {
-      voteMin: Math.ceil((cfg.person.vote.min + cfg.person.vote.max) / 2),
-      commentsCountMin: 0,
-      country: '',
-      countryN: 0,
-      nationality: {
-        countryN: 0, // TODO: -1 ?
-        countryCode: countryCode,
-        countryName: $scope.countries[countryCode],
-      },
+    $scope.countryCode = '';
+
+/*
+  var filter = {
+    voteMin: 0,
+    commentsCountMin: 0,
+    nationality: {
+      countryCode: 'it',
+      countryName: 'Italy',
+    },
+  };
+  $cookieStore.put('filter', filter);
+*/
+
+/*
+  // Put cookie
+  $cookieStore.put('myFavorite','oatmeal');
+  // Get cookie
+  var favoriteCookie = $cookieStore.get('myFavorite');
+  // Removing a cookie
+  $cookieStore.remove('myFavorite');
+*/
+    $scope.filter = $cookieStore.get('filter');
+
+    $scope.openAside = function(position) {
+      $aside.open({
+        templateUrl: 'views/aside.html',
+        placement: position,
+        size: 'sm',
+        backdrop: true,
+        controller: function($scope, $modalInstance) {
+          $scope.ok = function(e) {
+            $modalInstance.close();
+            e.stopPropagation();
+          };
+          $scope.cancel = function(e) {
+            $modalInstance.dismiss();
+            e.stopPropagation();
+          };
+        }
+      });
+    };
+
+    $scope.about = function () {
+      console.info('ABOUT');
     };
 
     $scope.register = function () {
@@ -100,39 +135,29 @@ console.info('TODO: SEARCHING...');
     };
 
     $scope.activeCountries = function () {
-console.log('$scope.activeCountries called');
-      return [
-        { 'n': 1, 'code': 'it', 'name': 'Italy' },
-        { 'n': 2, 'code': 'ru', 'name': 'Russia' },
-      ];
-    };
-
-    $scope.setFilterCountry = function (n) {
-      var ac = $scope.activeCountries();
-      var max = ac.length;
-      $scope.filter.countryN = Math.max(0, Math.min(max, $scope.filter.countryN + n));
-console.log('$scope.setFilterCountry()', $scope.filter.countryN, ' => ', ac[$scope.filter.countryN]);
-      $scope.filter.country = ac[$scope.filter.countryN].name;
-      //return ac[$scope.filter.countryN];
+      // TODO: ...
+      return {
+        'ar': 'Argentina',
+        'br': 'Brasil',
+        'cu': 'Cuba',
+        'es': 'Spain',
+        'fr': 'France',
+        'it': 'Italy',
+        'ru': 'Russia',
+        'th': 'Thailand',
+      };
     };
 
     $scope.setFilterNationalityCountry = function (code) {
-console.log('$scope.setFilterNationalityCountry:', code);
       $scope.filter.nationality.countryCode = code;
-      $scope.filter.nationality.countryName = $scope.countries[code];
-$event.stopPropagation();
-      //closeNavbarCollapseMenu();
+      $scope.filter.nationality.countryName = code ? $scope.countries[code] : null;
+      $cookieStore.put('filter', $scope.filter);
     };
 
-    // TODO: this function is in person controller: hot to have only one instance?
+    // TODO: this function is in person controller: how to have only one instance?
     $scope.getCountryClass = function(countryCode) {
       return 'flag flag-32 flag-' + countryCode;
     };
-
-    function closeNavbarCollapseMenu () {
-console.info('TRIGGERING CLICK TO CLOSE COLLAPSE MENU');
-      $('.navbar-toggle').trigger('click');
-    }
 
     function setCredentials (response) {
       Authentication.setCredentials(response.user.username, response.user.password, response.user.role);

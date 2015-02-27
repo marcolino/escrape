@@ -27,6 +27,7 @@ var app = angular.module('escrapeApp', [
     'ngMap',
     'ngOrderObjectBy',
     'ui.bootstrap',
+    'ngAside',
   ]);
 
 app.config(function ($routeProvider) {
