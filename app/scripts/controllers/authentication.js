@@ -8,17 +8,27 @@ app.controller('AuthenticationController',
     console.info('AUTH CTRL start, countries:', $scope.countries);
     $scope.countryCode = '';
 
-/*
-  var filter = {
-    voteMin: 0,
-    commentsCountMin: 0,
-    nationality: {
-      countryCode: 'it',
-      countryName: 'Italy',
-    },
-  };
-  $cookieStore.put('filter', filter);
-*/
+    $scope.filter = $cookieStore.get('filter');
+    console.log('DEFAULT FILTER:', $scope.filter);
+    if (!$scope.filter) {
+      console.log('SETTING DEFAULT FILTER...');
+      $scope.filter = {
+        isopened: true,
+        active: 'active and not active',
+        voteMin: 0,
+        commentsCountMin: 0,
+        nationality: {
+          countryCode: 'it',
+          countryName: 'Italy',
+        },
+      };
+    }
+    //$scope.filter = $cookieStore.get('filter');
+    $cookieStore.put('filter', $scope.filter);
+
+// TODO: temporary, when changing filter...
+$scope.filter.active = 'active and not active';
+$scope.filter.isopened = true;
 
 /*
   // Put cookie
@@ -28,7 +38,6 @@ app.controller('AuthenticationController',
   // Removing a cookie
   $cookieStore.remove('myFavorite');
 */
-    $scope.filter = $cookieStore.get('filter');
 
     $scope.openAside = function(position) {
       $aside.open({
@@ -148,7 +157,26 @@ console.info('TODO: SEARCHING...');
       };
     };
 
+    $scope.setFilterActive = function (mode) {
+      console.log('$scope.filter:', $scope.filter);
+      $scope.filter.active = mode;
+      $cookieStore.put('filter', $scope.filter);
+    };
+
+    $scope.getActiveClass = function(mode) {
+      console.log('ACTIVE:', mode);
+      switch (mode) {
+        default:
+        case 'active and not active':
+          return 'glyphicon glyphicon-th-large';
+        case 'active':
+          return 'glyphicon glyphicon-ok';
+        case 'not active':
+          return 'glyphicon glyphicon-remove';
+      }
+    };
     $scope.setFilterNationalityCountry = function (code) {
+      console.log('$scope.filter:', $scope.filter);
       $scope.filter.nationality.countryCode = code;
       $scope.filter.nationality.countryName = code ? $scope.countries[code] : null;
       $cookieStore.put('filter', $scope.filter);

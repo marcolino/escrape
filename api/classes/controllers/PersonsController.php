@@ -74,8 +74,15 @@ class PersonsController {
     */
     /*
     "esf" => [
+      "url" => "http://www.escortforumit.xxx/escorts/city_it_torino",
     ],
     */
+    /*
+    "doi" => [
+      "url" => "http://www.dolciincontri.net/annunci-personali_torino.html",
+      ],
+    ],
+*/
   ];
   const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
