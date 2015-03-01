@@ -1,0 +1,105 @@
+<div ng-controller="AuthenticationController">
+
+  <!--
+  <div class="modal-header">
+    <h4 class="modal-title">Options</h4>
+  </div>
+  -->
+  
+  <div class="modal-body noselect">
+    <accordion close-others="true">
+      <button class="btn btn-primary btn-block" NOstyle="text-align:left;" ng-click="about()">
+        About
+      </button>
+
+      <p style="margin: 10px;"></p>
+
+      <div class="form-group">
+        <div class="input-group">
+          <input type="text" class="form-control" placeholder="Search">
+          <div class="input-group-btn">
+            <button class="btn btn-default" ng-click="search()"><i class="glyphicon glyphicon-search"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin: 10px;"></p>
+
+      <accordion-group is-open="filter.isopened">
+        <accordion-heading>
+          Filters <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': filter.isopened, 'glyphicon-chevron-right': !filter.isopened}"></i>
+        </accordion-heading>
+  
+        Only persons who are:<br>
+        <div class="btn-group">
+          <div class="dropdown">
+            <div class="input-group" data-toggle="dropdown">
+              <!--<span class="input-group-addon" title="Select active or not active persons"><img ng-src="images/flags/it.png" class="flag-addon noselect" /></span>-->
+              <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getStatusClass(filter.status)"></i></span>
+              <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="filter.status" readonly="" />
+            </div>
+            <ul class="dropdown-menu scrollable-menu" role="menu">
+              <li ng-repeat="status in statuses()">
+                <a ng-click="setFilterStatus(status)"><i ng-class="getStatusClass(status)">&emsp;</i> {{status}}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <p style="margin: 10px;"></p>
+
+        Only persons with min. vote:<br>
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon" title="Vote up" ng-click="setFilterVoteMin(+1)"><i class="glyphicon glyphicon-thumbs-up"></i></span>
+            <input type="text" class="form-control default-cursor" ng-model="filter.voteMin" readonly="" />
+            <span class="input-group-addon" title="Vote down" ng-click="setFilterVoteMin(-1)"><i class="glyphicon glyphicon-thumbs-down"></i></span>
+          </div>
+        </div>
+  
+        Only persons with min. comments:<br>
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+10)"><i class="glyphicon glyphicon-bullhorn rotate90ccw"></i></span>
+            <input type="text" class="form-control default-cursor" ng-model="filter.commentsCountMin"readonly="" />
+            <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-10)"><i class="glyphicon glyphicon-bullhorn rotate90cw"></i></span>
+          </div>
+        </div>
+
+        Only persons from country:<br>
+        <div class="btn-group">
+          <div class="dropdown">
+            <div class="input-group" data-toggle="dropdown">
+              <span class="input-group-addon" title="Nationality"><i ng-class="getCountryClass(filter.nationality.countryCode)"></i></span>
+              <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="filter.nationality.countryName" readonly="" />
+            </div>
+            <ul class="dropdown-menu scrollable-menu" role="menu">
+              <li ng-repeat="(countryCode, countryName) in activeCountries()" class="flag-li">
+                <a ng-click="setFilterNationalityCountry(countryCode)"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <p style="margin: 10px;"></p>
+
+        <br>
+        <div class="btn-group pull-right">
+          <button class="btn btn-primary btn-block" style="text-align:left;" ng-click="resetFilters()">
+            Reset all filters
+          </button>
+        </div>
+
+      </accordion-group>
+    </accordion>
+  </div>
+  
+  <div class="modal-footer">
+    <button class="btn btn-primary" ng-click="close($event)">Close</button>
+  <!--
+    <button class="btn btn-primary" ng-click="ok($event)">OK</button>
+    <button class="btn btn-warning" ng-click="cancel($event)">Cancel</button>
+  -->
+  </div>
+
+</div>

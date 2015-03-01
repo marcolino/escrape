@@ -197,6 +197,7 @@ body {
 }
 */
 
+/* avoid opten spurious selections */
 .noselect {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -204,6 +205,16 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+/* avoid change of cursor on readonly test input */
+input[readonly].default-cursor {
+  cursor: default;
+}
+
+/* avoid text decoration on accordion elements */
+.accordion-toggle {
+  text-decoration: none !important;
 }
 
 /* carousel */

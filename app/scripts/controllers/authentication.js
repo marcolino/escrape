@@ -4,62 +4,31 @@ app.controller('AuthenticationController',
   function ($scope, $rootScope, $location, $aside, $cookieStore, cfg, Authentication, Countries) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
-    //$scope.filter = Filter;
-    console.info('AUTH CTRL start, countries:', $scope.countries);
-    $scope.countryCode = '';
-
-    $scope.filter = $cookieStore.get('filter');
-    console.log('DEFAULT FILTER:', $scope.filter);
-    if (!$scope.filter) {
-      console.log('SETTING DEFAULT FILTER...');
-      $scope.filter = {
-        isopened: true,
-        active: 'active and not active',
-        voteMin: 0,
-        commentsCountMin: 0,
-        nationality: {
-          countryCode: 'it',
-          countryName: 'Italy',
-        },
-      };
-    }
-    //$scope.filter = $cookieStore.get('filter');
-    $cookieStore.put('filter', $scope.filter);
-
-// TODO: temporary, when changing filter...
-$scope.filter.active = 'active and not active';
-$scope.filter.isopened = true;
-
-/*
-  // Put cookie
-  $cookieStore.put('myFavorite','oatmeal');
-  // Get cookie
-  var favoriteCookie = $cookieStore.get('myFavorite');
-  // Removing a cookie
-  $cookieStore.remove('myFavorite');
-*/
 
     $scope.openAside = function(position) {
       $aside.open({
-        templateUrl: 'views/aside.html',
+        templateUrl: 'views/sidemenu.html',
         placement: position,
-        size: 'sm',
+        size: 'sm', // 'sm': small / 'lg': large
         backdrop: true,
         controller: function($scope, $modalInstance) {
-          $scope.ok = function(e) {
+          $scope.close = function(e) {
             $modalInstance.close();
             e.stopPropagation();
           };
+          /*
           $scope.cancel = function(e) {
             $modalInstance.dismiss();
             e.stopPropagation();
           };
+          */
         }
       });
     };
 
     $scope.about = function () {
       console.info('ABOUT');
+      $location.path('/about');
     };
 
     $scope.register = function () {
@@ -69,7 +38,7 @@ $scope.filter.isopened = true;
         $scope.dataLoading = false;
         if (response.success) {
           setCredentials(response);
-          $location.path('/#');
+          $location.path('#/');
         } else {
           $scope.error = response.message;
         }
@@ -125,6 +94,29 @@ $scope.filter.isopened = true;
 console.info('TODO: SEARCHING...');
     };
 
+    $scope.loadFilters = function () {
+      $scope.filter = $cookieStore.get('filter');
+      if (!$scope.filter) {
+        $scope.resetFilters();
+      }
+      console.log('loading filter:', $scope.filter);
+    }
+
+    $scope.resetFilters = function () {
+      console.log('re-setting filter to defaults');
+      $scope.filter = {
+        isopened: true,
+        status: 'any status', // 'any status' / 'active' / 'inactive'
+        voteMin: 0,
+        commentsCountMin: 0,
+        nationality: {
+          countryCode: '',
+          countryName: '',
+        },
+      };
+      $cookieStore.put('filter', $scope.filter);
+    }
+
     $scope.setFilterVoteMin = function (n) {
       if (n > 0) {
         $scope.filter.voteMin = Math.min($scope.cfg.person.vote.max, $scope.filter.voteMin + n);
@@ -143,9 +135,18 @@ console.info('TODO: SEARCHING...');
       //$('#navbar-collapse-1').trigger('click');
     };
 
+    $scope.statuses = function () {
+      return [
+        'any status',
+        'active',
+        'not active',
+      ];
+    }
+
     $scope.activeCountries = function () {
-      // TODO: ...
+      // TODO: get from persons...
       return {
+        '': 'any country',
         'ar': 'Argentina',
         'br': 'Brasil',
         'cu': 'Cuba',
@@ -157,17 +158,17 @@ console.info('TODO: SEARCHING...');
       };
     };
 
-    $scope.setFilterActive = function (mode) {
+    $scope.setFilterStatus = function (status) {
       console.log('$scope.filter:', $scope.filter);
-      $scope.filter.active = mode;
+      $scope.filter.status = status;
       $cookieStore.put('filter', $scope.filter);
     };
 
-    $scope.getActiveClass = function(mode) {
+    $scope.getStatusClass = function(mode) {
       console.log('ACTIVE:', mode);
       switch (mode) {
         default:
-        case 'active and not active':
+        case '':
           return 'glyphicon glyphicon-th-large';
         case 'active':
           return 'glyphicon glyphicon-ok';
@@ -178,7 +179,7 @@ console.info('TODO: SEARCHING...');
     $scope.setFilterNationalityCountry = function (code) {
       console.log('$scope.filter:', $scope.filter);
       $scope.filter.nationality.countryCode = code;
-      $scope.filter.nationality.countryName = code ? $scope.countries[code] : null;
+      $scope.filter.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[0]; /// ??????????????????
       $cookieStore.put('filter', $scope.filter);
     };
 
@@ -190,5 +191,8 @@ console.info('TODO: SEARCHING...');
     function setCredentials (response) {
       Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
     }
+
+    // load filters
+    $scope.loadFilters();
   }
 );
