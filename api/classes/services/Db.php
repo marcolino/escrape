@@ -194,6 +194,10 @@ class DB extends PDO {
   }
 
   public function set($table, $id, $array) {
+#print_r($table);
+#print_r($id);
+#print_r($array);
+#exit;
     try {
       $set = "";
       foreach ($array as $key => $value) {
@@ -208,7 +212,7 @@ class DB extends PDO {
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("update into table $table did update " . $statement->rowCount() . " records");
+        throw new Exception("update into table $table fir id [$id] did update " . $statement->rowCount() . " records");
       }
       return $id;
     } catch (PDOException $e) { /* caught by router */ }

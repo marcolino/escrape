@@ -1,7 +1,1 @@
 TODO:
-
- - controllers/authentication.js:
- $scope.setFilterNationalityCountry = function (code) {
-      console.log('$scope.filter:', $scope.filter);
-      $scope.filter.nationality.countryCode = code;
-      $scope.filter.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[0]; /// ??????????????????

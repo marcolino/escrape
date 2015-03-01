@@ -6,7 +6,6 @@ function atHome() {
 }
 var fake = !atHome();
 var apiUri = atHome() ? 'http://0.0.0.0' : 'http://192.168.10.30';
-console.info('atHome:' + atHome());
 
 app.constant('cfg', {
   site: {

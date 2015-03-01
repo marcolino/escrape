@@ -144,7 +144,7 @@ class PersonsController {
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-#if ($n > 3) break;
+if ($n > 3) break;
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -210,7 +210,7 @@ class PersonsController {
         }
           
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
-          $photoUrls = $matches[1];
+          $photosUrls = $matches[1];
         } else {
           $this->router->log("error", "photo pattern not found on site [$siteId]");
           continue;
@@ -235,28 +235,19 @@ class PersonsController {
         #  $person["photos"][] = $photo;
         #}
 
-        if (($id = $this->db->getByKey("person", $key))) { # old key, update it
+        $photos = new PhotosController($this->router);
+        if (($id = $this->db->getByField("person", "key", $key))) { # old key, update it
           $this->router->log("debug", "updating person: $key °°°");
           $this->set($id, $person); # error handling?
-          $photos = new PhotosController($this->router);
-          foreach ($photoUrls as $photoUrl) {
-            $photo = [];
-            $photo["id_person"] = $id;
-            $photo["url"] = $photoUrl;
-            $photos->set($photo);
+          foreach ($photosUrls as $photoUrl) {
+            $photos->set($id, [ "url" => $photoUrl ]);
           }
           #$this->db->data["persons"][$id] = $person;
         } else { # new key, insert it
           $this->router->log("debug", "inserting person: $key °°°");
           $id = $this->add($person);
-          $num = 0;
-          foreach ($photosUrl as $photoUrl) {
-            $photo = [];
-            $photo["id_person"] = $id;
-            $photo["showcase"] = ($num === 0);
-            $photo["url"] = $photoUrl;
-            $photos->add($photo);
-            $num++;
+          foreach ($photosUrls as $photoUrl) {
+            $photos->set($id, [ "url" => $photoUrl ]);
           }
         }
       }

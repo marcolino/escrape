@@ -104,6 +104,7 @@ class PhotosController {
   public function set($id, $photo) {
     # TODO: check if we need to change some properties of image on disk...
     return $this->db->set("photo", $id, $photo);
+$this->router->log("debug", "setting photo [$photo] to db for id [$id]");
   }
 
   public function delete($id) {

@@ -1,25 +1,29 @@
 'use strict';
  
 app.controller('AuthenticationController',
-  function ($scope, $rootScope, $location, $aside, $cookieStore, cfg, Authentication, Countries) {
+  function ($scope, $rootScope, $location, $aside, $cookieStore, $timeout, cfg, Authentication, Countries) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
+    $scope.key = 'filters';
 
     $scope.openAside = function(position) {
       $aside.open({
         templateUrl: 'views/sidemenu.html',
         placement: position,
         size: 'sm', // 'sm': small / 'lg': large
-        backdrop: true,
+        backdrop: true, // close if user clicks outside this panel
         controller: function($scope, $modalInstance) {
           $scope.close = function(e) {
             $modalInstance.close();
-            e.stopPropagation();
+            if (e) {
+              e.stopPropagation();
+            }
           };
           /*
           $scope.cancel = function(e) {
             $modalInstance.dismiss();
             e.stopPropagation();
+            $scope.storeFilters(); // to save isopen status
           };
           */
         }
@@ -27,8 +31,8 @@ app.controller('AuthenticationController',
     };
 
     $scope.about = function () {
-      console.info('ABOUT');
       $location.path('/about');
+      $scope.close();
     };
 
     $scope.register = function () {
@@ -91,21 +95,43 @@ app.controller('AuthenticationController',
     };
 
     $scope.search = function () {
-console.info('TODO: SEARCHING...');
+      $scope.storeFilters(); // store search term (really?)
+      $scope.close();
     };
 
     $scope.loadFilters = function () {
-      $scope.filter = $cookieStore.get('filter');
-      if (!$scope.filter) {
+      var key = $scope.key;
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + '-' + $scope.key;
+        //console.log('loading filters for user ', $rootScope.globals.currentUser.username);
+      }
+      $scope.filters = $cookieStore.get(key);
+      if (!$scope.filters) {
         $scope.resetFilters();
       }
-      console.log('loading filter:', $scope.filter);
-    }
+      //console.log('loading filters:', $scope.filter);
+    };
+
+    $scope.storeFilters = function () {
+      var key = $scope.key;
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + '-' + $scope.key;
+        //console.log('storing filters for user ', $rootScope.globals.currentUser.username);
+      }
+      $cookieStore.put(key, $scope.filters);
+      //console.log('storing filters:', $scope.filters);
+    };
 
     $scope.resetFilters = function () {
-      console.log('re-setting filter to defaults');
-      $scope.filter = {
+      var key = $scope.key;
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + ':' + $scope.key;
+        //console.log('storing filters for user ', $rootScope.globals.currentUser.username);
+      }
+      //console.log('re-setting filters to defaults');
+      $scope.filters = {
         isopened: true,
+        searchTerm: '',
         status: 'any status', // 'any status' / 'active' / 'inactive'
         voteMin: 0,
         commentsCountMin: 0,
@@ -114,25 +140,25 @@ console.info('TODO: SEARCHING...');
           countryName: '',
         },
       };
-      $cookieStore.put('filter', $scope.filter);
-    }
+      $cookieStore.put(key, $scope.filters);
+    };
 
     $scope.setFilterVoteMin = function (n) {
       if (n > 0) {
-        $scope.filter.voteMin = Math.min($scope.cfg.person.vote.max, $scope.filter.voteMin + n);
+        $scope.filters.voteMin = Math.min($scope.cfg.person.vote.max, $scope.filters.voteMin + n);
       } else {
-        $scope.filter.voteMin = Math.max($scope.cfg.person.vote.min, $scope.filter.voteMin + n);
+        $scope.filters.voteMin = Math.max($scope.cfg.person.vote.min, $scope.filters.voteMin + n);
       }
-      //$('#navbar-collapse-1').trigger('click');
+      $scope.storeFilters();
     };
 
     $scope.setFilterCommentsCountMin = function (n) {
       if (n > 0) {
-        $scope.filter.commentsCountMin += n;
+        $scope.filters.commentsCountMin += n;
       } else {
-        $scope.filter.commentsCountMin = Math.max(0, $scope.filter.commentsCountMin + n);
+        $scope.filters.commentsCountMin = Math.max(0, $scope.filters.commentsCountMin + n);
       }
-      //$('#navbar-collapse-1').trigger('click');
+      $scope.storeFilters();
     };
 
     $scope.statuses = function () {
@@ -141,7 +167,7 @@ console.info('TODO: SEARCHING...');
         'active',
         'not active',
       ];
-    }
+    };
 
     $scope.activeCountries = function () {
       // TODO: get from persons...
@@ -159,13 +185,11 @@ console.info('TODO: SEARCHING...');
     };
 
     $scope.setFilterStatus = function (status) {
-      console.log('$scope.filter:', $scope.filter);
-      $scope.filter.status = status;
-      $cookieStore.put('filter', $scope.filter);
+      $scope.filters.status = status;
+      $scope.storeFilters();
     };
 
     $scope.getStatusClass = function(mode) {
-      console.log('ACTIVE:', mode);
       switch (mode) {
         default:
         case '':
@@ -176,16 +200,22 @@ console.info('TODO: SEARCHING...');
           return 'glyphicon glyphicon-remove';
       }
     };
+
     $scope.setFilterNationalityCountry = function (code) {
-      console.log('$scope.filter:', $scope.filter);
-      $scope.filter.nationality.countryCode = code;
-      $scope.filter.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[0]; /// ??????????????????
-      $cookieStore.put('filter', $scope.filter);
+      $scope.filters.nationality.countryCode = code;
+      $scope.filters.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[''];
+      $scope.storeFilters();
     };
 
     // TODO: this function is in person controller: how to have only one instance?
-    $scope.getCountryClass = function(countryCode) {
-      return 'flag flag-32 flag-' + countryCode;
+    $scope.getCountryClass = function(code) {
+      return code ? 'flag flag-32 flag-' + code : 'glyphicon glyphicon-globe';
+    };
+
+    $scope.toggleFilterOpened = function (isopened) {
+      $timeout(function() {
+        $scope.storeFilters();
+      });
     };
 
     function setCredentials (response) {

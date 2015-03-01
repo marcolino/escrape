@@ -37,8 +37,8 @@ $scope.username = $rootScope.username;
       if (!cfg.fake) { console.log('person:', person); }
       $scope.person = person;
       $scope.person.nationality = {};
-      $scope.person.nationality.code = 'it';
-      $scope.person.nationality.country = $scope.countries[$scope.person.nationality.code];
+      $scope.person.nationality.countryCode = 'it';
+      $scope.person.nationality.countryName = $scope.countries[$scope.person.nationality.countryCode];
       $scope.person.vote = 5;
       $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
       $scope.person.streetRegion = 'it';
@@ -146,8 +146,8 @@ $scope.username = $rootScope.username;
 
   $scope.formChangeCountry = function(code) {
     console.log('formChangeCountry(): ', code);
-    $scope.person.nationality.code = code;
-    $scope.person.nationality.country = $scope.countries[code];
+    $scope.person.nationality.countryCode = code;
+    $scope.person.nationality.countryName = $scope.countries[code];
   };
 
   $scope.streetAddressToImageUrl = function(streetAddress) {

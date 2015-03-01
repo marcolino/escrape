@@ -67,8 +67,8 @@
           <div class="col-xs-7 col-sm-6 col-md-6 col-lg-6">
             <div class="dropdown">
               <div class="input-group" data-toggle="dropdown">
-                <span class="input-group-addon" title="Nationality"><i ng-class="getCountryClass(person.nationality.code)"></i></span>
-                <input class="form-control" id="query" name="query" type="text" ng-value="person.nationality.country" />
+                <span class="input-group-addon" title="Nationality"><i ng-class="getCountryClass(person.nationality.countryCode)"></i></span>
+                <input class="form-control" id="query" name="query" type="text" ng-value="person.nationality.countryName" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
                 <li ng-repeat="(countryCode, countryName) in countries" class="flag-li">

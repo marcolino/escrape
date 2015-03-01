@@ -40,7 +40,6 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
 
   service.setCredentials = function (username, password, role) {
     var authdata = Base64.encode(username + ':' + password);
-
     $rootScope.globals = {
       currentUser: {
         username: username,
