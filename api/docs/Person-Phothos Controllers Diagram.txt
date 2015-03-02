@@ -1,0 +1,26 @@
+PersonController
+  sync()
+    set($id, $person)
+      db->add("person", $person)
+    add($person)
+      db->set("person", $id, $person)
+    photoAdd($idPerson, $photoUrl)
+      photoCheckDuplication($idPerson, $photo)
+      photoCheckSimilarity($idPerson, $photo)
+        photoStore($idPerson, $photo)
+        db->add("photo", $photo)
+    photoStore($idPerson, $photo)
+    photoGet($idPerson, $number)
+    photoGetAll($idPerson)
+    photoGetByNumber($idPerson, $number)
+    photoShow($idPerson, $number, $type = "full")
+
+  getList()
+    getPhotoShowcase($person["id"], true)
+    comments->countByPerson($person["id"])
+    comments->getAverageValutationByPerson($person["id"])
+
+
+
+CommentsController
+  

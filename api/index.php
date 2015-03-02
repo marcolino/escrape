@@ -3,7 +3,7 @@
 require_once 'Slim/Slim.php';
 require_once 'classes/controllers/UsersController.php';
 require_once 'classes/controllers/PersonsController.php';
-require_once 'classes/controllers/PhotosController.php';
+#require_once 'classes/controllers/PhotosController.php';
 require_once 'classes/controllers/CommentsController.php';
 require_once 'classes/services/Db.php';
 require_once 'classes/services/Image.php';
@@ -262,9 +262,78 @@ class Router {
         'file' => $error->getFile(),
         'line' => $error->getLine(),
         //'trace' => $error->getTrace(), #AsString(),
+        //'html' => $this->exception2HTML($error), // TODO: use it?
       ],
       'log' => $this->logs,
     ]));
+  }
+
+  private function exception2HTML($err) {
+    $trace = "";
+    foreach ($err->getTrace() as $a => $b) {
+      $aval = strval($a);
+      foreach ($b as $c => $d) {
+        if ($c === "args") {
+          foreach ($d as $e => $f) {
+            #$trace .= "<tr><td><b>$aval#</b></td><td align='right'><u>args:</u></td> <td><u>$e</u>:</td><td><i>$f</i></td></tr>";
+            $trace .= "<tr><td><b>$aval#</b></td>";
+            $trace .= "<td align='right'><u>args:</u></td> <td><u>$e</u>:</td>";
+            $trace .= "<td><i>" . var_export($f, true) . "</i></td></tr>";
+          }
+        } else {
+          $trace .= "<tr><td><b>$aval#</b></td><td align='right'><u>$c</u>:</td><td></td><td><i>$d</i></td>";
+        }
+      }
+    }
+    $code = strval($err->getCode());
+    $message = $err->getMessage();
+    $file = $err->getFile();
+    $line = strval($err->getLine());
+    $trace = "
+      <font face='Monospace'>
+        <center>
+          <fieldset style='width: 66%; border: 4px solid white; background: black;'>
+            <legend><b>[</b>PDO Error<b>]</b></legend>
+            <table border='0'>
+              <tr>
+                <td align='right'>
+                  <b><u>Message:</u></b></td><td><i>$message</i>
+                </td>
+              </tr>
+              <tr>
+                <td align='right'>
+                  <b><u>Code:</u></b></td><td><i>$code()</i>
+                </td>
+              </tr>
+              <tr>
+                <td align='right'>
+                  <b><u>File:</u></b></td><td><i>$file</i>
+                </td>
+              </tr>
+              <tr>
+                <td align='right'>
+                  <b><u>Line:</u></b>
+                </td>
+                <td>
+                  <i>$line</i>
+                </td>
+              </tr>
+              <tr>
+                <td align='right'>
+                  <b><u>Trace:</u></b>
+                </td>
+                <td>
+                  <br /><br />
+                  <table border='0'>
+                    $trace
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </fieldset>
+        </center>
+      </font>
+    ";
   }
 
   private function access_control_allow($response) {

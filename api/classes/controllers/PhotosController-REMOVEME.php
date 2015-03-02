@@ -7,6 +7,7 @@
  */
 
 class PhotosController {
+
   public function __construct($router) {
     $this->router = $router;
     $this->db = $router->db;
@@ -20,7 +21,7 @@ class PhotosController {
   *                  >= 0 id of added photo
   */
   public function add($photo) {
-    $photo = new Image();
+    $photo = new Image(); # TODO: $photo ??? override the parameter ???
 
     # get all photos for the person id of the photo
     $photos = $this->getPhotosByPerson($photo["id_person"]);
@@ -41,6 +42,7 @@ class PhotosController {
       return -1; // duplicate found
     }
 
+/*
     # check for photo truthfulness
     if ($imagesTool->checkImageThruthfulness($photo["url"])) {
       $photo["thruthfulness"] = true;
@@ -48,14 +50,15 @@ class PhotosController {
       $photo["thruthfulness"] = false;
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " does not seem thrutful");
     }
+*/
 
     $photo["type"] = $this->getTypeFromUrl($photo["url"]);
-    $photo["name"] = $photo["sum"]; # TODO: ???
+    $photo["name"] = $photo["sum"]; # TODO: a progressive integer counter?
 
     # assert photos full path existence
     $pathNameFull = self::DB_PHOTOS_PATH_FULL . $photo["id_person"] . "/";
     if (!file_exists($pathNameFull)) {
-      if (!@mkdir($pathNameFull, 0766, true)) {
+      if (!@mkdir($pathNameFull, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
         throw new Exception("can't create folder $pathNameFull");
       }
       $this->router->log("debug", "the directory $pathNameFull has been created");
@@ -76,7 +79,7 @@ class PhotosController {
     # assert photos thumbnail path existence
     $pathNameThumbnail = self::DB_PHOTOS_PATH_THUMBNAIL . $photo["id_person"] . "/";
     if (!file_exists($pathNameThumbnail)) {
-      if (!@mkdir($pathNameThumbnail, 0766, true)) {
+      if (!@mkdir($pathNameThumbnail, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
         throw new Exception("can't create folder $pathNameThumbnail");
       }
       $this->router->log("debug", "the directory $pathNameThumbnail has been created");
@@ -101,11 +104,13 @@ class PhotosController {
     return $this->db->get("photo", "id");
   }
 
+/*
   public function set($id, $photo) {
     # TODO: check if we need to change some properties of image on disk...
     return $this->db->set("photo", $id, $photo);
 $this->router->log("debug", "setting photo [$photo] to db for id [$id]");
   }
+*/
 
   public function delete($id) {
     $photo = $this->get($id);
@@ -131,17 +136,20 @@ $this->router->log("debug", "setting photo [$photo] to db for id [$id]");
     return $this->db->getByField("photo", "id_person", $idPerson);
   }
 
-  public function getPhotoShowcase($idPerson) {
-    return "http://localhost/escrape/api/db/photos/1-toe-123456/small-001.jpeg"; # TODO...
+  public function getPhotoShowcase($idPerson) { # TODO...
+    return "http://localhost/escrape/api/db/photos/1-toe-123456/small-001.jpeg";
   }
 
-  private function scaleBitmap($bitmap, $mode) { # TODO: REMOVE-ME...
+  private function scaleBitmap($bitmap, $mode) {
     switch ($mode) {
       case "full":
-        ;
+        ; // no need to scale bitmap
         break;
       case "thumbnail":
-        $bitmap = $bitmap;  # TODO: .............
+        $image = new Image();
+        $photo = $image->fromArray([ "bitmap" => $bitmap ])->toArray();
+        $bitmap = $photo["bitmap"];
+        unset($image);
         break;
       default:
         throw new Exception("scaleBitmap unforeseen mode $mode");

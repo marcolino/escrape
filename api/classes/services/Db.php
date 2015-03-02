@@ -1,30 +1,35 @@
 <?php
 
-/*
-$db = new DB();
-$db->add("person", array("name" => "pippo", "key" => "abc", "age" => 27 ));
-$p = $db->getAll("person");
-print_r($p);
-*/
-
 class DB extends PDO {
   const DB_TYPE = "sqlite";
   const DB_PATH = "db/escrape.sqlite";
+  const DB_USER = "";
+  const DB_PASS = "";
+  const DB_CHARSET = "utf8";
   private $db;
 
   public function __construct() {
     try {
       $new = !file_exists(self::DB_PATH);
-      $this->db = new PDO(self::DB_TYPE . ":" . self::DB_PATH);
+      $this->db = new PDO(
+        self::DB_TYPE . ":" . self::DB_PATH,
+        self::DB_USER,
+        self::DB_PASS,
+        [ PDO::ATTR_PERSISTENT => TRUE ]
+      );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      chmod(self::DB_PATH, 0644); # TODO: debug only!
       if ($new) { // db doesn't exist, create tables...
+        chmod(self::DB_PATH, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
+        $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
       }
-    } catch (Exception $e) { /* caught by router */ }
+    } catch (Exception $e) {
+      throw new Exception("__construct() error:" . $e);
+    }
   }
 
   public function createTables() {
+    # TODO: always use text or varchar ... ?
     try {
       $this->db->exec(
         "create table if not exists user (
@@ -42,8 +47,8 @@ class DB extends PDO {
         "create table if not exists person (
           id integer primary key autoincrement,
           key varchar(16),
-          name varchar,
-          site text,
+          name text,
+          site_key text,
           url text,
           timestamp integer,
           sex text,
@@ -96,7 +101,9 @@ class DB extends PDO {
         "
       );
  
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("createTables() error:" . $e);
+    }
   }
 
   public function getAll($table) {
@@ -109,7 +116,9 @@ class DB extends PDO {
       $statement = $this->db->query($sql);
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $result;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("getViaSQL() error:" . $e);
+    }
   }
 
   public function get($table, $id) {
@@ -120,7 +129,9 @@ class DB extends PDO {
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("get() error:" . $e);
+    }
   }
 
   public function getByField($table, $fieldName, $fieldValue) {
@@ -131,7 +142,9 @@ class DB extends PDO {
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("getByField() error:" . $e);
+    }
   }
 
   public function getByFields($table, $array) {
@@ -148,7 +161,9 @@ class DB extends PDO {
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("getByFields() error:" . $e);
+    }
   }
 
   public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
@@ -159,18 +174,24 @@ class DB extends PDO {
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("getAverageFieldByPerson() error:" . $e);
+    }
   }
 
   public function countByField($table, $fieldName, $fieldValue) {
     try {
       $sql = "select * from $table where $fieldName = :$fieldName";
+print "countByField() - $sql: [$sql] ($fieldValue)\n";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
+print "countByField($table, $fieldName, $fieldValue) => " . var_export($result, 1) . "\n";
       return $result ? count($result) : 0;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("countByField() error:" . $e);
+    }
   }
 
   public function add($table, $array) {
@@ -181,6 +202,7 @@ class DB extends PDO {
         $values .= ($values ? ", " : "") . ":" . $key;
       }
       $sql = "insert into $table ($fields) values ($values)";
+print "add() sql: [$sql]\n";
       $statement = $this->db->prepare($sql);
       foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
@@ -190,14 +212,12 @@ class DB extends PDO {
         throw new Exception("insert into table $table did insert " . $statement->rowCount() . " records");
       }
       return $this->db->lastInsertId();
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("add() error:" . $e);
+    }
   }
 
   public function set($table, $id, $array) {
-#print_r($table);
-#print_r($id);
-#print_r($array);
-#exit;
     try {
       $set = "";
       foreach ($array as $key => $value) {
@@ -215,7 +235,9 @@ class DB extends PDO {
         throw new Exception("update into table $table fir id [$id] did update " . $statement->rowCount() . " records");
       }
       return $id;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("set() error:" . $e);
+    }
   }
 
   public function delete($table, $id) {
@@ -230,7 +252,9 @@ class DB extends PDO {
         throw new Exception("delete from table $table did delete " . $statement->rowCount() . " records");
       }
       return true;
-    } catch (PDOException $e) { /* caught by router */ }
+    } catch (PDOException $e) {
+      throw new Exception("delete() error:" . $e);
+    }
   }
 
   private function profile($method) { # TODO: to be tested...

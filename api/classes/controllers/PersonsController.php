@@ -10,8 +10,7 @@
 #  - normalizePhone(), ... etc ...: in a common class...
 
 class PersonsController {
-
-  private $personsDefinition = [
+  private $sitesDefinitions = [
     "sgi" => [
       "url" => "http://www.sexyguidaitalia.com",
       "path" => "escort/torino",
@@ -111,24 +110,24 @@ class PersonsController {
     $this->router->log("info", "sync()");
 
     $changed = false;
-    foreach ($this->personsDefinition as $siteId => $site) {
+    foreach ($this->sitesDefinitions as $siteKey => $site) {
       $url = $site["url"] . "/" . $site["path"];
 #INCOGNITO# #DEBUG#
 #$url = "http://localhost/escrape/server/debug/sgi.html";
-#if ($siteId != "mor") continue;
+#if ($siteKey != "mor") continue;
 
       $this->router->log("info", "url: [$url]");
       $page = $this->getUrlContents($url, $site["charset"]);
 
       if ($page === FALSE) {
-        $this->router->log("error", "can't get page contents on site [$siteId]");
+        $this->router->log("error", "can't get page contents on site [$siteKey]");
         continue;
       }
 /*
       if (preg_match($site["patterns"]["persons"], $page, $matches)) {
         $persons_page = $matches[1];
       } else {
-        $this->router->log("error", persons pattern not found on site [$siteId] [" . $site["patterns"]["persons"] . "]");
+        $this->router->log("error", persons pattern not found on site [$siteKey] [" . $site["patterns"]["persons"] . "]");
         continue;
       }
 */
@@ -137,35 +136,34 @@ class PersonsController {
       if (preg_match_all($site["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
-        $this->router->log("error", "not any person pattern found on site [$siteId]");
+        $this->router->log("error", "not any person pattern found on site [$siteKey]");
         continue;
       }
       
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-if ($n > 3) break;
+
+if ($n > 3) break; # TODO: DEBUG-ONLY
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
-          $key = $siteId . "-" . $id;
+          $key = $siteKey . "-" . $id;
         } else {
-          $this->router->log("error", "person $n id not found on site [$siteId]");
+          $this->router->log("error", "person $n id not found on site [$siteKey]");
           continue;
         }
 
         if (preg_match($site["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
           $details_url = $site["url"] . "/" . $matches[1];
         } else {
-          $this->router->log("error", "person $n details url not found on site [$siteId]");
+          $this->router->log("error", "person $n details url not found on site [$siteKey]");
           continue;
         }
 
-#INCOGNITO# #DEBUG#
-#$details_url = "http://192.168.10.30/escrape/server/debug/adv4946.html";
         $this->router->log("debug", $details_url);
         if (($page_details = $this->getUrlContents($details_url, $site["charset"])) === FALSE) {
-          $this->router->log("error", "can't get person $n url contents on site [$siteId]");
+          $this->router->log("error", "can't get person $n url contents on site [$siteKey]");
           continue;
         }
         $timestamp = time(); # current timestamp, we don't have page last modification date...
@@ -174,14 +172,14 @@ if ($n > 3) break;
         if (preg_match($site["patterns"]["person-name"], $page_details, $matches) >= 1) {
           $name = $this->cleanName($matches[1]);
         } else {
-          $this->router->log("error", "person $n name not found on site [$siteId]");
+          $this->router->log("error", "person $n name not found on site [$siteKey]");
           continue;
         }
         
         if (preg_match($site["patterns"]["person-sex"], $page_details, $matches) >= 1) {
           $sex = $matches[1];
         } else {
-          #$this->router->log("warning", "person $n sex not found on site [$siteId]");
+          #$this->router->log("warning", "person $n sex not found on site [$siteKey]");
           $sex = "";
           #continue;
         }
@@ -189,7 +187,7 @@ if ($n > 3) break;
         if (preg_match($site["patterns"]["person-zone"], $page_details, $matches) >= 1) {
           $zone = $matches[1];
         } else {
-          #$this->router->log("warning", "person $n zone not found on site [$siteId]");
+          #$this->router->log("warning", "person $n zone not found on site [$siteKey]");
           $zone = "";
           #continue;
         }
@@ -197,7 +195,7 @@ if ($n > 3) break;
         if (preg_match($site["patterns"]["person-description"], $page_details, $matches) >= 1) {
           $description = $matches[1];
         } else {
-          #$this->router->log("warning", "person $n description not found on site [$siteId]");
+          #$this->router->log("warning", "person $n description not found on site [$siteKey]");
           $description = "";
           #continue;
         }
@@ -205,21 +203,21 @@ if ($n > 3) break;
         if (preg_match($site["patterns"]["person-phone"], $page_details, $matches) >= 1) {
           $phone = $this->normalizePhone($matches[1]);
         } else {
-          $this->router->log("error", "person $n phone not found on site [$siteId]");
+          $this->router->log("error", "person $n phone not found on site [$siteKey]");
           continue;
         }
           
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
           $photosUrls = $matches[1];
         } else {
-          $this->router->log("error", "photo pattern not found on site [$siteId]");
+          $this->router->log("error", "photo pattern not found on site [$siteKey]");
           continue;
         }
 
         $person = [];
         $person["key"] = $key;
         $person["name"] = $name;
-        $person["site"] = $siteId;
+        $person["site_key"] = $siteKey;
         $person["url"] = $details_url;
         $person["timestamp"] = $timestamp;
         $person["sex"] = $sex;
@@ -231,24 +229,17 @@ if ($n > 3) break;
         $person["age"] = null; # age
         $person["vote"] = null; # vote ([0-9])
 
-        #foreach ($photos as $photo) {
-        #  $person["photos"][] = $photo;
-        #}
-
-        $photos = new PhotosController($this->router);
-        if (($id = $this->db->getByField("person", "key", $key))) { # old key, update it
-          $this->router->log("debug", "updating person: $key °°°");
-          $this->set($id, $person); # error handling?
-          foreach ($photosUrls as $photoUrl) {
-            $photos->set($id, [ "url" => $photoUrl ]);
-          }
-          #$this->db->data["persons"][$id] = $person;
+        if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
+          $id = $p[0]["id"];
+          $this->router->log("debug", " °°° updating person: $key °°°");
+          $this->set($id, $person);
         } else { # new key, insert it
-          $this->router->log("debug", "inserting person: $key °°°");
+          $this->router->log("debug", " ^^^ inserting person: $key ^^^");
           $id = $this->add($person);
-          foreach ($photosUrls as $photoUrl) {
-            $photos->set($id, [ "url" => $photoUrl ]);
-          }
+        }
+        // add photos
+        foreach ($photosUrls as $photoUrl) {
+          $this->photoAdd($id, $photoUrl);
         }
       }
     }
@@ -280,112 +271,20 @@ if ($n > 3) break;
   public function getList() {
     $list = [];
     $comments = new CommentsController($this->router);
-    $photos = new PhotosController($this->router);
 
-#$all = $this->db->getAll("person");
-#throw new Exception("all:" . var_export($all, true));
     foreach ($this->db->getAll("person") as $personId => $person) {
-      #$comments_count = $this->db->countByField("comment", "phone", $value["phone"]);
-      #$comments_count = $comments->countByPhone($value["phone"]);
-#throw new Exception("getList() - personId: $personId");
       $list[$personId] = [
         "id" => $person["id"],
         "key" => $person["key"],
-        "site" => $person["site"],
+        "site_key" => $person["site_key"],
         "name" => $person["name"],
         "phone" => $person["phone"],
         "vote" => $person["vote"],
         "age" => $person["age"],
-        "photo" => $photos->getPhotoShowcase($person["id"]),
+        "photo_showcase" => $this->photoGetByShowcase($person["id"], true),
         "comments_count" => $comments->countByPerson($person["id"]),
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
       ];
-    }
-    return $list;
-  }
-
-public function putVote($params) { return $this->setVote($params); }
-  /**
-   * set person vote
-   *
-   * @param  array $filter
-   * @return array
-   */
-  public function setVote($params) {
-    $id = $params['id'];
-    $vote = $params['vote'];
-
-    if (!isset($this->db->data["persons"][$id])) {
-      throw new Exception("can't set vote: person id [$id] not found");
-    }
-    if (!is_numeric($vote) || $vote < 0 || $vote > 1) {
-      throw new Exception("can't set vote: vote must be in range [0-1]");
-    }
-
-    $this->db->data["persons"][$id]["vote"] = $vote;
-
-    $this->store();
-
-    return [ 'result' => true ];
-  }
-
-  public function getPersonsDefinition() {
-    $personsDefinition = [];
-    foreach ($this->personsDefinition as $id1 => $value1) {
-      foreach ($value1 as $id2 => $value2) {
-        if ($id2 != "patterns") {
-          $personsDefinition[$id1][$id2] = $value2;
-        }
-      }
-    }
-    return $personsDefinition;
-  }
-
-  public function getPersonsByPhone($phone) {
-    return array_filter($this->getPersons(), function($item) use ($phone) {
-       return $item['phone'] == $phone;
-    });
-  }
-
-  public function getPersonsByUrl($url) {
-    return array_filter($this->getPersons(), function($item) use ($url) {
-       return $item['url'] == $url;
-    });
-  }
-
-  public function getPersonsByDateSpan($dateFrom, $dateTo) {
-    return array_filter($this->getPersons(), function($item) use ($dateFrom, $dateTo) {
-       $notBefore = $dateFrom ? ($item['timestamp'] >= $dateFrom) : true;
-       $notAfter = $dateTo ? ($item['timestamp'] <= $dateTo) : true;
-       return $notBefore && $notAfter;
-    });
-  }
-
-  public function getPersonsByPageSum($sum) {
-    return array_filter($this->getPersons(), function($item) use ($sum) {
-       return $item['pageSum'] == $sum;
-    });
-  }
-
-  /**
-   * filter list
-   *
-   * @return array
-   */
-  public function filter($list, $filter) {
-    if (isset($filter)) {
-      if (isset($filter["range"])) {
-        foreach ($filter["range"] as $name => $value) {
-          $list = array_filter($list, function ($item) use ($name, $value) {
-            return (
-              !$item[$name] || (
-                (!$value["min"] || ($item[$name] >= $value["min"])) &&
-                (!$value["max"] || ($item[$name] <= $value["max"]))
-              )
-            );
-          });
-        }
-      }
     }
     return $list;
   }
@@ -413,11 +312,12 @@ public function putVote($params) { return $this->setVote($params); }
   }
 
   private function cleanName($value) {
-    $value = preg_replace("/[()]/", "", $value);
-    $value = preg_replace("/\s+/", " ", $value);
-    $value = preg_replace("/\s+$/", "", $value);
-    $value = preg_replace("/^\s+/", "", $value);
-    $value = ucfirst($value);
+    $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
+    $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
+    $value = preg_replace("/^\s+/", "", $value); // ignore leading blanks
+    $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
+    #$value = strtoupper($value); // all upper case
+    $value = ucfirst(strtolower($value)); // only initials upper case
     return $value;
   }
 
@@ -433,7 +333,7 @@ public function putVote($params) { return $this->setVote($params); }
     }
     return $result;
 */
-    $phone = preg_replace("/[^\d]*/", "", $phone);
+    $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
     return $phone;
   }
   
@@ -457,70 +357,15 @@ public function putVote($params) { return $this->setVote($params); }
 */
 
   /**
-   * Get a photo of person
-   *
-   * @param  integer $idPerson the id of the person's photo
-   * @param  integer $number   the progressive number of the photo in the person's photos collection
-   * @return array[]           if photo found
-   *         null              if photo not found
-   */
-  public function photoGet($idPerson, $number) {
-    $photo = $this->db->getByField("photo", $idPerson, "number", $number);
-    return $photo;
-  }
-
-  /**
-   * Get all photos of person
-   *
-   * @param  integer $idPerson the id of the person's photo
-   * @return array[][]         if photos found
-   *         null              if photos not found
-   */
-  public function photosGet($idPerson) {
-    $photos = $this->db->get("photo", $idPerson);
-    return $photos;
-  }
-
-  /**
-   * Show a photo of person
-   *
-   * @param  integer $idPerson the id of the person's photo
-   * @param  integer $number   the progressive number of the photo in the person's photos collection
-   * @param  string $type      the type of the photo:
-   *                             - "full"    shows the full version (default)
-   *                             - "small"   shows the small version
-   * @return void              outputs photo with MIME header
-   */
-  public function photoShow($idPerson, $number, $type = null) {
-    $photo = $this->db->getByFields("photo", $idPerson, "number", $number);
-    if (empty($photo)) {
-      header("Content-Type: " . $photo["mime"]);
-    } else {
-      header("Content-Type: " . $photo["mime"]);
-      switch ($type) {
-        default:
-        case "full":
-          print $photo["bitmap"];
-          break;
-        case "small":
-          print $photo["bitmapSmall"];
-          break;
-      }
-    }
-  }
-
-  /**
    * Add a photo
    *
    * @param  integer $idPerson the id of the person's photo
    * @param  string $photoUrl  the url of the photo
-   * @param  string $showcase  flag to denote showcase photo
-   * @return integer: -1       photo not added (duplication)
-   *                  -2       photo not added (similarity)
-   *                  -3       photo not added (can't store)
-   *                  >= 0     photo added to database
+   * @return integer: 0        photo not added (duplication / similarity)
+   *                  >= 0     photo added to filesystem and to database
    */
-  public function photoAdd($idPerson, $photoUrl, $showcase) {
+  public function photoAdd($idPerson, $photoUrl) {
+    // build photo array with image class
     $image = new Image();
     $image->fromUrl($photoUrl);
     $photo = $image->toArray();
@@ -528,34 +373,39 @@ public function putVote($params) { return $this->setVote($params); }
 
     // check if image is an exact duplicate
     if ($this->photoCheckDuplication($idPerson, $photo)) {
-      $this->router->log("info", "photo " . $photo->url . " for person id " . $idPerson . " is a duplicate");
+      $this->router->log("debug", " --- photo " . $photo->url . " for person id " . $idPerson . " is a duplicate");
       return -1; // duplicate found
     }
-    $this->router->log("debug", "photoAdd - not a duplicate");
+    #$this->router->log("debug", "photoAdd - not a duplicate");
 
     // check if image has similarities
     if ($this->photoCheckSimilarity($idPerson, $photo)) {
-      $this->router->log("info", "photo " . $photo->url . " for person id " . $idPerson . " is a similarity");
+      $this->router->log("debug", " --- photo " . $photo->url . " for person id " . $idPerson . " is a similarity");
       return -2; // similarity found
     }
-    $this->router->log("debug", "photoAdd - not a similarity");
+    #$this->router->log("debug", "photoAdd - not a similarity");
+
+    $this->router->log("debug", "photoAdd - ADDING photo, it seems new...");
+
+    # TODO: set $showcase (flag to denote showcase photo) ...
+    $showcase = true;
 
     $photo["id_person"] = $idPerson;
     $photo["timestamp_creation"] = time();
     $photo["domain"] = parse_url($photo["url"])["host"];
     $photo["sum"] = md5($photo["bitmap"]);
-    $photo["thruthfulness"] = null; // this is an offline property (it's very expensive to calculate)
+    $photo["thruthfulness"] = null; // this is an offline-set property (it's very expensive to calculate)
     $photo["showcase"] = $showcase;
    
-    // store this photo 
+    // store this photo
     if (($number = $this->photoStore($idPerson, $photo)) < 0) {
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $idPerson . " could not be stored locally");
       return -3; // error storing photo locally
     }
-
     $photo["number"] = $number;
 
     // add this photo to database
+$this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
     return $this->db->add("photo", $photo);
   }
 
@@ -604,6 +454,9 @@ public function putVote($params) { return $this->setVote($params); }
    * @param  string: photo url
    * @return boolean: true    if photo is not duplicated on the web
    *                  false   if photo is duplicated on the web
+   *
+   * TODO: DOESN'T WORK THIS WAY, CAN'T RELIABLY TELL IF A PHOTO IS THRUTHFUL;
+   *       SHOULD JUST RETURN A LIST OF LINKS TO BE SHOWN TO THE USER...
    */
   public function photoCheckThruthfulness($photo) {
     $domain = parse_url($photo["url"])['host'];
@@ -615,34 +468,24 @@ public function putVote($params) { return $this->setVote($params); }
   }
 
   /**
-   * Load photo from local file system
-   *
-   * @param  integer $idPerson   the id of the person whose photo to load
-   * @param  integer $number     the progressive number of the photo
-   * @return ...
-   */
-  private function photoLoad($idPerson, $number) {
-  }
-
-  /**
-   * Store photo on local file system
+   * Store a photo on local file system
    *
    * @param  integer $idPerson   the id of the person whose photo to store
    * @param  array $photo        the photo structure
    * @return integer: >= 0       the progressive number of the photo
    *                  < 0        error...
    */
-  private function photoStore($idPerson, $photo) {
-    $person = $this->db->get("person", $idPerson);
-    $personPhotosCount = $this->db->countByField("photo", "id_person", $idPerson);
+  public function photoStore($idPerson, $photo) {
+    $keyPerson = $this->db->get("person", $idPerson)["key"];
+    $personPhotosCount = $this->photoGetCount($idPerson);
     $number = ++$personPhotosCount;
-    $dirname = self::PHOTOS_PATH . $idPerson . "-" . $person["key"] . "/";
+    $dirname = self::PHOTOS_PATH . $keyPerson . "/";
     $filename = sprintf("%03d", $number);
     $fileext =  image_type_to_extension($photo["type"], true);
 
     # assure photos full path existence
     if (!file_exists($dirname)) {
-      if (!@mkdir($dirname, 0777, true)) {
+      if (!@mkdir($dirname, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
         throw new Exception("can't create folder $dirname");
       }
       $this->router->log("debug", "the directory $dirname has been created");
@@ -656,6 +499,82 @@ public function putVote($params) { return $this->setVote($params); }
     @file_put_contents($pathnameSmall, $photo["bitmapSmall"]);
 
     return $number;
+  }
+
+  /**
+   * Get all photos of person
+   *
+   * @param  integer $idPerson the id of the person's photo
+   * @return array[][]         if photos found
+   *         null              if photos not found
+   */
+  public function photoGetAll($idPerson) {
+    $photos = $this->db->get("photo", $idPerson);
+    return $photos;
+  }
+
+  /**
+   * Get a photo of person given it's number
+   *
+   * @param  integer $idPerson   the id of the person whose photo to load
+   * @param  integer $number     the progressive number of the photo
+   * @return array   the photo structure
+   */
+  private function photoGetByNumber($idPerson, $number) {
+    $photos = $this->db->getByFields("photo", [ "id_person" => $idPerson, "number" => $number ]);
+    return $photos[0];
+  }
+
+  /**
+   * Get photos of person given their showcase flag
+   *
+   * @param  integer $idPerson   the id of the person whose photo to load
+   * @param  integer $showcase   showcase flag (true / false)
+   * @return array   the photo structure
+   */
+  private function photoGetByShowcase($idPerson, $showcase) {
+    $photos = $this->db->getByFields("photo", [ "id_person" => $idPerson, "showcase" => $showcase ]);
+    return $photos[0];
+  }
+
+  /**
+   * Get count of photos of person
+   *
+   * @param  integer $idPerson the id of the person's photo
+   * @return integer           the number of photos of this person
+   */
+  public function photoGetCount($idPerson) {
+    $count = $this->db->countByField("photo", "id_person", $idPerson);
+$this->router->log("debug", "photoGetCount($idPerson): $count");
+    return $count;
+  }
+
+  /**
+   * Show a photo of person
+   *
+   * @param  integer $idPerson the id of the person's photo
+   * @param  integer $number   the progressive number of the photo in the person's photos collection
+   * @param  string $type      the type of the photo:
+   *                             - "full"    shows the full version (default)
+   *                             - "small"   shows the small version
+   * @return void              outputs photo with MIME header
+   */
+  public function photoShow($idPerson, $number, $type = "full") {
+    $photo = $this->db->getByFields("photo", ["id_person" => $idPerson, "number" => $number ]);
+    if (empty($photo)) {
+      header("Content-Type: " . $photo["mime"]);
+    } else {
+      header("Content-Type: " . $photo["mime"]);
+      switch ($type) {
+        default:
+        case "full":
+          print $photo["bitmap"];
+          break;
+        case "small":
+          print $photo["bitmapSmall"];
+          break;
+      }
+    }
   }
 
   private function photoGoogleSearch() {
@@ -708,43 +627,143 @@ public function putVote($params) { return $this->setVote($params); }
   }
 
   public function test() {
-   $photoUrls = [
+$this->router->log("debug", " test 1");
+$count = $this->photoGetCount("1");
+$this->router->log("debug", " test 2: $count");
+   $photosUrls = [
       "http://img1.wikia.nocookie.net/__cb20130913040728/disney/images/0/0e/595157-alice1_large.jpg",
       "http://planetpesca.com/files/2009/04/sardina.gif",
     ];
-    $newPerson = [];
-    $newPerson["key"] = "toe-123456";
-    $newPerson["name"] = "Alice";
-    $newPerson["site"] = "toe";
-    $newPerson["url"] = "www.toe.com/12345/";
-    $newPerson["timestamp"] = 1424248678;
-    $newPerson["sex"] = "F";
-    $newPerson["zone"] = "centro";
-    $newPerson["address"] = "Via Roma, 0, Torino";
-    $newPerson["description"] = "super";
-    $newPerson["phone"] = "3336480983";
-    $newPerson["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
-    $newPerson["age"] = 27;
-    $newPerson["vote"] = 7;
+    $person = [];
+    $person["key"] = "toe-123456";
+    $person["name"] = "Alice";
+    $person["site_key"] = "toe";
+    $person["url"] = "www.toe.com/12345/";
+    $person["timestamp"] = 1424248678;
+    $person["sex"] = "F";
+    $person["zone"] = "centro";
+    $person["address"] = "Via Roma, 0, Torino";
+    $person["description"] = "super";
+    $person["phone"] = "3336480983";
+    $person["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
+    $person["age"] = 27;
+    $person["vote"] = 7;
 
-    $photos = new PhotosController($this->router);
-    if (($persons = $this->db->getByField("person", "key", $newPerson["key"]))) { # old key, update it
-      #var_dump($person); exit;
-      $id = $persons[0]["id"];
-      $this->router->log("debug", "updating person: " . $persons[0]["key"] . " ^^^");
-      $this->set($id, $newPerson); # error handling?
-      #$this->db->data["persons"][$id] = $person;
+    // add person
+    $key = $person["key"];
+    if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
+      $id = $p[0]["id"];
+      $this->router->log("debug", " °°° updating person: $key °°°");
+      $this->set($id, $person);
     } else { # new key, insert it
-      $this->router->log("debug", "inserting person: " . $newPerson["key"] . " °°°");
-      $id = $this->add($newPerson);
+      $this->router->log("debug", " ^^^ inserting person: $key ^^^");
+      $id = $this->add($person);
     }
-    $num = 0;
-    foreach ($photoUrls as $photoUrl) {
-      $showcase = ($num === 0); # TODO: how to handle showcase when adding photos?
-      $this->photoAdd($id, $photoUrl, $showcase);
-      $num++;
+
+   // add photos
+    foreach ($photosUrls as $photoUrl) {
+      $this->photoAdd($id, $photoUrl);
     }
+
     return true;
   }
 
 }
+
+/*
+  public function putVote($params) { return $this->setVote($params); }
+*/
+
+/*
+  /**
+   * set person vote
+   *
+   * @param  array $filter
+   * @return array
+   * /
+  public function setVote($params) {
+    $id = $params['id'];
+    $vote = $params['vote'];
+
+    if (!isset($this->db->data["persons"][$id])) {
+      throw new Exception("can't set vote: person id [$id] not found");
+    }
+    if (!is_numeric($vote) || $vote < 0 || $vote > 1) {
+      throw new Exception("can't set vote: vote must be in range [0-1]");
+    }
+
+    $this->db->data["persons"][$id]["vote"] = $vote;
+
+    $this->store();
+
+    return [ 'result' => true ];
+  }
+*/
+
+/*
+  public function getSitesDefinitions() {
+    $sitesDefinitions = [];
+    foreach ($this->sitesDefinitions as $id1 => $value1) {
+      foreach ($value1 as $id2 => $value2) {
+        if ($id2 != "patterns") {
+          $sitesDefinitions[$id1][$id2] = $value2;
+        }
+      }
+    }
+    return $sitesDefinitions;
+  }
+*/
+
+/*
+  public function getPersonsByPhone($phone) {
+    return array_filter($this->getPersons(), function($item) use ($phone) {
+       return $item['phone'] == $phone;
+    });
+  }
+
+  public function getPersonsByUrl($url) {
+    return array_filter($this->getPersons(), function($item) use ($url) {
+       return $item['url'] == $url;
+    });
+  }
+
+  public function getPersonsByDateSpan($dateFrom, $dateTo) {
+    return array_filter($this->getPersons(), function($item) use ($dateFrom, $dateTo) {
+       $notBefore = $dateFrom ? ($item['timestamp'] >= $dateFrom) : true;
+       $notAfter = $dateTo ? ($item['timestamp'] <= $dateTo) : true;
+       return $notBefore && $notAfter;
+    });
+  }
+
+  public function getPersonsByPageSum($sum) {
+    return array_filter($this->getPersons(), function($item) use ($sum) {
+       return $item['pageSum'] == $sum;
+    });
+  }
+*/
+
+/*
+  /**
+   * filter list
+   *
+   * @return array
+   * /
+  public function filter($list, $filter) {
+    if (isset($filter)) {
+      if (isset($filter["range"])) {
+        foreach ($filter["range"] as $name => $value) {
+          $list = array_filter($list, function ($item) use ($name, $value) {
+            return (
+              !$item[$name] || (
+                (!$value["min"] || ($item[$name] >= $value["min"])) &&
+                (!$value["max"] || ($item[$name] <= $value["max"]))
+              )
+            );
+          });
+        }
+      }
+    }
+    return $list;
+  }
+*/
+

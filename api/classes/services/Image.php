@@ -9,7 +9,7 @@
 class Image {
   const SIGNATURE_SIDE = 10; // signature side (pixels)
   const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.4; // minimum % distance for similarity duplication # TODO: tune-me
-  const THUMBNAIL_SMALL_WIDTH = 400; // thumbnail "small" width (pixels)
+  const THUMBNAIL_SMALL_HEIGHT = 72; // thumbnail "small" height (pixels)
   const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
 
   public function __construct($options = []) {
@@ -20,8 +20,8 @@ class Image {
     if (!isset($this->options["signatureDuplicationMinDistance"])) {
       $this->options["signatureDuplicationMinDistance"] = self::SIGNATURE_DUPLICATION_MIN_DISTANCE;
     }
-    if (!isset($this->options["thumbnailSmallWidth"])) {
-      $this->options["thumbnailSmallWidth"] = self::THUMBNAIL_SMALL_WIDTH;
+    if (!isset($this->options["thumbnailSmallHeight"])) {
+      $this->options["thumbnailSmallHeight"] = self::THUMBNAIL_SMALL_HEIGHT;
     }
     if (!isset($this->options["internalType"])) {
       $this->options["internalType"] = self::INTERNAL_TYPE;
@@ -45,7 +45,7 @@ class Image {
     $this->mime = $info["mime"];
     $this->signature = $this->signature();
     $this->bitmapFull = $this->convert($this->options["internalType"]); // convert image to internal type
-    $this->bitmapSmall = $this->scale($this->options["thumbnailSmallWidth"]);
+    $this->bitmapSmall = $this->scaleByHeight($this->options["thumbnailSmallHeight"]);
   }
 
   /**
@@ -135,13 +135,13 @@ class Image {
   }
 
   /**
-   * Returns a scaled version of the image, given a width
+   * Returns a scaled version of the image, given an height
    */
-  private function scale($width) {
+  private function scaleByHeight($height) {
     // create the image from the bitmap
     $img = imagecreatefromstring($this->bitmapFull);
-    // calculate the new height to keep the same proportions
-    $height = (($this->height * $width) / $this->width);
+    // calculate the new width to keep the same proportions
+    $width = (($this->width * $height) / $this->height);
     // generate the new image container with the new size
     $imgScaled = imagecreatetruecolor($width, $height);
     // create the new image
