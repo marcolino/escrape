@@ -9,7 +9,7 @@
 class Image {
   const SIGNATURE_SIDE = 10; // signature side (pixels)
   const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.4; // minimum % distance for similarity duplication # TODO: tune-me
-  const THUMBNAIL_SMALL_HEIGHT = 72; // thumbnail "small" height (pixels)
+  const THUMBNAIL_HEIGHT = 72; // thumbnail "small" height (pixels)
   const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
 
   public function __construct($options = []) {
@@ -20,8 +20,8 @@ class Image {
     if (!isset($this->options["signatureDuplicationMinDistance"])) {
       $this->options["signatureDuplicationMinDistance"] = self::SIGNATURE_DUPLICATION_MIN_DISTANCE;
     }
-    if (!isset($this->options["thumbnailSmallHeight"])) {
-      $this->options["thumbnailSmallHeight"] = self::THUMBNAIL_SMALL_HEIGHT;
+    if (!isset($this->options["thumbnailHeight"])) {
+      $this->options["thumbnailHeight"] = self::THUMBNAIL_HEIGHT;
     }
     if (!isset($this->options["internalType"])) {
       $this->options["internalType"] = self::INTERNAL_TYPE;
@@ -37,15 +37,22 @@ class Image {
   */
   public function fromUrl($url) {
     $this->url = $url;
-    $this->bitmap = $this->getUrlContents($url); // download image
-    $info = getimagesize($url);
-    $this->width = $info[0];
-    $this->height = $info[1];
-    $this->type = $info[2];
-    $this->mime = $info["mime"];
+    list($this->bitmap, $this->mime) = $this->getUrlContents($url); // download image
+    $this->type = $this->mime2Type($this->mime);
+    $this->img = imagecreatefromstring($this->bitmap);
+    $this->width = imagesx($this->img);
+    $this->height = imagesy($this->img);
+    #$info = getimagesize($url);
+    #$this->width = $info[0];
+    #$this->height = $info[1];
+    #$this->type = $info[2];
+    #$this->mime = $info["mime"];
     $this->signature = $this->signature();
-    $this->bitmapFull = $this->convert($this->options["internalType"]); // convert image to internal type
-    $this->bitmapSmall = $this->scaleByHeight($this->options["thumbnailSmallHeight"]);
+    $this->bitmapFull = $this->convertToType($this->options["internalType"]); // convert image to internal type
+    $this->imgFull = imagecreatefromstring($this->bitmapFull);
+    $this->bitmapSmall = $this->scaleByHeight($this->options["thumbnailHeight"]);
+    $this->imgSmall = imagecreatefromstring($this->bitmapFull);
+    $this->sum = md5($this->bitmap);
   }
 
   /**
@@ -57,13 +64,17 @@ class Image {
   public function fromArray($array) {
     $this->url = $array["url"];
     $this->bitmap = $array["bitmap"];
+    $this->type = $array["type"];
+    $this->img = $array["img"];
     $this->width = $array["width"];
     $this->height = $array["height"];
-    $this->type = $array["type"];
     $this->mime = $array["mime"];
     $this->signature = $array["signature"];
     $this->bitmapFull = $array["bitmapFull"];
+    $this->imgFull = $array["imgFull"];
     $this->bitmapSmall = $array["bitmapSmall"];
+    $this->imgSmall = $array["imgSmall"];
+    $this->sum = $array["sum"];
   }
 
   /**
@@ -74,14 +85,15 @@ class Image {
   public function toArray() {
     $array = [];
     $array["url"] = $this->url;
-    $array["bitmap"] = $this->bitmap;
-    $array["width"] = $this->width;
-    $array["height"] = $this->height;
+    #$array["bitmap"] = $this->bitmap;
+    #$array["width"] = $this->width;
+    #$array["height"] = $this->height;
     $array["type"] = $this->type;
     $array["mime"] = $this->mime;
     $array["signature"] = $this->signature;
-    $array["bitmapFull"] = $this->bitmapFull;
-    $array["bitmapSmall"] = $this->bitmapSmall;
+    #$array["bitmapFull"] = $this->bitmapFull;
+    #$array["bitmapSmall"] = $this->bitmapSmall;
+    $array["sum"] = $this->sum;
     return $array;
   }
 
@@ -102,27 +114,27 @@ class Image {
   /**
    * Converts the image to a given type
    */
-  private function convert($type) {
+  private function convertToType($type) {
     if ($this->type === $type) { // the image bitmap is already of the requested type
       return $this->bitmap;
     }
-    // create the image from the bitmap
-    $img = imagecreatefromstring($this->bitmap);
+    #// create the image from the bitmap
+    #$img = imagecreatefromstring($this->bitmap);
     // produce the new bitmap
     ob_start();
     switch ($type) {
       case "gif":
-        if (!imagegif($img)) {
+        if (!imagegif($this->img)) {
           return false;
         }
         break;
       case "jpeg":
-        if (!imagejpeg($img, NULL, 100)) { // 100% quality
+        if (!imagejpeg($this->img, NULL, 100)) { // 100% quality
           return false;
         }
         break;
       case "png":
-        if (!imagepng($img, NULL, 0)) { // no compression
+        if (!imagepng($this->img, NULL, 0)) { // no compression
           return false;
         }
         break;
@@ -138,15 +150,15 @@ class Image {
    * Returns a scaled version of the image, given an height
    */
   private function scaleByHeight($height) {
-    // create the image from the bitmap
-    $img = imagecreatefromstring($this->bitmapFull);
+    #// create the image from the bitmap
+    #$img = imagecreatefromstring($this->bitmapFull);
     // calculate the new width to keep the same proportions
     $width = (($this->width * $height) / $this->height);
     // generate the new image container with the new size
     $imgScaled = imagecreatetruecolor($width, $height);
     // create the new image
     imagecopyresized(
-      $imgScaled, $img,
+      $imgScaled, $this->imgFull,
       0, 0, 0, 0,
       $width, $height,
       $this->width, $this->height
@@ -195,9 +207,9 @@ class Image {
    * Returns the string of bits representing the signature of an image
    */
   private function signature() {
-    $img = imagecreatefromstring($this->bitmap);
+    #$img = imagecreatefromstring($this->bitmap);
     $imgResized = imagecreatetruecolor($this->options["signaturePixelsPerSide"], $this->options["signaturePixelsPerSide"]);
-    imagecopyresized($imgResized, $img, 0, 0, 0, 0, $this->options["signaturePixelsPerSide"], $this->options["signaturePixelsPerSide"], $this->width, $this->height);
+    imagecopyresized($imgResized, $this->img, 0, 0, 0, 0, $this->options["signaturePixelsPerSide"], $this->options["signaturePixelsPerSide"], $this->width, $this->height);
     imagefilter($imgResized, IMG_FILTER_GRAYSCALE);
     $colorMean = $this->colorMeanValue($imgResized);
     $bits = $this->bits($colorMean);
@@ -232,6 +244,24 @@ class Image {
     return $bits;
   }
 
+  private function mime2Type($mime) {
+    switch ($mime) {
+      case 'image/gif':
+        $type = '.gif';
+        break;
+      case 'image/jpeg':
+        $type = '.jpg';
+        break;
+      case 'image/png':        
+        $type = '.png';
+        break;
+      default:
+        $type = "";
+        break;
+    }
+    return $type;
+  }
+
   private function getUrlContents($url) {
     $user_agent = "Mozilla";
     $ch = curl_init();
@@ -248,8 +278,9 @@ class Image {
     if (($errno = curl_errno($ch))) {
       throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
     }
+    $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     curl_close($ch);
-    return $output;
+    return [ $output, $mime ];
   }
 
   /**

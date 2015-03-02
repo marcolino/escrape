@@ -14,14 +14,14 @@ class DB extends PDO {
       $this->db = new PDO(
         self::DB_TYPE . ":" . self::DB_PATH,
         self::DB_USER,
-        self::DB_PASS,
-        [ PDO::ATTR_PERSISTENT => TRUE ]
+        self::DB_PASS
+        #[ PDO::ATTR_PERSISTENT => TRUE ] # TODO: why do we get "readonly database" with this ???
       );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       if ($new) { // db doesn't exist, create tables...
-        chmod(self::DB_PATH, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
+        @chmod(self::DB_PATH, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
       }
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
@@ -91,6 +91,9 @@ class DB extends PDO {
           id integer primary key autoincrement,
           id_person integer,
           number integer,
+          type varchar(8),
+          mime varchar(32),
+          domain text,
           url text,
           timestamp_creation integer,
           sum varchar(32),
@@ -202,7 +205,7 @@ print "countByField($table, $fieldName, $fieldValue) => " . var_export($result, 
         $values .= ($values ? ", " : "") . ":" . $key;
       }
       $sql = "insert into $table ($fields) values ($values)";
-print "add() sql: [$sql]\n";
+#print "add() sql: [$sql]\n";
       $statement = $this->db->prepare($sql);
       foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);

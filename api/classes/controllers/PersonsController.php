@@ -37,7 +37,7 @@ class PersonsController {
       "path" => "annunci_Escort_singole_Piemonte_Torino.html",
       "patterns" => [
         /*"persons" => "/(.*)/",*/
-        "person" => "/<!-- Inizio Anteprima Escort -->(.*?)<!-- Fine Anteprima Escort -->/s",
+        "person" => "/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s",
         "person-id" => "/<a href=\".*?([^\_]*?)\.html\".*?>.*?<\/a>/s",
         "person-details-url" => "/<a href=\"(.*?)\".*?>.*?<\/a>/s",
         "person-img-url" => "",
@@ -46,8 +46,8 @@ class PersonsController {
         "person-zone" => "/(?:<a href=\"#quartiere\".*?>(.*?)<\/a>)/s",
         "person-description" => "/<meta name=\"description\".*?content=\"(.*?)\".*?\/>/s",
         "person-phone" => "/<h\d class=\"phone\">\s*(?:<img.*? \/>)\s*(.*?)\s*<\/h\d>/s",
-        "person-phone-vacation" => "/In arrivo dopo le vacanze !!/s",
-        "person-phone-unavailable" => "/In arrivo dopo le vacanze !!/s", # TODO
+        "person-phone-vacation" => "/TODO/s", # TODO
+        "person-phone-unavailable" => "/Questa ...... ha disabilitato temporaneamente il suo annuncio/s",
         "person-photo" => "/<a\s+style=\"cursor:pointer;\"\s+href=\"(.*?)\" rel=\"prettyPhoto\[galleria\]\".*?<\/a>/s",
       ],
     ],
@@ -239,7 +239,8 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
         }
         // add photos
         foreach ($photosUrls as $photoUrl) {
-          $this->photoAdd($id, $photoUrl);
+         $photoFullUrl = $site["url"] . "/" . $photoUrl;
+          $this->photoAdd($id, $photoFullUrl);
         }
       }
     }
@@ -392,8 +393,9 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
     $photo["id_person"] = $idPerson;
     $photo["timestamp_creation"] = time();
-    $photo["domain"] = parse_url($photo["url"])["host"];
-    $photo["sum"] = md5($photo["bitmap"]);
+    $photo["domain"] = parse_url($photo["url"])["host"]; # TODO: is this right? Do we use this?
+    #$photo["sum"] = md5($photo["bitmap"]);
+    $photo["sum"] = $photo["sum"];
     $photo["thruthfulness"] = null; // this is an offline-set property (it's very expensive to calculate)
     $photo["showcase"] = $showcase;
    
@@ -418,9 +420,15 @@ $this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
    *                  false      if photo is not a fuplicate
    */
   private function photoCheckDuplication($idPerson, $photo) {
+#print_r($photo);
     $photos = $this->db->get("photo", $idPerson);
+# TODO: ARRAY OF ARRAY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
     if ($photos) {
+print "photos:";
+print_r($photos);
       foreach ($photos as $p) {
+print "p:";
+print_r($p);
         if ($p["sum"] === $photo["sum"]) {
           $this->router->log("debug", "photo " . $photo["url"] . " sum is equal to  " . $p["url"] . ", it's duplicate...");
           return true;
@@ -432,6 +440,7 @@ $this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
 
   private function photoCheckSimilarity($idPerson, $photo) {
     $photos = $this->db->get("photo", $idPerson);
+# TODO: ARRAY OF ARRAY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
     if ($photos) {
       $image1 = new Image();
       $image1->fromArray($photo);
@@ -481,7 +490,8 @@ $this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
     $number = ++$personPhotosCount;
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
     $filename = sprintf("%03d", $number);
-    $fileext =  image_type_to_extension($photo["type"], true);
+    #$fileext = image_type_to_extension($photo["type"], true);
+    $fileext = $photo["type"];
 
     # assure photos full path existence
     if (!file_exists($dirname)) {
@@ -662,7 +672,8 @@ $this->router->log("debug", " test 2: $count");
 
    // add photos
     foreach ($photosUrls as $photoUrl) {
-      $this->photoAdd($id, $photoUrl);
+      $photoFullUrl = $person["url"] . "/" . $photoUrl;
+      $this->photoAdd($id, $photoFullUrl);
     }
 
     return true;
