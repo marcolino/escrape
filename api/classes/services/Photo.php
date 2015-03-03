@@ -9,7 +9,7 @@
 class Photo {
   const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
   const SMALL_HEIGHT = 72; // small photo height (pixels)
-  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.4; // minimum % distance for similarity duplication # TODO: tune-me
+  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.1; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
 
   public function __construct($source, $options = []) {
@@ -70,9 +70,8 @@ class Photo {
     }
     $this->load();
     $bitmapFull = $this->bitmap;
-#print "bitmapFull()\n";
-print "bitmapFull length: [" . strlen($bitmapFull) . "]\n";
-    return $this->bitmapFull = $this->convertBitmapToInternalType($bitmapFull);
+    $this->bitmapFull = $this->convertBitmapToInternalType($bitmapFull);
+    return $this->bitmapFull;
   }
 
   /**
@@ -84,8 +83,8 @@ print "bitmapFull length: [" . strlen($bitmapFull) . "]\n";
     }
     $this->load();
     $bitmapSmall = $this->scaleByHeight($this->bitmap, $this->options["smallHeight"]);
-#print "bitmapSmall()\n";
-    return $this->bitmapSmall = $this->convertBitmapToInternalType($bitmapSmall);
+    $this->bitmapSmall = $this->convertBitmapToInternalType($bitmapSmall);
+    return $this->bitmapSmall;
   }
 
   /**
@@ -273,7 +272,6 @@ print "bitmapFull length: [" . strlen($bitmapFull) . "]\n";
     if (!isset($this->url)) {
       throw new Exception("Can't load photo: no url source specified");
     }
-#print("PHOTO LOAD(): LOADING PHOTO FROM URL [".$this->url()."] - CHECK THIS CALL IS NOT DUPLICATED...\n");
     list($this->bitmap, $this->mime) = $this->getUrlContents($this->url); // download photo
   }
 
@@ -283,7 +281,7 @@ print "bitmapFull length: [" . strlen($bitmapFull) . "]\n";
   private function convertBitmapToInternalType($bitmap) {
     if ($this->type() === $this->options["internalType"]) {
       // the bitmap is already of the requested type
-      return $this->bitmap;
+      return $bitmap;
     }
     $image = imagecreatefromstring($bitmap);
 
@@ -412,13 +410,13 @@ print "bitmapFull length: [" . strlen($bitmapFull) . "]\n";
   private function mime2Type($mime) {
     switch ($mime) {
       case 'image/gif':
-        $type = '.gif';
+        $type = 'gif';
         break;
       case 'image/jpeg':
-        $type = '.jpg';
+        $type = 'jpeg';
         break;
       case 'image/png':        
-        $type = '.png';
+        $type = 'png';
         break;
       default:
         $type = "";

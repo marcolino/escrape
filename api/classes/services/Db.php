@@ -14,8 +14,8 @@ class DB extends PDO {
       $this->db = new PDO(
         self::DB_TYPE . ":" . self::DB_PATH,
         self::DB_USER,
-        self::DB_PASS
-        #[ PDO::ATTR_PERSISTENT => TRUE ] # TODO: why do we get "readonly database" with this ???
+        self::DB_PASS,
+        [ PDO::ATTR_PERSISTENT => TRUE ]
       );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       if ($new) { // db doesn't exist, create tables...
@@ -200,7 +200,6 @@ class DB extends PDO {
         $values .= ($values ? ", " : "") . ":" . $key;
       }
       $sql = "insert into $table ($fields) values ($values)";
-#print "add() sql: [$sql]\n";
       $statement = $this->db->prepare($sql);
       foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);

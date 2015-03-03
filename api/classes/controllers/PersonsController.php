@@ -370,22 +370,17 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
     // check if photo is an exact duplicate
     if ($this->photoCheckDuplication($idPerson, $photo)) {
-      $this->router->log("debug", " --- photo " . $photo->url() . " for person id " . $idPerson . " is a duplicate, ignoring");
-$this->router->log("debug", "RETURNING FALSE");
+      $this->router->log("debug", " --- photo [$photoUrl] for person id " . $idPerson . " is a duplicate, ignoring");
       return false; // duplicate found
     }
-$this->router->log("debug", "AFTER RETURNING FALSE");
-    #$this->router->log("debug", "photoAdd - not a duplicate");
 
     // check if photo has similarities
     $photo->signature();
     if ($this->photoCheckSimilarity($idPerson, $photo)) {
-      $this->router->log("debug", " --- photo " . $photo->url() . " for person id " . $idPerson . " is a similarity, ignoring");
-      return false; // duplicate found
+      $this->router->log("debug", " --- photo [$photoUrl] for person id " . $idPerson . " is a similarity, ignoring");
+      return false; // similarity found
     }
-    #$this->router->log("debug", "photoAdd - not a similarity");
-
-    $this->router->log("debug", "photoAdd - storing photo, it seems new...");
+    $this->router->log("debug", "photoAdd - storing photo [$photoUrl], it seems new...");
 
     $showcase = true; # TODO: decide $showcase (flag to denote showcase photo) ...
 
@@ -404,7 +399,7 @@ $this->router->log("debug", "AFTER RETURNING FALSE");
     $photo->number($number);
 
     // add this photo to database
-    $this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
+    #$this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
     return $this->db->add("photo", $this->photo2Data($photo));
   }
 
@@ -445,14 +440,14 @@ $this->router->log("debug", "AFTER RETURNING FALSE");
     if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
         if ($p["sum"] === $photo->sum()) { // the checksum matches
-          #$this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+          $this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
           return true;
         }
       }
     } else { // not more than one result returned
       if ($photos) { // one result returned
         if ($photos["sum"] === $photo->sum()) { // the checksum matches
-          #$this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $photos["url"] . ", it's duplicate...");
+          $this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $photos["url"] . ", it's duplicate...");
           return true;
         }
       }
@@ -466,7 +461,7 @@ $this->router->log("debug", "AFTER RETURNING FALSE");
       foreach ($photos as $p) {
         $photo2 = new Photo([ "data" => $p ]);
         if ($photo->checkSimilarity($photo2)) {
-          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+          $this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
           return true;
         }
       }
@@ -474,7 +469,7 @@ $this->router->log("debug", "AFTER RETURNING FALSE");
       if ($photos) { // one result returned
         $photo2 = new Photo([ "data" => $photos ]);
         if ($photo->checkSimilarity($photo2)) {
-          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+          $this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
           return true;
         }
       }
@@ -516,14 +511,12 @@ $this->router->log("debug", "AFTER RETURNING FALSE");
     $this->router->log("debug", "photoStore - storing photo");
     $keyPerson = $this->db->get("person", $idPerson)["key"];
     $personPhotosCount = $this->photoGetCount($idPerson);
-$this->router->log("debug", "photoStore - personPhotosCount:[$personPhotosCount]");
     $number = $personPhotosCount + 1;
-$this->router->log("debug", "photoStore - idPerson:[$idPerson] - personPhotosCount:[$personPhotosCount], number:[$number]");
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
     $filename = sprintf("%03d", $number);
     $fileext = $photo->type();
-    $pathnameFull = $dirname . "full" . "-" . $filename . $fileext;
-    $pathnameSmall = $dirname . "small" . "-" . $filename . $fileext;
+    $pathnameFull = $dirname . "full" . "-" . $filename . "." . $fileext;
+    $pathnameSmall = $dirname . "small" . "-" . $filename . "." . $fileext;
 
     // assure photos directory existence
     if (!file_exists($dirname)) {
@@ -535,20 +528,16 @@ $this->router->log("debug", "photoStore - idPerson:[$idPerson] - personPhotosCou
       ; # directory already exists, not the first photo for this person
     }
 
-$this->router->log("debug", "photoStore - storing photo - bitmapFull to $pathnameFull");
     // store the full and small bitmaps to file-system
-$this->router->log("debug", "photoStore - bitmapFull size: " . strlen($photo->bitmapFull()));
     if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {
       $this->router->log("error", "can't save photo to file [$pathnameFull]");
       return false;
     }
-$this->router->log("debug", "photoStore - storing photo - bitmapSmall to $pathnameSmall");
     if ((file_put_contents($pathnameSmall, $photo->bitmapSmall())) === false) {
       $this->router->log("error", "can't save photo to file [$pathnameSmall]");
       return false;
     }
 
-$this->router->log("debug", "photoStore - storing photo - (new number is $number)");
     return $number;
   }
 
