@@ -3,10 +3,9 @@
 require_once 'Slim/Slim.php';
 require_once 'classes/controllers/UsersController.php';
 require_once 'classes/controllers/PersonsController.php';
-#require_once 'classes/controllers/PhotosController.php';
 require_once 'classes/controllers/CommentsController.php';
+require_once 'classes/services/Photo.php';
 require_once 'classes/services/Db.php';
-require_once 'classes/services/Image.php';
 
 class Router {
 
@@ -354,7 +353,7 @@ class Router {
 
 };
 
-#ini_set('display_errors', 'On'); error_reporting(E_ALL);
+ini_set('display_errors', 'On'); error_reporting(E_ALL);
 $router = new Router();
 $router->run();
 

@@ -13,8 +13,7 @@
   * @param string $date   source date to be converted
   * @return string      UNIX timestamp conevrsion of the given date
   */
-  # TODO: put these methods in common class...
-  function date2Timestamp($date) {
+  function date_to_timestamp($date) {
     $timestamp = "0";
     for ($m = 1; $m <= 12; $m++) {
       $month_name = ucfirst(strftime("%B", mktime(0, 0, 0, $m)));
@@ -27,5 +26,16 @@
     }
     return $timestamp;
   }
+
+ /**
+  * Checks if an array is multi dimensional
+  *
+  * @param array $array   the arry to be checked
+  * @return boolean       true if the array is multi dimensional, false otherwise
+  */
+  function is_array_multi($array) {
+    return (count($array, COUNT_RECURSIVE) > count($array));
+  }
+
 
 ?>

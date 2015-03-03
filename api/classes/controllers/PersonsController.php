@@ -239,8 +239,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
         }
         // add photos
         foreach ($photosUrls as $photoUrl) {
-         $photoFullUrl = $site["url"] . "/" . $photoUrl;
-          $this->photoAdd($id, $photoFullUrl);
+          $this->photoAdd($id, $site["url"] . "/" . $photoUrl);
         }
       }
     }
@@ -362,75 +361,98 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    *
    * @param  integer $idPerson the id of the person's photo
    * @param  string $photoUrl  the url of the photo
-   * @return integer: 0        photo not added (duplication / similarity)
+   * @return integer: false    photo not added (duplication / similarity)
    *                  >= 0     photo added to filesystem and to database
    */
   public function photoAdd($idPerson, $photoUrl) {
-    // build photo array with image class
-    $image = new Image();
-    $image->fromUrl($photoUrl);
-    $photo = $image->toArray();
-    unset($image);
+    // build photo object from url
+    $photo = new Photo([ "url" => $photoUrl ]);
 
-    // check if image is an exact duplicate
+    // check if photo is an exact duplicate
     if ($this->photoCheckDuplication($idPerson, $photo)) {
-      $this->router->log("debug", " --- photo " . $photo->url . " for person id " . $idPerson . " is a duplicate");
-      return -1; // duplicate found
+      $this->router->log("debug", " --- photo " . $photo->url() . " for person id " . $idPerson . " is a duplicate, ignoring");
+$this->router->log("debug", "RETURNING FALSE");
+      return false; // duplicate found
     }
+$this->router->log("debug", "AFTER RETURNING FALSE");
     #$this->router->log("debug", "photoAdd - not a duplicate");
 
-    // check if image has similarities
+    // check if photo has similarities
+    $photo->signature();
     if ($this->photoCheckSimilarity($idPerson, $photo)) {
-      $this->router->log("debug", " --- photo " . $photo->url . " for person id " . $idPerson . " is a similarity");
-      return -2; // similarity found
+      $this->router->log("debug", " --- photo " . $photo->url() . " for person id " . $idPerson . " is a similarity, ignoring");
+      return false; // duplicate found
     }
     #$this->router->log("debug", "photoAdd - not a similarity");
 
-    $this->router->log("debug", "photoAdd - ADDING photo, it seems new...");
+    $this->router->log("debug", "photoAdd - storing photo, it seems new...");
 
-    # TODO: set $showcase (flag to denote showcase photo) ...
-    $showcase = true;
+    $showcase = true; # TODO: decide $showcase (flag to denote showcase photo) ...
 
-    $photo["id_person"] = $idPerson;
-    $photo["timestamp_creation"] = time();
-    $photo["domain"] = parse_url($photo["url"])["host"]; # TODO: is this right? Do we use this?
-    #$photo["sum"] = md5($photo["bitmap"]);
-    $photo["sum"] = $photo["sum"];
-    $photo["thruthfulness"] = null; // this is an offline-set property (it's very expensive to calculate)
-    $photo["showcase"] = $showcase;
+    $photo->idPerson($idPerson);
+    $photo->domain();
+    $photo->sum();
+    $photo->timestampCreation(time());
+    $photo->thruthfulness("unknown"); // this is an offline-set property (it's very expensive to calculate)
+    $photo->showcase($showcase);
    
     // store this photo
-    if (($number = $this->photoStore($idPerson, $photo)) < 0) {
-      $this->router->log("info", "photo " . $photo["url"] . " for person id " . $idPerson . " could not be stored locally");
-      return -3; // error storing photo locally
+    if (($number = $this->photoStore($idPerson, $photo)) === false) {
+      $this->router->log("error", "photo " . $photo->url() . " for person id " . $idPerson . " could not be stored locally");
+      return false; // error storing photo locally
     }
-    $photo["number"] = $number;
+    $photo->number($number);
 
     // add this photo to database
-$this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
-    return $this->db->add("photo", $photo);
+    $this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
+    return $this->db->add("photo", $this->photo2Data($photo));
+  }
+
+  /**
+   * Extract from a Photo object all properties to be stored to database, as array
+   *
+   * @param  Photo: $photo       the photo object to check for duplication
+   * @return array:              the array with all fields to be stored to database
+   */
+  private function photo2Data($photo) {
+    $data = [];
+    foreach($photo as $property => $value) {
+      if (
+        ($property === "id_person") ||
+        ($property === "number") ||
+        ($property === "url") ||
+        ($property === "sum") ||
+        ($property === "timestamp_creation") ||
+        ($property === "signature") ||
+        ($property === "showcase") ||
+        ($property === "thruthfulness")
+      )
+      $data[$property] = $value;
+    }
+    return $data;
   }
 
   /**
    * Check for photo exact duplication
    *
    * @param  integer $idPerson:  the id of person to check for photo duplication
-   * @param  array: photo        the photo to check for duplication
+   * @param  Photo: $photo       the photo object to check for duplication
    * @return boolean: true       if photo is a duplicate
    *                  false      if photo is not a fuplicate
    */
   private function photoCheckDuplication($idPerson, $photo) {
-#print_r($photo);
     $photos = $this->db->get("photo", $idPerson);
-# TODO: ARRAY OF ARRAY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
-    if ($photos) {
-print "photos:";
-print_r($photos);
+    if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
-print "p:";
-print_r($p);
-        if ($p["sum"] === $photo["sum"]) {
-          $this->router->log("debug", "photo " . $photo["url"] . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+        if ($p["sum"] === $photo->sum()) { // the checksum matches
+          #$this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+          return true;
+        }
+      }
+    } else { // not more than one result returned
+      if ($photos) { // one result returned
+        if ($photos["sum"] === $photo->sum()) { // the checksum matches
+          #$this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $photos["url"] . ", it's duplicate...");
           return true;
         }
       }
@@ -440,18 +462,21 @@ print_r($p);
 
   private function photoCheckSimilarity($idPerson, $photo) {
     $photos = $this->db->get("photo", $idPerson);
-# TODO: ARRAY OF ARRAY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
-    if ($photos) {
-      $image1 = new Image();
-      $image1->fromArray($photo);
+    if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
-        $image2 = new Image();
-        $image2->fromArray($p);
-        if ($image1->checkSimilarity($image2)) {
-          $this->router->log("info", "photo signature " . $photo["url"] . " is similar to " . $p["url"] . ", it's probably a duplicate...");
+        $photo2 = new Photo([ "data" => $p ]);
+        if ($photo->checkSimilarity($photo2)) {
+          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
           return true;
         }
-        unset($image2);
+      }
+    } else { // not more than one result returned
+      if ($photos) { // one result returned
+        $photo2 = new Photo([ "data" => $photos ]);
+        if ($photo->checkSimilarity($photo2)) {
+          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+          return true;
+        }
       }
     }
     return false;
@@ -461,41 +486,48 @@ print_r($p);
    * Check for photo truthfulness
    *
    * @param  string: photo url
-   * @return boolean: true    if photo is not duplicated on the web
-   *                  false   if photo is duplicated on the web
+   * @return string: "yes"       if photo is unique on the web
+   *                 "no"        if photo is not uniqu on the web
+   *                 "unknown"   if photo uniqueness on the web is unknown
    *
    * TODO: DOESN'T WORK THIS WAY, CAN'T RELIABLY TELL IF A PHOTO IS THRUTHFUL;
    *       SHOULD JUST RETURN A LIST OF LINKS TO BE SHOWN TO THE USER...
    */
   public function photoCheckThruthfulness($photo) {
-    $domain = parse_url($photo["url"])['host'];
+    return "unknown";
+/*
+    #$domain = $photo->domain();
     $similarUrls = $this->photoGoogleSearch();
     if (count($similarUrls) > 0) { // same image found
       return false;
     }
     return true;
+*/
   }
 
   /**
    * Store a photo on local file system
    *
-   * @param  integer $idPerson   the id of the person whose photo to store
-   * @param  array $photo        the photo structure
+   * @param  integer $idPerson   the id of the person for which to store photo
+   * @param  Photo $photo        the photo to be stored
    * @return integer: >= 0       the progressive number of the photo
-   *                  < 0        error...
    */
   public function photoStore($idPerson, $photo) {
+    $this->router->log("debug", "photoStore - storing photo");
     $keyPerson = $this->db->get("person", $idPerson)["key"];
     $personPhotosCount = $this->photoGetCount($idPerson);
-    $number = ++$personPhotosCount;
+$this->router->log("debug", "photoStore - personPhotosCount:[$personPhotosCount]");
+    $number = $personPhotosCount + 1;
+$this->router->log("debug", "photoStore - idPerson:[$idPerson] - personPhotosCount:[$personPhotosCount], number:[$number]");
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
     $filename = sprintf("%03d", $number);
-    #$fileext = image_type_to_extension($photo["type"], true);
-    $fileext = $photo["type"];
+    $fileext = $photo->type();
+    $pathnameFull = $dirname . "full" . "-" . $filename . $fileext;
+    $pathnameSmall = $dirname . "small" . "-" . $filename . $fileext;
 
-    # assure photos full path existence
+    // assure photos directory existence
     if (!file_exists($dirname)) {
-      if (!@mkdir($dirname, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
+      if (!mkdir($dirname, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
         throw new Exception("can't create folder $dirname");
       }
       $this->router->log("debug", "the directory $dirname has been created");
@@ -503,11 +535,20 @@ print_r($p);
       ; # directory already exists, not the first photo for this person
     }
 
-    $pathnameFull = $dirname . "full" . "-" . $filename . $fileext;
-    @file_put_contents($pathnameFull, $photo["bitmapFull"]);
-    $pathnameSmall = $dirname . "small" . "-" . $filename . $fileext;
-    @file_put_contents($pathnameSmall, $photo["bitmapSmall"]);
+$this->router->log("debug", "photoStore - storing photo - bitmapFull to $pathnameFull");
+    // store the full and small bitmaps to file-system
+$this->router->log("debug", "photoStore - bitmapFull size: " . strlen($photo->bitmapFull()));
+    if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {
+      $this->router->log("error", "can't save photo to file [$pathnameFull]");
+      return false;
+    }
+$this->router->log("debug", "photoStore - storing photo - bitmapSmall to $pathnameSmall");
+    if ((file_put_contents($pathnameSmall, $photo->bitmapSmall())) === false) {
+      $this->router->log("error", "can't save photo to file [$pathnameSmall]");
+      return false;
+    }
 
+$this->router->log("debug", "photoStore - storing photo - (new number is $number)");
     return $number;
   }
 
@@ -518,7 +559,7 @@ print_r($p);
    * @return array[][]         if photos found
    *         null              if photos not found
    */
-  public function photoGetAll($idPerson) {
+  private function photoGetAll($idPerson) {
     $photos = $this->db->get("photo", $idPerson);
     return $photos;
   }
@@ -555,7 +596,7 @@ print_r($p);
    */
   public function photoGetCount($idPerson) {
     $count = $this->db->countByField("photo", "id_person", $idPerson);
-$this->router->log("debug", "photoGetCount($idPerson): $count");
+    #$this->router->log("debug", "photoGetCount($idPerson): $count");
     return $count;
   }
 
@@ -571,9 +612,7 @@ $this->router->log("debug", "photoGetCount($idPerson): $count");
    */
   public function photoShow($idPerson, $number, $type = "full") {
     $photo = $this->db->getByFields("photo", ["id_person" => $idPerson, "number" => $number ]);
-    if (empty($photo)) {
-      header("Content-Type: " . $photo["mime"]);
-    } else {
+    if (!empty($photo)) {
       header("Content-Type: " . $photo["mime"]);
       switch ($type) {
         default:
@@ -584,7 +623,19 @@ $this->router->log("debug", "photoGetCount($idPerson): $count");
           print $photo["bitmapSmall"];
           break;
       }
+    } else {
+      $this->photoShowEmpty();
     }
+  }
+
+  private function photoShowEmpty() {
+    header("Content-Type: " . "image/jpeg");
+    $image = imagecreate(128, 256);
+    $background_color = imagecolorallocate($image, 0, 0, 0);
+    $text_color = imagecolorallocate($image, 233, 14, 91);
+    imagestring($im, 1, 5, 5, "Empty photo", $text_color);
+    imagejpeg($image);
+    imagedestroy($image);
   }
 
   private function photoGoogleSearch() {
@@ -629,7 +680,6 @@ $this->router->log("debug", "photoGetCount($idPerson): $count");
     return $result;
   }
 
-
   /**
    * Destructor
    */
@@ -637,18 +687,15 @@ $this->router->log("debug", "photoGetCount($idPerson): $count");
   }
 
   public function test() {
-$this->router->log("debug", " test 1");
-$count = $this->photoGetCount("1");
-$this->router->log("debug", " test 2: $count");
    $photosUrls = [
-      "http://img1.wikia.nocookie.net/__cb20130913040728/disney/images/0/0e/595157-alice1_large.jpg",
-      "http://planetpesca.com/files/2009/04/sardina.gif",
+      "/_Eb1ice0XQzI/S5_N0s_WcvI/AAAAAAAAB9A/P6k2sZ4BRwU/s400/Alice_nel_paese_delle_meraviglie_14.jpg",
+      "/-utIwNqmRYMk/UHr9Fuc30LI/AAAAAAAACtg/HYruJverwBE/s1600/brucaliffo.jpg",
     ];
     $person = [];
     $person["key"] = "toe-123456";
     $person["name"] = "Alice";
     $person["site_key"] = "toe";
-    $person["url"] = "www.toe.com/12345/";
+    $person["url"] = "http://2.bp.blogspot.com";
     $person["timestamp"] = 1424248678;
     $person["sex"] = "F";
     $person["zone"] = "centro";
@@ -670,10 +717,9 @@ $this->router->log("debug", " test 2: $count");
       $id = $this->add($person);
     }
 
-   // add photos
+    // add photos
     foreach ($photosUrls as $photoUrl) {
-      $photoFullUrl = $person["url"] . "/" . $photoUrl;
-      $this->photoAdd($id, $photoFullUrl);
+      $this->photoAdd($id, $person["url"] . "/" . $photoUrl);
     }
 
     return true;
@@ -777,4 +823,3 @@ $this->router->log("debug", " test 2: $count");
     return $list;
   }
 */
-

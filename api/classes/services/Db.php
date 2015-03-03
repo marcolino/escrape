@@ -21,7 +21,7 @@ class DB extends PDO {
       if ($new) { // db doesn't exist, create tables...
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
-        @chmod(self::DB_PATH, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
+        chmod(self::DB_PATH, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
       }
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
@@ -91,12 +91,9 @@ class DB extends PDO {
           id integer primary key autoincrement,
           id_person integer,
           number integer,
-          type varchar(8),
-          mime varchar(32),
-          domain text,
           url text,
-          timestamp_creation integer,
           sum varchar(32),
+          timestamp_creation integer,
           signature varchar(256),
           showcase integer,
           thruthfulness integer
@@ -184,14 +181,12 @@ class DB extends PDO {
 
   public function countByField($table, $fieldName, $fieldValue) {
     try {
-      $sql = "select * from $table where $fieldName = :$fieldName";
-print "countByField() - $sql: [$sql] ($fieldValue)\n";
+      $sql = "select count($fieldName) as count from $table where $fieldName = :fieldValue";
       $statement = $this->db->prepare($sql);
-      $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
+      $statement->bindParam(":fieldValue", $fieldValue); #, PDO::PARAM_STR);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
-print "countByField($table, $fieldName, $fieldValue) => " . var_export($result, 1) . "\n";
-      return $result ? count($result) : 0;
+      return $result["count"];
     } catch (PDOException $e) {
       throw new Exception("countByField() error:" . $e);
     }

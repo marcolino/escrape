@@ -265,7 +265,7 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
       
           if ($content) { # empty comments are not useful...
             $comment = [];
-            $timestamp = date2Timestamp($date);
+            $timestamp = date_to_timestamp($date);
             $id = $timestamp . "-" . md5("topic:[$topic], author:[$author], content:[$content]"); # a sortable, univoque index
             $comment["phoneMd5"] = $phoneMd5;
             $comment["topic"] = $topic;

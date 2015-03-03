@@ -1,26 +1,36 @@
 PersonController
-  sync()
+  sync() }
     set($id, $person)
       db->add("person", $person)
     add($person)
       db->set("person", $id, $person)
-    photoAdd($idPerson, $photoUrl)
+    photoAdd($idPerson, $photoUrl) {
       photoCheckDuplication($idPerson, $photo)
       photoCheckSimilarity($idPerson, $photo)
         photoStore($idPerson, $photo)
         db->add("photo", $photo)
-    photoStore($idPerson, $photo)
-    photoGet($idPerson, $number)
-    photoGetAll($idPerson)
-    photoGetByNumber($idPerson, $number)
-    photoShow($idPerson, $number, $type = "full")
+    }
+  }
 
-  getList()
+  getList() {
     getPhotoShowcase($person["id"], true)
     comments->countByPerson($person["id"])
     comments->getAverageValutationByPerson($person["id"])
+  }
+
+  photoAdd($idPerson, $photoUrl) {
+  photoStore($idPerson, $photo)
+  photoGet($idPerson, $number)
+  photoGetAll($idPerson)
+  photoGetByNumber($idPerson, $number)
+  photoGetByShowcase($idPerson, $showcase)
+  photoShow($idPerson, $number, $type = "full")
+  photoCheckDuplication($idPerson, $photo)
+  photoCheckSimilarity($idPerson, $photo)
+  photoCheckThruthfulness($photo)
+  photoGetCount($idPerson)
+  photoGoogleSearch()
 
 
 
-CommentsController
-  
+CommentsController  
