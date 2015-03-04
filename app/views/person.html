@@ -168,17 +168,24 @@
     </div>
 
     <!-- photos pill -->
+<!--<pre> person: {{person}} </pre>-->
     <div class="tab-content" ng-show="selectedTab == 'photos'">
       <div class="slides-control">
         <carousel disable-animation="true">
           <slide ng-repeat="photo in person.photos" NOactive="photo.active">
-            <img ng-src="{{sites[person.site]['url']}}/{{photo}}" style="margin:auto;" />
-            <!-- <img class="slide" ng-src="{{photo.image}}"> -->
+            <img class="slide" ng-src="{{cfg.apiUri + '/' + photo.path_full}}" />
             <div class="carousel-caption">
               <p>{{slide.text}}</p>
             </div>
           </slide>
         </carousel>
+        <div class="carousel-toolbar">
+          <div class="form-group" style="vertical-align:bottom">
+            <div class="col-xs-1">
+              <button ng-click="checkForThrutfullness()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

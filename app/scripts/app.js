@@ -28,8 +28,10 @@ var app = angular.module('escrapeApp', [
     'ngOrderObjectBy',
     'ui.bootstrap',
     'ngAside',
+    'toastr',
   ]);
 
+// configure routing system
 app.config(function ($routeProvider) {
   $routeProvider
     .when('/register', {
@@ -57,6 +59,34 @@ app.config(function ($routeProvider) {
     .otherwise({
       redirectTo: '/'
     });
+});
+
+// configure messaging system
+app.config(function (toastrConfig) {
+  angular.extend(toastrConfig, {
+    allowHtml: true,
+    closeButton: true,
+    closeHtml: '<button>&times;</button>',
+    containerId: 'toast-container',
+    extendedTimeOut: 0, // ms. - 0 means not timeout
+    iconClasses: {
+      error: 'toast-error',
+      info: 'toast-info',
+      success: 'toast-success',
+      warning: 'toast-warning'
+    },
+    maxOpened: 3,
+    messageClass: 'toast-message',
+    newestOnTop: false, // newest on bottom
+    onHidden: null,
+    onShown: null,
+    positionClass: 'toast-bottom-right',
+    tapToDismiss: true,
+    target: 'body',
+    timeOut: 0, // ms. - 0 means not timeout
+    titleClass: 'toast-title',
+    toastClass: 'toast'
+  });
 });
 
 app.run(function ($rootScope, $location, $cookieStore, $http) {

@@ -234,6 +234,8 @@ input[readonly].default-cursor {
 .carousel-indicators .active {
   opacity: 0.5;
 }
+.carousel-toolbar {
+}
 
 /* Google maps */
 #map-canvas { /* TODO: do we need this? */

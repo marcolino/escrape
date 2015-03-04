@@ -92,7 +92,7 @@ class CommentsController {
     if (!$idPerson) {
       throw new Exception("can't get comments average valutation by person: no person id specified");
     }
-    return $this->db->getAverageFieldByPerson("comment", $idPerson, "content_valutation");
+    return $this->db->getAverageFieldByPerson("comment", $idPerson, "content_valutation")["avg"];
   }
 
   /**

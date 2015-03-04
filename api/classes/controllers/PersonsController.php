@@ -16,7 +16,6 @@ class PersonsController {
       "path" => "escort/torino",
       "charset" => "utf-8",
       "patterns" => [
-        /*"persons" => "/<table .*?id=\"ctl00_content_tableFoto\".*?>(.*?)<\/table>/s",*/
         "person" => "/<DIV class=\"(?:top|thumbsUp)\".*?>(.*?)<\/DIV>/s",
         "person-id" => "/<div .*?class=\"wraptocenter\">.*?<a href=\".*?\/([^\/\"]+)\".*?>.*?<\/div>/s",
         "person-details-url" => "/<div .*?class=\"wraptocenter\">.*?<a href=\"(.*?)\".*?>.*?<\/div>/s",
@@ -28,6 +27,7 @@ class PersonsController {
         "person-phone" => "/<td id=\"ctl00_content_CellaTelefono\".*?><span.*?>(.*?)<\/span>.*?<\/td>/s",
         "person-phone-vacation" => "/In arrivo dopo le vacanze !!/s",
         "person-phone-unavailable" => "/unavailable/s", # TODO
+        "person-nationality" => "/TODO NATIONALITY/s", # TODO
         "person-photo" => "/<a rel='group' class='fancybox' href=(.*?)>.*?<\/a>/",
       ],
     ],
@@ -36,7 +36,6 @@ class PersonsController {
       "charset" => "CP1252",
       "path" => "annunci_Escort_singole_Piemonte_Torino.html",
       "patterns" => [
-        /*"persons" => "/(.*)/",*/
         "person" => "/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s",
         "person-id" => "/<a href=\".*?([^\_]*?)\.html\".*?>.*?<\/a>/s",
         "person-details-url" => "/<a href=\"(.*?)\".*?>.*?<\/a>/s",
@@ -48,6 +47,7 @@ class PersonsController {
         "person-phone" => "/<h\d class=\"phone\">\s*(?:<img.*? \/>)\s*(.*?)\s*<\/h\d>/s",
         "person-phone-vacation" => "/TODO/s", # TODO
         "person-phone-unavailable" => "/Questa ...... ha disabilitato temporaneamente il suo annuncio/s",
+        "person-nationality" => "/TODO NATIONALITY/s", # TODO
         "person-photo" => "/<a\s+style=\"cursor:pointer;\"\s+href=\"(.*?)\" rel=\"prettyPhoto\[galleria\]\".*?<\/a>/s",
       ],
     ],
@@ -92,14 +92,8 @@ class PersonsController {
   function __construct($router) {
     $this->router = $router;
     $this->db = $router->db;
-    #$this->db = new DB();
-#    $this->setup();
   }
 
-#  private function setup() {
-#    $this->load("persons");
-#  }
-  
   /**
   * Sync persons
   *
@@ -112,9 +106,6 @@ class PersonsController {
     $changed = false;
     foreach ($this->sitesDefinitions as $siteKey => $site) {
       $url = $site["url"] . "/" . $site["path"];
-#INCOGNITO# #DEBUG#
-#$url = "http://localhost/escrape/server/debug/sgi.html";
-#if ($siteKey != "mor") continue;
 
       $this->router->log("info", "url: [$url]");
       $page = $this->getUrlContents($url, $site["charset"]);
@@ -123,14 +114,6 @@ class PersonsController {
         $this->router->log("error", "can't get page contents on site [$siteKey]");
         continue;
       }
-/*
-      if (preg_match($site["patterns"]["persons"], $page, $matches)) {
-        $persons_page = $matches[1];
-      } else {
-        $this->router->log("error", persons pattern not found on site [$siteKey] [" . $site["patterns"]["persons"] . "]");
-        continue;
-      }
-*/
       $persons_page = $page;
 
       if (preg_match_all($site["patterns"]["person"], $persons_page, $matches)) {
@@ -207,6 +190,13 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
           continue;
         }
           
+        if (preg_match($site["patterns"]["person-nationality"], $page_details, $matches) >= 1) {
+          $nationality = $this->normalizeNationality($matches[1]);
+        } else {
+          $this->router->log("error", "person $n nationality not found on site [$siteKey]");
+          #continue;
+        }
+          
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
           $photosUrls = $matches[1];
         } else {
@@ -216,15 +206,16 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
         $person = [];
         $person["key"] = $key;
+        $person["key_site"] = $siteKey;
         $person["name"] = $name;
-        $person["site_key"] = $siteKey;
         $person["url"] = $details_url;
-        $person["timestamp"] = $timestamp;
+        $person["timestamp"] = $timestamp; # TODO: do not set if updating...
         $person["sex"] = $sex;
         $person["zone"] = $zone;
         $person["address"] = null;
         $person["description"] = $description;
         $person["phone"] = $phone;
+        $person["nationality"] = $nationality;
         $person["page_sum"] = $page_sum;
         $person["age"] = null; # age
         $person["vote"] = null; # vote ([0-9])
@@ -247,7 +238,10 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
   }
 
   public function get($id) {
-    return $this->db->get("person", $id);
+    $person = $this->db->get("person", $id);
+    $photos = $this->db->getByField("photo", "id_person", $id);
+    $person["photos"] = $photos;
+    return $person;
   }
   
   public function add($person) {
@@ -276,12 +270,13 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
       $list[$personId] = [
         "id" => $person["id"],
         "key" => $person["key"],
-        "site_key" => $person["site_key"],
+        "key_site" => $person["key_site"],
         "name" => $person["name"],
         "phone" => $person["phone"],
+        "nationality" => $person["nationality"],
         "vote" => $person["vote"],
         "age" => $person["age"],
-        "photo_showcase" => $this->photoGetByShowcase($person["id"], true),
+        "photo_path_small_showcase" => $this->photoGetByShowcase($person["id"], true)["path_small"],
         "comments_count" => $comments->countByPerson($person["id"]),
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
       ];
@@ -336,7 +331,12 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
     return $phone;
   }
-  
+
+  private function normalizeNationality($nationality) {
+    # TODO: ...
+    return "it";
+  }
+
 /*
   # TODO: ....
   private function ret($action, $success = true, $response = "") {
@@ -370,17 +370,17 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
     // check if photo is an exact duplicate
     if ($this->photoCheckDuplication($idPerson, $photo)) {
-      $this->router->log("debug", " --- photo [$photoUrl] for person id " . $idPerson . " is a duplicate, ignoring");
+      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is a duplicate, ignoring");
       return false; // duplicate found
     }
 
     // check if photo has similarities
     $photo->signature();
     if ($this->photoCheckSimilarity($idPerson, $photo)) {
-      $this->router->log("debug", " --- photo [$photoUrl] for person id " . $idPerson . " is a similarity, ignoring");
+      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is a similarity, ignoring");
       return false; // similarity found
     }
-    $this->router->log("debug", "photoAdd - storing photo [$photoUrl], it seems new...");
+    $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " SEEMS NEW, ADDING...");
 
     $showcase = true; # TODO: decide $showcase (flag to denote showcase photo) ...
 
@@ -416,6 +416,8 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
         ($property === "id_person") ||
         ($property === "number") ||
         ($property === "url") ||
+        ($property === "path_full") ||
+        ($property === "path_small") ||
         ($property === "sum") ||
         ($property === "timestamp_creation") ||
         ($property === "signature") ||
@@ -436,18 +438,20 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    *                  false      if photo is not a fuplicate
    */
   private function photoCheckDuplication($idPerson, $photo) {
-    $photos = $this->db->get("photo", $idPerson);
+    $this->router->log("debug", "photoCheckDuplication: ENTERING - idPerson: $idPerson, photo: " . var_export($photo, 1));
+    $photos = $this->db->getByField("photo", "id_person", $idPerson);
     if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
         if ($p["sum"] === $photo->sum()) { // the checksum matches
-          $this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+          $this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
           return true;
         }
       }
     } else { // not more than one result returned
-      if ($photos) { // one result returned
-        if ($photos["sum"] === $photo->sum()) { // the checksum matches
-          $this->router->log("debug", "photo " . $photo->url() . " sum is equal to  " . $photos["url"] . ", it's duplicate...");
+      if ($photos) { // exactly one result returned
+        $p = $photos;
+        if ($p["sum"] === $photo->sum()) { // the checksum matches
+          $this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
           return true;
         }
       }
@@ -456,7 +460,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
   }
 
   private function photoCheckSimilarity($idPerson, $photo) {
-    $photos = $this->db->get("photo", $idPerson);
+    $photos = $this->db->getByField("photo", "id_person", $idPerson);
     if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
         $photo2 = new Photo([ "data" => $p ]);
@@ -515,17 +519,21 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
     $filename = sprintf("%03d", $number);
     $fileext = $photo->type();
-    $pathnameFull = $dirname . "full" . "-" . $filename . "." . $fileext;
-    $pathnameSmall = $dirname . "small" . "-" . $filename . "." . $fileext;
+    $dirnameFull = $dirname . "full" . "/";
+    $dirnameSmall = $dirname . "small" . "/";
+    $pathnameFull = $dirnameFull . $filename . "." . $fileext;
+    $pathnameSmall = $dirnameSmall . $filename . "." . $fileext;
 
-    // assure photos directory existence
-    if (!file_exists($dirname)) {
-      if (!mkdir($dirname, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
-        throw new Exception("can't create folder $dirname");
+    // assure photos directories existence
+    foreach ([ $dirnameFull, $dirnameSmall ] as $d) {
+      if (!file_exists($d)) {
+        if (!mkdir($d, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
+          throw new Exception("can't create folder $d");
+        }
+        $this->router->log("debug", "the directory $d has been created");
+      } else {
+        ; # directory already exists, not the first photo for this person
       }
-      $this->router->log("debug", "the directory $dirname has been created");
-    } else {
-      ; # directory already exists, not the first photo for this person
     }
 
     // store the full and small bitmaps to file-system
@@ -537,6 +545,10 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
       $this->router->log("error", "can't save photo to file [$pathnameSmall]");
       return false;
     }
+
+    // store paths in photo structure
+    $photo->pathFull($pathnameFull);
+    $photo->pathSmall($pathnameSmall);
 
     return $number;
   }
@@ -574,6 +586,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    */
   private function photoGetByShowcase($idPerson, $showcase) {
     $photos = $this->db->getByFields("photo", [ "id_person" => $idPerson, "showcase" => $showcase ]);
+$this->router->log("debug", "photoGetByShowcase($idPerson): " . var_export($photos, 1));
     return $photos[0];
   }
 
@@ -682,8 +695,8 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     ];
     $person = [];
     $person["key"] = "toe-123456";
+    $person["key_site"] = "toe";
     $person["name"] = "Alice";
-    $person["site_key"] = "toe";
     $person["url"] = "http://2.bp.blogspot.com";
     $person["timestamp"] = 1424248678;
     $person["sex"] = "F";
@@ -691,6 +704,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     $person["address"] = "Via Roma, 0, Torino";
     $person["description"] = "super";
     $person["phone"] = "3336480983";
+    $person["nationality"] = "ru";
     $person["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
     $person["age"] = 27;
     $person["vote"] = 7;
@@ -708,7 +722,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
     // add photos
     foreach ($photosUrls as $photoUrl) {
-      $this->photoAdd($id, $person["url"] . "/" . $photoUrl);
+      $this->photoAdd($id, $person["url"] . $photoUrl);
     }
 
     return true;

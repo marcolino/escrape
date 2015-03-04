@@ -1,6 +1,6 @@
 <div class="container">
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
-    <!--<pre> person: {{person}} </pre>-->
+    <pre> person: {{person}} </pre>
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
       <a ng-href="#/details/{{person.id}}"><div class="img-rounded img-clip-container"><img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" /></div></a>
     </div>
@@ -16,10 +16,22 @@
       </div>
       <div class="row">
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+          <button type="button" class="btn" ng-attr-title="nationality: {{person.nationality}}">
+            <a ng-href="#/"><i ng-class="getCountryClassSmall(person.nationality)"></i></a>
+          </button>
+        </div>
+        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
           <div class="person-site">
-            <button class="btn btn-default" type="button" ng-attr-title="referral site: {{person.site}}">
-              <div class="img-rounded"><img ng-src="images/referral-sites/{{person.key_site}}.png" class="img-rounded img-site" /></div>
-            </button>
+            <span ng-if="!cfg.fake">
+              <button type="button" class="btn" ng-attr-title="referral site: {{person.key_site}}">
+                <div class="img-rounded"><img ng-src="images/referral-sites/{{person.key_site}}.png" class="img-rounded img-site" /></div>
+              </button>
+            </span>
+            <span ng-if="cfg.fake">
+              <button type="button" class="btn" ng-attr-title="referral site: {{person.key_site}}">
+                <div class="img-rounded"><img ng-src="images/referral-sites/fake-{{person.key_site}}.png" class="img-rounded img-site" /></div>
+              </button>
+            </span>
           </div>
         </div>
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
@@ -27,14 +39,14 @@
             <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone light"></i></a>
           </button>
         </div>
-        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-4">
+        <div class="col-xs-3 col-sm-2 col-md-2 col-lg-3">
           <div class="person-comments-count">
             <button class="btn btn-info" type="button" ng-attr-title="{{person.comments_count}} comments">
               <i class="glyphicon glyphicon-bullhorn"></i>&nbsp;<span class="badge">{{person.comments_count}}</span>
             </button>
           </div>
         </div>
-        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+        <div class="col-xs-3 col-sm-2 col-md-2 col-lg-3">
           <div class="person-vote">
             <button class="btn btn-warning" type="button" ng-attr-title="vote: {{person.vote||5}}">
               <i class="glyphicon glyphicon-thumbs-up"></i>&nbsp;<span class="badge">{{person.vote||5}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->

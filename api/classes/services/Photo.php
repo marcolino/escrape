@@ -238,6 +238,24 @@ class Photo {
     return $this->number = $value;
   }
 
+  public function pathFull($value = null) {
+    if (!$value) {
+      if (isset($this->path_full)) {
+        return $this->path_full;
+      }
+    }
+    return $this->path_full = $value;
+  }
+
+  public function pathSmall($value = null) {
+    if (!$value) {
+      if (isset($this->path_small)) {
+        return $this->path_small;
+      }
+    }
+    return $this->path_small = $value;
+  }
+
   /**
    * Create a photo from data
    *

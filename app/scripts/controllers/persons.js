@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Sites, Countries, Persons, Comments) {
   $scope.persons = [];
   $scope.person = [];
   $scope.personId = $routeParams.personId;
@@ -30,12 +30,13 @@ $scope.username = $rootScope.username;
         angular.forEach($scope.persons, function(person) {
           person.name = person.name.shuffle();
         });
-      } // /DEBUG ONLY
+      } // DEBUG ONLY
     });
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
       if (!cfg.fake) { console.log('person:', person); }
       $scope.person = person;
+      $scope.person.nat = $scope.person.nationality; // TODO...
       $scope.person.nationality = {};
       $scope.person.nationality.countryCode = 'it';
       $scope.person.nationality.countryName = $scope.countries[$scope.person.nationality.countryCode];
@@ -90,7 +91,7 @@ $scope.username = $rootScope.username;
         */
       });
 
-      if (cfg.fake || !$scope.person.photos) { // DEBUG ONLY
+      if (cfg.fake && !$scope.person.photos) { // DEBUG ONLY
         $scope.person.photos = [
           {
             image: 'http://uploads7.wikiart.org/images/vincent-van-gogh/self-portrait-1887-9.jpg',
@@ -111,6 +112,7 @@ $scope.username = $rootScope.username;
         $scope.person.description = $scope.person.description.substr(0, 2);
       }
     });
+notify.success('Viva la FICA!', 'Messaggio');
   }
 
   // public methods
@@ -140,7 +142,12 @@ $scope.username = $rootScope.username;
   };
 
   $scope.removePerson = function(person) {
-    Persons.removePerson(person.id).then(loadPersons);
+    Persons.removePerson(person.id).then(
+      loadPersons,
+      function(errorMessage) {
+        console.warn(errorMessage);
+      }
+    );
   };
 
 
@@ -189,6 +196,10 @@ $scope.username = $rootScope.username;
 
   $scope.getCountryClass = function(countryCode) {
     return 'flag flag-32 flag-' + countryCode;
+  };
+
+  $scope.getCountryClassSmall = function(countryCode) {
+    return 'flag flag-16 flag-' + countryCode;
   };
 
   // google maps initialization

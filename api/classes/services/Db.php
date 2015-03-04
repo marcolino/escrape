@@ -2,29 +2,39 @@
 
 class DB extends PDO {
   const DB_TYPE = "sqlite";
-  const DB_PATH = "db/escrape.sqlite";
-  const DB_USER = "";
-  const DB_PASS = "";
+  const DB_NAME = "db/escrape.sqlite";
+  const DB_USER = null;
+  const DB_PASS = null;
   const DB_CHARSET = "utf8";
   private $db;
 
   public function __construct() {
     try {
-      $new = !file_exists(self::DB_PATH);
+      $dbPath = dirname(self::DB_NAME);
+      if ($dbPath) {
+        if (!file_exists($dbPath)) {
+          if (!mkdir($dbPath, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
+            throw new Exception("can't create folder $dirname");
+          }
+        }
+      }
+      $new = !file_exists(self::DB_NAME);
       $this->db = new PDO(
-        self::DB_TYPE . ":" . self::DB_PATH,
+        self::DB_TYPE . ":" . self::DB_NAME,
         self::DB_USER,
-        self::DB_PASS,
-        [ PDO::ATTR_PERSISTENT => TRUE ]
+        self::DB_PASS
+        #, [ PDO::ATTR_PERSISTENT => TRUE ] # TODO: on update this causes: "General error: 1 no such column: key_site" ... ?
       );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       if ($new) { // db doesn't exist, create tables...
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
-        chmod(self::DB_PATH, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
       }
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
+    }
+    if ($new) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
+      chmod(self::DB_NAME, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
     }
   }
 
@@ -47,8 +57,8 @@ class DB extends PDO {
         "create table if not exists person (
           id integer primary key autoincrement,
           key varchar(16),
+          key_site varchar(16),
           name text,
-          site_key text,
           url text,
           timestamp integer,
           sex text,
@@ -56,6 +66,7 @@ class DB extends PDO {
           address text,
           description text,
           phone varchar(16),
+          nationality varchar(2),
           page_sum text,
           age text,
           vote integer
@@ -92,6 +103,8 @@ class DB extends PDO {
           id_person integer,
           number integer,
           url text,
+          path_full text,
+          path_small text,
           sum varchar(32),
           timestamp_creation integer,
           signature varchar(256),
@@ -168,7 +181,7 @@ class DB extends PDO {
 
   public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
     try {
-      $sql = "select avg($fieldName) from $table where id_person = :id_person";
+      $sql = "select avg($fieldName) as avg from $table where id_person = :id_person";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . "id_person", $idPerson); #, PDO::PARAM_STR);
       $statement->execute();
@@ -218,7 +231,7 @@ class DB extends PDO {
     try {
       $set = "";
       foreach ($array as $key => $value) {
-        $set .= ($set ? ", " : "") . $key . "=" . " " . ":" . $key;
+        $set .= ($set ? ", " : "") . $key . "=" . ":" . $key;
       }
       $sql = "update $table set $set where id = :id";
       $statement = $this->db->prepare($sql);
