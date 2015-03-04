@@ -1,14 +1,8 @@
-<!--
-<p>You're logged in as user {{username}} ~ <a href="#/login">Logout</a></p><br>
--->
 <div class="container">
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
-    <!-- person: {{person}} -->
-    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" ng-if="!cfg.fake">
-      <a ng-href="#/details/{{person.id}}"><div class="img-rounded img-clip-container"><img ng-src="{{person.photo}}" class="img-rounded img-clip" /></div></a>
-    </div>
-    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" ng-if="cfg.fake">
-      <a ng-href="#/details/{{person.id}}"><div class="img-rounded img-clip-container"><img ng-src="images/users/user-{{$index}}.jpg" ng-srcOK="{{person.photo}}" class="img-rounded img-clip"/></div></a>
+    <!--<pre> person: {{person}} </pre>-->
+    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
+      <a ng-href="#/details/{{person.id}}"><div class="img-rounded img-clip-container"><img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" /></div></a>
     </div>
     <div class="col-xs-8 col-sm-9 col-md-9 col-lg-9">
       <div class="row" style="padding-bottom:2px;">
@@ -24,7 +18,7 @@
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
           <div class="person-site">
             <button class="btn btn-default" type="button" ng-attr-title="referral site: {{person.site}}">
-              <div class="img-rounded"><img ng-src="images/referral-sites/{{person.site}}.png" class="img-rounded img-site" /></div>
+              <div class="img-rounded"><img ng-src="images/referral-sites/{{person.key_site}}.png" class="img-rounded img-site" /></div>
             </button>
           </div>
         </div>
@@ -48,15 +42,6 @@
           </div>
         </div>
       </div>
-<!--
-      <div class="row">
-        <div class="col-xs-2">A</div>
-        <div class="col-xs-1">B</div>
-        <div class="col-xs-2">C</div>
-        <div class="col-xs-2">D</div>
-        <div class="col-xs-2">E</div>
-      </div>
--->
     </div>
   </div>
 </div>
