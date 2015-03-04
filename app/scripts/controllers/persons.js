@@ -112,7 +112,7 @@ $scope.username = $rootScope.username;
         $scope.person.description = $scope.person.description.substr(0, 2);
       }
     });
-notify.success('Viva la FICA!', 'Messaggio');
+    notify.success('TODO: all messages with notify...', 'Messaggio');
   }
 
   // public methods

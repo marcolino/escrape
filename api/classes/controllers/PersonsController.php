@@ -194,7 +194,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
           $nationality = $this->normalizeNationality($matches[1]);
         } else {
           $this->router->log("error", "person $n nationality not found on site [$siteKey]");
-          $nationality = "";
+          $nationality = "ru";
           #continue;
         }
           
@@ -367,7 +367,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    */
   public function photoAdd($idPerson, $photoUrl) {
     // build photo object from url
-    $photo = new Photo([ "url" => $photoUrl ]);
+    $photo = new Photo([ "url" => $photoUrl ]); # TODO: can we avoid download with curl "get header only", comparing modification timestamps?
 
     // check if photo is an exact duplicate
     if ($this->photoCheckDuplication($idPerson, $photo)) {
@@ -439,7 +439,6 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    *                  false      if photo is not a fuplicate
    */
   private function photoCheckDuplication($idPerson, $photo) {
-    $this->router->log("debug", "photoCheckDuplication: ENTERING - idPerson: $idPerson, photo: " . var_export($photo, 1));
     $photos = $this->db->getByField("photo", "id_person", $idPerson);
     if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
@@ -587,7 +586,6 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    */
   private function photoGetByShowcase($idPerson, $showcase) {
     $photos = $this->db->getByFields("photo", [ "id_person" => $idPerson, "showcase" => $showcase ]);
-$this->router->log("debug", "photoGetByShowcase($idPerson): " . var_export($photos, 1));
     return $photos[0];
   }
 

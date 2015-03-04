@@ -83,7 +83,7 @@ app.config(function (toastrConfig) {
     positionClass: 'toast-bottom-right',
     tapToDismiss: true,
     target: 'body',
-    timeOut: 0, // ms. - 0 means not timeout
+    timeOut: 5000, // ms. - 0 means not timeout
     titleClass: 'toast-title',
     toastClass: 'toast'
   });

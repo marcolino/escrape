@@ -170,7 +170,7 @@ class Router {
       }
     });
     # ======================
-    $this->app->post('/comments/sync', function() {
+    $this->app->post('/comments/sync', function() { # TODO: why POST???? GET!!!
       try {
         $comments = new CommentsController($this);
         $this->success($comments->sync());

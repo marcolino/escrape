@@ -25,8 +25,9 @@
           <div class="col-xs-12">
             <div class="slider-horizontal">
             <span ng-repeat="(id, photo) in person.photos">
+              <!--<pre>id:{{id}}, photo:{{photo}}</pre>-->
               <span ng-if="!cfg.fake">
-                <img ng-src="{{sites[person.site]['url']}}/{{photo}}" class="img-rounded img-clip" />
+                <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" />
               </span>
               <span ng-if="cfg.fake">
                 <img ng-src="images/users/user-{{$index}}.jpg" class="img-rounded img-clip" />

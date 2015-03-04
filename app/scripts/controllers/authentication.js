@@ -212,7 +212,7 @@ app.controller('AuthenticationController',
       return code ? 'flag flag-32 flag-' + code : 'glyphicon glyphicon-globe';
     };
 
-    $scope.toggleFilterOpened = function (isopened) {
+    $scope.toggleFilterOpened = function (/*isopened*/) {
       $timeout(function() {
         $scope.storeFilters();
       });

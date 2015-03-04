@@ -340,7 +340,7 @@ class Photo {
     // generate the new photo container with the new size
     $imageScaled = imagecreatetruecolor($width, $height);
     // create the new photo
-    imagecopyresized(
+    imagecopyresampled(
       $imageScaled, $image,
       0, 0, 0, 0,
       $width, $height,
