@@ -194,6 +194,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
           $nationality = $this->normalizeNationality($matches[1]);
         } else {
           $this->router->log("error", "person $n nationality not found on site [$siteKey]");
+          $nationality = "";
           #continue;
         }
           
@@ -443,7 +444,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     if (is_array_multi($photos)) { // more than one result returned
       foreach ($photos as $p) {
         if ($p["sum"] === $photo->sum()) { // the checksum matches
-          $this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+          #$this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
           return true;
         }
       }
@@ -451,7 +452,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
       if ($photos) { // exactly one result returned
         $p = $photos;
         if ($p["sum"] === $photo->sum()) { // the checksum matches
-          $this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+          #$this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
           return true;
         }
       }
@@ -465,7 +466,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
       foreach ($photos as $p) {
         $photo2 = new Photo([ "data" => $p ]);
         if ($photo->checkSimilarity($photo2)) {
-          $this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
           return true;
         }
       }
@@ -473,7 +474,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
       if ($photos) { // one result returned
         $photo2 = new Photo([ "data" => $photos ]);
         if ($photo->checkSimilarity($photo2)) {
-          $this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
           return true;
         }
       }

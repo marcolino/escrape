@@ -1,6 +1,6 @@
 <div class="container">
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
-    <pre> person: {{person}} </pre>
+    <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
       <a ng-href="#/details/{{person.id}}"><div class="img-rounded img-clip-container"><img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" /></div></a>
     </div>
