@@ -10,6 +10,7 @@ app.service('Persons', function($http, $q, cfg) {
       console.error(response.data.error);
       return($q.reject(response.data.error));
     } else {
+console.info('handleSuccess() - response:', response);
       return(response.data);
     }
   }
@@ -32,9 +33,6 @@ app.service('Persons', function($http, $q, cfg) {
       return $http({
         method: 'GET',
         url: apiUri + 'get',
-        data: {
-          flag: 'yes'
-        },
       }).then(handleSuccess, handleError);
     },
 
@@ -42,9 +40,6 @@ app.service('Persons', function($http, $q, cfg) {
       return $http({
         method: 'GET',
         url: apiUri + 'get' + '/' + id,
-        data: {
-          flag: 'yes'
-        },
       }).then(handleSuccess, handleError);
     },
 
@@ -63,9 +58,6 @@ app.service('Persons', function($http, $q, cfg) {
         data: {
           name: name
         },
-        params: {
-          flag: 'yes'
-        },
       }).then(handleSuccess, handleError);
     },
 
@@ -76,11 +68,20 @@ app.service('Persons', function($http, $q, cfg) {
         data: {
           id: id
         },
-        params: {
-          flag: 'no'
+      }).then(handleSuccess, handleError);
+    },
+
+    photoGetOccurrences: function (url) {
+console.log("SERVICE photoGetOccurrences URL is", url);
+      return $http({
+        method: 'POST',
+        url: apiUri + 'photo' + '/' + 'get' + '/' + 'occurrences',
+        data: {
+          url: url
         },
       }).then(handleSuccess, handleError);
     }
+
   });
 
 });

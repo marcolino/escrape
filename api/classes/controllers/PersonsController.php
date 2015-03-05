@@ -285,6 +285,52 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     return $list;
   }
 
+  public function photoGetOccurrences($imageUrl) {
+    #$thisdomain = "www.ilfattoquotidiano.it";
+    $url =
+      "http://www.google.com/searchbyimage" .
+      "?image_url=" . $imageUrl .
+      "&filter=" . "0"
+    ;
+    $response = [];
+    $data = getUrlContents($url);
+    $html = str_get_html($data); // the whole html
+    foreach ($html->find('div.srg') as $srg) { // each one of responses (sections both before and after real duplicate links)
+      $response = []; // keep only last section responses, with real duplicate links
+      foreach ($srg->find('li.g') as $g) { // each one of responses (sectioms before and after real duplicate links)
+        /*
+         * each one of search responses are in a list item with a class name "g"
+         * we are seperating each of the elements within, into an array;
+         * titles are stored within "<h3 class='r'><a...>text</a></h3>";
+         * links are in the href of the anchor contained in the "<h3>...</h3>";
+         */
+        $rc = $g->find('div.rc', 0);
+        $r = $rc->find('h3.r', 0);
+        $a = $r->find('a', 0);
+        $imgsrc = "";
+        foreach ($rc->find("img") as $el) {
+          $imgsrc = $el->src;
+        }
+        $link = $a->href;
+        $text = $a->innertext;
+        $link = preg_replace("/^\/url\?q=/", "", $link);
+        $link = preg_replace("/&amp;sa=U.*/", "", $link);
+        $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
+        $domain = parse_url($link)['host'];
+        #if ($domain !== $thisdomain) { // consider only images from different domains
+          $response[] = [
+            "link" => $link,
+            "imgsrc" => $imgsrc,
+            "text" => $text,
+          ];
+        #}
+      }
+    }
+    $html->clear(); // clean up the memory 
+    return $response;
+  }
+
+/*
   private function getUrlContents($url, $charset) {
     $user_agent = "Mozilla"; 
     $ch = curl_init();
@@ -306,6 +352,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     curl_close($ch);
     return ($charset == "utf-8") ? $output : iconv($charset, "utf-8", $output);
   }
+*/
 
   private function cleanName($value) {
     $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
@@ -610,6 +657,8 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
    *                             - "full"    shows the full version (default)
    *                             - "small"   shows the small version
    * @return void              outputs photo with MIME header
+   *
+   * TODO: do we need this function, or will always use "<img ns-src='{{person.photo_path}}'>" ?
    */
   public function photoShow($idPerson, $number, $type = "full") {
     $photo = $this->db->getByFields("photo", ["id_person" => $idPerson, "number" => $number ]);
@@ -639,6 +688,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     imagedestroy($image);
   }
 
+/*
   private function photoGoogleSearch() {
     $maxResults = 9;
     $result = array();
@@ -660,14 +710,14 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
        * titles are stored within "<h3><a...>{title}</a></h3>";
        * links are in the href of the anchor contained in the "<h3>...</h3>";
        * summaries are stored in a div with a classname of "s"
-       */
+       * /
       $srg = $g->find('div.srg', 0);
       $a = $srg->find('a', 0);
       $link = $a->href;
       # TODO: accept only urls containing the photo...
       #print "link: [$link]\n";
       $link = preg_replace("/^\/url\?q=/", "", $link);
-      $link = preg_replace("/&amp;sa=U.*/", "", $link);
+      $link = preg_replace("/&amp;sa=U.*              /", "", $link);
       $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
       $domain = parse_url($link)['host'];
       if ($domain !== $this->domain) { // consider only images from different domains
@@ -680,12 +730,15 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     
     return $result;
   }
+*/
 
   /**
    * Destructor
    */
   function __destruct() {
   }
+
+
 
   public function test() {
    $photosUrls = [
@@ -726,102 +779,6 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
     return true;
   }
-
 }
 
-/*
-  public function putVote($params) { return $this->setVote($params); }
-*/
-
-/*
-  /**
-   * set person vote
-   *
-   * @param  array $filter
-   * @return array
-   * /
-  public function setVote($params) {
-    $id = $params['id'];
-    $vote = $params['vote'];
-
-    if (!isset($this->db->data["persons"][$id])) {
-      throw new Exception("can't set vote: person id [$id] not found");
-    }
-    if (!is_numeric($vote) || $vote < 0 || $vote > 1) {
-      throw new Exception("can't set vote: vote must be in range [0-1]");
-    }
-
-    $this->db->data["persons"][$id]["vote"] = $vote;
-
-    $this->store();
-
-    return [ 'result' => true ];
-  }
-*/
-
-/*
-  public function getSitesDefinitions() {
-    $sitesDefinitions = [];
-    foreach ($this->sitesDefinitions as $id1 => $value1) {
-      foreach ($value1 as $id2 => $value2) {
-        if ($id2 != "patterns") {
-          $sitesDefinitions[$id1][$id2] = $value2;
-        }
-      }
-    }
-    return $sitesDefinitions;
-  }
-*/
-
-/*
-  public function getPersonsByPhone($phone) {
-    return array_filter($this->getPersons(), function($item) use ($phone) {
-       return $item['phone'] == $phone;
-    });
-  }
-
-  public function getPersonsByUrl($url) {
-    return array_filter($this->getPersons(), function($item) use ($url) {
-       return $item['url'] == $url;
-    });
-  }
-
-  public function getPersonsByDateSpan($dateFrom, $dateTo) {
-    return array_filter($this->getPersons(), function($item) use ($dateFrom, $dateTo) {
-       $notBefore = $dateFrom ? ($item['timestamp'] >= $dateFrom) : true;
-       $notAfter = $dateTo ? ($item['timestamp'] <= $dateTo) : true;
-       return $notBefore && $notAfter;
-    });
-  }
-
-  public function getPersonsByPageSum($sum) {
-    return array_filter($this->getPersons(), function($item) use ($sum) {
-       return $item['pageSum'] == $sum;
-    });
-  }
-*/
-
-/*
-  /**
-   * filter list
-   *
-   * @return array
-   * /
-  public function filter($list, $filter) {
-    if (isset($filter)) {
-      if (isset($filter["range"])) {
-        foreach ($filter["range"] as $name => $value) {
-          $list = array_filter($list, function ($item) use ($name, $value) {
-            return (
-              !$item[$name] || (
-                (!$value["min"] || ($item[$name] >= $value["min"])) &&
-                (!$value["max"] || ($item[$name] <= $value["max"]))
-              )
-            );
-          });
-        }
-      }
-    }
-    return $list;
-  }
-*/
+?>
