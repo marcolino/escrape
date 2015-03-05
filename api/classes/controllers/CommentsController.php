@@ -10,7 +10,6 @@
  */
 
 require_once('lib/simple_html_dom.php');
-require_once('lib/random_user_agent.php');
 require_once('classes/services/Utilities.php');
 
 class CommentsController {
@@ -431,7 +430,6 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
     retry:
     $ch = curl_init();
     if (($errno = curl_errno($ch))) {
-      $this->router->log("error", "can't initialize curl, " . curl_strerror($errno));
       throw new Exception("can't initialize curl, " . curl_strerror($errno));
     }
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -451,7 +449,6 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
         }
       }
       $this->router->log("error", "can't execute curl to [$url], " . curl_strerror($errno));
-      throw new Exception("can't execute curl to [$url], " . curl_strerror($errno));
     }
     curl_close($ch);
     return $output;

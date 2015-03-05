@@ -178,16 +178,46 @@
             <div class="carousel-caption">
               <p>{{slide.text}}</p>
             </div>
+            <!-- ------------------------------------ -->
+            <div class="carousel-toolbar">
+              <div class="form-group" style="vertical-align:bottom">
+                <div class="col-xs-12">
+                  <!-- <button ng-click="photoGetOccurrences('{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button> -->
+                  <button ng-click="photoGetOccurrences('http://www.investireoggi.it/attualita/files/2015/01/marcotravaglio.jpg')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
+OPEN: <a data-toggle="modal" data-target="#photoShowOccurrencesModalPopup"><span class="glyphicon glyphicon-home"></span></a>
+                </div>
+              </div>
+            </div>
+            <!-- ------------------------------------ -->
           </slide>
         </carousel>
-        <div class="carousel-toolbar">
-          <div class="form-group" style="vertical-align:bottom">
-            <div class="col-xs-1">
-              <button ng-click="checkForThrutfullness()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
+      </div>
+
+      <!-- photo show occurrences modal popup -->
+      <div id="photoShowOccurrencesModalPopup" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title">Check photo occurrences</h4>
+            </div>
+            <div class="modal-body">
+              dfkghdfkjgdfsjkgjksdfhgkj
+              <img ng-src="" class="img-responsive">
             </div>
           </div>
         </div>
       </div>
+
+      <!-- -------------------------------------------------------------------- -->
+      <!--
+      <button class="btn btn-default" ng-click="open()">Open me!</button>
+      <button class="btn btn-default" ng-click="open('lg')">Large modal</button>
+      <button class="btn btn-default" ng-click="open('sm')">Small modal</button>
+      <div ng-show="selected">Selection from a modal: {{ selected }}</div>
+      -->
+      <!-- -------------------------------------------------------------------- -->
+
     </div>
 
     <!-- comments pill -->
@@ -221,3 +251,21 @@
   
   </div>
 </div>
+
+<script type="text/ng-template" id="myModalContent.html">
+  <div class="modal-header">
+    <h3 class="modal-title">I am a modal!</h3>
+  </div>
+  <div class="modal-body">
+    <ul>
+      <li ng-repeat="item in items">
+        <a ng-click="selected.item = item">{{ item }}</a>
+      </li>
+    </ul>
+    Selected: <b>{{ selected.item }}</b>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-primary" ng-click="ok()">OK</button>
+    <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+  </div>
+</script>

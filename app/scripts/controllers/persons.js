@@ -149,7 +149,18 @@ $scope.username = $rootScope.username;
       }
     );
   };
-
+      
+  $scope.photoGetOccurrences = function(url) {
+    //console.info('photoGetOccurrences(' + url + ')');
+    Persons.photoGetOccurrences(url).then(
+      function(response) {
+        console.info(response); ////////////////////////////////
+      },
+      function(errorMessage) {
+        console.warn(errorMessage);
+      }
+    );
+  };
 
   $scope.formChangeCountry = function(code) {
     console.log('formChangeCountry(): ', code);
