@@ -72,7 +72,7 @@ console.info('handleSuccess() - response:', response);
     },
 
     photoGetOccurrences: function (url) {
-console.log("SERVICE photoGetOccurrences URL is", url);
+console.log('SERVICE photoGetOccurrences URL is', url);
       return $http({
         method: 'POST',
         url: apiUri + 'photo' + '/' + 'get' + '/' + 'occurrences',

@@ -151,15 +151,47 @@ $scope.username = $rootScope.username;
   };
       
   $scope.photoGetOccurrences = function(url) {
-    //console.info('photoGetOccurrences(' + url + ')');
+    console.info('XXXXXXXXXXXX photoGetOccurrences(' + url + ')');
     Persons.photoGetOccurrences(url).then(
       function(response) {
+
         console.info(response); ////////////////////////////////
+        $scope.photoOccurrencesResponse = response;
+        $scope.selectedTab = 'photosOccurrences';
+        //$scope.myTabs[1].disabled = true;
+
+/*
+        var modalOptions = {
+            closeButtonText: 'Fake',
+            actionButtonText: 'Unique',
+            headerText: 'Photo occurrences',
+            bodyText: '<i>' + response[0].text + '</i>',
+        };
+
+        modalService.showModal({}, modalOptions).then(function (/ *result* /) {
+            //console.info('Modal response:', result);
+            /*
+            dataService.deleteCustomer($scope.customer.id).then(function () {
+                $location.path('/customers');
+            }, processError);
+            * /
+        });
+*/
       },
       function(errorMessage) {
         console.warn(errorMessage);
       }
     );
+  };
+
+  $scope.unique = function() {
+    console.log('It is unique!');
+    $scope.selectedTab = 'photos';
+  };
+
+  $scope.fake = function() {
+    console.log('It is fake!');
+    $scope.selectedTab = 'photos';
   };
 
   $scope.formChangeCountry = function(code) {

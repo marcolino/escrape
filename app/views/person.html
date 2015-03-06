@@ -1,18 +1,19 @@
-<p>You're logged in as user {{username}} ~ <a href="#/login">Logout</a></p>
-
 <div class="container">
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
-      <li ng-class="{active: selectedTab == 'main'}">
+      <li ng-class="{active: selectedTab === 'main'}">
         <a href="" ng-click="selectedTab = 'main';">Main</a>
       </li>
-      <li ng-class="{active: selectedTab == 'photos'}">
+      <li ng-class="{active: selectedTab === 'photos'}">
         <a href="" ng-click="selectedTab = 'photos';">Photos</a>
       </li>
-      <li ng-class="{active: selectedTab == 'comments'}">
+      <li ng-class="{active: selectedTab === 'photosOccurrences', hide: selectedTab !== 'photosOccurrences'}">
+        <a href="" ng-click="selectedTab = 'photosOccurrences';">Photos Occurrences</a>
+      </li>
+      <li ng-class="{active: selectedTab === 'comments'}">
         <a href="" ng-click="selectedTab = 'comments';">Comments <span class="badge">{{person.comments.length}}</span></a>
       </li>
-      <li ng-class="{active: selectedTab == 'unions', hide: true}">
+      <li ng-class="{active: selectedTab === 'unions', hide: true}">
         <a href="" ng-click="selectedTab = 'unions';">Unions</a>
       </li>
     </ul>
@@ -182,9 +183,9 @@
             <div class="carousel-toolbar">
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
-                  <!-- <button ng-click="photoGetOccurrences('{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button> -->
+              <!--<button ng-click="photoGetOccurrences('http://www.investireoggi.it/attualita/files/2015/01/marcotravaglio.jpg')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
                   <button ng-click="photoGetOccurrences('http://www.investireoggi.it/attualita/files/2015/01/marcotravaglio.jpg')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
-OPEN: <a data-toggle="modal" data-target="#photoShowOccurrencesModalPopup"><span class="glyphicon glyphicon-home"></span></a>
+              <!--<button ng-click="photoGetOccurrences('{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
                 </div>
               </div>
             </div>
@@ -207,6 +208,18 @@ OPEN: <a data-toggle="modal" data-target="#photoShowOccurrencesModalPopup"><span
             </div>
           </div>
         </div>
+=======
+    </div>
+
+    <!-- photosOccurrences pill -->
+    <div class="tab-content" ng-show="selectedTab == 'photosOccurrences'">
+      {{photoOccurrencesResponse}}
+    
+      <hr>
+      <div>
+        <button ng-click="unique()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Unique</button>
+        <button ng-click="fake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
+>>>>>>> 371a3f7325540e98e96e1390ea18155a731b329a
       </div>
 
       <!-- -------------------------------------------------------------------- -->
