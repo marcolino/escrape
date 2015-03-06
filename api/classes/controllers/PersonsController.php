@@ -285,14 +285,14 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     return $list;
   }
 
-  public function photoGetOccurrences($imageUrl) {
-    #$thisdomain = "www.ilfattoquotidiano.it";
+  public function photoGetOccurrences($id, $imageUrl) {
+    $personDomain = $this->db->get("person", $id)["url"];
     $url =
       "http://www.google.com/searchbyimage" .
       "?image_url=" . $imageUrl .
       "&filter=" . "0"
     ;
-    $response = [];
+    $response = null;
     $data = getUrlContents($url);
     $html = str_get_html($data); // the whole html
     foreach ($html->find('div.srg') as $srg) { // each one of responses (sections both before and after real duplicate links)
@@ -316,14 +316,13 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
         $link = preg_replace("/^\/url\?q=/", "", $link);
         $link = preg_replace("/&amp;sa=U.*/", "", $link);
         $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
-        $domain = parse_url($link)['host'];
-        #if ($domain !== $thisdomain) { // consider only images from different domains
+        if (parse_url($link)["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
           $response[] = [
             "link" => $link,
             "imgsrc" => $imgsrc,
             "text" => $text,
           ];
-        #}
+        }
       }
     }
     $html->clear(); // clean up the memory 
@@ -741,40 +740,63 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
 
 
   public function test() {
-   $photosUrls = [
-      "/_Eb1ice0XQzI/S5_N0s_WcvI/AAAAAAAAB9A/P6k2sZ4BRwU/s400/Alice_nel_paese_delle_meraviglie_14.jpg",
-      "/-utIwNqmRYMk/UHr9Fuc30LI/AAAAAAAACtg/HYruJverwBE/s1600/brucaliffo.jpg",
+    $photosUrls[0] = [
+      "/scienzefanpage/wp-content/uploads/2013/12/samantha-cristoforetti-futura.jpg",
+      "/scienzefanpage/wp-content/uploads/2012/07/donna-italiana-spazio1-300x225.jpg",
     ];
-    $person = [];
-    $person["key"] = "toe-123456";
-    $person["key_site"] = "toe";
-    $person["name"] = "Alice";
-    $person["url"] = "http://2.bp.blogspot.com";
-    $person["timestamp"] = 1424248678;
-    $person["sex"] = "F";
-    $person["zone"] = "centro";
-    $person["address"] = "Via Roma, 0, Torino";
-    $person["description"] = "super";
-    $person["phone"] = "3336480983";
-    $person["nationality"] = "ru";
-    $person["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
-    $person["age"] = 27;
-    $person["vote"] = 7;
+    $person[0] = [];
+    $person[0]["key"] = "toe-123456";
+    $person[0]["key_site"] = "toe";
+    $person[0]["name"] = "Samantha";
+    $person[0]["url"] = "http://static.fanpage.it";
+    $person[0]["timestamp"] = 1424248678;
+    $person[0]["sex"] = "F";
+    $person[0]["zone"] = "centro";
+    $person[0]["address"] = "Via Roma, 3, Milano";
+    $person[0]["description"] = "astronauta";
+    $person[0]["phone"] = "3336480981";
+    $person[0]["nationality"] = "it";
+    $person[0]["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
+    $person[0]["age"] = 31;
+    $person[0]["vote"] = 8;
+    ########################################################################################
+    $photosUrls[1] = [
+      "/wp-content/gallery/convegno/img_2484.jpg",
+      "/wp-content/gallery/convegno/img_2477.jpg",
+    ];
+    $person[1] = [];
+    $person[1]["key"] = "sgi-789012";
+    $person[1]["key_site"] = "sgi";
+    $person[1]["name"] = "Elena";
+    $person[1]["url"] = "http://www.newshd.net";
+    $person[1]["timestamp"] = 1424248555;
+    $person[1]["sex"] = "F";
+    $person[1]["zone"] = "centro";
+    $person[1]["address"] = "Via Garibaldi 12, Roma";
+    $person[1]["description"] = "scienziata";
+    $person[1]["phone"] = "3336480982";
+    $person[1]["nationality"] = "it";
+    $person[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
+    $person[1]["age"] = 42;
+    $person[1]["vote"] = 9;
+    ########################################################################################
 
     // add person
-    $key = $person["key"];
-    if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
-      $id = $p[0]["id"];
-      $this->router->log("debug", " °°° updating person: $key °°°");
-      $this->set($id, $person);
-    } else { # new key, insert it
-      $this->router->log("debug", " ^^^ inserting person: $key ^^^");
-      $id = $this->add($person);
-    }
-
-    // add photos
-    foreach ($photosUrls as $photoUrl) {
-      $this->photoAdd($id, $person["url"] . $photoUrl);
+    for ($i = 0; $i < sizeof($person); $i++) {
+      $key = $person[$i]["key"];
+      if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
+        $id = $p[0]["id"];
+        $this->router->log("debug", " °°° updating person: $key °°°");
+        $this->set($id, $person[$i]);
+      } else { # new key, insert it
+        $this->router->log("debug", " ^^^ inserting person: $key ^^^");
+        $id = $this->add($person[$i]);
+      }
+  
+      // add photos
+      foreach ($photosUrls[$i] as $photoUrl) {
+        $this->photoAdd($id, $person[$i]["url"] . $photoUrl);
+      }
     }
 
     return true;

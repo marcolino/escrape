@@ -28,9 +28,9 @@ class Router {
   }
 
   public function run() {
-    # === persons group =============================================
+    # === persons group ====================================================
     $this->app->group("/persons", function () {
-      $this->app->get("/test", function() { # =====================
+      $this->app->get("/test", function() { # ============================
         try {
           $persons = new PersonsController($this);
           $this->success($persons->test());
@@ -40,7 +40,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/get", function() { # ======================
+      $this->app->get("/get", function() { # =============================
         try {
           $persons = new PersonsController($this);
           $this->success($persons->getList());
@@ -50,7 +50,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/get/:id", function($id) { # ===============
+      $this->app->get("/get/:id", function($id) { # ======================
         try {
           $persons = new PersonsController($this);
           $this->success($persons->get($id));
@@ -60,7 +60,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/sync", function() { # ======================
+      $this->app->get("/sync", function() { # =============================
         try {
           $persons = new PersonsController($this);
           $this->success($persons->sync());
@@ -70,19 +70,19 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/photo/get/occurrences/", function() { # ====
+      $this->app->post("/photo/get/occurrences/", function() { # ===========
         try {
           $persons = new PersonsController($this);
           #$url = $this->app->request()->get('url');
           $data = json_decode($this->app->request()->getBody());
-          $this->success($persons->photoGetOccurrences($data->url));
+          $this->success($persons->photoGetOccurrences($data->id, $data->url));
         } catch (Exception $e) {
           $this->error($e);
         } catch (PDOException $e) {
           $this->error($e);
         }
       });
-      $this->app->get("/search/:query", function($query) { # =======
+      $this->app->get("/search/:query", function($query) { # ==============
         try {
           $persons = new PersonsController($this);
           #$query = json_decode($this->app->request()->getBody());
@@ -93,7 +93,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->put("/set/:id", function($id) { # ================
+      $this->app->put("/set/:id", function($id) { # =======================
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody());
@@ -104,7 +104,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/insert", function() { # ===================
+      $this->app->post("/insert", function() { # ==========================
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody());
@@ -115,7 +115,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->delete("/delete/:id", function($id) { # ==========
+      $this->app->delete("/delete/:id", function($id) { # =================
         try {
           $persons = new PersonsController($this);
           //$data = json_decode($this->app->request()->getBody());
@@ -126,11 +126,11 @@ class Router {
           $this->error($e);
         }
       });
-    }); # ============================================================
+    }); # ===================================================================
 
-    # === users group ================================================
+    # === users group =======================================================
     $this->app->group("/users", function () {
-      $this->app->post("/register", function() { # =================
+      $this->app->post("/register", function() { # ========================
         try {
           $users = new UsersController($this);
           $data = json_decode($this->app->request()->getBody());
@@ -141,7 +141,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/login", function() { # ====================
+      $this->app->post("/login", function() { # ===========================
         $data = json_decode($this->app->request()->getBody());
         try {
           $users = new UsersController($this);
@@ -152,7 +152,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->delete("/delete/:id", function($id) { # ===========
+      $this->app->delete("/delete/:id", function($id) { # ==================
         try {
           $users = new UsersController($this);
           $this->success($users->delete($id));
@@ -162,11 +162,11 @@ class Router {
           $this->error($e);
         }
       });
-    }); # ============================================================
+    }); # ===================================================================
 
-    # comments group =================================================
+    # comments group ========================================================
     $this->app->group("/comments", function () {
-      $this->app->get("/get", function() { # =======================
+      $this->app->get("/get", function() { # ==============================
         try {
           $comments = new CommentsController($this);
           $this->success($comments->getAll());
@@ -176,7 +176,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/get/:id", function($id) { # ================
+      $this->app->get("/get/:id", function($id) { # =======================
         try {
           $comments = new CommentsController($this);
           $this->success($comments->get($id));
@@ -186,7 +186,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/getByPhone/:phone", function($phone) { # ===
+      $this->app->get("/getByPhone/:phone", function($phone) { # ==========
         try {
           $comments = new CommentsController($this);
           $this->success($comments->getByPhone($phone));
@@ -196,7 +196,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/sync", function() { # =====================
+      $this->app->post("/sync", function() { # ============================
         # TODO: why POST???? GET!!!
         try {
           $comments = new CommentsController($this);
@@ -207,7 +207,7 @@ class Router {
           $this->error($e);
         }
       });
-    }); # ============================================================
+    }); # ===================================================================
 
     $this->app->options("/.+", function() { $this->success(null); }); # DEBUG: only to allow *all* CORS requests... (grunt / apache)
     $this->app->error(function(Exception $e) { $this->error($e); }); # app->
@@ -235,7 +235,7 @@ class Router {
         $this->app->getLog()->debug($value);
         break;
     }
-    $this->app->logs[$level][] = $value;
+    #$this->app->logs[$level][] = $value;
   }
 
   private function unforeseen() {

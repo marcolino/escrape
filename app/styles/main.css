@@ -107,6 +107,16 @@ body {
   /* TODO: set this value in controller, using ng-style (see https://docs.angularjs.org/api/ng/directive/ngStyle) */
   height: 72px; /* bitmap height, should be set dynamically */
 }
+.img-clip-small-container {
+  width: 66px;
+  text-align: center;
+  border: 1px solid #aaa;
+}
+.img-clip-small {
+  width: auto;
+  max-width: 64px;
+  height: 48px;
+}
 .img-site-container {
   height: 20px;
   text-align: center;
@@ -217,8 +227,12 @@ input[readonly].default-cursor {
   cursor: default;
 }
 
+/* TODO: use no-text-decoration... */
 /* avoid text decoration on accordion elements */
 .accordion-toggle {
+  text-decoration: none !important;
+}
+.no-text-decoration {
   text-decoration: none !important;
 }
 

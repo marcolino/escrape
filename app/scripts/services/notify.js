@@ -25,7 +25,7 @@ app.service('notify', function(cfg, toastr) {
     },
   
     warning: function (message, title) {
-      title = typeof title !== 'undefined' ? title : 'Success';
+      title = typeof title !== 'undefined' ? title : 'Warning';
       if (cfg.notify.toastr) {
         toastr.warning(message, title);
       }

@@ -207,9 +207,9 @@ app.controller('AuthenticationController',
       $scope.storeFilters();
     };
 
-    // TODO: this function is in person controller: how to have only one instance?
-    $scope.getCountryClass = function(code) {
-      return code ? 'flag flag-32 flag-' + code : 'glyphicon glyphicon-globe';
+    // TODO: this function is similar in person controller: how to have only one instance?
+    $scope.getCountryClass = function(countryCode) {
+      return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
     };
 
     $scope.toggleFilterOpened = function (/*isopened*/) {

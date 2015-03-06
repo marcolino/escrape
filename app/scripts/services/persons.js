@@ -71,12 +71,13 @@ console.info('handleSuccess() - response:', response);
       }).then(handleSuccess, handleError);
     },
 
-    photoGetOccurrences: function (url) {
+    photoGetOccurrences: function (id, url) {
 console.log('SERVICE photoGetOccurrences URL is', url);
       return $http({
         method: 'POST',
         url: apiUri + 'photo' + '/' + 'get' + '/' + 'occurrences',
         data: {
+          id: id,
           url: url
         },
       }).then(handleSuccess, handleError);

@@ -125,3 +125,9 @@ String.prototype.shuffle = function () {
   }
   return a.join('');
 };
+
+String.prototype.parseUrl = function () {
+  var a = document.createElement('a');
+  a.href = this;
+  return a;
+};

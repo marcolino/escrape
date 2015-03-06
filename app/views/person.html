@@ -1,38 +1,32 @@
 <div class="container">
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
-      <li ng-class="{active: selectedTab === 'main'}">
-        <a href="" ng-click="selectedTab = 'main';">Main</a>
+      <li ng-class="{active: tabSelected === 'main', hide: tabs['main'].hidden}">
+        <a href="" ng-click="tabSelected = 'main'">{{tabs['main'].description}}</a>
       </li>
-      <li ng-class="{active: selectedTab === 'photos'}">
-        <a href="" ng-click="selectedTab = 'photos';">Photos</a>
+      <li ng-class="{active: tabSelected === 'photos', hide: tabs['photos'].hidden}">
+        <a href="" ng-click="tabSelected = 'photos'">{{tabs['photos'].description}}</a>
       </li>
-      <li ng-class="{active: selectedTab === 'photosOccurrences', hide: selectedTab !== 'photosOccurrences'}">
-        <a href="" ng-click="selectedTab = 'photosOccurrences';">Photos Occurrences</a>
+      <li ng-class="{active: tabSelected === 'photosOccurrences', hide: tabs['photosOccurrences'].hidden}">
+        <a href="" ng-click="tabSelected = 'photosOccurrences'">{{tabs['photosOccurrences'].description}}</a>
       </li>
-      <li ng-class="{active: selectedTab === 'comments'}">
-        <a href="" ng-click="selectedTab = 'comments';">Comments <span class="badge">{{person.comments.length}}</span></a>
+      <li ng-class="{active: tabSelected === 'comments', hide: tabs['comments'].hidden}">
+        <a href="" ng-click="tabSelected = 'comments'">{{tabs['comments'].description}} <span class="badge">{{person.comments.length}}</a>
       </li>
-      <li ng-class="{active: selectedTab === 'unions', hide: true}">
-        <a href="" ng-click="selectedTab = 'unions';">Unions</a>
+      <li ng-class="{active: tabSelected === 'unions', hide: tabs['unions'].hidden}">
+        <a href="" ng-click="tabSelected = 'unions'">{{tabs['unions'].description}}</a>
       </li>
     </ul>
-  
-    <!-- person.id: {{person.id}} -->
+
     <!-- main pill -->
-    <div class="tab-content" ng-show="selectedTab == 'main'">
+    <div class="tab-content" ng-show="tabSelected === 'main' && !tabs['main'].hidden">
       <form class="form-horizontal" style="margin-top:5px">
         <div class="form-group">
           <div class="col-xs-12">
             <div class="slider-horizontal">
-            <span ng-repeat="(id, photo) in person.photos">
-              <!--<pre>id:{{id}}, photo:{{photo}}</pre>-->
-              <span ng-if="!cfg.fake">
-                <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" />
-              </span>
-              <span ng-if="cfg.fake">
-                <img ng-src="images/users/user-{{$index}}.jpg" class="img-rounded img-clip" />
-              </span>
+            <span ng-repeat="(number, photo) in person.photos">
+              <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
+              <a href="" ng-click="tabSelect('photos', number)"><img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" /></a>
             </span>
             </div>
           </div>
@@ -69,12 +63,12 @@
           <div class="col-xs-7 col-sm-6 col-md-6 col-lg-6">
             <div class="dropdown">
               <div class="input-group" data-toggle="dropdown">
-                <span class="input-group-addon" title="Nationality"><i ng-class="getCountryClass(person.nationality.countryCode)"></i></span>
+                <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="getCountryClass(person.nationality.countryCode)"></i></i></span>
                 <input class="form-control" id="query" name="query" type="text" ng-value="person.nationality.countryName" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
                 <li ng-repeat="(countryCode, countryName) in countries" class="flag-li">
-                  <a ng-click="formChangeCountry('{{countryCode}}')"><i ng-class="getCountryClass(countryCode)"></i> {{countryName}}</a>
+                  <a ng-click="formChangeCountry('{{countryCode}}')"><i class="f16"><i ng-class="getCountryClass(countryCode)"></i></i> {{countryName}}</a>
                 </li>
               </ul>
             </div>
@@ -170,71 +164,65 @@
     </div>
 
     <!-- photos pill -->
-<!--<pre> person: {{person}} </pre>-->
-    <div class="tab-content" ng-show="selectedTab == 'photos'">
+    <!--<pre> person: {{person}} </pre>-->
+    <div class="tab-content" ng-show="tabSelected === 'photos' && !tabs['photos'].hidden">
       <div class="slides-control">
         <carousel disable-animation="true">
-          <slide ng-repeat="photo in person.photos" NOactive="photo.active">
+          <slide ng-repeat="photo in person.photos" active="photo.active">
             <img class="slide" ng-src="{{cfg.apiUri + '/' + photo.path_full}}" />
             <div class="carousel-caption">
               <p>{{slide.text}}</p>
             </div>
-            <!-- ------------------------------------ -->
             <div class="carousel-toolbar">
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
-              <!--<button ng-click="photoGetOccurrences('http://www.investireoggi.it/attualita/files/2015/01/marcotravaglio.jpg')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
-                  <button ng-click="photoGetOccurrences('http://www.investireoggi.it/attualita/files/2015/01/marcotravaglio.jpg')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
-              <!--<button ng-click="photoGetOccurrences('{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
+                  <button ng-click="photoGetOccurrences(person.id, '{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
                 </div>
               </div>
             </div>
-            <!-- ------------------------------------ -->
           </slide>
         </carousel>
       </div>
-
-      <!-- photo show occurrences modal popup -->
-      <div id="photoShowOccurrencesModalPopup" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <h4 class="modal-title">Check photo occurrences</h4>
-            </div>
-            <div class="modal-body">
-              dfkghdfkjgdfsjkgjksdfhgkj
-              <img ng-src="" class="img-responsive">
-            </div>
-          </div>
-        </div>
-=======
     </div>
 
     <!-- photosOccurrences pill -->
-    <div class="tab-content" ng-show="selectedTab == 'photosOccurrences'">
-      {{photoOccurrencesResponse}}
-    
-      <hr>
-      <div>
-        <button ng-click="unique()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Unique</button>
-        <button ng-click="fake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
->>>>>>> 371a3f7325540e98e96e1390ea18155a731b329a
+    <div class="tab-content" ng-show="tabSelected === 'photosOccurrences' && !tabs['photosOccurrences'].hidden">
+      <div class="text-center">
+        <span ng-show="photosOccurrencesLoading"><img src="images/loading.gif" /> &emsp; Searching occurrences of this photo in the whole web...</span>
+      </div>
+      <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences">
+        <a ng-href="{{photosOccurrence.link}}" target="_blank" class="no-text-decoration">
+          <div class="col-xs-4 col-sm-2 col-md-1 col-lg-1">
+            <div class="img-rounded img-clip-small-container">
+              <img ng-src="{{photosOccurrence.imgsrc}}" class="img-rounded img-clip-small" />
+            </div>
+          </div>
+          <div class="col-xs-8 col-sm-10 col-md-11 col-lg-11">
+            <div class="row">
+              <div class="col">
+                <i style="color:darkgreen"><small><span ng-bind="photosOccurrence.link"></span></small></i>
+              </div>
+              <div class="col">
+                <span ng-bind-html="photosOccurrence.text"></span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div ng-show="!photosOccurrencesLoading && photosOccurrences === null">
+        <h4>No other occurrences of this photo found in the whole web: it is presumably thruthful.</h4>
       </div>
 
-      <!-- -------------------------------------------------------------------- -->
-      <!--
-      <button class="btn btn-default" ng-click="open()">Open me!</button>
-      <button class="btn btn-default" ng-click="open('lg')">Large modal</button>
-      <button class="btn btn-default" ng-click="open('sm')">Small modal</button>
-      <div ng-show="selected">Selection from a modal: {{ selected }}</div>
-      -->
-      <!-- -------------------------------------------------------------------- -->
-
+      <div ng-hide="photosOccurrencesLoading">
+        <hr>
+        <button ng-click="photosOccurrencesThruthful()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Truthful</button>
+        <button ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
+        <!--<button NOng-hide="photosOccurrences === null" ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>-->
+      </div>
     </div>
 
     <!-- comments pill -->
-    <div class="tab-content" ng-show="selectedTab == 'comments'">
+    <div class="tab-content" ng-show="tabSelected === 'comments' && !tabs['comments'].hidden">
       <div class="comments">
         <div ng-repeat="(id, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">
           <div class="form-group">
@@ -258,27 +246,9 @@
     </div>
 
     <!-- unions pill -->
-    <div class="tab-content" ng-show="selectedTab == 'unions'">
+    <div class="tab-content" ng-show="tabSelected === 'unions' && !tabs['unions'].hidden">
       unions...
     </div>
   
   </div>
 </div>
-
-<script type="text/ng-template" id="myModalContent.html">
-  <div class="modal-header">
-    <h3 class="modal-title">I am a modal!</h3>
-  </div>
-  <div class="modal-body">
-    <ul>
-      <li ng-repeat="item in items">
-        <a ng-click="selected.item = item">{{ item }}</a>
-      </li>
-    </ul>
-    Selected: <b>{{ selected.item }}</b>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-primary" ng-click="ok()">OK</button>
-    <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
-  </div>
-</script>

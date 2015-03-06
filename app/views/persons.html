@@ -1,3 +1,8 @@
+<div style="margin-bottom:-19px; overflow:hidden;">
+   <img src="http://static.fanpage.it/scienzefanpage/wp-content/uploads/2013/12/samantha-cristoforetti-futura.jpg"/><br />  
+   <img style="position:relative; top: -424px;" src="http://192.168.10.30/escrape/app/images/watermarks/fake.png" />
+</div>
+
 <div class="container">
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
     <!--<pre> person: {{person}} </pre>-->
@@ -17,7 +22,7 @@
       <div class="row">
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
           <button type="button" class="btn" ng-attr-title="nationality: {{person.nationality}}">
-            <a ng-href="#/"><i ng-class="getCountryClassSmall(person.nationality)"></i></a>
+            <a ng-href="#/"><i class="f16"><i ng-class="getCountryClass(person.nationality)"></i></span></a>
           </button>
         </div>
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">

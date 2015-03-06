@@ -4,7 +4,30 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.persons = [];
   $scope.person = [];
   $scope.personId = $routeParams.personId;
-  $scope.selectedTab = 'main';
+  $scope.tabs = {
+    'main': {
+      'description': 'Main',
+      'hidden': false,
+    },
+    'photos': {
+      'description': 'Photos',
+      'hidden': false,
+    },
+    'photosOccurrences': {
+      'description': 'Photos occurrences',
+      'hidden': true,
+      'loading': false,
+    },
+    'comments': {
+      'description': 'Comments',
+      'hidden': false,
+    },
+    'unions': {
+      'description': 'Unions',
+      'hidden': true,
+    }
+  };
+  $scope.tabSelected = 'main';
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   $scope.sites = Sites;
@@ -112,7 +135,7 @@ $scope.username = $rootScope.username;
         $scope.person.description = $scope.person.description.substr(0, 2);
       }
     });
-    notify.success('TODO: all messages with notify...', 'Messaggio');
+    //notify.success('TODO: all messages with notify...', 'Messaggio');
   }
 
   // public methods
@@ -150,48 +173,58 @@ $scope.username = $rootScope.username;
     );
   };
       
-  $scope.photoGetOccurrences = function(url) {
-    console.info('XXXXXXXXXXXX photoGetOccurrences(' + url + ')');
-    Persons.photoGetOccurrences(url).then(
+  $scope.tabSelect = function (tabName, data = null) {
+    //console.log('Selecting tab ' + tabName);
+    $scope.tabSelected = tabName;
+    if (tabName === 'photos') {
+      var number = data;
+      $scope.person.photos[number].active = true;
+    }
+  };
+
+  $scope.photoGetOccurrences = function(id, url) {
+    $scope.tabSelected = 'photosOccurrences';
+    $scope.tabs.photosOccurrences.hidden = false;
+    $scope.photosOccurrencesLoading = true;
+    //notify.info('photoGetOccurrences(' + url + ')');
+    Persons.photoGetOccurrences(id, url).then(
+
+      // TODO: ignore same domain results...
+
       function(response) {
-
-        console.info(response); ////////////////////////////////
-        $scope.photoOccurrencesResponse = response;
-        $scope.selectedTab = 'photosOccurrences';
-        //$scope.myTabs[1].disabled = true;
-
-/*
-        var modalOptions = {
-            closeButtonText: 'Fake',
-            actionButtonText: 'Unique',
-            headerText: 'Photo occurrences',
-            bodyText: '<i>' + response[0].text + '</i>',
-        };
-
-        modalService.showModal({}, modalOptions).then(function (/ *result* /) {
-            //console.info('Modal response:', result);
-            /*
-            dataService.deleteCustomer($scope.customer.id).then(function () {
-                $location.path('/customers');
-            }, processError);
-            * /
-        });
-*/
+        console.info(response);
+        if (response === null) {
+          //notify.warning('No occurrences found...');
+        } else {
+          /*
+          //var imageDomainHost = response[0].imgsrc.parseUrl().host;
+          var linkDomainHost = response[0].link.parseUrl().host;
+          var personDomainHost = response[0].personDomain.parseUrl().host;
+          notify.info('photoGetOccurrences<br>\n Link domain host: ' + linkDomainHost);
+          */
+        }
+        $scope.photosOccurrences = response;
+        $scope.photosOccurrencesLoading = false;
       },
       function(errorMessage) {
         console.warn(errorMessage);
+        $scope.photosOccurrencesLoading = false;
       }
     );
   };
 
-  $scope.unique = function() {
+  $scope.photosOccurrencesThruthful = function() {
     console.log('It is unique!');
-    $scope.selectedTab = 'photos';
+    $scope.tabSelected = 'photos';
+    $scope.photosOccurrences = null;
+    $scope.tabs.photosOccurrences.hidden = true;
   };
 
-  $scope.fake = function() {
+  $scope.photosOccurrencesFake = function() {
     console.log('It is fake!');
-    $scope.selectedTab = 'photos';
+    $scope.tabSelected = 'photos';
+    $scope.photosOccurrences = null;
+    $scope.tabs.photosOccurrences.hidden = true;
   };
 
   $scope.formChangeCountry = function(code) {
@@ -238,11 +271,7 @@ $scope.username = $rootScope.username;
   };
 
   $scope.getCountryClass = function(countryCode) {
-    return 'flag flag-32 flag-' + countryCode;
-  };
-
-  $scope.getCountryClassSmall = function(countryCode) {
-    return 'flag flag-16 flag-' + countryCode;
+    return 'flag' + ' ' + countryCode;
   };
 
   // google maps initialization
