@@ -5,18 +5,16 @@ app.service('Persons', function($http, $q, cfg) {
 
   // private methods
   function handleSuccess(response) {
-    //console.info('Person success: ', response.data);
+console.info('response.data:', response.data);
     if (response.data.error) {
       console.error(response.data.error);
       return($q.reject(response.data.error));
     } else {
-console.info('handleSuccess() - response:', response);
       return(response.data);
     }
   }
 
   function handleError(response) {
-    //console.info('Person error: ', response);
     if (
       ! angular.isObject(response.data) ||
       ! response.data.message
@@ -72,13 +70,13 @@ console.info('handleSuccess() - response:', response);
     },
 
     photoGetOccurrences: function (id, url) {
-console.log('SERVICE photoGetOccurrences URL is', url);
+      //console.log('SERVICE photoGetOccurrences - id:', id, ', url:', url);
       return $http({
         method: 'POST',
         url: apiUri + 'photo' + '/' + 'get' + '/' + 'occurrences',
         data: {
           id: id,
-          url: url
+          url: url,
         },
       }).then(handleSuccess, handleError);
     }

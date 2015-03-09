@@ -1,3 +1,8 @@
+<style>
+.img-fake {
+  box-shadow: 0px 0px 1px red;
+}
+</style>
 <div class="container">
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
@@ -26,7 +31,15 @@
             <div class="slider-horizontal">
             <span ng-repeat="(number, photo) in person.photos">
               <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
-              <a href="" ng-click="tabSelect('photos', number)"><img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" /></a>
+              <a href="#/" ng-click="tabSelect('photos', number)" class="no-text-decoration">
+<!-- This solution makes images in background squaree'... ???
+                <span>
+                  <img ng-show="photo.thruthfulness !== 'false'" ng-src="{{cfg.apiUri + '/' + photo.path_small}}" title="not-fake photo" class="img-rounded img-clip" />
+                  <img ng-show="photo.thruthfulness === 'false'" src="images/watermarks/fake-small.png" ng-style="{'background-image':'url({{cfg.apiUri + '/' + photo.path_small}})'}" title="fake photo" class="img-rounded img-clip" />
+                </span>
+-->
+                <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" Xng-class="'img-fake': photo.thruthfulness === 'false'" class="img-rounded img-clip img-fake" />
+              </a>
             </span>
             </div>
           </div>
@@ -153,7 +166,7 @@
               <h4 class="modal-title">{{person.streetAddress}}</h4>
             </div>
             <div class="modal-body">
-              <map style="display: block; height: 32em; width: 100%;" zoom="14" Xcenter="[40.74, -74.18]" scrollwheel="false" zoom-control-options="{ style: 'small' }" map-type-id="ROADMAP">
+              <map style="display: block; height: 32em; width: 100%;" zoom="14" scrollwheel="false" zoom-control-options="{ style: 'small' }" map-type-id="ROADMAP">
                 <marker position="{{person.streetLocation}}" title="{{person.streetAddress}}" draggable="false" visible="true"></marker>
               </map>
             </div>
@@ -187,20 +200,29 @@
 
     <!-- photosOccurrences pill -->
     <div class="tab-content" ng-show="tabSelected === 'photosOccurrences' && !tabs['photosOccurrences'].hidden">
-      <div class="text-center">
-        <span ng-show="photosOccurrencesLoading"><img src="images/loading.gif" /> &emsp; Searching occurrences of this photo in the whole web...</span>
+      <div class="jumbotron" ng-show="photosOccurrencesLoading">
+        <div class="text-center">
+          <span><img src="images/loading.gif" /> &emsp; Searching occurrences of this photo in the whole web...</span>
+        </div>
+      </div>
+      <!--
+        <pre>{{photosOccurrences}}</pre>
+        <pre>{{photosOccurrencesBestGuess}}</pre>
+      -->
+      <div ng-show="!photosOccurrencesLoading && photosOccurrencesBestGuess">
+        Best guess for this photo is: <a ng-href="{{photosOccurrencesBestGuess.href}}" target="_blank"><i>{{photosOccurrencesBestGuess.text}}</i></a>
       </div>
       <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences">
-        <a ng-href="{{photosOccurrence.link}}" target="_blank" class="no-text-decoration">
-          <div class="col-xs-4 col-sm-2 col-md-1 col-lg-1">
+        <a ng-href="{{photosOccurrence.href}}" target="_blank" class="no-text-decoration">
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-1">
             <div class="img-rounded img-clip-small-container">
               <img ng-src="{{photosOccurrence.imgsrc}}" class="img-rounded img-clip-small" />
             </div>
           </div>
-          <div class="col-xs-8 col-sm-10 col-md-11 col-lg-11">
+          <div class="col-xs-8 col-sm-10 col-md-10 col-lg-11">
             <div class="row">
               <div class="col">
-                <i style="color:darkgreen"><small><span ng-bind="photosOccurrence.link"></span></small></i>
+                <i style="color:darkgreen"><small><span ng-bind="photosOccurrence.href"></span></small></i>
               </div>
               <div class="col">
                 <span ng-bind-html="photosOccurrence.text"></span>
@@ -209,14 +231,17 @@
           </div>
         </a>
       </div>
-      <div ng-show="!photosOccurrencesLoading && photosOccurrences === null">
-        <h4>No other occurrences of this photo found in the whole web: it is presumably thruthful.</h4>
+      <div ng-show="!photosOccurrencesLoading && photosOccurrences.length === 0">
+        <div class="text-center">
+          <h4>No other occurrences of this photo found in the whole web: it is presumably thruthful.</h4>
+        </div>
       </div>
 
       <div ng-hide="photosOccurrencesLoading">
         <hr>
         <button ng-click="photosOccurrencesThruthful()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Truthful</button>
         <button ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
+        <button ng-click="photosOccurrencesUndecided()" class="btn btn-warning"><i class="glyphicon glyphicon-question-sign"></i> Don't know</button>
         <!--<button NOng-hide="photosOccurrences === null" ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>-->
       </div>
     </div>

@@ -9,6 +9,8 @@
  *  $ curl -X POST -d 'phone=primo post, content=bello' http://localhost/escrape/api/comments/
  */
 
+# TODO: use Utilities getUrlContents WITH charset !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+
 require_once('lib/simple_html_dom.php');
 require_once('classes/services/Utilities.php');
 

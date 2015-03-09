@@ -98,7 +98,7 @@ body {
   /* TODO: set this value in controller, using ng-style (see https://docs.angularjs.org/api/ng/directive/ngStyle) */
   width: 106px; /* bitmap max width (+1+1), should be set dynamically */
   text-align: center;
-  border: 1px solid #aaa;
+  border: 1px solid #eee;
 }
 .img-clip {
   width: auto;

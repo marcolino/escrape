@@ -1,13 +1,15 @@
-<div style="margin-bottom:-19px; overflow:hidden;">
-   <img src="http://static.fanpage.it/scienzefanpage/wp-content/uploads/2013/12/samantha-cristoforetti-futura.jpg"/><br />  
-   <img style="position:relative; top: -424px;" src="http://192.168.10.30/escrape/app/images/watermarks/fake.png" />
-</div>
-
 <div class="container">
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
     <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
-      <a ng-href="#/details/{{person.id}}"><div class="img-rounded img-clip-container"><img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" /></div></a>
+      <a ng-href="#/details/{{person.id}}">
+        <div class="img-rounded img-clip-container">
+          <!-- <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" /> -->
+<!-- TODO: img width should be enforced, can't rely un fake image width, which should be as small as possible... -->
+          <img ng-show="person.thruthfulness !== 'false'" ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" title="not-fake photo" class="img-rounded img-clip" />
+          <img ng-show="person.thruthfulness === 'false'" ng-style="{'background-image':'url({{cfg.apiUri + '/' + person.photo_path_small_showcase}})'}" src="images/watermarks/fake-small.png" title="fake photo" class="img-rounded img-clip" />
+        </div>
+      </a>
     </div>
     <div class="col-xs-8 col-sm-9 col-md-9 col-lg-9">
       <div class="row" style="padding-bottom:2px;">

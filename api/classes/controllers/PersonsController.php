@@ -6,9 +6,6 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
-# TODO:
-#  - normalizePhone(), ... etc ...: in a common class...
-
 class PersonsController {
   private $sitesDefinitions = [
     "sgi" => [
@@ -108,7 +105,7 @@ class PersonsController {
       $url = $site["url"] . "/" . $site["path"];
 
       $this->router->log("info", "url: [$url]");
-      $page = $this->getUrlContents($url, $site["charset"]);
+      $page = getUrlContents($url, $site["charset"]);
 
       if ($page === FALSE) {
         $this->router->log("error", "can't get page contents on site [$siteKey]");
@@ -127,7 +124,7 @@ class PersonsController {
       foreach ($person_cells as $person_cell) {
         $n++;
 
-if ($n > 3) break; # TODO: DEBUG-ONLY
+if ($n > 7) break; # TODO: DEBUG-ONLY
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -145,7 +142,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
         }
 
         $this->router->log("debug", $details_url);
-        if (($page_details = $this->getUrlContents($details_url, $site["charset"])) === FALSE) {
+        if (($page_details = getUrlContents($details_url, $site["charset"])) === FALSE) {
           $this->router->log("error", "can't get person $n url contents on site [$siteKey]");
           continue;
         }
@@ -239,9 +236,11 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
   }
 
   public function get($id) {
+#print "get($id)\n";
     $person = $this->db->get("person", $id);
     $photos = $this->db->getByField("photo", "id_person", $id);
     $person["photos"] = $photos;
+#print " person: "; var_export($person);
     return $person;
   }
   
@@ -277,6 +276,7 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
         "nationality" => $person["nationality"],
         "vote" => $person["vote"],
         "age" => $person["age"],
+        "thruthfulness" => "false", # TODO: if at least one photo is !thrustful, person is !thrustful...
         "photo_path_small_showcase" => $this->photoGetByShowcase($person["id"], true)["path_small"],
         "comments_count" => $comments->countByPerson($person["id"]),
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
@@ -286,72 +286,30 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
   }
 
   public function photoGetOccurrences($id, $imageUrl) {
-    $personDomain = $this->db->get("person", $id)["url"];
-    $url =
-      "http://www.google.com/searchbyimage" .
-      "?image_url=" . $imageUrl .
-      "&filter=" . "0"
-    ;
-    $response = null;
-    $data = getUrlContents($url);
-    $html = str_get_html($data); // the whole html
-    foreach ($html->find('div.srg') as $srg) { // each one of responses (sections both before and after real duplicate links)
-      $response = []; // keep only last section responses, with real duplicate links
-      foreach ($srg->find('li.g') as $g) { // each one of responses (sectioms before and after real duplicate links)
-        /*
-         * each one of search responses are in a list item with a class name "g"
-         * we are seperating each of the elements within, into an array;
-         * titles are stored within "<h3 class='r'><a...>text</a></h3>";
-         * links are in the href of the anchor contained in the "<h3>...</h3>";
-         */
-        $rc = $g->find('div.rc', 0);
-        $r = $rc->find('h3.r', 0);
-        $a = $r->find('a', 0);
-        $imgsrc = "";
-        foreach ($rc->find("img") as $el) {
-          $imgsrc = $el->src;
+    $person = $this->db->get("person", $id);
+    $personDomain = $person["url"];
+
+    $googleSearch = new GoogleSearch();
+    $maxPages = 2;
+
+    $response = [];
+    if ($results = $googleSearch->searchImage($imageUrl, $maxPages)) {
+      if ($results["search_results"]) {
+        $response["best_guess"] = $results["best_guess"];
+        #if ($results["best_guess"]["text"]) {
+        #  print "\nBest guess - text: {$results["best_guess"]["text"]}, href: {$results["best_guess"]["href"]}\n\n";
+        #}
+        $response["search_results"] = [];
+        foreach ($results["search_results"] as $result) {
+          if (parse_url($result["href"])["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
+            $response["search_results"][] = $result;
+          }
         }
-        $link = $a->href;
-        $text = $a->innertext;
-        $link = preg_replace("/^\/url\?q=/", "", $link);
-        $link = preg_replace("/&amp;sa=U.*/", "", $link);
-        $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
-        if (parse_url($link)["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
-          $response[] = [
-            "link" => $link,
-            "imgsrc" => $imgsrc,
-            "text" => $text,
-          ];
-        }
+      } else { // no occurrences found
       }
     }
-    $html->clear(); // clean up the memory 
     return $response;
   }
-
-/*
-  private function getUrlContents($url, $charset) {
-    $user_agent = "Mozilla"; 
-    $ch = curl_init();
-    if (($errno = curl_errno($ch))) {
-      $this->router->log("error", "can't initialize curl, " . curl_strerror($errno));
-      throw new Exception("can't initialize curl, " . curl_strerror($errno));
-    }
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
-    $output = curl_exec($ch);
-    if (($errno = curl_errno($ch))) {
-      $this->router->log("error", "can't execute curl to [$url], " . curl_strerror($errno));
-      throw new Exception("can't execute curl to [$url], " . curl_strerror($errno));
-    }
-    curl_close($ch);
-    return ($charset == "utf-8") ? $output : iconv($charset, "utf-8", $output);
-  }
-*/
 
   private function cleanName($value) {
     $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
@@ -528,29 +486,6 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
   }
 
   /**
-   * Check for photo truthfulness
-   *
-   * @param  string: photo url
-   * @return string: "yes"       if photo is unique on the web
-   *                 "no"        if photo is not uniqu on the web
-   *                 "unknown"   if photo uniqueness on the web is unknown
-   *
-   * TODO: DOESN'T WORK THIS WAY, CAN'T RELIABLY TELL IF A PHOTO IS THRUTHFUL;
-   *       SHOULD JUST RETURN A LIST OF LINKS TO BE SHOWN TO THE USER...
-   */
-  public function photoCheckThruthfulness($photo) {
-    return "unknown";
-/*
-    #$domain = $photo->domain();
-    $similarUrls = $this->photoGoogleSearch();
-    if (count($similarUrls) > 0) { // same image found
-      return false;
-    }
-    return true;
-*/
-  }
-
-  /**
    * Store a photo on local file system
    *
    * @param  integer $idPerson   the id of the person for which to store photo
@@ -624,6 +559,19 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
   }
 
   /**
+   * Get a photo truthfulness
+   *
+   * @param  string: photo url
+   * @return string: "yes"       if photo is unique on the web
+   *                 "no"        if photo is not uniqu on the web
+   *                 "unknown"   if photo uniqueness on the web is unknown
+   */
+  public function photoCheckThruthfulness($idPerson, $number) {
+    $photo = $this->photoGetByNumber($idPerson, $number);
+    return $photo["thruthfulness"];
+  }
+
+  /**
    * Get photos of person given their showcase flag
    *
    * @param  integer $idPerson   the id of the person whose photo to load
@@ -686,50 +634,6 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     imagejpeg($image);
     imagedestroy($image);
   }
-
-/*
-  private function photoGoogleSearch() {
-    $maxResults = 9;
-    $result = array();
-    #$query_encoded = urlencode($query);
-    
-    $data = $this->getUrlContents(
-      "https://www.google.com/searchbyimage" .
-      "?site=" . "imghp" .
-      "&image_url=" . $this->url .
-      "&num=" . $maxResults . 
-      "&filter=" . "0"
-    );
-    $html = str_get_html($data);
-     
-    foreach($html->find('li.g') as $g) {
-      /*
-       * each search results are in a list item with a class name "g"
-       * we are seperating each of the elements within, into an array;
-       * titles are stored within "<h3><a...>{title}</a></h3>";
-       * links are in the href of the anchor contained in the "<h3>...</h3>";
-       * summaries are stored in a div with a classname of "s"
-       * /
-      $srg = $g->find('div.srg', 0);
-      $a = $srg->find('a', 0);
-      $link = $a->href;
-      # TODO: accept only urls containing the photo...
-      #print "link: [$link]\n";
-      $link = preg_replace("/^\/url\?q=/", "", $link);
-      $link = preg_replace("/&amp;sa=U.*              /", "", $link);
-      $link = preg_replace("/(?:%3Fwap2$)/", "", $link); # remove wap2 parameter, if any
-      $domain = parse_url($link)['host'];
-      if ($domain !== $this->domain) { // consider only images from different domains
-        $result[] = $link;
-      }
-    }
-     
-    # clean up the memory 
-    $html->clear();
-    
-    return $result;
-  }
-*/
 
   /**
    * Destructor
@@ -802,5 +706,16 @@ if ($n > 3) break; # TODO: DEBUG-ONLY
     return true;
   }
 }
+
+/*
+  # CLI class test
+  require_once "classes/services/Network.php";
+  require_once "classes/services/GoogleSearch.php";
+  $pc = new PersonsController(null);
+  $id = 1;
+  $imageUrl = "http://www.meteoweb.eu/wp-content/uploads/2013/07/cristoforetti.jpg";
+  $result = $pc->photoGetOccurrences($id, $imageUrl);
+  var_dump($result);
+*/
 
 ?>

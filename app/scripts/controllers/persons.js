@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Sites, Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, Sites, Countries, Persons, Comments) {
   $scope.persons = [];
   $scope.person = [];
   $scope.personId = $routeParams.personId;
@@ -48,6 +48,8 @@ $scope.username = $rootScope.username;
 
   if (!$scope.personId) { // load persons list
     Persons.getPersons().then(function(persons) {
+//console.info('persons:', persons);
+      //angular.copy(persons, $scope.persons);
       $scope.persons = persons;
       if (cfg.fake) { // DEBUG ONLY
         angular.forEach($scope.persons, function(person) {
@@ -58,6 +60,7 @@ $scope.username = $rootScope.username;
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
       if (!cfg.fake) { console.log('person:', person); }
+      //angular.copy(person, $scope.person);
       $scope.person = person;
       $scope.person.nat = $scope.person.nationality; // TODO...
       $scope.person.nationality = {};
@@ -173,11 +176,12 @@ $scope.username = $rootScope.username;
     );
   };
       
-  $scope.tabSelect = function (tabName, data = null) {
+  $scope.tabSelect = function (tabName, data) {
     //console.log('Selecting tab ' + tabName);
     $scope.tabSelected = tabName;
     if (tabName === 'photos') {
       var number = data;
+      $scope.person.photos[0].active = false;
       $scope.person.photos[number].active = true;
     }
   };
@@ -186,24 +190,21 @@ $scope.username = $rootScope.username;
     $scope.tabSelected = 'photosOccurrences';
     $scope.tabs.photosOccurrences.hidden = false;
     $scope.photosOccurrencesLoading = true;
+    $scope.photosOccurrences = null;
     //notify.info('photoGetOccurrences(' + url + ')');
     Persons.photoGetOccurrences(id, url).then(
-
-      // TODO: ignore same domain results...
-
       function(response) {
-        console.info(response);
-        if (response === null) {
-          //notify.warning('No occurrences found...');
+console.info('+++ photoGetOccurrences response:', response);
+        // TODO: restructure these names... :-(
+        $scope.photosOccurrences = response.search_results;
+        $scope.photosOccurrencesBestGuess = response.best_guess;
+        console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
+        //if (response === []) {
+        if (typeof response !== 'undefined' && response.length === 0) {
+          console.log('No occurrences found...');
         } else {
-          /*
-          //var imageDomainHost = response[0].imgsrc.parseUrl().host;
-          var linkDomainHost = response[0].link.parseUrl().host;
-          var personDomainHost = response[0].personDomain.parseUrl().host;
-          notify.info('photoGetOccurrences<br>\n Link domain host: ' + linkDomainHost);
-          */
+          console.info('Occurrences found:', response);
         }
-        $scope.photosOccurrences = response;
         $scope.photosOccurrencesLoading = false;
       },
       function(errorMessage) {
@@ -216,14 +217,21 @@ $scope.username = $rootScope.username;
   $scope.photosOccurrencesThruthful = function() {
     console.log('It is unique!');
     $scope.tabSelected = 'photos';
-    $scope.photosOccurrences = null;
+    $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
   };
 
   $scope.photosOccurrencesFake = function() {
     console.log('It is fake!');
     $scope.tabSelected = 'photos';
-    $scope.photosOccurrences = null;
+    $scope.photosOccurrences = [];
+    $scope.tabs.photosOccurrences.hidden = true;
+  };
+
+  $scope.photosOccurrencesUndecided = function() {
+    console.log('Don\'t know...');
+    $scope.tabSelected = 'photos';
+    $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
   };
 

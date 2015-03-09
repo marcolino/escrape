@@ -1,4 +1,3 @@
-/*
 'use strict';
 
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, Sites, Countries, Persons, Comments) {
@@ -87,7 +86,7 @@ console.log('sites:', $scope.sites.sgi);
             },
           ];
         }
-        * /
+        */
       });
 
       if (cfg.fake || !$scope.person.photos) { // DEBUG ONLY
@@ -194,7 +193,7 @@ console.log('sites:', $scope.sites.sgi);
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {
     $scope.map = maps[0];
-    /* global $:false * /
+    /* global $:false */
     $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
       $timeout(function() {
         google.maps.event.trigger($scope.map, 'resize');
@@ -204,4 +203,3 @@ console.log('sites:', $scope.sites.sgi);
   });
 
 });
-*/

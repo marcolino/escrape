@@ -1,4 +1,10 @@
 <?php
+/**
+ * DB class
+ * 
+ * @package DB
+ * @author  Marco Solari <marcosolari@gmail.com>
+ */
 
 class DB extends PDO {
   const DB_TYPE = "sqlite";
@@ -50,6 +56,9 @@ class DB extends PDO {
           role text
          );
          create unique index if not exists username_idx on user (username);
+         insert into user (username, password, email, role)
+         select 'marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin' 
+         where not exists(select 1 from user where id = 1)
         "
       );
 

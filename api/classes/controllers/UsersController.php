@@ -25,9 +25,11 @@ class UsersController {
     }
     $user = $this->db->getByField("user", "username", $username);
     if (count($user) === 1) {
+# TODO: message => $error ...
       return [ "message" => "Sorry, this username is already registered" ];
     }
     if (!$this->checkPasswordStrength($password)) {
+# TODO: message => $error ...
       return [ "message" => "Password too weak, please choose a stronger one" ];
     }
     $user = [
@@ -47,6 +49,7 @@ class UsersController {
     if (count($user) === 1) {
       return [ "success" => true, "user" => $user[0] ];
     } else {
+# TODO: message => $error ...
       return [ "message" => "Wrong username/password, please try again" ];
     }
   }
@@ -57,11 +60,12 @@ class UsersController {
       return [ "message" => "Sorry, this user is not registered" ];
     }
     $this->db->deletebyField("user", "username", $username);
+# TODO: message => $error ...
     return [ "success" => true ];
   }
 
   private function scramblePassword($password) {
-    return self::MD5_SALT . md5($password);
+    return md5(self::MD5_SALT . $password);
   }
 
   private function checkPasswordStrength($password) {

@@ -2,7 +2,10 @@
 
 // TODO: DEBUG ONLY //////////////////////////////////////////////
 function atHome() {
-  return (navigator.appVersion.indexOf('Linux') !== -1);
+  return (
+    (navigator.appVersion.indexOf('Linux') !== -1) || // Chrome
+    (navigator.oscpu.indexOf('Linux') !== -1) // Firefox
+  );
 }
 var fake = !atHome();
 var apiUri = atHome() ? 'http://0.0.0.0' : 'http://192.168.10.30';

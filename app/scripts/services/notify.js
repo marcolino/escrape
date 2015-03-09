@@ -1,5 +1,12 @@
 'use strict';
 
+// TODO: do not print title in console.xxx if it's undefined...
+// TODO: handle multiple parameters, just as console.xxx...:
+/*
+for (var i = 0; i < arguments.length; i++) {
+  alert(arguments[i]);
+}
+*/
 app.service('notify', function(cfg, toastr) {
   return({
   

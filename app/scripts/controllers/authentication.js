@@ -39,11 +39,15 @@ app.controller('AuthenticationController',
       $scope.dataLoading = true;
       Authentication.clearCredentials();
       Authentication.register($scope.username, $scope.password, function(response) {
+console.log(response);
         $scope.dataLoading = false;
+        //if (response.contents.success) {
         if (response.success) {
+          //setCredentials(response.contents);
           setCredentials(response);
           $location.path('#/');
         } else {
+          //$scope.error = response.contents.message;
           $scope.error = response.message;
         }
       });
@@ -53,11 +57,15 @@ app.controller('AuthenticationController',
       $scope.dataLoading = true;
       Authentication.clearCredentials();
       Authentication.login($scope.username, $scope.password, function(response) {
+console.log(response);
         $scope.dataLoading = false;
+        //if (response.contents.success) {
         if (response.success) {
+          //setCredentials(response.contents);
           setCredentials(response);
           $location.path('/#');
         } else {
+          //$scope.error = response.contents.message;
           $scope.error = response.message;
         }
       });
@@ -106,6 +114,7 @@ app.controller('AuthenticationController',
         //console.log('loading filters for user ', $rootScope.globals.currentUser.username);
       }
       $scope.filters = $cookieStore.get(key);
+$rootScope.filters = $scope.filters; // TESTING, to be accessible to persons controller, too...
       if (!$scope.filters) {
         $scope.resetFilters();
       }
@@ -119,6 +128,7 @@ app.controller('AuthenticationController',
         //console.log('storing filters for user ', $rootScope.globals.currentUser.username);
       }
       $cookieStore.put(key, $scope.filters);
+$rootScope.filters = $scope.filters; // TESTING, to be accessible to persons controller, too...
       //console.log('storing filters:', $scope.filters);
     };
 

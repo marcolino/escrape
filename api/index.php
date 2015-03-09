@@ -4,8 +4,10 @@ require "vendor/autoload.php"; // Slim #require "Slim/Slim.php";
 require "classes/controllers/UsersController.php";
 require "classes/controllers/PersonsController.php";
 require "classes/controllers/CommentsController.php";
+require "classes/services/Network.php";
 require "classes/services/Photo.php";
 require "classes/services/Db.php";
+require "classes/services/GoogleSearch.php";
 
 class Router {
 
@@ -13,7 +15,6 @@ class Router {
     $timezone = "Europe/Rome"; // default timezone
     $logFile = "./logs/slim.log"; // null to disable log
     $mode = "development"; // mode tag
-    #$debug = true; // debug flag
 
     date_default_timezone_set($timezone);
     $logWriter = new \Slim\LogWriter(fopen($logFile, "a"));
@@ -51,6 +52,7 @@ class Router {
         }
       });
       $this->app->get("/get/:id", function($id) { # ======================
+#print "/get/:id id:\n"; print_r($id); exit;
         try {
           $persons = new PersonsController($this);
           $this->success($persons->get($id));
@@ -70,11 +72,11 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/photo/get/occurrences/", function() { # ===========
+      $this->app->post("/photo/get/occurrences", function() { # ===========
         try {
           $persons = new PersonsController($this);
-          #$url = $this->app->request()->get('url');
-          $data = json_decode($this->app->request()->getBody());
+          $data = json_decode($this->app->request()->getBody()); // content-type: application/json
+          #$this->success([ [ "text" => json_encode([$data->id, $data->url]), "imgsrc" => "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQbm5ipONSdcESkgazDxbUhFNWthW5cHzWPvF5Bv2nfRqXZNQvYJwSJ7Q", "href" => "https://www.google.it/url?sa=t&rct=j&q=&esrc=s&source=web&cd=11&cad=rja&uact=8&ved=0CEoQFjAK&url=http%3A%2F%2Fwww.perugiatoday.it%2Fcronaca%2Fstrage-gatti-perugia-orrore.html&ei=Q6j8VPa1I4bnyQPE94GIAQ&usg=AFQjCNHJyixc1C1PiBV1uDNIGUcKeF88Zg&sig2=qrSffEYjNkzlCImtA1W0cA" ] ]);
           $this->success($persons->photoGetOccurrences($data->id, $data->url));
         } catch (Exception $e) {
           $this->error($e);
@@ -85,7 +87,6 @@ class Router {
       $this->app->get("/search/:query", function($query) { # ==============
         try {
           $persons = new PersonsController($this);
-          #$query = json_decode($this->app->request()->getBody());
           $this->success($persons->searchByName($query));
         } catch (Exception $e) {
           $this->error($e);
@@ -97,6 +98,8 @@ class Router {
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody());
+          $id = $this->app->request()->params("id");
+          $data = $this->app->request()->params("data");
           $this->success($persons->set($id, $data));
         } catch (Exception $e) {
           $this->error($e);
@@ -107,7 +110,7 @@ class Router {
       $this->app->post("/insert", function() { # ==========================
         try {
           $persons = new PersonsController($this);
-          $data = json_decode($this->app->request()->getBody());
+          $data = $this->app->request()->params("data");
           $this->success($persons->insert($data));
         } catch (Exception $e) {
           $this->error($e);
@@ -135,6 +138,9 @@ class Router {
           $users = new UsersController($this);
           $data = json_decode($this->app->request()->getBody());
           $this->success($users->register($data->username, $data->password));
+          #$username = $this->app->request()->params("username");
+          #$password = $this->app->request()->params("password");
+          #$this->success($users->register($username, $password));
         } catch (Exception $e) {
           $this->error($e);
         } catch (PDOException $e) {
@@ -142,10 +148,13 @@ class Router {
         }
       });
       $this->app->post("/login", function() { # ===========================
-        $data = json_decode($this->app->request()->getBody());
         try {
           $users = new UsersController($this);
+          $data = json_decode($this->app->request()->getBody());
           $this->success($users->login($data->username, $data->password));
+          #$username = $this->app->request()->params("username");
+          #$password = $this->app->request()->params("password");
+          #$this->success($users->login($username, $password));
         } catch (Exception $e) {
           $this->error($e);
         } catch (PDOException $e) {
@@ -242,17 +251,28 @@ class Router {
     $response = $this->app->response();
     $this->access_control_allow($response);
     $response->body(json_encode([
-      "response" => null,
+      "contents" => null,
       "error" => [
-        "message" => "Unforeseen route [" . $this->app->router()->getMatchedRoutes() . "]",
+        "message" => "Unforeseen route [" . $this->app->router()->getCurrentRoute() . "]",
       ],
     ]));
   }
 
   private function success($value) {
+#print "success:"; var_export($value);
     $response = $this->app->response();
     $this->access_control_allow($response);
-    if ($value) { $response->body(json_encode($value)); }
+#print "success:"; var_dump($value);
+#print "=================\n";
+#$value['description'] = null;
+#foreach ($value as $k => $v) {
+#  print "[$k] => [$v]\n";
+#}
+#exit;
+#print json_encode($value); exit;
+    #$response->body(json_encode([ "contents" => $value ]));
+    $response->body(json_encode($value));
+# TODO: use "contents" ... 
   }
   
   private function error($error) {
@@ -263,7 +283,7 @@ class Router {
     #  $response->header("Access-Control-Allow-Credentials", "true");
     #}
     $response->body(json_encode([
-      "response" => null,
+      #"contents" => null,
       "error" => [
         "message" => $error->getMessage(),
         "code" => $error->getCode(),

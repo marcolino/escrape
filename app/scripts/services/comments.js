@@ -5,7 +5,6 @@ app.service('Comments', function($http, $q, cfg) {
 
   // private methods
   function handleSuccess(response) {
-    //console.info('Comment success: ', response.data);
     if (response.data.error) {
       console.error(response.data.error);
       return($q.reject(response.data.error));
@@ -15,7 +14,6 @@ app.service('Comments', function($http, $q, cfg) {
   }
 
   function handleError(response) {
-    //console.info('Comment error: ', response);
     if (
       ! angular.isObject(response.data) ||
       ! response.data.message
