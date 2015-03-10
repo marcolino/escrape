@@ -27,10 +27,11 @@ console.info('response.data:', response.data);
   // public methods
   return({
 
-    getPersons: function () {
+    getPersons: function (data) {
       return $http({
         method: 'GET',
         url: apiUri + 'get',
+        params: { data: data },
       }).then(handleSuccess, handleError);
     },
 

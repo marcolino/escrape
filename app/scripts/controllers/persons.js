@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, Sites, Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, /*Sites, */Countries, Persons, Comments) {
   $scope.persons = [];
   $scope.person = [];
   $scope.personId = $routeParams.personId;
@@ -13,7 +13,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       'description': 'Photos',
       'hidden': false,
     },
-    'photosOccurrences': {
+    'photosOccurrences': { // TODO: think of a better name, please...
       'description': 'Photos occurrences',
       'hidden': true,
       'loading': false,
@@ -30,7 +30,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.tabSelected = 'main';
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
-  $scope.sites = Sites;
+  //$scope.sites = Sites;
   $scope.cfg = cfg; // make cfg data available to scope
 if (!cfg.fake) { console.log('sites:', $scope.sites); }
 $scope.username = $rootScope.username;
@@ -41,21 +41,15 @@ $scope.username = $rootScope.username;
   }
 
   function loadPersons() {
-    Persons.getPersons().then(function(persons) {
+    Persons.getPersons($rootScope.data).then(function(persons) {
       applyPersons(persons);
     });
   }
 
   if (!$scope.personId) { // load persons list
-    Persons.getPersons().then(function(persons) {
-//console.info('persons:', persons);
-      //angular.copy(persons, $scope.persons);
+    //loadPersons();
+    Persons.getPersons($rootScope.data).then(function(persons) {
       $scope.persons = persons;
-      if (cfg.fake) { // DEBUG ONLY
-        angular.forEach($scope.persons, function(person) {
-          person.name = person.name.shuffle();
-        });
-      } // DEBUG ONLY
     });
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
@@ -69,7 +63,6 @@ $scope.username = $rootScope.username;
       $scope.person.vote = 5;
       $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
       $scope.person.streetRegion = 'it';
-      //$scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
       $scope.$watch('person.streetAddress', function() {
          console.log('$watch: Hey, person.streetAddress has changed!');
          $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.streetAddress);
@@ -79,66 +72,9 @@ $scope.username = $rootScope.username;
       Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
         if (!cfg.fake) { console.log('comments for ' + $scope.person.phone + ':', comments); }
         $scope.person.comments = comments;
-        /*
-        if (cfg.fake || !$scope.person.comments) { // DEBUG ONLY
-          $scope.person.comments = [
-            {
-              'author': 'au1',
-              'date': '2014-27-05 10:33:11',
-              'content': 'Molto efficiente e rapido',
-              'url': 'http://a...',
-            },
-            {
-              'author': 'au2',
-              'date': '2014-27-05 11:50:00',
-              'content': 'Poco efficiente e lento',
-              'url': 'http://b...',
-            },
-            {
-              'author': 'au3',
-              'date': '2014-27-06 12:44:32',
-              'content': 'Abbastanza efficiente ma veloce',
-              'url': 'http://c...',
-            },
-            {
-              'author': 'au4',
-              'date': '2014-27-05 11:50:00',
-              'content': 'Poco efficiente e lento',
-              'url': 'http://d...',
-            },
-            {
-              'author': 'au5',
-              'date': '2014-12-12 22:15:30',
-              'content': 'Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... Non saprei proprio cosa dire... ',
-              'url': 'http://e...',
-            },
-          ];
-        }
-        */
       });
 
-      if (cfg.fake && !$scope.person.photos) { // DEBUG ONLY
-        $scope.person.photos = [
-          {
-            image: 'http://uploads7.wikiart.org/images/vincent-van-gogh/self-portrait-1887-9.jpg',
-            active: true,
-          },
-          {
-            image: 'http://upload.wikimedia.org/wikipedia/commons/7/78/Brorfelde_landscape_2.jpg',
-            active: false,
-          },
-          {
-            image: 'http://lorempixel.com/400/200/sports',
-            active: false,
-          },
-        ];
-      }
-      if (cfg.fake) { // DEBUG ONLY
-        $scope.person.name = $scope.person.name.substr(0, 2);
-        $scope.person.description = $scope.person.description.substr(0, 2);
-      }
     });
-    //notify.success('TODO: all messages with notify...', 'Messaggio');
   }
 
   // public methods

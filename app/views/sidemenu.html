@@ -5,29 +5,31 @@
 
       <div class="form-group">
         <div class="input-group">
-          <input type="text" class="form-control" ng-model="filters.searchTerm" placeholder="Search">
+          <input type="text" class="form-control input-search-clear" ng-model="data.search.term" placeholder="Search">
           <div class="input-group-btn">
-            <!-- <i class="glyphicon glyphicon-remove-circle"></i> clear button doesn't work... -->
+            <button class="btn btn-default button-search-clear" ng-click="searchClear()">
+              <i class="glyphicon glyphicon-remove Xinput-search-clear"></i>
+            </button>
             <button class="btn btn-default" ng-click="search()">
-            <i class="glyphicon glyphicon-search"></i>
+              <i class="glyphicon glyphicon-search"></i>
             </button>
           </div>
         </div>
       </div>
 
-      <p style="margin: 10px;"></p>
+      <p class="menu-item-separator"></p>
 
-      <accordion-group is-open="filters.isopened">
+      <accordion-group is-open="data.filters.isopened">
         <accordion-heading>
-          Filters <i class="pull-right glyphicon" ng-click="toggleFiltersOpened(filters.isopened)" ng-class="{'glyphicon-chevron-down': filters.isopened, 'glyphicon-chevron-right': !filters.isopened}"></i>
+          Filters <i class="pull-right glyphicon" ng-click="toggleSectionOpened('filters', data.filters.isopened)" ng-class="{'glyphicon-chevron-down': data.filters.isopened, 'glyphicon-chevron-right': !data.filters.isopened}"></i>
         </accordion-heading>
   
         Only persons who are:<br>
         <div class="btn-group">
           <div class="dropdown">
             <div class="input-group" data-toggle="dropdown">
-              <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getStatusClass(filters.status)"></i></span>
-              <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="filters.status" readonly="" />
+              <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getStatusClass(data.filters.status)"></i></span>
+              <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="data.filters.status" readonly="" />
             </div>
             <ul class="dropdown-menu scrollable-menu" role="menu">
               <li ng-repeat="status in statuses()">
@@ -37,13 +39,13 @@
           </div>
         </div>
 
-        <p style="margin: 10px;"></p>
+        <p class="menu-item-separator"></p>
 
         Only persons with min. vote:<br>
         <div class="form-group">
           <div class="input-group">
             <span class="input-group-addon" title="Vote up" ng-click="setFilterVoteMin(+1)"><i class="glyphicon glyphicon-thumbs-up"></i></span>
-            <input type="text" class="form-control default-cursor" ng-value="filters.voteMin" readonly="" />
+            <input type="text" class="form-control default-cursor" ng-value="data.filters.voteMin" readonly="" />
             <span class="input-group-addon" title="Vote down" ng-click="setFilterVoteMin(-1)"><i class="glyphicon glyphicon-thumbs-down"></i></span>
           </div>
         </div>
@@ -52,7 +54,7 @@
         <div class="form-group">
           <div class="input-group">
             <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+10)"><i class="glyphicon glyphicon-bullhorn rotate90ccw"></i></span>
-            <input type="text" class="form-control default-cursor" ng-value="filters.commentsCountMin" readonly="" />
+            <input type="text" class="form-control default-cursor" ng-value="data.filters.commentsCountMin" readonly="" />
             <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-10)"><i class="glyphicon glyphicon-bullhorn rotate90cw"></i></span>
           </div>
         </div>
@@ -61,8 +63,8 @@
         <div class="btn-group">
           <div class="dropdown">
             <div class="input-group" data-toggle="dropdown">
-              <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="getCountryClass(filters.nationality.countryCode)"></i></i></span>
-              <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="filters.nationality.countryName" readonly="" />
+              <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="getCountryClass(data.filters.nationality.countryCode)"></i></i></span>
+              <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="data.filters.nationality.countryName" readonly="" />
             </div>
             <ul class="dropdown-menu scrollable-menu" role="menu">
               <li ng-repeat="(countryCode, countryName) in activeCountries()" class="flag-li">
@@ -72,20 +74,26 @@
           </div>
         </div>
 
+        <p class="menu-item-separator"></p>
+
+        <button class="btn btn-warning pull-right" ng-click="resetData('filters')">
+          Reset all filters
+        </button>
+
       </accordion-group>
 
-      <p style="margin: 10px;"></p>
+      <p class="menu-item-separator"></p>
 
-      <accordion-group is-open="options.isopened">
+      <accordion-group is-open="data.options.isopened">
         <accordion-heading>
-          Options <i class="pull-right glyphicon" ng-click="toggleOptionsOpened(options.isopened)" ng-class="{'glyphicon-chevron-down': filters.isopened, 'glyphicon-chevron-right': !filters.isopened}"></i>
+          Options <i class="pull-right glyphicon" ng-click="toggleDataOpened('options', data.options.isopened)" ng-class="{'glyphicon-chevron-down': data.options.isopened, 'glyphicon-chevron-right': !data.options.isopened}"></i>
         </accordion-heading>
   
         Not yet implemented...<br>
 
       </accordion-group>
 
-      <p style="margin: 10px;"></p>
+      <p class="menu-item-separator"></p>
 
       <button class="btn btn-primary btn-block" ng-click="about()">
         About

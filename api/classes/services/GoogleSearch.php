@@ -107,25 +107,14 @@ class GoogleSearch {
       return $result; // main results div not found
     }
 
-    # TODO: should merge these loops...
-
-    // get img src from links
+    // get text, href and imgsrc from links
     $n = 0;
-    foreach ($d->find("div.rc") as $rc) {
-      foreach ($rc->find("img") as $img) {
-        ++$n;
-        $result[$n]["imgsrc"] = $img->src;
-      }
-    }
-
-    // get text and href from links
-    $n = 0;
-    foreach ($d->find("div.rc h3.r") as $h3) {
-      foreach ($h3->find("a") as $a) { // get links
-        ++$n;
-        $result[$n]["text"] = htmlspecialchars_decode($a->plaintext, ENT_QUOTES);
-        $result[$n]["href"] = $a->href;
-      }
+    foreach($d->find('div.rc') as $div) {
+      $a = $div->find('h3.r a', 0);
+      $result[$n]["text"] = htmlspecialchars_decode($a->plaintext, ENT_QUOTES);
+      $result[$n]["href"] = $a->href;
+      $result[$n]['imgsrc'] = $div->find('div.th img', 0)->src;
+      $n++;
     }
 
     return $result;

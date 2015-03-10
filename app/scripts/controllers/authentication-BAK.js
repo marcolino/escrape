@@ -4,23 +4,7 @@ app.controller('AuthenticationController',
   function ($scope, $rootScope, $location, $aside, $cookieStore, $timeout, cfg, Authentication, Countries) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
-    $scope.dataDefaults = {
-      search: {
-        term: '',
-      },
-      filters: {
-        isopened: true,
-        status: 'any status', // 'any status' / 'active' / 'inactive'
-        voteMin: 0,
-        commentsCountMin: 0,
-        nationality: {
-          countryCode: '',
-          countryName: '',
-        },
-      },
-      options: {
-      },
-    };
+    $scope.key = 'filters';
 
     $scope.openAside = function(position) {
       $aside.open({
@@ -35,6 +19,13 @@ app.controller('AuthenticationController',
               e.stopPropagation();
             }
           };
+          /*
+          $scope.cancel = function(e) {
+            $modalInstance.dismiss();
+            e.stopPropagation();
+            $scope.storeFilters(); // to save isopen status
+          };
+          */
         }
       });
     };
@@ -48,7 +39,7 @@ app.controller('AuthenticationController',
       $scope.dataLoading = true;
       Authentication.clearCredentials();
       Authentication.register($scope.username, $scope.password, function(response) {
-        console.log('register():', response);
+console.log(response);
         $scope.dataLoading = false;
         //if (response.contents.success) {
         if (response.success) {
@@ -66,7 +57,7 @@ app.controller('AuthenticationController',
       $scope.dataLoading = true;
       Authentication.clearCredentials();
       Authentication.login($scope.username, $scope.password, function(response) {
-        console.log('login():', response);
+console.log(response);
         $scope.dataLoading = false;
         //if (response.contents.success) {
         if (response.success) {
@@ -81,7 +72,6 @@ app.controller('AuthenticationController',
     };
 
     $scope.logout = function () {
-      console.log('logout()');
       Authentication.clearCredentials();
     };
 
@@ -107,39 +97,76 @@ app.controller('AuthenticationController',
       }
     };
 
-    $scope.isActive = function (viewLocation) { // TODO: do we need/use this?
+    // TODO: do we need this?
+    $scope.isActive = function (viewLocation) { 
       return viewLocation === $location.path();
     };
 
     $scope.search = function () {
-      $scope.storeData('search'); // store search term (really we want to store search terms?)
+      $scope.storeFilters(); // store search term (really?)
       $scope.close();
     };
 
-    $scope.searchClear = function () {
-      console.log('searchClear');
-      $scope.resetData('search');
+    $scope.loadFilters = function () {
+      var key = $scope.key;
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + '-' + $scope.key;
+        //console.log('loading filters for user ', $rootScope.globals.currentUser.username);
+      }
+      $scope.filters = $cookieStore.get(key);
+      if (!$scope.filters) {
+        $scope.resetFilters();
+      }
+      //console.log('loading filters:', $scope.filter);
+    };
+
+    $scope.storeFilters = function () {
+      var key = $scope.key;
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + '-' + $scope.key;
+        //console.log('storing filters for user ', $rootScope.globals.currentUser.username);
+      }
+      $cookieStore.put(key, $scope.filters);
+      //console.log('storing filters:', $scope.filters);
+    };
+
+    $scope.resetFilters = function () {
+      var key = $scope.key;
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + ':' + $scope.key;
+        //console.log('storing filters for user ', $rootScope.globals.currentUser.username);
+      }
+      //console.log('re-setting filters to defaults');
+      $scope.filters = {
+        isopened: true,
+        searchTerm: '',
+        status: 'any status', // 'any status' / 'active' / 'inactive'
+        voteMin: 0,
+        commentsCountMin: 0,
+        nationality: {
+          countryCode: '',
+          countryName: '',
+        },
+      };
+      $cookieStore.put(key, $scope.filters);
     };
 
     $scope.setFilterVoteMin = function (n) {
       if (n > 0) {
-        $scope.data.filters.voteMin =
-          Math.min($scope.cfg.person.vote.max, $scope.data.filters.voteMin + n);
+        $scope.filters.voteMin = Math.min($scope.cfg.person.vote.max, $scope.filters.voteMin + n);
       } else {
-        $scope.data.filters.voteMin =
-          Math.max($scope.cfg.person.vote.min, $scope.data.filters.voteMin + n);
+        $scope.filters.voteMin = Math.max($scope.cfg.person.vote.min, $scope.filters.voteMin + n);
       }
-      $scope.storeData('filters');
+      $scope.storeFilters();
     };
 
     $scope.setFilterCommentsCountMin = function (n) {
       if (n > 0) {
-        $scope.data.filters.commentsCountMin += n;
+        $scope.filters.commentsCountMin += n;
       } else {
-        $scope.data.filters.commentsCountMin =
-          Math.max(0, $scope.data.filters.commentsCountMin + n);
+        $scope.filters.commentsCountMin = Math.max(0, $scope.filters.commentsCountMin + n);
       }
-      $scope.storeData('filters');
+      $scope.storeFilters();
     };
 
     $scope.statuses = function () {
@@ -166,8 +193,8 @@ app.controller('AuthenticationController',
     };
 
     $scope.setFilterStatus = function (status) {
-      $scope.data.filters.status = status;
-      $scope.storeData('filters');
+      $scope.filters.status = status;
+      $scope.storeFilters();
     };
 
     $scope.getStatusClass = function(mode) {
@@ -183,9 +210,9 @@ app.controller('AuthenticationController',
     };
 
     $scope.setFilterNationalityCountry = function (code) {
-      $scope.data.filters.nationality.countryCode = code;
-      $scope.data.filters.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[''];
-      $scope.storeData('filters');
+      $scope.filters.nationality.countryCode = code;
+      $scope.filters.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[''];
+      $scope.storeFilters();
     };
 
     // TODO: this function is similar in person controller: how to have only one instance?
@@ -193,10 +220,9 @@ app.controller('AuthenticationController',
       return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
     };
 
-    $scope.toggleSectionOpened = function (section/*, isopened*/) {
-      // store filters on filters opened toggle to save opened status
+    $scope.toggleFiltersOpened = function (/*isopened*/) {
       $timeout(function() {
-        $scope.storeData(section);
+        $scope.storeFilters();
       });
     };
 
@@ -204,59 +230,23 @@ app.controller('AuthenticationController',
       Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
     }
 
-    $scope.loadData = function () {
-      $scope.data = {};
-      var key = cfg.site.name;
-      if ($scope.signedIn()) { // add authdata to key, if user is signed in
-        key += '-' + $rootScope.globals.currentUser.authdata;
-        console.log('loading data for user ', $rootScope.globals.currentUser.username);
-      } else {
-        console.log('loading data for guest');
-      }
-      $scope.data = $cookieStore.get(key);
-      if (!$scope.data) {
-        angular.copy($scope.dataDefaults, $scope.data);
-      }
-      console.log('loaded data:', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
-    };
-
-    $scope.storeData = function () {
-      var key = cfg.site.name;
+    $scope.loadOptions = function () {
+      var key = 'options';
       if ($scope.signedIn()) {
-        key += '-' + $rootScope.globals.currentUser.authdata;
+        key = $rootScope.globals.currentUser.authdata + '-' + key;
+        //console.log('loading filters for user ', $rootScope.globals.currentUser.username);
       }
-      $cookieStore.put(key, $scope.data);
-      console.log('stored data:', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
+      $scope.options = $cookieStore.get(key);
+      if (!$scope.options) {
+        //$scope.resetFilters();
+      }
+      //console.log('loading options:', $scope.options);
     };
 
-    $scope.resetData = function (section) {
-      var key = cfg.site.name;
-      if ($scope.signedIn()) {
-        key += '-' + $rootScope.globals.currentUser.authdata;
-      }
-      switch (section) {
-        default:
-        case null:
-          angular.copy($scope.dataDefaults, $scope.data);
-          break;
-        case 'search':
-          angular.copy($scope.dataDefaults.search, $scope.data.search);
-          break;
-        case 'filters':
-          angular.copy($scope.dataDefaults.filters, $scope.data.filters);
-          break;
-        case 'options':
-          angular.copy($scope.dataDefaults.options, $scope.data.options);
-          break;
-      }
-      $cookieStore.put(key, $scope.data);
-      console.log('reset data to defaults for section ' + section + ':', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
-    };
+    // load filters
+    $scope.loadFilters();
 
-    // load data (filters, options, ...)
-    $scope.loadData();
+    // load options
+    $scope.loadOptions();
   }
 );

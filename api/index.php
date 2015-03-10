@@ -41,10 +41,11 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/get", function() { # =============================
+      $this->app->get("/get", function() { # ==================
         try {
           $persons = new PersonsController($this);
-          $this->success($persons->getList());
+          $data = $this->app->request()->get("data"); // get 'data' from GET parameters
+          $this->success($persons->getList($data));
         } catch (Exception $e) {
           $this->error($e);
         } catch (PDOException $e) {
@@ -52,7 +53,6 @@ class Router {
         }
       });
       $this->app->get("/get/:id", function($id) { # ======================
-#print "/get/:id id:\n"; print_r($id); exit;
         try {
           $persons = new PersonsController($this);
           $this->success($persons->get($id));
@@ -381,8 +381,6 @@ class Router {
   }
 
 };
-
-
 
 ini_set("display_errors", "On");
 error_reporting(E_ALL);

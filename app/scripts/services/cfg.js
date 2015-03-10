@@ -3,8 +3,10 @@
 // TODO: DEBUG ONLY //////////////////////////////////////////////
 function atHome() {
   return (
-    (navigator.appVersion.indexOf('Linux') !== -1) || // Chrome
-    (navigator.oscpu.indexOf('Linux') !== -1) // Firefox
+    (typeof navigator !== 'undefined' && typeof navigator.appVersion !== 'undefined' &&
+     navigator.appVersion.indexOf('Linux') !== -1) || // Chrome
+    (typeof navigator !== 'undefined' && typeof navigator.oscpu !== 'undefined' &&
+     navigator.oscpu.indexOf('Linux') !== -1) // Firefox
   );
 }
 var fake = !atHome();
@@ -13,9 +15,9 @@ var apiUri = atHome() ? 'http://0.0.0.0' : 'http://192.168.10.30';
 
 app.constant('cfg', {
   site: {
-    name: 'escrape',
-    description: 'escrape, the web contacts manager',
-    version: '0.0.1', // TODO: sync with latest git tag...
+    name: 'eScrape',
+    description: 'the ultimate web contacts manager',
+    version: 'v0.0.1', // TODO: sync with latest git tag...
   },
   apiUri: apiUri + '/escrape/api',
   fake: fake,

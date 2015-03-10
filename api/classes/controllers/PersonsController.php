@@ -259,14 +259,16 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
   /**
    * get persons list
    *
-   * @param  array $filter
+   * @param  array $filters
    * @return array
    */
-  public function getList() {
+  public function getList($filters) {
     $list = [];
     $comments = new CommentsController($this->router);
 
-    foreach ($this->db->getAll("person") as $personId => $person) {
+    $this->router->log("debug", " *** getList() - filters:" . var_export($filters, true));
+    #foreach ($this->db->getAll("person") as $personId => $person) {
+    foreach ($this->db->getAllFiltered("person", $filters) as $personId => $person) {
       $list[$personId] = [
         "id" => $person["id"],
         "key" => $person["key"],

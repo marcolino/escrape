@@ -133,6 +133,19 @@ class DB extends PDO {
     return $this->getViaSql($sql);                
   }
 
+  public function getAllFiltered($table, $filters) {
+throw new Exception("filters:" . var_export($filters, 1));
+/*
+    if ($filters && $filters["search"] && $filters["search"]["term"]) {
+      $searchTerm = $filters["search"]["term"];
+      $sql = "select * from $table where name like '%$searchTerm%'"; # TODO: prepare/bind, if possible...
+    } else {
+      $sql = "select * from $table";
+    }
+    return $this->getViaSql($sql);                
+*/
+  }
+
   public function getViaSQL($sql) { # TODO: is this safe?
     try {
       $statement = $this->db->query($sql);

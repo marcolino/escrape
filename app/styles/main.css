@@ -236,6 +236,45 @@ input[readonly].default-cursor {
   text-decoration: none !important;
 }
 
+/* input search with clear button */
+.input-search-clear {
+  border-right: 0;
+}
+.button-search-clear {
+  cursor: pointer;
+  color: #ccc;
+  border: 1px solid #ccc;
+  border-left: 0;
+  background-color: #fefefe;
+  outline: none;
+}
+.button-search-clear:hover {
+  color: #888;
+  border: 1px solid #ccc;
+  border-left: 0;
+  background-color: #fefefe;
+  outline: none;
+}
+.button-search-clear:active {
+  color: #444;
+  border: 1px solid #ccc;
+  border-left: 0;
+  background-color: #fefefe;
+  outline: none;
+}
+.button-search-clear:focus {
+  color: #444;
+  border: 1px solid #ccc;
+  border-left: 0;
+  background-color: #fefefe;
+  outline: none;
+}
+
+/* side-menu items separator */
+p.menu-item-separator {
+  margin: 10px;
+}
+
 /* carousel */
 .carousel-inner > .item > img { /* center carousel slides */
   margin: 0 auto;
