@@ -1,4 +1,4 @@
-<div ng-controller="AuthenticationController">
+ <div ng-controller="AuthenticationController">
 
   <div class="modal-body noselect">
     <accordion close-others="true">
@@ -19,7 +19,7 @@
 
       <accordion-group is-open="filters.isopened">
         <accordion-heading>
-          Filters <i class="pull-right glyphicon" ng-click="toggleFilterOpened(filters.isopened)" ng-class="{'glyphicon-chevron-down': filters.isopened, 'glyphicon-chevron-right': !filters.isopened}"></i>
+          Filters <i class="pull-right glyphicon" ng-click="toggleFiltersOpened(filters.isopened)" ng-class="{'glyphicon-chevron-down': filters.isopened, 'glyphicon-chevron-right': !filters.isopened}"></i>
         </accordion-heading>
   
         Only persons who are:<br>
@@ -72,14 +72,16 @@
           </div>
         </div>
 
-        <p style="margin: 10px;"></p>
+      </accordion-group>
 
-        <br>
-        <div class="btn-group pull-right">
-          <button class="btn btn-primary btn-block" style="text-align:left;" ng-click="resetFilters()">
-            Reset all filters
-          </button>
-        </div>
+      <p style="margin: 10px;"></p>
+
+      <accordion-group is-open="options.isopened">
+        <accordion-heading>
+          Options <i class="pull-right glyphicon" ng-click="toggleOptionsOpened(options.isopened)" ng-class="{'glyphicon-chevron-down': filters.isopened, 'glyphicon-chevron-right': !filters.isopened}"></i>
+        </accordion-heading>
+  
+        Not yet implemented...<br>
 
       </accordion-group>
 

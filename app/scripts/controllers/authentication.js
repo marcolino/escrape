@@ -114,7 +114,6 @@ console.log(response);
         //console.log('loading filters for user ', $rootScope.globals.currentUser.username);
       }
       $scope.filters = $cookieStore.get(key);
-$rootScope.filters = $scope.filters; // TESTING, to be accessible to persons controller, too...
       if (!$scope.filters) {
         $scope.resetFilters();
       }
@@ -128,7 +127,6 @@ $rootScope.filters = $scope.filters; // TESTING, to be accessible to persons con
         //console.log('storing filters for user ', $rootScope.globals.currentUser.username);
       }
       $cookieStore.put(key, $scope.filters);
-$rootScope.filters = $scope.filters; // TESTING, to be accessible to persons controller, too...
       //console.log('storing filters:', $scope.filters);
     };
 
@@ -222,7 +220,7 @@ $rootScope.filters = $scope.filters; // TESTING, to be accessible to persons con
       return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
     };
 
-    $scope.toggleFilterOpened = function (/*isopened*/) {
+    $scope.toggleFiltersOpened = function (/*isopened*/) {
       $timeout(function() {
         $scope.storeFilters();
       });
@@ -232,7 +230,23 @@ $rootScope.filters = $scope.filters; // TESTING, to be accessible to persons con
       Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
     }
 
+    $scope.loadOptions = function () {
+      var key = 'options';
+      if ($scope.signedIn()) {
+        key = $rootScope.globals.currentUser.authdata + '-' + key;
+        //console.log('loading filters for user ', $rootScope.globals.currentUser.username);
+      }
+      $scope.options = $cookieStore.get(key);
+      if (!$scope.options) {
+        //$scope.resetFilters();
+      }
+      //console.log('loading options:', $scope.options);
+    };
+
     // load filters
     $scope.loadFilters();
+
+    // load options
+    $scope.loadOptions();
   }
 );

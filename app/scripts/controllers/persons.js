@@ -196,8 +196,8 @@ $scope.username = $rootScope.username;
       function(response) {
 console.info('+++ photoGetOccurrences response:', response);
         // TODO: restructure these names... :-(
-        $scope.photosOccurrences = response.search_results;
-        $scope.photosOccurrencesBestGuess = response.best_guess;
+        $scope.photosOccurrences = response.searchResults;
+        $scope.photosOccurrencesBestGuess = response.bestGuess;
         console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
         //if (response === []) {
         if (typeof response !== 'undefined' && response.length === 0) {

@@ -294,15 +294,14 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
 
     $response = [];
     if ($results = $googleSearch->searchImage($imageUrl, $maxPages)) {
+      if ($results["best_guess"]) {
+        $response["bestGuess"] = $results["best_guess"];
+      }
       if ($results["search_results"]) {
-        $response["best_guess"] = $results["best_guess"];
-        #if ($results["best_guess"]["text"]) {
-        #  print "\nBest guess - text: {$results["best_guess"]["text"]}, href: {$results["best_guess"]["href"]}\n\n";
-        #}
-        $response["search_results"] = [];
+        $response["searchResults"] = [];
         foreach ($results["search_results"] as $result) {
           if (parse_url($result["href"])["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
-            $response["search_results"][] = $result;
+            $response["searchResults"][] = $result;
           }
         }
       } else { // no occurrences found

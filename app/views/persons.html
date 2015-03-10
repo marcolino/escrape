@@ -4,10 +4,11 @@
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
       <a ng-href="#/details/{{person.id}}">
         <div class="img-rounded img-clip-container">
-          <!-- <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" /> -->
-<!-- TODO: img width should be enforced, can't rely un fake image width, which should be as small as possible... -->
+          <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" />
+<!--
           <img ng-show="person.thruthfulness !== 'false'" ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" title="not-fake photo" class="img-rounded img-clip" />
           <img ng-show="person.thruthfulness === 'false'" ng-style="{'background-image':'url({{cfg.apiUri + '/' + person.photo_path_small_showcase}})'}" src="images/watermarks/fake-small.png" title="fake photo" class="img-rounded img-clip" />
+-->
         </div>
       </a>
     </div>

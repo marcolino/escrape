@@ -7,5 +7,6 @@
  * # AboutController
  * Controller of the escrapeApp
  */
-app.controller('AboutController', function (/*$scope*/) {
+app.controller('AboutController', function ($scope, cfg) {
+  
 });
