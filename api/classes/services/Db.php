@@ -134,7 +134,7 @@ class DB extends PDO {
   }
 
   public function getAllFiltered($table, $filters) {
-throw new Exception("filters:" . var_export($filters, 1));
+throw new Exception("filters:" . var_export($filters, 0));
 /*
     if ($filters && $filters["search"] && $filters["search"]["term"]) {
       $searchTerm = $filters["search"]["term"];

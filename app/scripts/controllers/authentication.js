@@ -215,7 +215,7 @@ app.controller('AuthenticationController',
       }
       $scope.data = $cookieStore.get(key);
       if (!$scope.data) {
-        angular.copy($scope.dataDefaults, $scope.data);
+        $scope.data = angular.copy($scope.dataDefaults);
       }
       console.log('loaded data:', $scope.data);
       $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
@@ -239,16 +239,16 @@ app.controller('AuthenticationController',
       switch (section) {
         default:
         case null:
-          angular.copy($scope.dataDefaults, $scope.data);
+          $scope.data = angular.copy($scope.dataDefaults);
           break;
         case 'search':
-          angular.copy($scope.dataDefaults.search, $scope.data.search);
+          $scope.data.search = angular.copy($scope.dataDefaults.search);
           break;
         case 'filters':
-          angular.copy($scope.dataDefaults.filters, $scope.data.filters);
+          $scope.data.filters = angular.copy($scope.dataDefaults.filters);
           break;
         case 'options':
-          angular.copy($scope.dataDefaults.options, $scope.data.options);
+          $scope.data.options = angular.copy($scope.dataDefaults.options);
           break;
       }
       $cookieStore.put(key, $scope.data);
@@ -256,7 +256,8 @@ app.controller('AuthenticationController',
       $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
     };
 
-    // load data (filters, options, ...)
+console.log('$scope.dataDefaults:', $scope.dataDefaults);
+  // load data (filters, options, ...)
     $scope.loadData();
   }
 );

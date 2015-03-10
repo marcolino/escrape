@@ -32,8 +32,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   //$scope.sites = Sites;
   $scope.cfg = cfg; // make cfg data available to scope
-if (!cfg.fake) { console.log('sites:', $scope.sites); }
-$scope.username = $rootScope.username;
+$scope.username = $rootScope.username; // TODO: ??? why not from Authentication service???
 
   // private methods
   function applyPersons(newPersons) {
