@@ -41,10 +41,11 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/get", function() { # ==================
+      $this->app->post("/get", function() { # ==================
         try {
           $persons = new PersonsController($this);
-          $data = $this->app->request()->get("data"); // get 'data' from GET parameters
+          $data = json_decode($this->app->request()->getBody(), true); // sencond parameter uses associative arrays instead of stdClass
+          //$data = $this->app->request()->get("data"); // get 'data' from GET parameters
           $this->success($persons->getList($data));
         } catch (Exception $e) {
           $this->error($e);

@@ -3,12 +3,13 @@
   <div class="modal-body noselect">
     <accordion close-others="true">
 
+      <!-- search widget -->
       <div class="form-group">
         <div class="input-group">
-          <input type="text" class="form-control input-search-clear" ng-model="data.search.term" placeholder="Search">
+          <input type="text" class="form-control input-search-clear" ng-model="data.search.term" placeholder="Search" key-enter="search()">
           <div class="input-group-btn">
             <button class="btn btn-default button-search-clear" ng-click="searchClear()">
-              <i class="glyphicon glyphicon-remove Xinput-search-clear"></i>
+              <i class="glyphicon glyphicon-remove"></i>
             </button>
             <button class="btn btn-default" ng-click="search()">
               <i class="glyphicon glyphicon-search"></i>

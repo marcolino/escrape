@@ -21,9 +21,10 @@ app.controller('AuthenticationController',
       options: {
       },
     };
+    $scope.dataOriginal = {};
 
     $scope.openAside = function(position) {
-      $aside.open({
+      var asideInstance = $aside.open({
         templateUrl: 'views/sidemenu.html',
         placement: position,
         size: 'sm', // 'sm': small / 'lg': large
@@ -34,9 +35,43 @@ app.controller('AuthenticationController',
             if (e) {
               e.stopPropagation();
             }
+            // set new sieves digest in service
+            // TODO: this.data IS WRONG!!!!!!!!!!!!!!!!!!!!!!11
+            this.setSievesDigest(this.data);
+          };
+          $scope.cancel = function(e) {
+            $modalInstance.close();
+            if (e) {
+              e.stopPropagation();
+            }
+            // set new sieves digest in service
+            // TODO: this.data IS WRONG!!!!!!!!!!!!!!!!!!!!!!11
+            this.setSievesDigest(this.data);
           };
         }
       });
+      asideInstance.result.then(
+        function () { // aside modal closed
+        },
+        function () { // aside modal dismissed (backdrop)
+          console.log('aside modal dismissed (via backdrop)');
+          // set new sieves digest in service
+          $scope.setSievesDigest($scope.data);
+        }
+      );
+    };
+
+    $scope.setSievesDigest = function (data) {
+      var digest =
+        data.search.term + '\0' +
+        data.filters.status + '\0' +
+        data.filters.status + '\0' +
+        data.filters.voteMin + '\0' +
+        data.filters.commentsCountMin + '\0' +
+        data.filters.nationality.countryCode + '\0'
+      ;
+      //console.info(' +++ sieves digets:', digest);
+      Authentication.setSievesDigest(digest);
     };
 
     $scope.about = function () {
@@ -209,7 +244,7 @@ app.controller('AuthenticationController',
       var key = cfg.site.name;
       if ($scope.signedIn()) { // add authdata to key, if user is signed in
         key += '-' + $rootScope.globals.currentUser.authdata;
-        console.log('loading data for user ', $rootScope.globals.currentUser.username);
+        console.log('loading data for user', $rootScope.globals.currentUser.username);
       } else {
         console.log('loading data for guest');
       }
@@ -219,6 +254,8 @@ app.controller('AuthenticationController',
       }
       console.log('loaded data:', $scope.data);
       $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
+      angular.copy($scope.data, $scope.dataOriginal); // save loaded data as dataOriginal, to be able to check for modifications
+      console.log('$scope.dataOriginal:', $scope.dataOriginal);
     };
 
     $scope.storeData = function () {
@@ -239,16 +276,20 @@ app.controller('AuthenticationController',
       switch (section) {
         default:
         case null:
-          $scope.data = angular.copy($scope.dataDefaults);
+          //$scope.data = angular.copy($scope.dataDefaults);
+          angular.copy($scope.dataDefaults, $scope.data);
           break;
         case 'search':
-          $scope.data.search = angular.copy($scope.dataDefaults.search);
+          //$scope.data.search = angular.copy($scope.dataDefaults.search);
+          angular.copy($scope.dataDefaults.search, $scope.data.search);
           break;
         case 'filters':
-          $scope.data.filters = angular.copy($scope.dataDefaults.filters);
+          //$scope.data.filters = angular.copy($scope.dataDefaults.filters);
+          angular.copy($scope.dataDefaults.filters, $scope.data.filters);
           break;
         case 'options':
-          $scope.data.options = angular.copy($scope.dataDefaults.options);
+          //$scope.data.options = angular.copy($scope.dataDefaults.options);
+          angular.copy($scope.dataDefaults.options, $scope.data.options);
           break;
       }
       $cookieStore.put(key, $scope.data);

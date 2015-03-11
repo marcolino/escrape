@@ -3,6 +3,7 @@
 app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg) {
   var apiUri = cfg.apiUri + '/users/';
   var service = {};
+  var sievesDigest = '';
 
   service.register = function (username, password, callback) {
     $http.post(apiUri + 'register', { username: username, password: password })
@@ -56,6 +57,15 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
     $rootScope.globals = {};
     $cookieStore.remove('globals');
     $http.defaults.headers.common.Authorization = 'Basic'; // + ' '; # ???
+  };
+
+  service.setSievesDigest = function (digest) {
+    sievesDigest = digest;
+    console.log('setSievesDigest :', sievesDigest);
+  };
+
+  service.getSievesDigest = function () {
+    return sievesDigest;
   };
 
   return service;

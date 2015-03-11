@@ -128,22 +128,10 @@ class DB extends PDO {
     }
   }
 
+/*
   public function getAll($table) {
     $sql = "select * from $table";
     return $this->getViaSql($sql);                
-  }
-
-  public function getAllFiltered($table, $filters) {
-throw new Exception("filters:" . var_export($filters, 0));
-/*
-    if ($filters && $filters["search"] && $filters["search"]["term"]) {
-      $searchTerm = $filters["search"]["term"];
-      $sql = "select * from $table where name like '%$searchTerm%'"; # TODO: prepare/bind, if possible...
-    } else {
-      $sql = "select * from $table";
-    }
-    return $this->getViaSql($sql);                
-*/
   }
 
   public function getViaSQL($sql) { # TODO: is this safe?
@@ -153,6 +141,45 @@ throw new Exception("filters:" . var_export($filters, 0));
       return $result;
     } catch (PDOException $e) {
       throw new Exception("getViaSQL() error:" . $e);
+    }
+  }
+*/
+
+  public function getAllFiltered($table, $filters) {
+    try {
+      $sql = "select * from '$table' where 1 = 1";
+      $statement = null;
+      if (
+        $filters &&
+        $filters["search"] &&
+        $filters["search"]["term"]
+      ) {
+        $searchTerm = $filters["search"]["term"];
+        $sql .= " and ";
+        $sql .= "name like '%' || :searchTerm || '%'";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(":searchTerm", $searchTerm, PDO::PARAM_STR);       
+      }
+      if (
+        $filters &&
+        $filters["filters"] &&
+        $filters["filters"]["nationality"] &&
+        $filters["filters"]["nationality"]["countryCode"]
+      ) {
+        $countryCode = $filters["filters"]["nationality"]["countryCode"];
+        $sql .= " and ";
+        $sql .= "nationality = :countryCode";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(":countryCode", $countryCode, PDO::PARAM_STR);       
+      }
+      if (!$statement) {
+        $statement = $this->db->prepare($sql);
+      }
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("error getting persons with filters:" . $e);
     }
   }
 
@@ -165,7 +192,7 @@ throw new Exception("filters:" . var_export($filters, 0));
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("get() error:" . $e);
+      throw new Exception("error getting person:" . $e);
     }
   }
 

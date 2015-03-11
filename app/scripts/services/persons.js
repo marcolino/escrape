@@ -6,7 +6,7 @@ app.service('Persons', function($http, $q, cfg) {
   // private methods
   function handleSuccess(response) {
 console.info('response.data:', response.data);
-console.info('response.data.error:', response.data.error);
+//console.info('response.data.error:', response.data.error);
     if (response.data.error) {
 console.info('response.data ERROR!');
       console.error(response.data.error);
@@ -31,9 +31,9 @@ console.info('response.data ERROR!');
 
     getPersons: function (data) {
       return $http({
-        method: 'GET',
+        method: 'POST',
         url: apiUri + 'get',
-        params: data,
+        data: data,
       }).then(handleSuccess, handleError);
     },
 

@@ -30,9 +30,14 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.tabSelected = 'main';
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
-  //$scope.sites = Sites;
   $scope.cfg = cfg; // make cfg data available to scope
-$scope.username = $rootScope.username; // TODO: ??? why not from Authentication service???
+  $scope.username = $rootScope.username; // TODO: get username from Authentication service...
+
+  // watch for sieves changes
+  $scope.autenticationService = Authentication;
+  $scope.$watch('autenticationService.getSievesDigest()', function(newValue, oldValue, scope) {
+    loadPersons();
+  }, false);
 
   // private methods
   function applyPersons(newPersons) {
