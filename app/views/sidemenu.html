@@ -54,9 +54,9 @@
         Only persons with min. comments:<br>
         <div class="form-group">
           <div class="input-group">
-            <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+10)"><i class="glyphicon glyphicon-bullhorn rotate90ccw"></i></span>
+            <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+1)"><i class="glyphicon glyphicon-bullhorn rotate90ccw"></i></span>
             <input type="text" class="form-control default-cursor" ng-value="data.filters.commentsCountMin" readonly="" />
-            <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-10)"><i class="glyphicon glyphicon-bullhorn rotate90cw"></i></span>
+            <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-1)"><i class="glyphicon glyphicon-bullhorn rotate90cw"></i></span>
           </div>
         </div>
 
@@ -104,7 +104,7 @@
   </div>
   
   <div class="modal-footer">
-    <button class="btn btn-primary" ng-click="close($event)">Close</button>
+    <button class="btn btn-success" ng-click="close($event)">Close</button>
   <!--
     <button class="btn btn-primary" ng-click="ok($event)">OK</button>
     <button class="btn btn-warning" ng-click="cancel($event)">Cancel</button>

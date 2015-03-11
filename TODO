@@ -4,3 +4,8 @@ TODO:
  - search() should issue a persons reload...
  - nationality.countryCode/countryName => nationatily + function countryName(countryCode)...
  - data -> search/filters (find a good term ["sieve"] )
+ - style="" in views to style.css
+ - $sitesDefinitions from PersonsControllers.php to a config file in a gitignore folder
+
+DONE:
+ - SQL: uppercase reserved words

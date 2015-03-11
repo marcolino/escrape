@@ -35,7 +35,9 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // watch for sieves changes
   $scope.autenticationService = Authentication;
-  $scope.$watch('autenticationService.getSievesDigest()', function(newValue, oldValue, scope) {
+  $scope.$watch('autenticationService.getSievesDigest()', function(/*newValue, oldValue, scope*/) {
+    //console.log('$watch - newValue:', newValue);
+    //console.log('$watch - oldValue:', oldValue);
     loadPersons();
   }, false);
 

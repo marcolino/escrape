@@ -3,7 +3,7 @@
     <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
       <a ng-href="#/details/{{person.id}}">
-        <div class="img-rounded img-clip-container">
+        <div class="img-rounded img-clip-container" style="background:#333">
           <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" />
 <!--
           <img ng-show="person.thruthfulness !== 'false'" ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" title="not-fake photo" class="img-rounded img-clip" />

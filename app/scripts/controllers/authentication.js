@@ -36,17 +36,7 @@ app.controller('AuthenticationController',
               e.stopPropagation();
             }
             // set new sieves digest in service
-            // TODO: this.data IS WRONG!!!!!!!!!!!!!!!!!!!!!!11
-            this.setSievesDigest(this.data);
-          };
-          $scope.cancel = function(e) {
-            $modalInstance.close();
-            if (e) {
-              e.stopPropagation();
-            }
-            // set new sieves digest in service
-            // TODO: this.data IS WRONG!!!!!!!!!!!!!!!!!!!!!!11
-            this.setSievesDigest(this.data);
+            this.setSievesDigest($scope.data);
           };
         }
       });
@@ -54,8 +44,7 @@ app.controller('AuthenticationController',
         function () { // aside modal closed
         },
         function () { // aside modal dismissed (backdrop)
-          console.log('aside modal dismissed (via backdrop)');
-          // set new sieves digest in service
+          // TODO: test this (backdrop aside menu closing: doesn't seem to always work...) ##################à
           $scope.setSievesDigest($scope.data);
         }
       );
@@ -70,7 +59,6 @@ app.controller('AuthenticationController',
         data.filters.commentsCountMin + '\0' +
         data.filters.nationality.countryCode + '\0'
       ;
-      //console.info(' +++ sieves digets:', digest);
       Authentication.setSievesDigest(digest);
     };
 
@@ -253,7 +241,7 @@ app.controller('AuthenticationController',
         $scope.data = angular.copy($scope.dataDefaults);
       }
       console.log('loaded data:', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
+      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here? (AND, do we need $rootScope.data???)
       angular.copy($scope.data, $scope.dataOriginal); // save loaded data as dataOriginal, to be able to check for modifications
       console.log('$scope.dataOriginal:', $scope.dataOriginal);
     };
@@ -265,7 +253,7 @@ app.controller('AuthenticationController',
       }
       $cookieStore.put(key, $scope.data);
       console.log('stored data:', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
+      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here? (AND, do we need $rootScope.data???)
     };
 
     $scope.resetData = function (section) {
@@ -297,7 +285,6 @@ app.controller('AuthenticationController',
       $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
     };
 
-console.log('$scope.dataDefaults:', $scope.dataDefaults);
   // load data (filters, options, ...)
     $scope.loadData();
   }
