@@ -18,6 +18,7 @@
   "trailing": true,
   "smarttabs": true,
   "globals": {
+    "latestTag": true,
     "angular": false,
     "app": true,
     "toastr": false,

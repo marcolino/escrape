@@ -19,7 +19,8 @@ app.constant('cfg', {
   site: {
     name: 'eScrape',
     description: 'the ultimate web contacts manager',
-    version: 'v0.0.1', // TODO: sync with latest git tag...
+    //version: 'v0.0.1', // TODO: sync with latest git tag...
+    version: latestTag, // sync'ed with latest git tag with a post-commit hook
   },
   apiUri: apiUri + '/escrape/api',
   fake: fake, // DEBUG ONLY
