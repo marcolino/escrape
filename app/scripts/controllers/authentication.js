@@ -12,6 +12,8 @@ app.controller('AuthenticationController',
         isopened: true,
         status: 'any status', // 'any status' / 'active' / 'inactive'
         voteMin: 0,
+        ageMin: 0, // TODO: IMPLEMENT ageMin EVERYWHERE NEEDED...
+        ageMax: 0, // TODO: IMPLEMENT ageMax EVERYWHERE NEEDED...
         commentsCountMin: 0,
         nationality: {
           countryCode: '',

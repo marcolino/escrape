@@ -207,7 +207,8 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         $person["key_site"] = $siteKey;
         $person["name"] = $name;
         $person["url"] = $details_url;
-        $person["timestamp"] = $timestamp; # TODO: do not set if updating...
+        $person["timestamp_creation"] = $timestamp; # TODO: do not set if updating...
+        $person["timestamp_last_sync"] = $timestamp; # TODO: do not set if updating...
         $person["sex"] = $sex;
         $person["zone"] = $zone;
         $person["address"] = null;
@@ -654,7 +655,8 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     $person[0]["key_site"] = "toe";
     $person[0]["name"] = "Samantha";
     $person[0]["url"] = "http://static.fanpage.it";
-    $person[0]["timestamp"] = 1424248678;
+    $person[0]["timestamp_creation"] = 1424248678;
+    $person[0]["timestamp_last_sync"] = 1424248678;
     $person[0]["sex"] = "F";
     $person[0]["zone"] = "centro";
     $person[0]["address"] = "Via Roma, 3, Milano";
@@ -674,7 +676,8 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     $person[1]["key_site"] = "sgi";
     $person[1]["name"] = "Elena";
     $person[1]["url"] = "http://www.newshd.net";
-    $person[1]["timestamp"] = 1424248555;
+    $person[1]["timestamp_creation"] = 1424248555;
+    $person[0]["timestamp_last_sync"] = 1424248678;
     $person[1]["sex"] = "F";
     $person[1]["zone"] = "centro";
     $person[1]["address"] = "Via Garibaldi 12, Roma";
