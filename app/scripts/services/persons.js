@@ -1,15 +1,13 @@
 'use strict';
 
-app.service('Persons', function($http, $q, cfg) {
+app.service('Persons', function($http, $q, cfg, notify) {
   var apiUri = cfg.apiUri + '/persons/';
 
   // private methods
   function handleSuccess(response) {
-console.info('response.data:', response.data);
-//console.info('response.data.error:', response.data.error);
+    //console.info('response.data:', response.data);
     if (response.data.error) {
-console.info('response.data ERROR!');
-      console.error(response.data.error);
+      notify.error(response.data.error);
       return($q.reject(response.data.error));
     } else {
       return(response.data);
@@ -20,8 +18,10 @@ console.info('response.data ERROR!');
     if (
       ! angular.isObject(response.data) ||
       ! response.data.message
-      ) {
-      return($q.reject('An unknown error occurred in service [Person]'));
+    ) {
+      var message = 'An unknown error occurred in service [Person]';
+      notify.error(message);
+      return($q.reject(message));
     }
     return($q.reject(response.data.message));
   }

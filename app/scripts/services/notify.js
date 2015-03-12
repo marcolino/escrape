@@ -1,56 +1,119 @@
 'use strict';
 
-// TODO: do not print title in console.xxx if it's undefined...
-// TODO: handle multiple parameters, just as console.xxx...:
-/*
-for (var i = 0; i < arguments.length; i++) {
-  alert(arguments[i]);
-}
-*/
 app.service('notify', function(cfg, toastr) {
-  return({
-  
-    success: function (message, title) {
-      title = typeof title !== 'undefined' ? title : 'Success';
-      if (cfg.notify.toastr) {
-        toastr.success(message, title);
-      }
-      if (cfg.notify.console) {
-        console.log(message, title);
-      }
-    },
-  
-    info: function (message, title) {
-      title = typeof title !== 'undefined' ? title : 'Info';
-      if (cfg.notify.toastr) {
-        toastr.info(message, title);
-      }
-      if (cfg.notify.console) {
-        console.info(message, title);
-      }
 
-    },
-  
-    warning: function (message, title) {
-      title = typeof title !== 'undefined' ? title : 'Warning';
+ function stringify(args) { // stringify array in args
+    var sep = ' | '; // number/string separator
+
+    // see if all arguments are number or string (to avoid JSON.stringify...)
+    var retval = '';
+    var type = '';
+    for (var i = 0; i < args.length; i++) {
+      type = typeof args[i];
+      if (type !== 'number' && type !== 'string') { // not numeric/string type
+        return JSON.stringify(args);
+      }
+      if (retval) {
+        retval += sep;
+      }
+      retval += args[i];
+    }
+    if (args.length === 0) { // empty array
+      return null;
+    }
+    if (args.length === 1) { // one element array
+      return args[0];
+    }
+    // multiple elements array
+    return retval;
+  }
+
+  return({ // all the following methods use 'arguments' pseudo-array
+
+    // success methods /////////////////////////////////
+    success: function () {
+      var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.warning(message, title);
+        toastr.success(stringify(args), 'Success');
       }
       if (cfg.notify.console) {
-        console.warn(message, title);
+        console.log(args);
       }
     },
-    warn: function (message, title) { this.warning(message, title); },
-  
-    error: function (message, title) {
-      title = typeof title !== 'undefined' ? title : 'Error';
+    successWithTitle: function () {
+      var args = [].slice.call(arguments);
+      var title = args.shift();
       if (cfg.notify.toastr) {
-        toastr.error(message, title);
+        toastr.success(stringify(args), title);
       }
       if (cfg.notify.console) {
-        console.error(message, title);
+        console.log('[' + title + ']', args);
+      }
+    },
+
+    // info methods /////////////////////////////////
+    info: function () {
+      var args = [].slice.call(arguments);
+      if (cfg.notify.toastr) {
+        toastr.info(stringify(args), 'info');
+      }
+      if (cfg.notify.console) {
+        console.info(args);
+      }
+    },
+    infoWithTitle: function () {
+      var args = [].slice.call(arguments);
+      var title = args.shift();
+      if (cfg.notify.toastr) {
+        toastr.info(stringify(args), title);
+      }
+      if (cfg.notify.console) {
+        console.info('[' + title + ']', args);
       }
     },
   
+    // warning methods /////////////////////////////////
+    warning: function () {
+      var args = [].slice.call(arguments);
+      if (cfg.notify.toastr) {
+        toastr.warning(stringify(args), 'warning');
+      }
+      if (cfg.notify.console) {
+        console.warn(args);
+      }
+    },
+    warningWithTitle: function () {
+      var args = [].slice.call(arguments);
+      var title = args.shift();
+      if (cfg.notify.toastr) {
+        toastr.warning(stringify(args), title);
+      }
+      if (cfg.notify.console) {
+        console.warn('[' + title + ']', args);
+      }
+    },
+
+    // error methods /////////////////////////////////
+    error: function () {
+      var args = [].slice.call(arguments);
+      if (cfg.notify.toastr) {
+        toastr.error(stringify(args), 'error');
+      }
+      if (cfg.notify.console) {
+        console.error(args);
+      }
+    },
+    errorWithTitle: function () {
+      var args = [].slice.call(arguments);
+      var title = args.shift();
+      if (cfg.notify.toastr) {
+        toastr.error(stringify(args), title);
+      }
+      if (cfg.notify.console) {
+        console.error('[' + title + ']', args);
+      }
+    },
+
   });
+
 });

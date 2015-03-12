@@ -23,12 +23,12 @@ app.controller('AuthenticationController',
     };
     $scope.dataOriginal = {};
 
-    $scope.openAside = function(position) {
-      var asideInstance = $aside.open({
+    $scope.openSideMenu = function(position) {
+      $aside.open({ // side menu instance
         templateUrl: 'views/sidemenu.html',
         placement: position,
         size: 'sm', // 'sm': small / 'lg': large
-        backdrop: true, // close if user clicks outside this panel
+        backdrop: true, // don't close if user clicks outside this panel
         controller: function($scope, $modalInstance) {
           $scope.close = function(e) {
             $modalInstance.close();
@@ -39,26 +39,27 @@ app.controller('AuthenticationController',
             this.setSievesDigest($scope.data);
           };
         }
-      });
-      asideInstance.result.then(
+      }).result.then(
         function () { // aside modal closed
         },
-        function () { // aside modal dismissed (backdrop)
-          // TODO: test this (backdrop aside menu closing: doesn't seem to always work...) ##################à
-          $scope.setSievesDigest($scope.data);
+        function () { // aside modal dismissed (backdrop): force a reload
+          $scope.setSievesDigest(null);
         }
       );
     };
 
     $scope.setSievesDigest = function (data) {
-      var digest =
-        data.search.term + '\0' +
-        data.filters.status + '\0' +
-        data.filters.status + '\0' +
-        data.filters.voteMin + '\0' +
-        data.filters.commentsCountMin + '\0' +
-        data.filters.nationality.countryCode + '\0'
-      ;
+      var digest;
+      if (data) {
+        digest =
+          data.search.term + '\0' +
+          data.filters.status + '\0' +
+          data.filters.status + '\0' +
+          data.filters.voteMin + '\0' +
+          data.filters.commentsCountMin + '\0' +
+          data.filters.nationality.countryCode + '\0'
+        ;
+      }
       Authentication.setSievesDigest(digest);
     };
 

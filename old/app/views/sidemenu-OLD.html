@@ -1,23 +1,22 @@
  <div ng-controller="AuthenticationController">
 
   <div class="modal-body noselect">
-
     <accordion close-others="true">
 
       <!-- search widget -->
-      <NOdiv class="form-group">
-      <div class="input-group">
-        <input type="text" class="form-control input-search-clear" ng-model="data.search.term" placeholder="Search" key-enter="search()">
-        <div class="input-group-btn">
-          <button class="btn btn-default button-search-clear" ng-click="searchClear()">
-            <i class="glyphicon glyphicon-remove"></i>
-          </button>
-          <button class="btn btn-default" ng-click="search()">
-            <i class="glyphicon glyphicon-search"></i>
-          </button>
+      <div class="form-group">
+        <div class="input-group">
+          <input type="text" class="form-control input-search-clear" ng-model="data.search.term" placeholder="Search" key-enter="search()">
+          <div class="input-group-btn">
+            <button class="btn btn-default button-search-clear" ng-click="searchClear()">
+              <i class="glyphicon glyphicon-remove"></i>
+            </button>
+            <button class="btn btn-default" ng-click="search()">
+              <i class="glyphicon glyphicon-search"></i>
+            </button>
+          </div>
         </div>
       </div>
-      </NOdiv>
 
       <p class="menu-item-separator"></p>
 
@@ -27,7 +26,7 @@
         </accordion-heading>
   
         Only persons who are:<br>
-        <div class="form-group">
+        <div class="btn-group">
           <div class="dropdown">
             <div class="input-group" data-toggle="dropdown">
               <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getStatusClass(data.filters.status)"></i></span>
@@ -62,7 +61,7 @@
         </div>
 
         Only persons from country:<br>
-        <div class="form-group">
+        <div class="btn-group">
           <div class="dropdown">
             <div class="input-group" data-toggle="dropdown">
               <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="getCountryClass(data.filters.nationality.countryCode)"></i></i></span>
@@ -78,14 +77,8 @@
 
         <p class="menu-item-separator"></p>
 
-        <button class="btn btn-success pull-left" ng-click="close($event)" title="Apply changes and close side menu">
-          <i class="glyphicon glyphicon-chevron-left"></i><i class="glyphicon glyphicon-chevron-left glyphicon-chevron-left-2"></i>
-          Apply<!-- we do force an "apply" (loadPersons()) even on backdrop... -->
-        </button>
-
-        <button class="btn btn-warning pull-right" ng-click="resetData('filters')" title="Reset all changes and close side menu">
-          <i class="glyphicon glyphicon-ban-circle"></i>
-          Reset all
+        <button class="btn btn-warning pull-right" ng-click="resetData('filters')">
+          Reset all filters
         </button>
 
       </accordion-group>
@@ -110,14 +103,12 @@
     </accordion>
   </div>
   
-  <!--
   <div class="modal-footer">
     <button class="btn btn-success" ng-click="close($event)">Close</button>
-  <!- -
+  <!--
     <button class="btn btn-primary" ng-click="ok($event)">OK</button>
     <button class="btn btn-warning" ng-click="cancel($event)">Cancel</button>
-  - ->
-  </div>
   -->
+  </div>
 
 </div>

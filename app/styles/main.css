@@ -85,6 +85,21 @@ body {
   -ms-transform:rotate(270deg);        
 }
 
+/* element rotation - 180° */
+/*
+.rotate180 {
+  -webkit-transform:rotate(180deg);
+  -moz-transform:rotate(180deg);
+  -o-transform:rotate(180deg);
+  -ms-transform:rotate(180deg);        
+}
+*/
+
+/* glyphicon-chevron left to make it double */
+.glyphicon-chevron-left-2 {
+  margin-left: -7px;
+}
+
 /* Listing page */
 .row-gap {
   padding: 2px 0 2px 0;

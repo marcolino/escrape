@@ -1,6 +1,8 @@
 'use strict';
 
-// TODO: DEBUG ONLY //////////////////////////////////////////////
+var apiUri = 'http://0.0.0.0'; // server is local
+
+// DEBUG ONLY ////////////////////////////////////////////////////
 function atHome() {
   return (
     (typeof navigator !== 'undefined' && typeof navigator.appVersion !== 'undefined' &&
@@ -10,7 +12,7 @@ function atHome() {
   );
 }
 var fake = !atHome();
-var apiUri = atHome() ? 'http://0.0.0.0' : 'http://192.168.10.30';
+apiUri = atHome() ? 'http://0.0.0.0' : 'http://192.168.10.30';
 //////////////////////////////////////////////////////////////////
 
 app.constant('cfg', {

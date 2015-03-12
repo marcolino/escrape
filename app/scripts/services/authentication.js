@@ -1,6 +1,6 @@
 'use strict';
  
-app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg) {
+app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg, notify) {
   var apiUri = cfg.apiUri + '/users/';
   var service = {};
   var sievesDigest = '';
@@ -15,8 +15,11 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
         ! angular.isObject(response.data) ||
         ! response.data.message
       ) {
-        return($q.reject('An unknown error occurred in registration service'));
+        var message = 'An unknown error occurred in registration service';
+        notify.error(message);
+        return($q.reject(message));
       }
+      notify.error(response.data.message);
       return($q.reject(response.data.message));
     });
   };
@@ -33,8 +36,11 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
         ! angular.isObject(response.data) ||
         ! response.data.message
       ) {
-        return($q.reject('An unknown error occurred in login service'));
+        var message = 'An unknown error occurred in login service';
+        notify.error(message);
+        return($q.reject(message));
       }
+      notify.error(response.data.message);
       return($q.reject(response.data.message));
     });
   };
@@ -60,8 +66,9 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
   };
 
   service.setSievesDigest = function (digest) {
-    sievesDigest = digest;
-    console.log('setSievesDigest :', sievesDigest);
+    // a null value sets a random digest (which will force a reload)
+    sievesDigest = digest ? digest : Math.random();
+    //console.log('setSievesDigest :', sievesDigest);
   };
 
   service.getSievesDigest = function () {

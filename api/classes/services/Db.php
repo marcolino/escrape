@@ -137,19 +137,23 @@ class DB extends PDO {
   }
 */
   public function getAllSieved($table, $sieves) {
+    $params = [];
     try {
       $sql = "SELECT * FROM '$table' WHERE 1 = 1";
-      $statement = null;
       if (
         $sieves &&
         $sieves["search"] &&
         $sieves["search"]["term"]
       ) {
-        $searchTerm = $sieves["search"]["term"];
+        $params["searchTerm"] = $sieves["search"]["term"];
         $sql .= " AND ";
-        $sql .= "name LIKE '%' || :searchTerm || '%'";
-        $statement = $this->db->prepare($sql);
-        $statement->bindParam(":searchTerm", $searchTerm, PDO::PARAM_STR);
+        $sql .= "(
+          name LIKE '%' || :searchTerm || '%' OR
+          description LIKE '%' || :searchTerm || '%' OR
+          phone LIKE '%' || :searchTerm || '%' OR
+          zone LIKE '%' || :searchTerm || '%' OR
+          address LIKE '%' || :searchTerm || '%'
+        )";
       }
       if (
         $sieves &&
@@ -157,39 +161,35 @@ class DB extends PDO {
         $sieves["filters"]["nationality"] &&
         $sieves["filters"]["nationality"]["countryCode"]
       ) {
-        $countryCode = $sieves["filters"]["nationality"]["countryCode"];
+        $params["countryCode"] = $sieves["filters"]["nationality"]["countryCode"];
         $sql .= " AND ";
         $sql .= "nationality = :countryCode";
-        $statement = $this->db->prepare($sql);
-        $statement->bindParam(":countryCode", $countryCode, PDO::PARAM_STR);
       }
       if (
         $sieves &&
         $sieves["filters"] &&
         $sieves["filters"]["voteMin"]
       ) {
-        $voteMin = $sieves["filters"]["voteMin"];
+        $params["voteMin"] = $sieves["filters"]["voteMin"];
         $sql .= " AND ";
         $sql .= "vote >= :voteMin";
-        $statement = $this->db->prepare($sql);
-        $statement->bindParam(":voteMin", $voteMin, PDO::PARAM_INT);
       }
       if (
         $sieves &&
         $sieves["filters"] &&
         $sieves["filters"]["commentsCountMin"]
       ) {
-        $commentsCountMin = $sieves["filters"]["commentsCountMin"];
+        $params["commentsCountMin"] = $sieves["filters"]["commentsCountMin"];
         $sql .= " AND ";
         $sql .= "(SELECT COUNT(*) FROM comment WHERE id_person = person.id) >= :commentsCountMin";
-        $statement = $this->db->prepare($sql);
-        $statement->bindParam(":commentsCountMin", $commentsCountMin, PDO::PARAM_INT);
       }
-#throw new Exception("sql: [$sql] - commentsCountMin: $commentsCountMin");
-      if (!$statement) {
-        $statement = $this->db->prepare($sql);
+
+      $statement = $this->db->prepare($sql);
+      foreach ($params as $key => &$value) {
+        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();
+#throw new Exception("sql: [$sql]");
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 #throw new Exception("result: " . json_encode($result));
       return $result;

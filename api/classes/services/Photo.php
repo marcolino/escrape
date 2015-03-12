@@ -7,7 +7,7 @@
  */
 
 class Photo {
-  const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
+  const INTERNAL_TYPE = "jpg"; // internal type of bitmaps
   const SMALL_HEIGHT = 72; // small photo height (pixels)
   const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.1; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
@@ -311,7 +311,7 @@ class Photo {
           return false;
         }
         break;
-      case "jpeg":
+      case "jpg":
         if (!imagejpeg($image, NULL, 100)) { // 100% quality
           return false;
         }
@@ -354,7 +354,7 @@ class Photo {
           return false;
         }
         break;
-      case "jpeg":
+      case "jpg":
         if (!imagejpeg($imageScaled, NULL, 100)) { // 100% quality
           return false;
         }
@@ -431,7 +431,7 @@ class Photo {
         $type = 'gif';
         break;
       case 'image/jpeg':
-        $type = 'jpeg';
+        $type = 'jpg';
         break;
       case 'image/png':        
         $type = 'png';

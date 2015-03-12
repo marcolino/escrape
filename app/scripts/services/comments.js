@@ -1,15 +1,15 @@
 'use strict';
 
-app.service('Comments', function($http, $q, cfg) {
+app.service('Comments', function($http, $q, cfg, notify) {
   var apiUri = cfg.apiUri + '/comments/';
 
   // private methods
   function handleSuccess(response) {
     if (response.data.error) {
-      console.error(response.data.error);
-      return($q.reject(response.data.error));
+      notify.error(response.data.error);
+      return $q.reject(response.data.error);
     } else {
-      return(response.data);
+      return response.data;
     }
   }
 
@@ -18,9 +18,12 @@ app.service('Comments', function($http, $q, cfg) {
       ! angular.isObject(response.data) ||
       ! response.data.message
       ) {
-      return($q.reject('An unknown error occurred in service [Comment]'));
+      var message = 'An unknown error occurred in service [' + apiUri + ']';
+      notify.error(message);
+      return $q.reject(message);
     }
-    return($q.reject(response.data.message));
+    notify.error(response.data.error);
+    return $q.reject(response.data.message);
   }
 
   // public methods
