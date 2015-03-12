@@ -22,7 +22,7 @@ app.constant('cfg', {
     version: 'v0.0.1', // TODO: sync with latest git tag...
   },
   apiUri: apiUri + '/escrape/api',
-  fake: fake,
+  fake: fake, // DEBUG ONLY
   notify: {
     toastr: true,
     console: true,

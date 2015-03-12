@@ -3,7 +3,7 @@ TODO:
  - style="" in views to style.css
  - $sitesDefinitions from PersonsControllers.php to a config file in a gitignore folder
  - table person: timestamp => timestamp_creation, timestamp_lst_synced
- - test post-commit hook... (3)
+ - test post-commit hook... (4)
 
 DONE:
  - search() should issue a persons reload...
