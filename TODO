@@ -1,4 +1,5 @@
 TODO:
+ - auto set input focus in login and register forms
  - nationality.countryCode/countryName => nationality + function countryName(countryCode)...
  - style="" in views to style.css
  - $sitesDefinitions from PersonsControllers.php to a config file in a gitignore folder
