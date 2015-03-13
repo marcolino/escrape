@@ -2,7 +2,16 @@
 
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, /*Sites, */Countries, Persons, Comments) {
   $scope.persons = [];
-  $scope.person = [];
+  $scope.person = {};
+
+  // TODO: assign to person default values, to avoid visualization errors before person is fully loaded...
+  $scope.person.timestampCreation = 0;
+  
+  $scope.sites = {
+    'google+': 'googleplus.com',
+    'linkedin': 'linkedin.com',
+    'facebook': 'facebook.com',
+  };
   $scope.personId = $routeParams.personId;
   $scope.tabs = {
     'main': {
@@ -63,9 +72,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       //angular.copy(person, $scope.person);
       $scope.person = person;
       $scope.person.nat = $scope.person.nationality; // TODO...
-      $scope.person.nationality = {};
-      $scope.person.nationality.countryCode = 'it';
-      $scope.person.nationality.countryName = $scope.countries[$scope.person.nationality.countryCode];
+      $scope.person.nationality = 'it';
       $scope.person.vote = 5;
       $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
       $scope.person.streetRegion = 'it';
@@ -179,8 +186,7 @@ console.info('+++ photoGetOccurrences response:', response);
 
   $scope.formChangeCountry = function(code) {
     console.log('formChangeCountry(): ', code);
-    $scope.person.nationality.countryCode = code;
-    $scope.person.nationality.countryName = $scope.countries[code];
+    $scope.person.nationality = code;
   };
 
   $scope.streetAddressToImageUrl = function(streetAddress) {
@@ -220,9 +226,15 @@ console.info('+++ photoGetOccurrences response:', response);
     });
   };
 
+/*
+  $scope.getCountryName = function(countryCode) {
+    return Countries.getCountryName(countryCode);
+  };
+
   $scope.getCountryClass = function(countryCode) {
     return 'flag' + ' ' + countryCode;
   };
+*/
 
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {

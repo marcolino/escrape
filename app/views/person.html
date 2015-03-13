@@ -45,18 +45,20 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="col-xs-6">
+          <div class="col-xs-12">
             <div class="input-group">
               <span class="input-group-addon" title="Name"><span class="glyphicon glyphicon-user"></span></span>
               <input type="text" class="form-control" ng-model="person.name" placeholder="Name">
             </div>
           </div>
+<!--
           <div class="col-xs-6">
             <div class="input-group">
               <span class="input-group-addon" title="Real name"><span class="glyphicon glyphicon-heart"></span></span>
               <input type="text" class="form-control" ng-model="person.realname" placeholder="Real name">
             </div>
           </div>
+-->
         </div>
         <div class="form-group">
           <div class="col-xs-6">
@@ -76,31 +78,28 @@
           <div class="col-xs-7 col-sm-6 col-md-6 col-lg-6">
             <div class="dropdown">
               <div class="input-group" data-toggle="dropdown">
-                <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="getCountryClass(person.nationality.countryCode)"></i></i></span>
-                <input class="form-control" id="query" name="query" type="text" ng-value="person.nationality.countryName" />
+                <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></i></span>
+                <input class="form-control" id="query" name="query" type="text" ng-value="countries.getCountryName(person.nationality)" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
-                <li ng-repeat="(countryCode, countryName) in countries" class="flag-li">
-                  <a ng-click="formChangeCountry('{{countryCode}}')"><i class="f16"><i ng-class="getCountryClass(countryCode)"></i></i> {{countryName}}</a>
+                <li ng-repeat="(countryCode, countryName) in countries.countries" class="flag-li">
+                  <a ng-click="formChangeCountry('{{countryCode}}')"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{countryName}}</a>
                 </li>
               </ul>
             </div>
           </div>
           <div class="col-xs-5 col-sm-6 col-md-6 col-lg-6">
             <div class="input-group">
+<!--
               <span class="input-group-addon" title="Referrals sites"><span class="glyphicon glyphicon-cloud-download"></span></span>
               <div class="form-control">
                 <div class="slider-horizontal">
                   <span ng-repeat="(id, value) in sites">
-                    <span ng-if="!cfg.fake">
                       <img class="image-referral-site" ng-src="images/referral-sites/{{id}}.png" ng-attr-title="{{value.name}}">
-                    </span>
-                    <span ng-if="cfg.fake">
-                      <img class="image-referral-site" ng-src="images/referral-sites/fake-{{id}}.png" ng-attr-title="{{value.name}}">
-                    </span>
                   </span>
                 </div>
               </div>
+-->
             </div>
           </div>
         </div>
@@ -120,8 +119,8 @@
           </div>
           <div class="col-xs-3 col-sm-5 col-md-6 col-lg-6">
             <div class="input-group">
-              <span class="input-group-addon" title="Last time sync'ed"><span class="glyphicon glyphicon-calendar"></span></a></span>
-              <input type="text" class="form-control" ng-value="person.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'" readonly placeholder="Last time sync'ed">
+              <span class="input-group-addon" title="Date of last sync"><span class="glyphicon glyphicon-calendar"></span></a></span>
+              <input type="text" class="form-control" ng-value="person.timestamp_last_sync * 1000 | date:'yyyy-MM-dd'" " HH:mm:ss'" readonly placeholder="Last time sync'ed">
             </div>
           </div>
         </div>

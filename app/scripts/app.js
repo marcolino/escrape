@@ -26,8 +26,9 @@ var app = angular.module('escrapeApp', [
     'ngCookies',
     'ngMap',
     'ngOrderObjectBy',
-    'ui.bootstrap',
     'ngAside',
+    'ui.bootstrap',
+    'ui-rangeSlider',
     'toastr',
   ]);
 

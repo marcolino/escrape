@@ -34,7 +34,7 @@ app.service('notify', function(cfg, toastr) {
     success: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.success(stringify(args), 'Success');
+        toastr.success(stringify(args)); //, 'Success');
       }
       if (cfg.notify.console) {
         console.log(args);
@@ -55,7 +55,7 @@ app.service('notify', function(cfg, toastr) {
     info: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.info(stringify(args), 'info');
+        toastr.info(stringify(args)); //, 'Info');
       }
       if (cfg.notify.console) {
         console.info(args);
@@ -76,7 +76,7 @@ app.service('notify', function(cfg, toastr) {
     warning: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.warning(stringify(args), 'warning');
+        toastr.warning(stringify(args)); //, 'Warning');
       }
       if (cfg.notify.console) {
         console.warn(args);
@@ -97,7 +97,7 @@ app.service('notify', function(cfg, toastr) {
     error: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.error(stringify(args), 'error');
+        toastr.error(stringify(args)); //, 'Error');
       }
       if (cfg.notify.console) {
         console.error(args);

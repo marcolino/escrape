@@ -10,15 +10,14 @@ app.controller('AuthenticationController',
       },
       filters: {
         isopened: true,
-        status: 'any status', // 'any status' / 'active' / 'inactive'
+        active: 'any', // 'any' / 'yes' / 'no'
         voteMin: 0,
-        ageMin: 0, // TODO: IMPLEMENT ageMin EVERYWHERE NEEDED...
-        ageMax: 0, // TODO: IMPLEMENT ageMax EVERYWHERE NEEDED...
         commentsCountMin: 0,
-        nationality: {
-          countryCode: '',
-          countryName: '',
+        age: {
+          min: 18,
+          max: 70,
         },
+        nationality: '',
       },
       options: {
       },
@@ -55,10 +54,11 @@ app.controller('AuthenticationController',
       if (data) {
         digest =
           data.search.term + '\0' +
-          data.filters.status + '\0' +
-          data.filters.status + '\0' +
+          data.filters.active + '\0' +
           data.filters.voteMin + '\0' +
           data.filters.commentsCountMin + '\0' +
+          data.filters.age.min + '\0' +
+          data.filters.age.max + '\0' +
           data.filters.nationality.countryCode + '\0'
         ;
       }
@@ -168,11 +168,16 @@ app.controller('AuthenticationController',
       $scope.storeData('filters');
     };
 
-    $scope.statuses = function () {
+    $scope.setFilterAgeRange = function () {
+      // filter values are automatically updated via the model
+      $scope.storeData('filters');
+    };
+
+    $scope.actives = function () {
       return [
-        'any status',
-        'active',
-        'not active',
+        'any',
+        'yes',
+        'no',
       ];
     };
 
@@ -191,34 +196,38 @@ app.controller('AuthenticationController',
       };
     };
 
-    $scope.setFilterStatus = function (status) {
-      $scope.data.filters.status = status;
+    $scope.setFilterActive = function (mode) {
+      $scope.data.filters.active = mode;
       $scope.storeData('filters');
     };
 
-    $scope.getStatusClass = function(mode) {
+    $scope.getClassActive = function(mode) {
       switch (mode) {
         default:
-        case '':
+        case 'any':
           return 'glyphicon glyphicon-th-large';
-        case 'active':
+        case 'yes':
           return 'glyphicon glyphicon-ok';
-        case 'not active':
+        case 'no':
           return 'glyphicon glyphicon-remove';
       }
     };
 
     $scope.setFilterNationalityCountry = function (code) {
-      $scope.data.filters.nationality.countryCode = code;
-      $scope.data.filters.nationality.countryName = code ? $scope.countries[code] : $scope.activeCountries()[''];
+      $scope.data.filters.nationality =code;
       $scope.storeData('filters');
     };
 
-    // TODO: this function is similar in person controller: how to have only one instance?
+/*
+    // TODO: these two functions are similar in person controller: how to have only one instance?
+    $scope.getCountry = function(countryCode) {
+      return Countries.getCountry(countryCode);
+    };
+
     $scope.getCountryClass = function(countryCode) {
       return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
     };
-
+*/
     $scope.toggleSectionOpened = function (section/*, isopened*/) {
       // store filters on filters opened toggle to save opened status
       $timeout(function() {

@@ -67,7 +67,7 @@ class DB extends PDO {
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
-          status VARCHAR(8),
+          active VARCHAR(8),
           sex TEXT,
           zone TEXT,
           address TEXT,
@@ -159,12 +159,22 @@ class DB extends PDO {
       if (
         $sieves &&
         $sieves["filters"] &&
-        $sieves["filters"]["nationality"] &&
-        $sieves["filters"]["nationality"]["countryCode"]
+        $sieves["filters"]["active"]
       ) {
-        $params["countryCode"] = $sieves["filters"]["nationality"]["countryCode"];
+        if ($sieves["filters"]["active"] !== "any") {
+          $params["active"] = $sieves["filters"]["active"];
+          $sql .= " AND ";
+          $sql .= "active = :active";
+        }
+      }
+      if (
+        $sieves &&
+        $sieves["filters"] &&
+        $sieves["filters"]["nationality"]
+      ) {
+        $params["nationality"] = $sieves["filters"]["nationality"];
         $sql .= " AND ";
-        $sql .= "nationality = :countryCode";
+        $sql .= "nationality = :nationality";
       }
       if (
         $sieves &&
@@ -184,6 +194,19 @@ class DB extends PDO {
         $sql .= " AND ";
         $sql .= "(SELECT COUNT(*) FROM comment WHERE id_person = person.id) >= :commentsCountMin";
       }
+      if (
+        $sieves &&
+        $sieves["filters"] &&
+        $sieves["filters"]["age"] &&
+        $sieves["filters"]["age"]["min"] &&
+        $sieves["filters"]["age"]["max"]
+      ) {
+        $params["ageMin"] = $sieves["filters"]["age"]["min"];
+        $params["ageMax"] = $sieves["filters"]["age"]["max"];
+        $sql .= " AND ";
+        $sql .= "(age >= :ageMin AND age <= :ageMax)";
+      }
+
 
       $statement = $this->db->prepare($sql);
       foreach ($params as $key => &$value) {

@@ -1,0 +1,22 @@
+/* customize slider handle (to show values inside) */
+.ngrs-range-slider {
+  margin: 0;
+  padding-right: 10px;
+}
+.ngrs-range-slider .ngrs-runner {
+  height: 22px;
+}
+.ngrs-range-slider .ngrs-handle {
+  width: 24px;
+  text-align: right;
+  padding-right: 6px;
+}
+.ngrs-range-slider .ngrs-handle-min i {
+  background-image: url("");
+}
+.ngrs-range-slider .ngrs-handle-max i {
+  background-image: url("");
+}
+.ngrs-value-inline {
+  font-size: .9em;
+}

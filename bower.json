@@ -19,7 +19,8 @@
     "angular-order-object-by": "~1.1.0",
     "angular-aside": "~1.1.2",
     "angular-toastr": "~1.0.2",
-    "world-flags-sprite": "*"
+    "world-flags-sprite": "*",
+    "angular-rangeslider": "~0.0.13"
   },
   "devDependencies": {
     "angular-mocks": "~1.3.0",

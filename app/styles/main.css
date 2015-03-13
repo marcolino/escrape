@@ -49,6 +49,7 @@ body {
   font-weight: bold;
   font-style: italic;
   color: darkred;
+  padding-left: 0; /* save mobile header space ... */
 }
 
 /* Custom page footer */

@@ -1,9 +1,17 @@
-TODO:
- - auto set input focus in login and register forms
- - nationality.countryCode/countryName => nationality + function countryName(countryCode)...
+TODO 1.0:
+ - key_site => site_key
+ - see if angular.rangeslider can be modified to handle inline sliders...
+ - handle showing of fake photos 
  - style="" in views to style.css
- - $sitesDefinitions from PersonsControllers.php to a config file in a gitignore folder
- - table person: timestamp => timestamp_creation, timestamp_lst_synced
+ - handle all exceptions at least with notify.error() ...
+ - handle sorting by some fields in list page
+ - angular.rangeSlider.js:
+    154   '<div class="ngrs-handle ngrs-handle-min"><i class="ngrs-value-inline">{{filteredModelMin}}</i></div>',
+    155   '<div class="ngrs-handle ngrs-handle-max"><i class="ngrs-value-inline">{{filteredModelMax}}</i></div>',
+   now we changed source... Should write a custom template, or something...
+
+TODO 2.0:
+ - I18n (?...)
 
 DONE:
  - search() should issue a persons reload...
@@ -12,3 +20,7 @@ DONE:
  - jpeg -> jpg
  - console.error()s, exceptions -> notify.error() ...
  - post-commit hook to sync latestTag javascript variable with latest tag from git
+ - $sitesDefinitions from PersonsControllers.php to a config file in a .gitignore folder
+ - auto set input focus in login and register forms
+ - nationality.countryCode/countryName => nationality + function countryName(countryCode)...
+ - table person: timestamp => timestamp_creation, timestamp_lst_synced

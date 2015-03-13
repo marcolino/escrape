@@ -4,6 +4,7 @@ var apiUri = 'http://0.0.0.0'; // server is local
 
 // DEBUG ONLY ////////////////////////////////////////////////////
 function atHome() {
+if (1) {return false;} // TODO: mobile @ office...
   return (
     (typeof navigator !== 'undefined' && typeof navigator.appVersion !== 'undefined' &&
      navigator.appVersion.indexOf('Linux') !== -1) || // Chrome
@@ -31,6 +32,10 @@ app.constant('cfg', {
     vote: {
       min: 0,
       max: 9,
+    },
+    age: {
+      min: 18,
+      max: 70,
     },
   },
 });

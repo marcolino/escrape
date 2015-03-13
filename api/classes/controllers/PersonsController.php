@@ -7,79 +7,7 @@
  */
 
 class PersonsController {
-  private $sitesDefinitions = [
-    "sgi" => [
-      "url" => "http://www.sexyguidaitalia.com",
-      "path" => "escort/torino",
-      "charset" => "utf-8",
-      "patterns" => [
-        "person" => "/<DIV class=\"(?:top|thumbsUp)\".*?>(.*?)<\/DIV>/s",
-        "person-id" => "/<div .*?class=\"wraptocenter\">.*?<a href=\".*?\/([^\/\"]+)\".*?>.*?<\/div>/s",
-        "person-details-url" => "/<div .*?class=\"wraptocenter\">.*?<a href=\"(.*?)\".*?>.*?<\/div>/s",
-        "person-img-url" => "/<div .*?class=\"wraptocenter\">.*?<img .*?src=\"(.*?)\".*?\/>.*?<\/div>/s",
-        "person-name" => "/<td id=\"ctl00_content_CellaNome\".*?><span.*?>(.*?)<\/span>.*?<\/td>/s",
-        "person-sex" => "/<td id=\"ctl00_content_CellaSesso\".*?>(.*?)<\/td>/s",
-        "person-zone" => "/<td id=\"ctl00_content_CellaZona\".*?>(.*?)<\/td>/s",
-        "person-description" => "/<td id=\"ctl00_content_CellaDescrizione\".*?>(.*?)(?:\s+)?(?:<br \/>.*?)?<\/td>/s",
-        "person-phone" => "/<td id=\"ctl00_content_CellaTelefono\".*?><span.*?>(.*?)<\/span>.*?<\/td>/s",
-        "person-phone-vacation" => "/In arrivo dopo le vacanze !!/s",
-        "person-phone-unavailable" => "/unavailable/s", # TODO
-        "person-nationality" => "/TODO NATIONALITY/s", # TODO
-        "person-photo" => "/<a rel='group' class='fancybox' href=(.*?)>.*?<\/a>/",
-      ],
-    ],
-    "toe" => [
-      "url" => "http://www.torinoerotica.com",
-      "charset" => "CP1252",
-      "path" => "annunci_Escort_singole_Piemonte_Torino.html",
-      "patterns" => [
-        "person" => "/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s",
-        "person-id" => "/<a href=\".*?([^\_]*?)\.html\".*?>.*?<\/a>/s",
-        "person-details-url" => "/<a href=\"(.*?)\".*?>.*?<\/a>/s",
-        "person-img-url" => "",
-        "person-name" => "/<h\d class=\"nome\">\s*(.*?)\s*<\/h\d>/s",
-        "person-sex" => "/<h\d class=\"sesso\">\s*(.*?)\s*&nbsp;.*?<\/h\d>/s",
-        "person-zone" => "/(?:<a href=\"#quartiere\".*?>(.*?)<\/a>)/s",
-        "person-description" => "/<meta name=\"description\".*?content=\"(.*?)\".*?\/>/s",
-        "person-phone" => "/<h\d class=\"phone\">\s*(?:<img.*? \/>)\s*(.*?)\s*<\/h\d>/s",
-        "person-phone-vacation" => "/TODO/s", # TODO
-        "person-phone-unavailable" => "/Questa ...... ha disabilitato temporaneamente il suo annuncio/s",
-        "person-nationality" => "/TODO NATIONALITY/s", # TODO
-        "person-photo" => "/<a\s+style=\"cursor:pointer;\"\s+href=\"(.*?)\" rel=\"prettyPhoto\[galleria\]\".*?<\/a>/s",
-      ],
-    ],
-    /*
-    "mor" => [
-      "url" => "http://www.moscarossa.biz",
-      "charset" => "CP1252",
-      "path" => "escort-torino-1.html",
-      "patterns" => [
-        "person" => "/(?:<td class='evidenzia_accompa_topr'|<tD align=center).*?>(.*?)<\/td>/s",
-        "person-id" => "//s",
-        "person-details-url" => "/<a class=prova .*?href='(.*?)'.*?>.*?<\/a>/s",
-        "person-name" => "/<span class=dettagli1>Nome:<\/span>\s*(.*?)\s*</s",
-        "person-sex" => "/nosex/",
-        "person-zone" => "/<span class=dettagli1>Citt&agrave;:<\/span>\s*(.*?)\s*</s",
-        "person-description" => "/<div .*?class=testo_annuncio2.*?>\s*(.*?)\s*<\/div>/s",
-        "person-phone" => "/<span class=dettagli1>Telefono:<\/span>\s*<a.*?>\s*(.*?)\s*<\/a>/s",
-        "person-phone-vacation" => "/In arrivo dopo le vacanze !!/s",
-        "person-phone-unavailable" => "/In arrivo dopo le vacanze !!/s",
-        "person-photo" => "/<a href=\"(fotooggi\/.*?)\">.*?<\/a>/s",
-      ],
-    ],
-    */
-    /*
-    "esf" => [
-      "url" => "http://www.escortforumit.xxx/escorts/city_it_torino",
-    ],
-    */
-    /*
-    "doi" => [
-      "url" => "http://www.dolciincontri.net/annunci-personali_torino.html",
-      ],
-    ],
-*/
-  ];
+
   const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
 
@@ -87,6 +15,7 @@ class PersonsController {
    * Constructor
    */
   function __construct($router) {
+    require_once('setup/persons.php'); // persons sites definitions
     $this->router = $router;
     $this->db = $router->db;
   }
@@ -651,12 +580,13 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
       "/scienzefanpage/wp-content/uploads/2012/07/donna-italiana-spazio1-300x225.jpg",
     ];
     $person[0] = [];
-    $person[0]["key"] = "toe-123456";
-    $person[0]["key_site"] = "toe";
+    $person[0]["key"] = "linkedin-123456";
+    $person[0]["key_site"] = "linkedin";
     $person[0]["name"] = "Samantha";
     $person[0]["url"] = "http://static.fanpage.it";
     $person[0]["timestamp_creation"] = 1424248678;
     $person[0]["timestamp_last_sync"] = 1424248678;
+    $person[0]["active"] = "no";
     $person[0]["sex"] = "F";
     $person[0]["zone"] = "centro";
     $person[0]["address"] = "Via Roma, 3, Milano";
@@ -672,12 +602,13 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
       "/wp-content/gallery/convegno/img_2477.jpg",
     ];
     $person[1] = [];
-    $person[1]["key"] = "sgi-789012";
-    $person[1]["key_site"] = "sgi";
+    $person[1]["key"] = "twitter-789012";
+    $person[1]["key_site"] = "twitter";
     $person[1]["name"] = "Elena";
     $person[1]["url"] = "http://www.newshd.net";
     $person[1]["timestamp_creation"] = 1424248555;
-    $person[0]["timestamp_last_sync"] = 1424248678;
+    $person[1]["timestamp_last_sync"] = 1424248678;
+    $person[1]["active"] = "yes";
     $person[1]["sex"] = "F";
     $person[1]["zone"] = "centro";
     $person[1]["address"] = "Via Garibaldi 12, Roma";
