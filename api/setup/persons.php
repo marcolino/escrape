@@ -1,54 +1,11 @@
 <?php
-  $sitesDefinitions = [
-    "linkedin" => [
-      "url" => "http://www.linkedin.com",
-      "path" => "/",
-      "charset" => "utf-8",
-      "patterns" => [
-        "person" => "/TODO/s",
-        "person-id" => "/TODO/s",
-        "person-details-url" => "/TODO/s",
-        "person-img-url" => "/TODO/s",
-        "person-name" => "/TODO/s",
-        "person-sex" => "/TODO/s",
-        "person-zone" => "/TODO/s",
-        "person-description" => "/TODO/s",
-        "person-phone" => "/TODO/s",
-        "person-phone-vacation" => "/TODO/s",
-        "person-phone-unavailable" => "/TODO/s",
-        "person-nationality" => "/TODO/s",
-        "person-photo" => "/TODO/s",
-      ],
-    ],
-    "facebook" => [
-      "url" => "http://www.facebook.com",
-      "path" => "/",
-      "charset" => "utf-8",
-      "patterns" => [
-        "person" => "/TODO/s",
-        "person-id" => "/TODO/s",
-        "person-details-url" => "/TODO/s",
-        "person-img-url" => "/TODO/s",
-        "person-name" => "/TODO/s",
-        "person-sex" => "/TODO/s",
-        "person-zone" => "/TODO/s",
-        "person-description" => "/TODO/s",
-        "person-phone" => "/TODO/s",
-        "person-phone-vacation" => "/TODO/s",
-        "person-phone-unavailable" => "/TODO/s",
-        "person-nationality" => "/TODO/s",
-        "person-photo" => "/TODO/s",
-      ],
-    ],
-  ];
-
-/*
-  $sitesDefinitions = [
+  $this->sitesDefinitions = [
     "sgi" => [
       "url" => "http://www.sexyguidaitalia.com",
       "path" => "escort/torino",
       "charset" => "utf-8",
       "patterns" => [
+        "security-check" => "/Please complete the security check to access/s",
         "person" => "/<DIV class=\"(?:top|thumbsUp)\".*?>(.*?)<\/DIV>/s",
         "person-id" => "/<div .*?class=\"wraptocenter\">.*?<a href=\".*?\/([^\/\"]+)\".*?>.*?<\/div>/s",
         "person-details-url" => "/<div .*?class=\"wraptocenter\">.*?<a href=\"(.*?)\".*?>.*?<\/div>/s",
@@ -69,6 +26,7 @@
       "charset" => "CP1252",
       "path" => "annunci_Escort_singole_Piemonte_Torino.html",
       "patterns" => [
+        "security-check" => "/TODO SECURITY CHECK/s", # TODO
         "person" => "/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s",
         "person-id" => "/<a href=\".*?([^\_]*?)\.html\".*?>.*?<\/a>/s",
         "person-details-url" => "/<a href=\"(.*?)\".*?>.*?<\/a>/s",
@@ -84,12 +42,13 @@
         "person-photo" => "/<a\s+style=\"cursor:pointer;\"\s+href=\"(.*?)\" rel=\"prettyPhoto\[galleria\]\".*?<\/a>/s",
       ],
     ],
-    / *
+    /*
     "mor" => [
       "url" => "http://www.moscarossa.biz",
       "charset" => "CP1252",
       "path" => "escort-torino-1.html",
       "patterns" => [
+        "security-check" => "/TODO SECURITY CHECK/s",
         "person" => "/(?:<td class='evidenzia_accompa_topr'|<tD align=center).*?>(.*?)<\/td>/s",
         "person-id" => "//s",
         "person-details-url" => "/<a class=prova .*?href='(.*?)'.*?>.*?<\/a>/s",
@@ -103,18 +62,17 @@
         "person-photo" => "/<a href=\"(fotooggi\/.*?)\">.*?<\/a>/s",
       ],
     ],
-    * /
-    / *
+    */
+    /*
     "esf" => [
       "url" => "http://www.escortforumit.xxx/escorts/city_it_torino",
     ],
-    * /
-    / *
+    */
+    /*
     "doi" => [
       "url" => "http://www.dolciincontri.net/annunci-personali_torino.html",
       ],
     ],
-    * /
+    */
   ];
-*/
 ?>

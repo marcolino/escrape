@@ -1,43 +1,5 @@
 <?php
-  $commentsDefinition = [
-    "linkedin" => [
-      "domain" => "linkedin.com",
-      "charset" => "utf-8",
-      "locale" => "it_IT.UTF-8",
-      "timezone" => "Europe/Rome",
-      "patterns" => [
-        "topic" => "/TODO/s",
-        "block" => "/TODO/s",
-        "author" => "/TODO/s",
-        "author-karma" => "/TODO/s",
-        "author-posts" => "/TODO/s",
-        "date" => "/TODO/s",
-        "content" => "/TODO/s",
-        "quote-signature" => "/TODO/s",
-        "next-link" => "/TODO/s",
-      ],
-    ],
-    "facebook" => [
-      "domain" => "facebook.com",
-      "charset" => "utf-8",
-      "locale" => "it_IT.UTF-8",
-      "timezone" => "Europe/Rome",
-      "patterns" => [
-        "topic" => "/TODO/s",
-        "block" => "/TODO/s",
-        "author" => "/TODO/s",
-        "author-karma" => "/TODO/s",
-        "author-posts" => "/TODO/s",
-        "date" => "/TODO/s",
-        "content" => "/TODO/s",
-        "quote-signature" => "/TODO/s",
-        "next-link" => "/TODO/s",
-      ],
-    ],
-  ];
-
-/*
-  $commentsDefinition = [
+  $this->commentsDefinition = [
     "gnf" => [
       "domain" => "gnoccaforum.com",
       "charset" => "utf-8",
@@ -56,7 +18,6 @@
       ],
     ],
   ];
-*/
 
   // TODO: we don't need these anymore, using Network.php's methods...
   $googleSearchMinDelayRange = [ 30, 75 ]; // range for random delay

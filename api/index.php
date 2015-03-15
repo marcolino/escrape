@@ -24,7 +24,7 @@ class Router {
       "debug" => false, // use custom error handler (?)
       "mode" => "development",
     ]);
-    $this->db = new DB();
+    $this->db = new DB($this);
     $this->logs = [];
   }
 
@@ -49,8 +49,8 @@ class Router {
           $this->success($persons->getList($data));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
+        #} catch (PDOException $e) {
+        #  $this->error($e);
         }
       });
       $this->app->get("/get/:id", function($id) { # ======================
@@ -290,7 +290,7 @@ class Router {
         "code" => $error->getCode(),
         "file" => $error->getFile(),
         "line" => $error->getLine(),
-        //"trace" => $error->getTrace(), #AsString(),
+        "trace" => $error->getTrace(), #AsString(),
         //"html" => $this->exception2HTML($error), // TODO: use it?
       ],
       "log" => $this->logs,
@@ -363,6 +363,7 @@ class Router {
         </center>
       </font>
     ";
+    return $trace;
   }
 
   private function access_control_allow($response) {

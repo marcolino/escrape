@@ -3,10 +3,27 @@
 app.service('notify', function(cfg, toastr) {
 
  function stringify(args) { // stringify array in args
-    var sep = ' | '; // number/string separator
-
-    // see if all arguments are number or string (to avoid JSON.stringify...)
     var retval = '';
+    // show exceptions in a custom way
+    if (
+      typeof args[0].message !== 'undefined' &&
+      typeof args[0].file !== 'undefined' &&
+      typeof args[0].line !== 'undefined' && 
+      typeof args[0].code !== 'undefined'
+    ) {
+      retval = 
+        '<u><b>Exception:</u></b><br>' +
+        args[0].message + '<br>' +
+        '<small>in file: <i>' + args[0].file + '</i></small><br>' +
+        '<small>at line: <i>' + args[0].line + '</i></small><br>' +
+        '<small>with code: <i>' + args[0].code + '</i></small><br>'
+      ;
+      return retval;
+    }
+    // TODO: we are now handling only first exception (args[0]): handle multiple exceptions, too?
+
+    var sep = ' | '; // number/string separator
+    // see if all arguments are number or string (to avoid JSON.stringify...)
     var type = '';
     for (var i = 0; i < args.length; i++) {
       type = typeof args[i];

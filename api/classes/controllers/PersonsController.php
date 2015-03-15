@@ -28,109 +28,125 @@ class PersonsController {
   */
   public function sync() {
     $this->router->log("info", "sync()");
+    $this->network = new Network(); // TODO: initialize $this->network in constructor?
+    $error = false; // track errors while sync'ing
 
-    $changed = false;
     foreach ($this->sitesDefinitions as $siteKey => $site) {
+      $useTor = true; // use TOR proxy to sync
       $url = $site["url"] . "/" . $site["path"];
-
-      $this->router->log("info", "url: [$url]");
-      $page = getUrlContents($url, $site["charset"]);
+      $this->router->log("debug", "site: " . $siteKey);
+#if ($siteKey === "toe") continue; # TODO: DEBUG-ONLY
+      getUrlContents:
+      $this->router->log("info", "getUrlContents($url) (TOR: $useTor)");
+      $page = $this->network->getUrlContents($url, $site["charset"], null, false, $useTor);
 
       if ($page === FALSE) {
         $this->router->log("error", "can't get page contents on site [$siteKey]");
         continue;
       }
       $persons_page = $page;
-
       if (preg_match_all($site["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
-        $this->router->log("error", "not any person pattern found on site [$siteKey]");
+        if (preg_match($site["patterns"]["security-check"], $persons_page, $matches) >= 1) {
+          if ($useTor) {
+            $this->router->log("info", "site [$siteKey] asks a security check; retrying without TOR...");
+            $useTor = false;
+            goto getUrlContents;
+          } else {
+            $this->router->log("error", "site [$siteKey] asks a security check even without TOR, giving up with this site");
+            $error = true;
+            continue;
+          }
+        }
+        $this->router->log("error", "not any person pattern found on site [$siteKey], giving up with this site");
+        $error = true;
         continue;
       }
       
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-
 if ($n > 7) break; # TODO: DEBUG-ONLY
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
           $key = $siteKey . "-" . $id;
         } else {
-          $this->router->log("error", "person $n id not found on site [$siteKey]");
+          $this->router->log("error", "person $n id not found on site [$siteKey], giving up with this person");
+          $error = true;
           continue;
         }
 
         if (preg_match($site["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
           $details_url = $site["url"] . "/" . $matches[1];
         } else {
-          $this->router->log("error", "person $n details url not found on site [$siteKey]");
+          $this->router->log("error", "person $n details url not found on site [$siteKey], giving up with this person");
+          $error = true;
           continue;
         }
 
         $this->router->log("debug", $details_url);
-        if (($page_details = getUrlContents($details_url, $site["charset"])) === FALSE) {
-          $this->router->log("error", "can't get person $n url contents on site [$siteKey]");
+        // TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
+        if (($page_details = $this->network->getUrlContents($details_url, $site["charset"], null, false, $useTor)) === FALSE) {
+          $this->router->log("error", "can't get person $n url contents on site [$siteKey], giving up with this person");
+          $error = true;
           continue;
         }
         $timestamp = time(); # current timestamp, we don't have page last modification date...
         $page_sum = md5($page_details);
 
-        if (preg_match($site["patterns"]["person-name"], $page_details, $matches) >= 1) {
-          $name = $this->cleanName($matches[1]);
-        } else {
-          $this->router->log("error", "person $n name not found on site [$siteKey]");
-          continue;
-        }
-        
-        if (preg_match($site["patterns"]["person-sex"], $page_details, $matches) >= 1) {
-          $sex = $matches[1];
-        } else {
-          #$this->router->log("warning", "person $n sex not found on site [$siteKey]");
-          $sex = "";
-          #continue;
-        }
-
-        if (preg_match($site["patterns"]["person-zone"], $page_details, $matches) >= 1) {
-          $zone = $matches[1];
-        } else {
-          #$this->router->log("warning", "person $n zone not found on site [$siteKey]");
-          $zone = "";
-          #continue;
-        }
-        
-        if (preg_match($site["patterns"]["person-description"], $page_details, $matches) >= 1) {
-          $description = $matches[1];
-        } else {
-          #$this->router->log("warning", "person $n description not found on site [$siteKey]");
-          $description = "";
-          #continue;
-        }
- 
         if (preg_match($site["patterns"]["person-phone"], $page_details, $matches) >= 1) {
           $phone = $this->normalizePhone($matches[1]);
         } else {
-          $this->router->log("error", "person $n phone not found on site [$siteKey]");
+          $this->router->log("error", "person $n phone not found on site [$siteKey], giving up with this person");
+          $error = true;
           continue;
-        }
-          
-        if (preg_match($site["patterns"]["person-nationality"], $page_details, $matches) >= 1) {
-          $nationality = $this->normalizeNationality($matches[1]);
-        } else {
-          $this->router->log("error", "person $n nationality not found on site [$siteKey]");
-          $nationality = "ru";
-          #continue;
         }
           
         if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
           $photosUrls = $matches[1];
         } else {
-          $this->router->log("error", "photo pattern not found on site [$siteKey]");
+          $this->router->log("error", "photo pattern not found on site [$siteKey], giving up with this person");
+          $error = true;
           continue;
         }
 
+        if (preg_match($site["patterns"]["person-name"], $page_details, $matches) >= 1) {
+          $name = $this->cleanName($matches[1]);
+        } else {
+          $this->router->log("warning", "person $n name not found on site [$siteKey]");
+          $name = "";
+        }
+        
+        if (preg_match($site["patterns"]["person-sex"], $page_details, $matches) >= 1) {
+          $sex = $matches[1];
+        } else {
+          $this->router->log("warning", "person $n sex not found on site [$siteKey]");
+          $sex = "";
+        }
+
+        if (preg_match($site["patterns"]["person-zone"], $page_details, $matches) >= 1) {
+          $zone = $matches[1];
+        } else {
+          $this->router->log("info", "person $n zone not found on site [$siteKey]");
+          $zone = "";
+        }
+        
+        if (preg_match($site["patterns"]["person-description"], $page_details, $matches) >= 1) {
+          $description = $matches[1];
+        } else {
+          $this->router->log("warning", "person $n description not found on site [$siteKey]");
+          $description = "";
+        }
+ 
+        if (preg_match($site["patterns"]["person-nationality"], $page_details, $matches) >= 1) {
+          $nationality = $this->normalizeNationality($matches[1]);
+        } else {
+          $this->router->log("warning", "person $n nationality not found on site [$siteKey]");
+          $nationality = "";
+        }
+          
         $person = [];
         $person["key"] = $key;
         $person["key_site"] = $siteKey;
@@ -162,7 +178,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         }
       }
     }
-    return true;
+    return !$error;
   }
 
   public function get($id) {
@@ -196,7 +212,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     $list = [];
     $comments = new CommentsController($this->router);
 
-    $this->router->log("debug", " *** getList() - sieves:" . var_export($sieves, true));
+    #$this->router->log("debug", " *** getList() - sieves:" . var_export($sieves, true));
     #foreach ($this->db->getAll("person") as $personId => $person) {
     foreach ($this->db->getAllSieved("person", $sieves) as $personId => $person) {
       $list[$personId] = [
@@ -222,10 +238,10 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     $personDomain = $person["url"];
 
     $googleSearch = new GoogleSearch();
-    $maxPages = 2;
+    $numPages = 2;
 
     $response = [];
-    if ($results = $googleSearch->searchImage($imageUrl, $maxPages)) {
+    if ($results = $googleSearch->searchImage($imageUrl, $numPages)) {
       if ($results["best_guess"]) {
         $response["bestGuess"] = $results["best_guess"];
       }

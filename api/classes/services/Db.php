@@ -12,7 +12,9 @@ class DB extends PDO {
   const DB_PASS = null;
   const DB_CHARSET = "utf8";
   private $db;
-  public function __construct() {
+
+  public function __construct($router) {
+    $this->router = $router;
     try {
       $dbPath = dirname(self::DB_NAME);
       if ($dbPath) {
@@ -41,6 +43,7 @@ class DB extends PDO {
       chmod(self::DB_NAME, 0666); # TODO: let everybody (developer) to write db: DEBUG ONLY!
     }
   }
+
   public function createTables() {
     # TODO: always use text or varchar ... ?
     try {
@@ -204,7 +207,7 @@ class DB extends PDO {
         $params["ageMin"] = $sieves["filters"]["age"]["min"];
         $params["ageMax"] = $sieves["filters"]["age"]["max"];
         $sql .= " AND ";
-        $sql .= "(age >= :ageMin AND age <= :ageMax)";
+        $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
       }
 
 
@@ -214,11 +217,12 @@ class DB extends PDO {
       }
       $statement->execute();
 #throw new Exception("sql: [$sql]");
+# TODO: why 2 exceptions thrown???
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 #throw new Exception("result: " . json_encode($result));
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("error getting persons with filters:" . $e);
+      throw new Exception("error getting persons with filters", 0, $e);
     }
   }
 
@@ -231,7 +235,7 @@ class DB extends PDO {
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("error getting person:" . $e);
+      throw new Exception("error getting person: " . $e);
     }
   }
   public function getByField($table, $fieldName, $fieldValue) {

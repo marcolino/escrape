@@ -5,7 +5,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
 
   // private methods
   function handleSuccess(response) {
-    //console.info('response.data:', response.data);
+console.info('SUCCESS - response.data:', response.data);
     if (response.data.error) {
       notify.error(response.data.error);
       return($q.reject(response.data.error));
@@ -23,6 +23,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
       notify.error(message);
       return($q.reject(message));
     }
+console.info('ERROR - response.data:', response.data);
     return($q.reject(response.data.message));
   }
 

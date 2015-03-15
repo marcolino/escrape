@@ -1,12 +1,14 @@
 'use strict';
 
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, /*Sites, */Countries, Persons, Comments) {
-  $scope.persons = [];
+  $scope.persons = [{}];
   $scope.person = {};
 
-  // TODO: assign to person default values, to avoid visualization errors before person is fully loaded...
-  $scope.person.timestampCreation = 0;
-  
+  // TODO: avoid visualization errors before person is fully loaded...
+  //$scope.person.timestampCreation = 0; // assigning 0 is of no use..., and ng-cloack seems of no use, either... shell add 0 default on view... :-()
+  $scope.person.timestamp_creation = 0;
+  $scope.person.timestamp_last_sync = 0;
+
   $scope.sites = {
     'google+': 'googleplus.com',
     'linkedin': 'linkedin.com',
@@ -43,11 +45,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.username = $rootScope.username; // TODO: get username from Authentication service...
 
   // watch for sieves changes
-  $scope.autenticationService = Authentication;
-  $scope.$watch('autenticationService.getSievesDigest()', function(/*newValue, oldValue, scope*/) {
+  $scope.authenticationService = Authentication;
+  $scope.$watch('authenticationService.getSievesDigest()', function(/*newValue, oldValue, scope*/) {
     //console.log('$watch - newValue:', newValue);
     //console.log('$watch - oldValue:', oldValue);
-    loadPersons();
+console.log('loadPersons() - $watch');
+    loadPersons(); // load persons list
   }, false);
 
   // private methods
@@ -62,17 +65,21 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   }
 
   if (!$scope.personId) { // load persons list
+/*
+console.log('loadPersons() - main');
     //loadPersons();
     Persons.getPersons($rootScope.data).then(function(persons) {
       $scope.persons = persons;
     });
+*/
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
       if (!cfg.fake) { console.log('person:', person); }
-      //angular.copy(person, $scope.person);
-      $scope.person = person;
-      $scope.person.nat = $scope.person.nationality; // TODO...
+      angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
+      console.log('Persons.getPerson:', $scope.person);
+      //$scope.person = person;
       $scope.person.nationality = 'it';
+      //$scope.person.nat = $scope.person.nationality; // TODO... ???
       $scope.person.vote = 5;
       $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
       $scope.person.streetRegion = 'it';
@@ -140,7 +147,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.tabs.photosOccurrences.hidden = false;
     $scope.photosOccurrencesLoading = true;
     $scope.photosOccurrences = null;
-    //notify.info('photoGetOccurrences(' + url + ')');
+    notify.info('photoGetOccurrences(' + url + ')');
     Persons.photoGetOccurrences(id, url).then(
       function(response) {
 console.info('+++ photoGetOccurrences response:', response);
@@ -164,7 +171,7 @@ console.info('+++ photoGetOccurrences response:', response);
   };
 
   $scope.photosOccurrencesThruthful = function() {
-    console.log('It is unique!');
+    console.log('It is thrutful!');
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;

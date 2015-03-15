@@ -2,6 +2,16 @@
 
 require_once __DIR__ . "/../../lib/simple_html_dom.php";
 
+/*
+require __DIR__ . "/../../classes/services/Network.php";
+$gs = new GoogleSearch();
+$imageUrl = "http://www.torinoerotica.com/wt_foto!annunci!124646!Anteprime!700x525!top1_5.jpeg";
+$maxPages = 1;
+$results = $gs->searchImage($imageUrl, $maxPages);
+print "results:\n"; print_r($results);
+exit;
+*/
+
 class GoogleSearch {
 
   private $searchRemoteImage = "https://www.google.com/searchbyimage?image_url=";
@@ -100,6 +110,9 @@ class GoogleSearch {
    */
   public function getSearchResults(simple_html_dom $dom) {
     $result = [];
+    if (!is_object($dom)) {
+      return $result; // main results div not found
+    }
     $c = count($dom->find("div.srg")) > 1 ? 1 : 0; // if this is first page, we have 2 divs, first with
                                                    // some irrelevant links, so skip the first page
     $d = $dom->find("div.srg", $c); // get second div (if this is first page), or first div
@@ -109,12 +122,22 @@ class GoogleSearch {
 
     // get text, href and imgsrc from links
     $n = 0;
+    $textMaxLen = 64;
+    try {
     foreach($d->find('div.rc') as $div) {
       $a = $div->find('h3.r a', 0);
+      $hrefShort = $a->href;
+      if (strlen($hrefShort) > $textMaxLen) {
+        $hrefShort = substr($hrefShort, 0, $textMaxLen) . "&hellip;";
+      }
       $result[$n]["text"] = htmlspecialchars_decode($a->plaintext, ENT_QUOTES);
       $result[$n]["href"] = $a->href;
+      $result[$n]["hrefShort"] = $hrefShort;
       $result[$n]['imgsrc'] = $div->find('div.th img', 0)->src;
       $n++;
+    }
+    } catch (Exception $e) {
+      throw new Exception("error searching results in dom: " . $e->getMessage());
     }
 
     return $result;
@@ -134,7 +157,7 @@ class GoogleSearch {
    *   ]
    * ]
    */
-  public function searchImage($imageUrl, $numPages = 1) {
+  public function searchImage($imageUrl, $numPages = 3) {
 #return [ "best_guess" => "bestGuess", "search_results" => [ [ "text" => "TEXT", "imgsrc" => "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQbm5ipONSdcESkgazDxbUhFNWthW5cHzWPvF5Bv2nfRqXZNQvYJwSJ7Q", "href" => "https://www.google.it/url?sa=t&rct=j&q=&esrc=s&source=web&cd=11&cad=rja&uact=8&ved=0CEoQFjAK&url=http%3A%2F%2Fwww.perugiatoday.it%2Fcronaca%2Fstrage-gatti-perugia-orrore.html&ei=Q6j8VPa1I4bnyQPE94GIAQ&usg=AFQjCNHJyixc1C1PiBV1uDNIGUcKeF88Zg&sig2=qrSffEYjNkzlCImtA1W0cA" ], ] ];
     try {
       // get first page dom
@@ -144,6 +167,7 @@ class GoogleSearch {
       $nextPageA = $dom->find("#nav a.pn", 0); // check if we have "next page" link (if we don't - it's the only page)
       $dom->clear();
       for ($i = 1; $i < $numPages && $nextPageA; $i++) { // loop through pages [2 - $numPages]
+#$searchResults[] = [ "text" => "$i", "imgsrc" => "http://www.1.com/1.jpg", "href" => "http://www.1.com/", "hrefShort" => "http://www.1.com" ];
         $dom = $this->getRemoteImageSearchDom($this->googleDomain.htmlspecialchars_decode($nextPageA->href));
         $searchResults = array_merge($searchResults, $this->getSearchResults($dom)); // get search results from page and merge with available results
         $nextPageA = $dom->find("#nav a.pn", 0); // check if we have "next page" link (if we don't it's last page)
