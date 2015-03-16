@@ -5,12 +5,12 @@ app.service('Persons', function($http, $q, cfg, notify) {
 
   // private methods
   function handleSuccess(response) {
-console.info('SUCCESS - response.data:', response.data);
+    console.info('SUCCESS - response.data:', response.data);
     if (response.data.error) {
       notify.error(response.data.error);
-      return($q.reject(response.data.error));
+      return $q.reject(response.data.error); // TODO: what does $q.reject does, exactly???
     } else {
-      return(response.data);
+      return response.data;
     }
   }
 
@@ -21,10 +21,10 @@ console.info('SUCCESS - response.data:', response.data);
     ) {
       var message = 'An unknown error occurred in service [Person]';
       notify.error(message);
-      return($q.reject(message));
+      return $q.reject(message);
     }
-console.info('ERROR - response.data:', response.data);
-    return($q.reject(response.data.message));
+    console.info('ERROR - response.data ???????????? WHEN DOES THIS HAPPEN ????????????', response.data);
+    return $q.reject(response.data.message); // TODO: what does $q.reject does, exactly???
   }
 
   // public methods

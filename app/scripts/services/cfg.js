@@ -26,6 +26,8 @@ app.constant('cfg', {
   fake: fake, // DEBUG ONLY
   notify: {
     toastr: true,
+    toastrShortTimeOut: 6000, // milliseconds
+    toastrLongTimeOut: 10000, // milliseconds
     console: true,
   },
   person: {

@@ -115,62 +115,71 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         if (preg_match($site["patterns"]["person-name"], $page_details, $matches) >= 1) {
           $name = $this->cleanName($matches[1]);
         } else {
-          $this->router->log("warning", "person $n name not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n name not found on site [$siteKey]");
           $name = "";
         }
         
         if (preg_match($site["patterns"]["person-sex"], $page_details, $matches) >= 1) {
           $sex = $matches[1];
         } else {
-          $this->router->log("warning", "person $n sex not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n sex not found on site [$siteKey]");
           $sex = "";
         }
 
         if (preg_match($site["patterns"]["person-zone"], $page_details, $matches) >= 1) {
           $zone = $matches[1];
         } else {
-          $this->router->log("info", "person $n zone not found on site [$siteKey]");
+          #$this->router->log("info", "person $n zone not found on site [$siteKey]");
           $zone = "";
         }
         
         if (preg_match($site["patterns"]["person-description"], $page_details, $matches) >= 1) {
           $description = $matches[1];
         } else {
-          $this->router->log("warning", "person $n description not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n description not found on site [$siteKey]");
           $description = "";
         }
  
         if (preg_match($site["patterns"]["person-nationality"], $page_details, $matches) >= 1) {
           $nationality = $this->normalizeNationality($matches[1]);
         } else {
-          $this->router->log("warning", "person $n nationality not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n nationality not found on site [$siteKey]");
           $nationality = "";
         }
-          
-        $person = [];
-        $person["key"] = $key;
-        $person["site_key"] = $siteKey;
-        $person["name"] = $name;
-        $person["url"] = $details_url;
-        $person["timestamp_creation"] = $timestamp; # TODO: do not set if updating...
-        $person["timestamp_last_sync"] = $timestamp; # TODO: do not set if updating...
-        $person["sex"] = $sex;
-        $person["zone"] = $zone;
-        $person["address"] = null;
-        $person["description"] = $description;
-        $person["phone"] = $phone;
-        $person["nationality"] = $nationality;
-        $person["page_sum"] = $page_sum;
-        $person["age"] = null; # age
-        $person["vote"] = null; # vote ([0-9])
+        
+        # TODO: add logic to grab this data from person's (or comments) page
+        $address = "Via Roma, 123, Torino";
+        $age = 28;
+        $vote = 7;
+        # TODO: add logic to handle 'active' flag
+        $active = "yes"; // 'yes' / 'no' / 'syncing' (?)
+
+        $personMaster = [];
+        $personMaster["key"] = $key;
+        $personMaster["site_key"] = $siteKey;
+        $personMaster["url"] = $details_url;
+        $personMaster["timestamp_last_sync"] = $timestamp;
+        $personMaster["page_sum"] = $page_sum;
+        $personMaster["active"] = $active;
+        $personDetail = [];
+        $personDetail["name"] = $name;
+        $personDetail["sex"] = $sex;
+        $personDetail["zone"] = $zone;
+        $personDetail["address"] = $address;
+        $personDetail["description"] = $description;
+        $personDetail["phone"] = $phone;
+        $personDetail["nationality"] = $nationality;
+        $personDetail["age"] = $age;
+        $personDetail["vote"] = $vote; # vote ([0-9])
 
         if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
           $id = $p[0]["id"];
           $this->router->log("debug", " °°° updating person: $key °°°");
-          $this->set($id, $person);
+          $this->set($id, $personMaster, $personDetail); # TODO...
         } else { # new key, insert it
           $this->router->log("debug", " ^^^ inserting person: $key ^^^");
-          $id = $this->add($person);
+          $person["timestamp_creation"] = $timestamp;
+          $id = $this->add($personMaster, $personDetail);
         }
         // add photos
         foreach ($photosUrls as $photoUrl) {
@@ -190,8 +199,8 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     return $person;
   }
   
-  public function add($person) {
-    return $this->db->add("person", $person);
+  public function add($personMaster, $personDetail) {
+    return $this->db->add("person", $personMaster, $personDetail);
   }
   
   public function set($id, $person) {
@@ -440,7 +449,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
    * @return integer: >= 0       the progressive number of the photo
    */
   public function photoStore($idPerson, $photo) {
-    $this->router->log("debug", "photoStore - storing photo");
+    #$this->router->log("debug", "photoStore - storing photo");
     $keyPerson = $this->db->get("person", $idPerson)["key"];
     $personPhotosCount = $this->photoGetCount($idPerson);
     $number = $personPhotosCount + 1;

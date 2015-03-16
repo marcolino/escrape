@@ -74,17 +74,17 @@ class DB extends PDO {
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
-          active VARCHAR(8),
-          page_sum TEXT,
+          page_sum TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
         "
       );
       $this->db->exec(
-        "CREATE TABLE if not exists profile (
+        "CREATE TABLE if not exists person_detail (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           id_person INTEGER,
           id_user INTEGER,
+          active VARCHAR(8),
           name TEXT,
           sex TEXT,
           zone TEXT,
@@ -95,7 +95,7 @@ class DB extends PDO {
           age TEXT,
           vote INTEGER
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
+         CREATE UNIQUE INDEX IF NOT EXISTS key_phone ON person_detail (phone);
         "
       );
       $this->db->exec(
@@ -155,8 +155,9 @@ class DB extends PDO {
   }
 */
 
-  public function getAllSieved($table, $sieves) {
+  public function getAllSieved($table, $sieves) { # TODO: select SYSTEM and USER fields...???!!!
     $params = [];
+    $table .= "_" . "detail";
     try {
       $sql = "SELECT * FROM '$table' WHERE 1 = 1";
       if (
@@ -234,14 +235,21 @@ class DB extends PDO {
 #throw new Exception("sql: [$sql]");
 # TODO: why 2 exceptions thrown???
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#throw new Exception("result: " . json_encode($result));
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("error getting persons with filters", 0, $e);
+      #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
+      throw new Exception("error getting persons with filters: " . $e->getMessage()); # TODO: USE THIS METHOD!!!
     }
   }
 
   public function get($table, $id) {
+/* 
+SELECT p.id, p.key
+FROM person AS p
+LEFT JOIN person_detail AS d
+ON p.id = d.id_person
+GROUP BY p.id, p.key
+*/
     try {
       $sql = "SELECT * FROM $table WHERE id = :id LIMIT 1";
       $statement = $this->db->prepare($sql);
@@ -312,25 +320,58 @@ class DB extends PDO {
     }
   }
 
-  public function add($table, $array) {
-    try {
+  public function add($table, $arrayMaster, $arrayDetail = null) {
+    try { // add master data
+      $tableMaster = $table;
       $fields = $values = "";
-      foreach ($array as $key => $value) {
+      foreach ($arrayMaster as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
-      $sql = "INSERT INTO $table ($fields) VALUES ($values)";
+      $sql = "INSERT INTO $tableMaster ($fields) VALUES ($values)";
       $statement = $this->db->prepare($sql);
-      foreach ($array as $key => &$value) {
+      foreach ($arrayMaster as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();
       if ($statement->rowCount() != 1) {
-        throw new Exception("insert into table $table did insert " . $statement->rowCount() . " records");
+        throw new Exception("insert into table $tableMaster did insert " . $statement->rowCount() . " records");
       }
-      return $this->db->lastInsertId();
+      $lastInsertId = $this->db->lastInsertId();
     } catch (PDOException $e) {
-      throw new Exception("add() error:" . $e);
+      throw new Exception("add person master error (master):" . $e);
+    }
+
+    if (!empty($arrayDetail)) {
+      $arrayDetail["id_person"] = $lastInsertId; // add master person_id to detail table
+      $arrayDetail["id_user"] = 1; // add user_id to detail table # TODO: GET REAL USER ID!!!
+  
+      try { // add details data
+        $tableDetail = $table . "_" . "detail";
+        $fields = $values = "";
+        foreach ($arrayDetail as $key => $value) {
+          $fields .= ($fields ? ", " : "") . $key;
+          $values .= ($values ? ", " : "") . ":" . $key;
+        }
+  
+        $sql = "INSERT INTO $tableDetail ($fields) VALUES ($values)";
+#throw new Exception("detail sql: [$sql]");
+        $statement = $this->db->prepare($sql);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+        }
+        $statement->execute();
+        if ($statement->rowCount() != 1) {
+          throw new Exception("insert into table $tableDetail did insert " . $statement->rowCount() . " records");
+        }
+        $lastInsertId = $this->db->lastInsertId();
+  
+  
+        
+        return $lastInsertId;
+      } catch (PDOException $e) {
+        throw new Exception("add person detail error:" . $e);
+      }
     }
   }
 
@@ -374,7 +415,7 @@ class DB extends PDO {
     }
   }
 
-  private function profile($method) { # TODO: to be tested...
+  private function profileForSpeed($method) { # TODO: to be tested...
     $time_start = microtime(true);
     call($method);
     $time_end = microtime(true);

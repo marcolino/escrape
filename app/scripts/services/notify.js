@@ -4,6 +4,7 @@ app.service('notify', function(cfg, toastr) {
 
  function stringify(args) { // stringify array in args
     var retval = '';
+
     // show exceptions in a custom way
     if (
       typeof args[0].message !== 'undefined' &&
@@ -12,36 +13,39 @@ app.service('notify', function(cfg, toastr) {
       typeof args[0].code !== 'undefined'
     ) {
       retval = 
-        '<u><b>Exception:</u></b><br>' +
-        args[0].message + '<br>' +
-        '<small>in file: <i>' + args[0].file + '</i></small><br>' +
-        '<small>at line: <i>' + args[0].line + '</i></small><br>' +
-        '<small>with code: <i>' + args[0].code + '</i></small><br>'
+        '<b>System exception:</b>' + '<br>' +
+        args[0].message + '<br>' + '<br>' +
+        '<small>' +
+        'in&nbsp;file:&nbsp;<i>' + args[0].file + '</i>,&nbsp;' +
+        'at&nbsp;line:&nbsp;<i>' + args[0].line + '</i>,&nbsp;' +
+        'with&nbsp;code:&nbsp;<i>' + args[0].code + '</i>.' +
+        '</small>'
       ;
       return retval;
     }
     // TODO: we are now handling only first exception (args[0]): handle multiple exceptions, too?
 
-    var sep = ' | '; // number/string separator
     // see if all arguments are number or string (to avoid JSON.stringify...)
+    var sep = ' | '; // number/string separator
     var type = '';
-    for (var i = 0; i < args.length; i++) {
+    var maxlen = 500;
+    for (var i = 0; i < args.length; i++) { // multiple elements array
       type = typeof args[i];
-      if (type !== 'number' && type !== 'string') { // not numeric/string type
-        return JSON.stringify(args);
+      if (type === 'number' || type === 'string') { // not numeric/string type
+        retval += args[i];
+      } else {
+        retval += JSON.stringify(args[i]);
       }
       if (retval) {
         retval += sep;
       }
-      retval += args[i];
     }
-    if (args.length === 0) { // empty array
-      return null;
+
+    // truncate too long messages (keep initial and final part)
+    if (retval.length > maxlen) {
+      retval = retval.substr(0, maxlen / 2) + ' &hellip; ' + retval.substr((maxlen / 2) + 1, (maxlen / 2));
     }
-    if (args.length === 1) { // one element array
-      return args[0];
-    }
-    // multiple elements array
+
     return retval;
   }
 
@@ -51,20 +55,20 @@ app.service('notify', function(cfg, toastr) {
     success: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.success(stringify(args)); //, 'Success');
+        toastr.success(stringify(args), null, { timeOut: cfg.notify.toastrShortTimeOut });
       }
       if (cfg.notify.console) {
-        console.log(args);
+        console.log(args.length > 1 ? args : args[0]);
       }
     },
     successWithTitle: function () {
       var args = [].slice.call(arguments);
       var title = args.shift();
       if (cfg.notify.toastr) {
-        toastr.success(stringify(args), title);
+        toastr.success(stringify(args), title, { timeOut: cfg.notify.toastrShortTimeOut });
       }
       if (cfg.notify.console) {
-        console.log('[' + title + ']', args);
+        console.log('[' + title + ']', args.length > 1 ? args : args[0]);
       }
     },
 
@@ -72,20 +76,20 @@ app.service('notify', function(cfg, toastr) {
     info: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.info(stringify(args)); //, 'Info');
+        toastr.info(stringify(args), null, { timeOut: cfg.notify.toastrShortTimeOut });
       }
       if (cfg.notify.console) {
-        console.info(args);
+        console.info(args.length > 1 ? args : args[0]);
       }
     },
     infoWithTitle: function () {
       var args = [].slice.call(arguments);
       var title = args.shift();
       if (cfg.notify.toastr) {
-        toastr.info(stringify(args), title);
+        toastr.info(stringify(args), title, { timeOut: cfg.notify.toastrShortTimeOut });
       }
       if (cfg.notify.console) {
-        console.info('[' + title + ']', args);
+        console.info('[' + title + ']', args.length > 1 ? args : args[0]);
       }
     },
   
@@ -93,20 +97,20 @@ app.service('notify', function(cfg, toastr) {
     warning: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.warning(stringify(args)); //, 'Warning');
+        toastr.warning(stringify(args), null, { timeOut: cfg.notify.toastrShortTimeOut });
       }
       if (cfg.notify.console) {
-        console.warn(args);
+        console.warn(args.length > 1 ? args : args[0]);
       }
     },
     warningWithTitle: function () {
       var args = [].slice.call(arguments);
       var title = args.shift();
       if (cfg.notify.toastr) {
-        toastr.warning(stringify(args), title);
+        toastr.warning(stringify(args), title, { timeOut: cfg.notify.toastrShortTimeOut });
       }
       if (cfg.notify.console) {
-        console.warn('[' + title + ']', args);
+        console.warn('[' + title + ']', args.length > 1 ? args : args[0]);
       }
     },
 
@@ -114,20 +118,20 @@ app.service('notify', function(cfg, toastr) {
     error: function () {
       var args = [].slice.call(arguments);
       if (cfg.notify.toastr) {
-        toastr.error(stringify(args)); //, 'Error');
+        toastr.error(stringify(args), null, { timeOut: cfg.notify.toastrLongTimeOut });
       }
       if (cfg.notify.console) {
-        console.error(args);
+        console.error(args.length > 1 ? args : args[0]);
       }
     },
     errorWithTitle: function () {
       var args = [].slice.call(arguments);
       var title = args.shift();
       if (cfg.notify.toastr) {
-        toastr.error(stringify(args), title);
+        toastr.error(stringify(args), title, { timeOut: cfg.notify.toastrLongTimeOut });
       }
       if (cfg.notify.console) {
-        console.error('[' + title + ']', args);
+        console.error('[' + title + ']', args.length > 1 ? args : args[0]);
       }
     },
 
