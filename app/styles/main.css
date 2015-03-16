@@ -341,6 +341,16 @@ p.menu-item-separator {
   overflow: auto;
   overflow-y: hidden;
 }
+.slider-image {
+  display: inline-block;
+  float: left;
+  margin-right: 5px;
+  text-align: center;
+}
+.label-image {
+  vertical-align: top;
+  margin-top: 2px !important;
+}
 
 .scrollable-menu {
   height: auto;

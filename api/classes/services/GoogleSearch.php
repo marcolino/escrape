@@ -30,7 +30,7 @@ class GoogleSearch {
    */
   public function getUrlDom($url, $post = false) {
     $this->network = new Network();
-    $data = $this->network->getUrlContents($url, $this->charset, $post);
+    $data = $this->network->getUrlContents($url, $this->charset, $post, false, false);
     $dom = str_get_html($data);
     return $dom;
   }

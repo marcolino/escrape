@@ -1,8 +1,3 @@
-<style>
-.img-fake {
-  box-shadow: 0px 0px 1px red;
-}
-</style>
 <div class="container">
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
@@ -29,18 +24,16 @@
         <div class="form-group">
           <div class="col-xs-12">
             <div class="slider-horizontal">
-            <span ng-repeat="(number, photo) in person.photos">
+              <span ng-repeat="(number, photo) in person.photos" class="slider-image">
               <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
               <a href="" ng-click="tabSelect('photos', number)" class="no-text-decoration">
-                <!-- This solution makes images in background squared'...
-                <span>
-                  <img ng-show="photo.thruthfulness !== 'false'" ng-src="{{cfg.apiUri + '/' + photo.path_small}}" title="not-fake photo" class="img-rounded img-clip" />
-                  <img ng-show="photo.thruthfulness === 'false'" src="images/watermarks/fake-small.png" ng-style="{'background-image':'url({{cfg.apiUri + '/' + photo.path_small}})'}" title="fake photo" class="img-rounded img-clip" />
-                </span>
-                -->
                 <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" ng-class="{'img-fake': photo.thruthfulness === 'false'}" class="img-rounded img-clip" />
+                <br>
+                <span ng-if="photo.thruthfulness === 'false'">
+                  <img src="images/watermarks/fake-label.png" class="label-image" />
+                </span>
               </a>
-            </span>
+              </span>
             </div>
           </div>
         </div>
@@ -230,7 +223,7 @@
           </div>
         </a>
       </div>
-      <div ng-show="!photosOccurrencesLoading && !photosOccurrences">
+      <div ng-show="!photosOccurrencesLoading && photosOccurrences.length === 0">
         <div class="text-center">
           <h4>No other occurrences of this photo found in the whole web: it is presumably thruthful.</h4>
         </div>

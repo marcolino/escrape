@@ -29,7 +29,7 @@ class DB extends PDO {
         self::DB_TYPE . ":" . self::DB_NAME,
         self::DB_USER,
         self::DB_PASS
-        #, [ PDO::ATTR_PERSISTENT => TRUE ] # TODO: on update this causes: "General error: 1 no such column: key_site" ... ?
+        #, [ PDO::ATTR_PERSISTENT => TRUE ] # TODO: on update this causes a "General error"...
       );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       if ($new) { // db doesn't exist, create TABLEs...
@@ -56,28 +56,42 @@ class DB extends PDO {
           role TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS username_idx ON user (username);
+         -- populate with default system user --
+         INSERT INTO user (username, password, email, role)
+         SELECT '*', '-', '', 'system'
+         WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = '*');
+         -- populate with default admin user --
          INSERT INTO user (username, password, email, role)
          SELECT 'marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin'
-         WHERE NOT EXISTS(SELECT 1 FROM user WHERE id = 1)
+         WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = 'marco');
         "
       );
       $this->db->exec(
         "CREATE TABLE if not exists person (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          key VARCHAR(16),
-          key_site VARCHAR(16),
-          name TEXT,
+          key VARCHAR(32),
+          site_key VARCHAR(16),
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
           active VARCHAR(8),
+          page_sum TEXT,
+         );
+         CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
+        "
+      );
+      $this->db->exec(
+        "CREATE TABLE if not exists profile (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_person INTEGER,
+          id_user INTEGER,
+          name TEXT,
           sex TEXT,
           zone TEXT,
           address TEXT,
           description TEXT,
           phone VARCHAR(16),
           nationality VARCHAR(2),
-          page_sum TEXT,
           age TEXT,
           vote INTEGER
          );
@@ -140,6 +154,7 @@ class DB extends PDO {
     }
   }
 */
+
   public function getAllSieved($table, $sieves) {
     $params = [];
     try {
@@ -238,6 +253,7 @@ class DB extends PDO {
       throw new Exception("error getting person: " . $e);
     }
   }
+
   public function getByField($table, $fieldName, $fieldValue) {
     try {
       $sql = "SELECT * FROM $table WHERE $fieldName = :$fieldName";
@@ -250,6 +266,7 @@ class DB extends PDO {
       throw new Exception("getByField() error:" . $e);
     }
   }
+
   public function getByFields($table, $array) {
     try {
       $where = "";
@@ -268,6 +285,7 @@ class DB extends PDO {
       throw new Exception("getByFields() error:" . $e);
     }
   }
+
   public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
     try {
       $sql = "select avg($fieldName) as avg from $table where id_person = :id_person";
@@ -280,6 +298,7 @@ class DB extends PDO {
       throw new Exception("getAverageFieldByPerson() error:" . $e);
     }
   }
+
   public function countByField($table, $fieldName, $fieldValue) {
     try {
       $sql = "SELECT COUNT($fieldName) AS count FROM $table WHERE $fieldName = :fieldValue";
@@ -292,6 +311,7 @@ class DB extends PDO {
       throw new Exception("countByField() error:" . $e);
     }
   }
+
   public function add($table, $array) {
     try {
       $fields = $values = "";
@@ -313,6 +333,7 @@ class DB extends PDO {
       throw new Exception("add() error:" . $e);
     }
   }
+
   public function set($table, $id, $array) {
     try {
       $set = "";
@@ -328,13 +349,14 @@ class DB extends PDO {
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("update into table $table fir id [$id] did update " . $statement->rowCount() . " records");
+        throw new Exception("update into table $table for id [$id] did update " . $statement->rowCount() . " records");
       }
       return $id;
     } catch (PDOException $e) {
       throw new Exception("set() error:" . $e);
     }
   }
+
   public function delete($table, $id) {
     try {
       $sql = "DELETE FROM $table WHERE id = :id";
@@ -351,6 +373,7 @@ class DB extends PDO {
       throw new Exception("delete() error:" . $e);
     }
   }
+
   private function profile($method) { # TODO: to be tested...
     $time_start = microtime(true);
     call($method);
@@ -358,6 +381,7 @@ class DB extends PDO {
     $time = $time_end - $time_start;
     return $time;
   }
+
   function __destruct() {
     $this->db = null;
   }

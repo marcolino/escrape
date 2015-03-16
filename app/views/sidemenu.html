@@ -6,7 +6,7 @@
 
       <!-- search widget -->
       <div class="input-group">
-        <input type="text" class="form-control input-search-clear" ng-model="data.search.term" placeholder="Search" key-enter="search()">
+        <input type="text" class="form-control input-search-clear" ng-model="sieves.search.term" placeholder="Search" key-enter="search()">
         <div class="input-group-btn">
           <button class="btn btn-default button-search-clear" ng-click="searchClear()">
             <i class="glyphicon glyphicon-remove"></i>
@@ -18,16 +18,16 @@
       </div>
       <p class="menu-item-separator"></p>
 
-      <accordion-group is-open="data.filters.isopened">
+      <accordion-group is-open="sieves.filters.isopened">
         <accordion-heading>
-          Filters <i class="pull-right glyphicon" ng-click="toggleSectionOpened('filters', data.filters.isopened)" ng-class="{'glyphicon-chevron-down': data.filters.isopened, 'glyphicon-chevron-right': !data.filters.isopened}"></i>
+          Filters <i class="pull-right glyphicon" ng-click="toggleSectionOpened('filters', sieves.filters.isopened)" ng-class="{'glyphicon-chevron-down': sieves.filters.isopened, 'glyphicon-chevron-right': !sieves.filters.isopened}"></i>
         </accordion-heading>
   
         <div>Active / Not active:</div>
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
-            <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getClassActive(data.filters.active)"></i></span>
-            <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="data.filters.active" readonly="" />
+            <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getClassActive(sieves.filters.active)"></i></span>
+            <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="sieves.filters.active" readonly="" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="mode in actives()">
@@ -40,7 +40,7 @@
         <div>Minumum vote:</div>
         <div class="input-group">
           <span class="input-group-addon" title="Vote up" ng-click="setFilterVoteMin(+1)"><i class="glyphicon glyphicon-thumbs-up"></i></span>
-          <input type="text" class="form-control default-cursor" ng-value="data.filters.voteMin" readonly="" />
+          <input type="text" class="form-control default-cursor" ng-value="sieves.filters.voteMin" readonly="" />
           <span class="input-group-addon" title="Vote down" ng-click="setFilterVoteMin(-1)"><i class="glyphicon glyphicon-thumbs-down"></i></span>
         </div>
         <p class="menu-item-separator"></p>
@@ -49,7 +49,7 @@
         <div class="form-group">
           <div class="input-group">
             <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+1)"><i class="glyphicon glyphicon-bullhorn rotate90ccw"></i></span>
-            <input type="text" class="form-control default-cursor" ng-value="data.filters.commentsCountMin" readonly="" />
+            <input type="text" class="form-control default-cursor" ng-value="sieves.filters.commentsCountMin" readonly="" />
             <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-1)"><i class="glyphicon glyphicon-bullhorn rotate90cw"></i></span>
           </div>
         </div>
@@ -58,15 +58,15 @@
         <div>In age range:</div>
         <div class="input-group" style="height:20px">
           <span class="input-group-addon" title="Age range"><i class="glyphicon glyphicon-apple"></i></span>
-          <div range-slider-inline show-values="false" min="cfg.person.age.min" max="cfg.person.age.max" model-min="data.filters.age.min" model-max="data.filters.age.max" ng-mouseup="setFilterAgeRange()" touchend="setFilterAgeRange()"></div>
+          <div range-slider-inline show-values="false" min="cfg.person.age.min" max="cfg.person.age.max" model-min="sieves.filters.age.min" model-max="sieves.filters.age.max" ng-mouseup="setFilterAgeRange()" touchend="setFilterAgeRange()"></div>
         </div>
         <p class="menu-item-separator"></p>
   
         <div>From country:</div>
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
-            <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(data.filters.nationality)"></i></i></span>
-            <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="countries.getCountryName(data.filters.nationality)" />
+            <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(sieves.filters.nationality)"></i></i></span>
+            <input class="form-control default-cursor" id="query" name="query" type="text" ng-value="countries.getCountryName(sieves.filters.nationality)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="(countryCode, countryName) in activeCountries()" class="flag-li">
@@ -81,7 +81,7 @@
           Apply<!-- we do force an "apply" (loadPersons()) even on backdrop... -->
         </button>
 
-        <button class="btn btn-warning pull-right" ng-click="resetData('filters')" title="Reset all changes and close side menu">
+        <button class="btn btn-warning pull-right" ng-click="resetSieves('filters')" title="Reset all changes and close side menu">
           <i class="glyphicon glyphicon-ban-circle"></i>
           Reset all
         </button>
@@ -90,9 +90,9 @@
 
       <p class="menu-item-separator"></p>
 
-      <accordion-group is-open="data.options.isopened">
+      <accordion-group is-open="sieves.options.isopened">
         <accordion-heading>
-          Options <i class="pull-right glyphicon" ng-click="toggleDataOpened('options', data.options.isopened)" ng-class="{'glyphicon-chevron-down': data.options.isopened, 'glyphicon-chevron-right': !data.options.isopened}"></i>
+          Options <i class="pull-right glyphicon" ng-click="toggleDataOpened('options', sieves.options.isopened)" ng-class="{'glyphicon-chevron-down': sieves.options.isopened, 'glyphicon-chevron-right': !sieves.options.isopened}"></i>
         </accordion-heading>
   
         Not yet implemented...<br>

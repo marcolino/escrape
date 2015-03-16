@@ -1,13 +1,23 @@
 'use strict';
 
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, /*Sites, */Countries, Persons, Comments) {
-  $scope.persons = [{}];
+$scope.images = [
+ 'images/users/user-0.jpg',
+ 'images/users/user-1.jpg',
+ 'images/users/user-2.jpg',
+ 'images/users/user-3.jpg',
+ 'images/users/user-4.jpg',
+];
+  $scope.persons = [];
   $scope.person = {};
 
   // TODO: avoid visualization errors before person is fully loaded...
+
   //$scope.person.timestampCreation = 0; // assigning 0 is of no use..., and ng-cloack seems of no use, either... shell add 0 default on view... :-()
+  /* jshint camelcase: false */
   $scope.person.timestamp_creation = 0;
   $scope.person.timestamp_last_sync = 0;
+  /* jshint camelcase: true */
 
   $scope.sites = {
     'google+': 'googleplus.com',
@@ -59,7 +69,7 @@ console.log('loadPersons() - $watch');
   }
 
   function loadPersons() {
-    Persons.getPersons($rootScope.data).then(function(persons) {
+    Persons.getPersons($rootScope.sieves).then(function(persons) {
       applyPersons(persons);
     });
   }
@@ -68,7 +78,7 @@ console.log('loadPersons() - $watch');
 /*
 console.log('loadPersons() - main');
     //loadPersons();
-    Persons.getPersons($rootScope.data).then(function(persons) {
+    Persons.getPersons($rootScope.sieves).then(function(persons) {
       $scope.persons = persons;
     });
 */
@@ -147,7 +157,7 @@ console.log('loadPersons() - main');
     $scope.tabs.photosOccurrences.hidden = false;
     $scope.photosOccurrencesLoading = true;
     $scope.photosOccurrences = null;
-    notify.info('photoGetOccurrences(' + url + ')');
+    //notify.info('photoGetOccurrences(' + url + ')');
     Persons.photoGetOccurrences(id, url).then(
       function(response) {
 console.info('+++ photoGetOccurrences response:', response);

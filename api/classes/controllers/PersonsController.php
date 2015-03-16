@@ -149,7 +149,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
           
         $person = [];
         $person["key"] = $key;
-        $person["key_site"] = $siteKey;
+        $person["site_key"] = $siteKey;
         $person["name"] = $name;
         $person["url"] = $details_url;
         $person["timestamp_creation"] = $timestamp; # TODO: do not set if updating...
@@ -218,7 +218,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
       $list[$personId] = [
         "id" => $person["id"],
         "key" => $person["key"],
-        "key_site" => $person["key_site"],
+        "site_key" => $person["site_key"],
         "name" => $person["name"],
         "phone" => $person["phone"],
         "nationality" => $person["nationality"],
@@ -597,7 +597,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     ];
     $person[0] = [];
     $person[0]["key"] = "linkedin-123456";
-    $person[0]["key_site"] = "linkedin";
+    $person[0]["site_key"] = "linkedin";
     $person[0]["name"] = "Samantha";
     $person[0]["url"] = "http://static.fanpage.it";
     $person[0]["timestamp_creation"] = 1424248678;
@@ -619,7 +619,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     ];
     $person[1] = [];
     $person[1]["key"] = "twitter-789012";
-    $person[1]["key_site"] = "twitter";
+    $person[1]["site_key"] = "twitter";
     $person[1]["name"] = "Elena";
     $person[1]["url"] = "http://www.newshd.net";
     $person[1]["timestamp_creation"] = 1424248555;

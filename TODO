@@ -1,20 +1,15 @@
 TODO 1.0:
- - key_site => site_key
- - data => sieves
- - handle css for fake photos 
- - move style="..." from views to style.css
+ - update DB class to work with new person+detail schema...
+ - register: do no accept reserved username '*'... (error: "username not allowed", not "already registered"...)
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list page
- - angular.rangeSlider.js:
-    154   '<div class="ngrs-handle ngrs-handle-min"><i class="ngrs-value-inline">{{filteredModelMin}}</i></div>',
-    155   '<div class="ngrs-handle ngrs-handle-max"><i class="ngrs-value-inline">{{filteredModelMax}}</i></div>',
-   now we changed source... If author does not answer, we shell fork and write a custom template, or something...
  - in goolge search results page, make buttons (Fake, Thrutful, Don't know) visible... (results in  a scroller)
  - in goolge search results page, handel error "Google thinks we're bot and won't process our requests"...
  - before goolge search, check image has already thruthful flag...
  - when saving photo url, normalize it (strip "../../"...)
  - prepend today date to slim log
  - after signIn(), issue a persons-reload()...
+ - move style="..." from all views to style.css...
 
 TODO 2.0:
  - I18n (?...)
@@ -36,4 +31,12 @@ DONE:
  - @office, clean setup/*.php contents...
  - why DB errors are shown so badly in notify?
  - why DB errors are shown twice in notify?
- 
+ - angular.rangeSlider.js:
+    154   '<div class="ngrs-handle ngrs-handle-min"><i class="ngrs-value-inline">{{filteredModelMin}}</i></div>',
+    155   '<div class="ngrs-handle ngrs-handle-max"><i class="ngrs-value-inline">{{filteredModelMax}}</i></div>',
+   now we changed source... If author does not answer, we shell fork and write a custom template, or something...
+ - key_site => site_key
+ - data => sieves
+ - store(...)Data => store(...)Sieves
+ - handle css for fake photos 
+ - test new "CREATE TABLE IF NOT EXISTS user"

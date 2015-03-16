@@ -43,22 +43,6 @@ class CommentsController {
     return $this->db->getByField("comment", "phone", $phone);
   }
   
-/*
-  public function countByPhone($phone) {
-    if (!$phone) {
-      throw new Exception("can't get comments by phone: no phone specified");
-    }
-    $phoneMd5 = md5($phone);
-    $n = 0;
-    foreach ($this->db->data["comments"] as $comment) {
-      if ($comment["phoneMd5"] === $phoneMd5) {
-        $n++;
-      }
-    }
-    return $n;
-  }
-*/
-
   public function countByPerson($idPerson) {
     if (!$idPerson) {
       throw new Exception("can't get comments count by person: no person id specified");
@@ -84,6 +68,7 @@ class CommentsController {
     $n = 0;
 
 $phones = []; # TODO: temporarily using this array to skip duplicate phones...
+# TODO: "data" is obsolete...
     foreach ($this->db->data["persons"] as $person) {
 if (array_key_exists($person["phone"], $phones)) {
   $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "***** skipping");
@@ -91,13 +76,6 @@ if (array_key_exists($person["phone"], $phones)) {
 } else {
   $phones[$person["phone"]] = 1;
 }
-
-/*
-if ($person["comments_last_synced"]) { # TODO: by the moment, skip already sync'ed persons; should process them nonetheless...
-  $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "***** already synced...");
-  continue;
-}
-*/
 
 if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02") { # DEBUG
   $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "***** JUST synced...");

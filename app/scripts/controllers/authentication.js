@@ -4,7 +4,7 @@ app.controller('AuthenticationController',
   function ($scope, $rootScope, $location, $aside, $cookieStore, $timeout, cfg, Authentication, Countries) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
-    $scope.dataDefaults = {
+    $scope.sievesDefaults = {
       search: {
         term: '',
       },
@@ -15,14 +15,14 @@ app.controller('AuthenticationController',
         commentsCountMin: 0,
         age: {
           min: 18,
-          max: 70,
+          max: 75,
         },
         nationality: '',
       },
       options: {
       },
     };
-    $scope.dataOriginal = {};
+    $scope.sievesOriginal = {};
 
     $scope.openSideMenu = function(position) {
       $aside.open({ // side menu instance
@@ -37,7 +37,7 @@ app.controller('AuthenticationController',
               e.stopPropagation();
             }
             // set new sieves digest in service
-            this.setSievesDigest($scope.data);
+            this.setSievesDigest($scope.sieves);
           };
         }
       }).result.then(
@@ -49,17 +49,17 @@ app.controller('AuthenticationController',
       );
     };
 
-    $scope.setSievesDigest = function (data) {
+    $scope.setSievesDigest = function (sieves) {
       var digest;
-      if (data) {
+      if (sieves) {
         digest =
-          data.search.term + '\0' +
-          data.filters.active + '\0' +
-          data.filters.voteMin + '\0' +
-          data.filters.commentsCountMin + '\0' +
-          data.filters.age.min + '\0' +
-          data.filters.age.max + '\0' +
-          data.filters.nationality.countryCode + '\0'
+          sieves.search.term + '\0' +
+          sieves.filters.active + '\0' +
+          sieves.filters.voteMin + '\0' +
+          sieves.filters.commentsCountMin + '\0' +
+          sieves.filters.age.min + '\0' +
+          sieves.filters.age.max + '\0' +
+          sieves.filters.nationality.countryCode + '\0'
         ;
       }
       Authentication.setSievesDigest(digest);
@@ -138,39 +138,39 @@ app.controller('AuthenticationController',
     };
 
     $scope.search = function () {
-      $scope.storeData('search'); // store search term (really we want to store search terms?)
+      $scope.storeSieves('search'); // store search term (really we want to store search terms?)
       $scope.close();
     };
 
     $scope.searchClear = function () {
       console.log('searchClear');
-      $scope.resetData('search');
+      $scope.resetSieves('search');
     };
 
     $scope.setFilterVoteMin = function (n) {
       if (n > 0) {
-        $scope.data.filters.voteMin =
-          Math.min($scope.cfg.person.vote.max, $scope.data.filters.voteMin + n);
+        $scope.sieves.filters.voteMin =
+          Math.min($scope.cfg.person.vote.max, $scope.sieves.filters.voteMin + n);
       } else {
-        $scope.data.filters.voteMin =
-          Math.max($scope.cfg.person.vote.min, $scope.data.filters.voteMin + n);
+        $scope.sieves.filters.voteMin =
+          Math.max($scope.cfg.person.vote.min, $scope.sieves.filters.voteMin + n);
       }
-      $scope.storeData('filters');
+      $scope.storeSieves('filters');
     };
 
     $scope.setFilterCommentsCountMin = function (n) {
       if (n > 0) {
-        $scope.data.filters.commentsCountMin += n;
+        $scope.sieves.filters.commentsCountMin += n;
       } else {
-        $scope.data.filters.commentsCountMin =
-          Math.max(0, $scope.data.filters.commentsCountMin + n);
+        $scope.sieves.filters.commentsCountMin =
+          Math.max(0, $scope.sieves.filters.commentsCountMin + n);
       }
-      $scope.storeData('filters');
+      $scope.storeSieves('filters');
     };
 
     $scope.setFilterAgeRange = function () {
       // filter values are automatically updated via the model
-      $scope.storeData('filters');
+      $scope.storeSieves('filters');
     };
 
     $scope.actives = function () {
@@ -197,8 +197,8 @@ app.controller('AuthenticationController',
     };
 
     $scope.setFilterActive = function (mode) {
-      $scope.data.filters.active = mode;
-      $scope.storeData('filters');
+      $scope.sieves.filters.active = mode;
+      $scope.storeSieves('filters');
     };
 
     $scope.getClassActive = function(mode) {
@@ -214,8 +214,8 @@ app.controller('AuthenticationController',
     };
 
     $scope.setFilterNationalityCountry = function (code) {
-      $scope.data.filters.nationality =code;
-      $scope.storeData('filters');
+      $scope.sieves.filters.nationality =code;
+      $scope.storeSieves('filters');
     };
 
 /*
@@ -231,7 +231,7 @@ app.controller('AuthenticationController',
     $scope.toggleSectionOpened = function (section/*, isopened*/) {
       // store filters on filters opened toggle to save opened status
       $timeout(function() {
-        $scope.storeData(section);
+        $scope.storeSieves(section);
       });
     };
 
@@ -239,36 +239,36 @@ app.controller('AuthenticationController',
       Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
     }
 
-    $scope.loadData = function () {
-      $scope.data = {};
+    $scope.loadSieves = function () {
+      $scope.sieves = {};
       var key = cfg.site.name;
       if ($scope.signedIn()) { // add authdata to key, if user is signed in
         key += '-' + $rootScope.globals.currentUser.authdata;
-        console.log('loading data for user', $rootScope.globals.currentUser.username);
+        console.log('loading sieves for user', $rootScope.globals.currentUser.username);
       } else {
-        console.log('loading data for guest');
+        console.log('loading sieves for guest');
       }
-      $scope.data = $cookieStore.get(key);
-      if (!$scope.data) {
-        $scope.data = angular.copy($scope.dataDefaults);
+      $scope.sieves = $cookieStore.get(key);
+      if (!$scope.sieves) {
+        $scope.sieves = angular.copy($scope.sievesDefaults);
       }
-      console.log('loaded data:', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here? (AND, do we need $rootScope.data???)
-      angular.copy($scope.data, $scope.dataOriginal); // save loaded data as dataOriginal, to be able to check for modifications
-      console.log('$scope.dataOriginal:', $scope.dataOriginal);
+      console.log('loaded sieves:', $scope.sieves);
+      $rootScope.sieves = $scope.sieves;
+      angular.copy($scope.sieves, $scope.sievesOriginal); // save loaded sieves as sievesOriginal, to be able to check for modifications
+      console.log('$scope.sievesOriginal:', $scope.sievesOriginal);
     };
 
-    $scope.storeData = function () {
+    $scope.storeSieves = function () {
       var key = cfg.site.name;
       if ($scope.signedIn()) {
         key += '-' + $rootScope.globals.currentUser.authdata;
       }
-      $cookieStore.put(key, $scope.data);
-      console.log('stored data:', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here? (AND, do we need $rootScope.data???)
+      $cookieStore.put(key, $scope.sieves);
+      console.log('stored sieves:', $scope.sieves);
+      $rootScope.sieves = $scope.sieves;
     };
 
-    $scope.resetData = function (section) {
+    $scope.resetSieves = function (section) {
       var key = cfg.site.name;
       if ($scope.signedIn()) {
         key += '-' + $rootScope.globals.currentUser.authdata;
@@ -276,28 +276,28 @@ app.controller('AuthenticationController',
       switch (section) {
         default:
         case null:
-          //$scope.data = angular.copy($scope.dataDefaults);
-          angular.copy($scope.dataDefaults, $scope.data);
+          //$scope.sieves = angular.copy($scope.sievesDefaults);
+          angular.copy($scope.sievesDefaults, $scope.sieves);
           break;
         case 'search':
-          //$scope.data.search = angular.copy($scope.dataDefaults.search);
-          angular.copy($scope.dataDefaults.search, $scope.data.search);
+          //$scope.sieves.search = angular.copy($scope.sievesDefaults.search);
+          angular.copy($scope.sievesDefaults.search, $scope.sieves.search);
           break;
         case 'filters':
-          //$scope.data.filters = angular.copy($scope.dataDefaults.filters);
-          angular.copy($scope.dataDefaults.filters, $scope.data.filters);
+          //$scope.sieves.filters = angular.copy($scope.sievesDefaults.filters);
+          angular.copy($scope.sievesDefaults.filters, $scope.sieves.filters);
           break;
         case 'options':
-          //$scope.data.options = angular.copy($scope.dataDefaults.options);
-          angular.copy($scope.dataDefaults.options, $scope.data.options);
+          //$scope.sieves.options = angular.copy($scope.sievesDefaults.options);
+          angular.copy($scope.sievesDefaults.options, $scope.sieves.options);
           break;
       }
-      $cookieStore.put(key, $scope.data);
-      console.log('reset data to defaults for section ' + section + ':', $scope.data);
-      $rootScope.data = $scope.data; // TODO: assign reference or copy object, here?
+      $cookieStore.put(key, $scope.sieves);
+      console.log('reset sieves to defaults for section ' + section + ':', $scope.sieves);
+      $rootScope.sieves = $scope.sieves;
     };
 
-  // load data (filters, options, ...)
-    $scope.loadData();
+    // load sieves (search, filters, options, ...)
+    $scope.loadSieves();
   }
 );
