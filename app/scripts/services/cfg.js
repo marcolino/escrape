@@ -34,8 +34,8 @@ app.constant('cfg', {
       max: 9,
     },
     age: {
-      min: 18,
-      max: 70,
+      min: 0,
+      max: 100,
     },
   },
 });

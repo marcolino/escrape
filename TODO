@@ -1,11 +1,8 @@
 TODO 1.0:
- - why DB errors are shown so badly in notify?
- - why DB errors are shown twice in notify?
  - key_site => site_key
  - data => sieves
  - handle css for fake photos 
  - move style="..." from views to style.css
- - @office, clean setup/*.php contents...
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list page
  - angular.rangeSlider.js:
@@ -36,4 +33,7 @@ DONE:
  - in goolge search results page, shorten long urls text...
  - see if angular.rangeslider can be modified to handle inline sliders...
  - in goolge search results page, on empty results, do not show buttons ...
+ - @office, clean setup/*.php contents...
+ - why DB errors are shown so badly in notify?
+ - why DB errors are shown twice in notify?
  

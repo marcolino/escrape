@@ -1,20 +1,20 @@
 <?php
   $this->commentsDefinition = [
     "gnf" => [
-      "domain" => "gnoccaforum.com",
+      "domain" => "twitter.com",
       "charset" => "utf-8",
       "locale" => "it_IT.UTF-8",
       "timezone" => "Europe/Rome",
       "patterns" => [
-        "topic" => "/<td.*?id=\"top_subject\">\s*Topic: (.*?)\s*\(Read \d+ times\)\s*<\/td>/s",
-        "block" => "/<table\s+width=\"100%\"\s+cellpadding=\"5\"\s+cellspacing=\"0\"\s+border=\"1\"\s+border-color=\"#cccccc\"\s*>\s+(?:<tbody>)?<tr>(.*?)<\/tr>\s+(?:<\/tbody>)?<\/table>/s",
-        "author" => "/<b>(?:<a href=\".*?\" title=\"View the profile of .*?\">)?(.*?)(?:<\/a>)?<\/b><br \/>\s*<span class=\"smalltext\">/s",
-        "author-karma" => "/<br \/>\s*Karma:\s*(\+?\d*\/-\d*)\s*<br \/>/s",
-        "author-posts" => "/<br \/>\s*Posts:\s*(\d*)\s*<br \/>/s",
-        "date" => "/<span class=\"smalltext\">«\s*<b>.*on:<\/b>\s*(.*?)\s*»<\/span>/s",
-        "content" => "/(<div class=\"post\">.*?\s*(?:<div class=\"post\">|$))/s",
-        "quote-signature" => "/<div class=\"quoteheader\">.*<\/div>(.*)/s",
-        "next-link" => "/<b>Pagine:<\/b>.*?\[<strong>\d+<\/strong>\] <a class=\"navPages\" href=\"(.*?)\">\d+<\/a>/s",
+        "topic" => "/TODO TOPIC/s",
+        "block" => "/TODO BLOCK/s",
+        "author" => "/TODO AUTHOR/s",
+        "author-karma" => "/TODO AUTHOR_KARMA/s",
+        "author-posts" => "/TODO AUTHOR_POSTS/s",
+        "date" => "/TODO DATE/s",
+        "content" => "/TODO CONTENT/s",
+        "quote-signature" => "/TODO QUOTE_SIGNATURE/s",
+        "next-link" => "/TODO NEXT_LINK/s",
       ],
     ],
   ];

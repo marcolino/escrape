@@ -28,7 +28,7 @@ var app = angular.module('escrapeApp', [
     'ngOrderObjectBy',
     'ngAside',
     'ui.bootstrap',
-    'ui-rangeSlider',
+    'ui-rangeSliderInline',
     'toastr',
   ]);
 
