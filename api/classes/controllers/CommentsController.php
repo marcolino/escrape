@@ -11,8 +11,8 @@
 
 # TODO: use Utilities getUrlContents WITH charset !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
 
-require_once('lib/simple_html_dom.php');
-require_once('classes/services/Utilities.php');
+require_once "lib/simple_html_dom.php";
+require_once "classes/services/Utilities.php";
 
 class CommentsController {
 
@@ -20,7 +20,7 @@ class CommentsController {
    * Constructor
    */
   function __construct($router) {
-    require_once('setup/comments.php'); // comments sites definitions
+    require_once "setup/comments.php"; // comments setup
     $this->router = $router;
     $this->db = $this->router->db;
   }

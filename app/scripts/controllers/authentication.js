@@ -80,7 +80,7 @@ app.controller('AuthenticationController',
         if (response.success) {
           //setCredentials(response.contents);
           setCredentials(response);
-          $location.path('#/');
+          $location.path('/#');
         } else {
           //$scope.error = response.contents.message;
           $scope.error = response.message;
@@ -98,6 +98,8 @@ app.controller('AuthenticationController',
         if (response.success) {
           //setCredentials(response.contents);
           setCredentials(response);
+          $scope.loadSieves(); // reload sieves
+          $scope.setSievesDigest(null); // force a persons reload
           $location.path('/#');
         } else {
           //$scope.error = response.contents.message;
@@ -109,6 +111,8 @@ app.controller('AuthenticationController',
     $scope.logout = function () {
       console.log('logout()');
       Authentication.clearCredentials();
+      $scope.loadSieves(); // reload sieves
+      $scope.setSievesDigest(null); // force a persons reload
     };
 
     $scope.signedIn = function () {
@@ -240,6 +244,7 @@ app.controller('AuthenticationController',
     }
 
     $scope.loadSieves = function () {
+console.log('=== $scope.loadSieves', $scope.sieves);
       $scope.sieves = {};
       var key = cfg.site.name;
       if ($scope.signedIn()) { // add authdata to key, if user is signed in

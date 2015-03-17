@@ -15,6 +15,7 @@ class UsersController {
    * Constructor
    */
   function __construct($router) {
+    require_once "setup/users.php"; // users setup
     $this->router = $router;
     $this->db = $router->db;
   }
@@ -23,13 +24,15 @@ class UsersController {
     if (strlen($username) > self::USERNAME_MAXIMUM_LENGTH) {
       return [ "message" => "Sorry, username maximum length is " . self::USERNAME_MAXIMUM_LENGTH . " bytes" ];
     }
+    if (array_key_exists($username, $this->usersDefinitions["reservedUserNames"])) {
+      return [ "message" => "Sorry, this username is reserved" ];
+    }
     $user = $this->db->getByField("user", "username", $username);
     if (count($user) === 1) {
-# TODO: message => $error ...
+# TODO: message => $error ... (?)
       return [ "message" => "Sorry, this username is already registered" ];
     }
     if (!$this->checkPasswordStrength($password)) {
-# TODO: message => $error ...
       return [ "message" => "Password too weak, please choose a stronger one" ];
     }
     $user = [
@@ -49,7 +52,6 @@ class UsersController {
     if (count($user) === 1) {
       return [ "success" => true, "user" => $user[0] ];
     } else {
-# TODO: message => $error ...
       return [ "message" => "Wrong username/password, please try again" ];
     }
   }
@@ -60,7 +62,6 @@ class UsersController {
       return [ "message" => "Sorry, this user is not registered" ];
     }
     $this->db->deletebyField("user", "username", $username);
-# TODO: message => $error ...
     return [ "success" => true ];
   }
 

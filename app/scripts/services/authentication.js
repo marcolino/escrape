@@ -68,7 +68,7 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
   service.setSievesDigest = function (digest) {
     // a null value sets a random digest (which will force a reload)
     sievesDigest = digest ? digest : Math.random();
-    //console.log('setSievesDigest :', sievesDigest);
+console.log('service.setSievesDigest :', sievesDigest);
   };
 
   service.getSievesDigest = function () {

@@ -1,6 +1,7 @@
 'use strict';
 
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, /*Sites, */Countries, Persons, Comments) {
+/*
 $scope.images = [
  'images/users/user-0.jpg',
  'images/users/user-1.jpg',
@@ -8,6 +9,7 @@ $scope.images = [
  'images/users/user-3.jpg',
  'images/users/user-4.jpg',
 ];
+*/
   $scope.persons = [];
   $scope.person = {};
 
@@ -56,10 +58,8 @@ $scope.images = [
 
   // watch for sieves changes
   $scope.authenticationService = Authentication;
-  $scope.$watch('authenticationService.getSievesDigest()', function(/*newValue, oldValue, scope*/) {
-    //console.log('$watch - newValue:', newValue);
-    //console.log('$watch - oldValue:', oldValue);
-console.log('loadPersons() - $watch');
+  $scope.$watch('authenticationService.getSievesDigest()', function(newValue, oldValue/*, scope*/) {
+console.log('WATCH - calling loadPersons()...');
     loadPersons(); // load persons list
   }, false);
 
@@ -69,6 +69,7 @@ console.log('loadPersons() - $watch');
   }
 
   function loadPersons() {
+console.log('loadPersons() - $rootScope.sieves:', $rootScope.sieves);
     Persons.getPersons($rootScope.sieves).then(function(persons) {
       applyPersons(persons);
     });

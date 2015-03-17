@@ -204,6 +204,7 @@
       <div ng-show="!photosOccurrencesLoading && photosOccurrencesBestGuess">
         Best guess for this photo is: <a ng-href="{{photosOccurrencesBestGuess.href}}" target="_blank"><i>{{photosOccurrencesBestGuess.text}}</i></a>
       </div>
+      <div style="height: 300px; overflow-y: auto;">
       <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences">
         <a ng-href="{{photosOccurrence.href}}" target="_blank" class="no-text-decoration">
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-1">
@@ -222,6 +223,7 @@
             </div>
           </div>
         </a>
+      </div>
       </div>
       <div ng-show="!photosOccurrencesLoading && photosOccurrences.length === 0">
         <div class="text-center">

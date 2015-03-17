@@ -1,6 +1,6 @@
 <?php
 
-require "vendor/autoload.php"; // Slim #require "Slim/Slim.php";
+require "vendor/autoload.php";
 require "classes/controllers/UsersController.php";
 require "classes/controllers/PersonsController.php";
 require "classes/controllers/CommentsController.php";
@@ -13,19 +13,29 @@ class Router {
 
   public function __construct() {
     $timezone = "Europe/Rome"; // default timezone
-    $logFile = "./logs/slim.log"; // null to disable log
-    $mode = "development"; // mode tag
+    $logPath = "./logs/"; // logs path
+    $logNameFormat = "Y-m-d"; // logs name format (passed to date())
+    $debugMode = true; // debug mode flag
 
     date_default_timezone_set($timezone);
-    $logWriter = new \Slim\LogWriter(fopen($logFile, "a"));
-    $this->app = new \Slim\Slim([
-      "log.enable" => ($logFile != null),
-      "log.writer" => $logWriter,
-      "debug" => false, // use custom error handler (?)
-      "mode" => "development",
-    ]);
+    $app = new \Slim\Slim();
+    $app->configureMode('development', function () use ($app, $logPath, $logNameFormat, $debugMode) {
+      $app->config([
+        "debug" => $debugMode,
+      ]);
+      $log = $app->getLog();
+      $log->setEnabled(true);
+      $log->setLevel($debugMode ? \Slim\Log::DEBUG :  \Slim\Log::ERROR);
+      $log->setWriter(new \Slim\Extras\Log\DateTimeFileWriter([
+        "path" => $logPath,
+        "name_format" => $logNameFormat,
+        "message_format" => "%date% - %label% - %message%",
+      ]));
+    });
+    $this->app = $app;
     $this->db = new DB($this);
     $this->logs = [];
+
   }
 
   public function run() {

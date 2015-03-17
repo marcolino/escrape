@@ -136,30 +136,23 @@ class DB extends PDO {
         "
       );
     } catch (PDOException $e) {
-      throw new Exception("createTables() error:" . $e);
+      throw new Exception("can't create tables: " . $e->getMessage());
     }
   }
-/*
-  public function getAll($TABLE) {
-    $sql = "select * from $TABLE";
-    return $this->getViaSql($sql);
-  }
-  public function getViaSQL($sql) { # TODO: is this safe?
-    try {
-      $statement = $this->db->query($sql);
-      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-      return $result;
-    } catch (PDOException $e) {
-      throw new Exception("getViaSQL() error:" . $e);
-    }
-  }
-*/
 
   public function getAllSieved($table, $sieves) { # TODO: select SYSTEM and USER fields...???!!!
     $params = [];
-    $table .= "_" . "detail";
+    $tableMaster = $table;
+    $tableDetail = $table . "_" . "detail";
     try {
-      $sql = "SELECT * FROM '$table' WHERE 1 = 1";
+      #$sql = "SELECT * FROM '$table' WHERE 1 = 1";
+      $sql = "
+        SELECT person.*, person_detail.*
+        FROM person
+        JOIN person_detail
+        ON person.id = person_detail.id_person
+        WHERE 1 = 1
+      ";
       if (
         $sieves &&
         $sieves["search"] &&
@@ -233,22 +226,35 @@ class DB extends PDO {
       }
       $statement->execute();
 #throw new Exception("sql: [$sql]");
-# TODO: why 2 exceptions thrown???
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+#throw new Exception("sql: [$sql] => " . var_export($result, true));
       return $result;
     } catch (PDOException $e) {
       #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
-      throw new Exception("error getting persons with filters: " . $e->getMessage()); # TODO: USE THIS METHOD!!!
+      throw new Exception("can't get $table with filters: " . $e->getMessage()); # TODO: USE THIS METHOD!!!
     }
   }
 
   public function get($table, $id) {
+
 /* 
+
+by Marco Solari:
+
 SELECT p.id, p.key
 FROM person AS p
 LEFT JOIN person_detail AS d
 ON p.id = d.id_person
 GROUP BY p.id, p.key
+
+by Yura Ivanov:
+
+SELECT p.*, d.*
+FROM person AS p
+JOIN person_detail AS d
+ON p.id = d.id_person
+WHERE p.id = ?
+
 */
     try {
       $sql = "SELECT * FROM $table WHERE id = :id LIMIT 1";
@@ -258,7 +264,7 @@ GROUP BY p.id, p.key
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("error getting person: " . $e);
+      throw new Exception("can't get $table person: " . $e->getMessage());
     }
   }
 
@@ -271,7 +277,7 @@ GROUP BY p.id, p.key
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
     } catch (PDOException $e) {
-      throw new Exception("getByField() error:" . $e);
+      throw new Exception("can't get $table by field: " . $e->getMessage());
     }
   }
 
@@ -290,7 +296,7 @@ GROUP BY p.id, p.key
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
     } catch (PDOException $e) {
-      throw new Exception("getByFields() error:" . $e);
+      throw new Exception("can't get $table by fields: " . $e->getMessage());
     }
   }
 
@@ -303,7 +309,7 @@ GROUP BY p.id, p.key
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("getAverageFieldByPerson() error:" . $e);
+      throw new Exception("can't get average field by person from $table: " . $e->getMessage());
     }
   }
 
@@ -316,7 +322,7 @@ GROUP BY p.id, p.key
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result["count"];
     } catch (PDOException $e) {
-      throw new Exception("countByField() error:" . $e);
+      throw new Exception("can't count $table by field: " . $e->getMessage());
     }
   }
 
@@ -339,7 +345,7 @@ GROUP BY p.id, p.key
       }
       $lastInsertId = $this->db->lastInsertId();
     } catch (PDOException $e) {
-      throw new Exception("add person master error (master):" . $e);
+      throw new Exception("can't add record to $tableMaster: " . $e->getMessage());
     }
 
     if (!empty($arrayDetail)) {
@@ -370,7 +376,7 @@ GROUP BY p.id, p.key
         
         return $lastInsertId;
       } catch (PDOException $e) {
-        throw new Exception("add person detail error:" . $e);
+        throw new Exception("can't add record to $tableDetail: " . $e->getMessage());
       }
     }
   }
@@ -394,7 +400,7 @@ GROUP BY p.id, p.key
       }
       return $id;
     } catch (PDOException $e) {
-      throw new Exception("set() error:" . $e);
+      throw new Exception("can't set record to $table: " . $e->getMessage());
     }
   }
 
@@ -406,12 +412,12 @@ GROUP BY p.id, p.key
       $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       $statement->execute();
       $count = $statement->rowCount();
-      if ($statement->rowCount() != 1) {
-        throw new Exception("delete from table $table did delete " . $statement->rowCount() . " records");
+      if ($count != 1) {
+        throw new Exception("delete from $table did not delete one record, but $count: " . $e->getMessage());
       }
       return true;
     } catch (PDOException $e) {
-      throw new Exception("delete() error:" . $e);
+      throw new Exception("can't delete from $table: " . $e->getMessage());
     }
   }
 

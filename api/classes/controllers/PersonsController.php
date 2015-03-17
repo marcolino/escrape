@@ -15,7 +15,7 @@ class PersonsController {
    * Constructor
    */
   function __construct($router) {
-    require_once('setup/persons.php'); // persons sites definitions
+    require_once "setup/persons.php"; // persons setup
     $this->router = $router;
     $this->db = $router->db;
   }
@@ -218,6 +218,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
    * @return array
    */
   public function getList($sieves) {
+$this->router->log("debug", "getList(), to test log...");
     $list = [];
     $comments = new CommentsController($this->router);
 
@@ -233,7 +234,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         "nationality" => $person["nationality"],
         "vote" => $person["vote"],
         "age" => $person["age"],
-        "thruthfulness" => "false", # TODO: if at least one photo is !thrustful, person is !thrustful...
+        "thruthfulness" => "no", # TODO: if at least one photo is !thrustful, person is !thrustful...
         "photo_path_small_showcase" => $this->photoGetByShowcase($person["id"], true)["path_small"],
         "comments_count" => $comments->countByPerson($person["id"]),
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
@@ -326,6 +327,9 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
    *                  >= 0     photo added to filesystem and to database
    */
   public function photoAdd($idPerson, $photoUrl) {
+    // 'normalize' relative urls
+    $photoUrl = str_replace("../", "", $photoUrl);
+
     // build photo object from url
     $photo = new Photo([ "url" => $photoUrl ]); # TODO: can we avoid download with curl "get header only", comparing modification timestamps?
 
@@ -604,62 +608,63 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
       "/scienzefanpage/wp-content/uploads/2013/12/samantha-cristoforetti-futura.jpg",
       "/scienzefanpage/wp-content/uploads/2012/07/donna-italiana-spazio1-300x225.jpg",
     ];
-    $person[0] = [];
-    $person[0]["key"] = "linkedin-123456";
-    $person[0]["site_key"] = "linkedin";
-    $person[0]["name"] = "Samantha";
-    $person[0]["url"] = "http://static.fanpage.it";
-    $person[0]["timestamp_creation"] = 1424248678;
-    $person[0]["timestamp_last_sync"] = 1424248678;
-    $person[0]["active"] = "no";
-    $person[0]["sex"] = "F";
-    $person[0]["zone"] = "centro";
-    $person[0]["address"] = "Via Roma, 3, Milano";
-    $person[0]["description"] = "astronauta";
-    $person[0]["phone"] = "3336480981";
-    $person[0]["nationality"] = "it";
-    $person[0]["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
-    $person[0]["age"] = 31;
-    $person[0]["vote"] = 8;
+    $personMaster[0] = [];
+    $personMaster[0]["key"] = "linkedin-123456";
+    $personMaster[0]["site_key"] = "linkedin";
+    $personMaster[0]["url"] = "http://static.fanpage.it";
+    $personMaster[0]["timestamp_last_sync"] = 1424248678;
+    $personMaster[0]["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
+    $personDetail[0] = [];
+    $personDetail[0]["active"] = "no";
+    $personDetail[0]["name"] = "Samantha";
+    $personDetail[0]["sex"] = "F";
+    $personDetail[0]["zone"] = "centro";
+    $personDetail[0]["address"] = "Via Roma, 3, Milano";
+    $personDetail[0]["description"] = "astronauta";
+    $personDetail[0]["phone"] = "3336480981";
+    $personDetail[0]["nationality"] = "it";
+    $personDetail[0]["age"] = 31;
+    $personDetail[0]["vote"] = 8;
     ########################################################################################
     $photosUrls[1] = [
       "/wp-content/gallery/convegno/img_2484.jpg",
       "/wp-content/gallery/convegno/img_2477.jpg",
     ];
-    $person[1] = [];
-    $person[1]["key"] = "twitter-789012";
-    $person[1]["site_key"] = "twitter";
-    $person[1]["name"] = "Elena";
-    $person[1]["url"] = "http://www.newshd.net";
-    $person[1]["timestamp_creation"] = 1424248555;
-    $person[1]["timestamp_last_sync"] = 1424248678;
-    $person[1]["active"] = "yes";
-    $person[1]["sex"] = "F";
-    $person[1]["zone"] = "centro";
-    $person[1]["address"] = "Via Garibaldi 12, Roma";
-    $person[1]["description"] = "scienziata";
-    $person[1]["phone"] = "3336480982";
-    $person[1]["nationality"] = "it";
-    $person[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
-    $person[1]["age"] = 42;
-    $person[1]["vote"] = 9;
+    $personMaster[1] = [];
+    $personMaster[1]["key"] = "twitter-789012";
+    $personMaster[1]["site_key"] = "twitter";
+    $personMaster[1]["url"] = "http://www.newshd.net";
+    $personMaster[1]["timestamp_last_sync"] = 1424248678;
+    $personMaster[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
+    $personDetail[1] = [];
+    $personDetail[1]["active"] = "yes";
+    $personDetail[1]["name"] = "Elena";
+    $personDetail[1]["sex"] = "F";
+    $personDetail[1]["zone"] = "centro";
+    $personDetail[1]["address"] = "Via Garibaldi 12, Roma";
+    $personDetail[1]["description"] = "scienziata";
+    $personDetail[1]["phone"] = "3336480982";
+    $personDetail[1]["nationality"] = "it";
+    $personDetail[1]["age"] = 42;
+    $personDetail[1]["vote"] = 9;
     ########################################################################################
 
     // add person
-    for ($i = 0; $i < sizeof($person); $i++) {
-      $key = $person[$i]["key"];
+    for ($i = 0; $i < sizeof($personMaster); $i++) {
+      $key = $personMaster[$i]["key"];
       if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
         $id = $p[0]["id"];
         $this->router->log("debug", " °°° updating person: $key °°°");
-        $this->set($id, $person[$i]);
+        $this->set($id, $personMaster[$i], $personDetail[$i]);
       } else { # new key, insert it
         $this->router->log("debug", " ^^^ inserting person: $key ^^^");
-        $id = $this->add($person[$i]);
+        $person["timestamp_creation"] = 1423000000;
+        $id = $this->add($personMaster[$i], $personDetail[$i]);
       }
   
       // add photos
       foreach ($photosUrls[$i] as $photoUrl) {
-        $this->photoAdd($id, $person[$i]["url"] . $photoUrl);
+        $this->photoAdd($id, $personMaster[$i]["url"] . $photoUrl);
       }
     }
 
