@@ -143,19 +143,19 @@ body {
   max-height: 18px;
 }
 .img-thruthful-yes { 
-          box-shadow: 1px 1px 2px 0px #143a04;
-  -webkit-box-shadow: 1px 1px 2px 0px #143a04;
-     -moz-box-shadow: 1px 1px 2px 0px #143a04;
+          box-shadow: 1px 1px 3px 0px #143a04;
+  -webkit-box-shadow: 1px 1px 3px 0px #143a04;
+     -moz-box-shadow: 1px 1px 3px 0px #143a04;
 }
 .img-thruthful-no { 
-          box-shadow: 1px 1px 2px 0px #7c0202;
-  -webkit-box-shadow: 1px 1px 2px 0px #7c0202;
-     -moz-box-shadow: 1px 1px 2px 0px #7c0202;
+          box-shadow: 1px 1px 3px 0px #7c0202;
+  -webkit-box-shadow: 1px 1px 3px 0px #7c0202;
+     -moz-box-shadow: 1px 1px 3px 0px #7c0202;
 }
 .img-thruthful-unknown { 
-          box-shadow: 1px 1px 2px 0px #aaaaaa;
-  -webkit-box-shadow: 1px 1px 2px 0px #aaaaaa;
-     -moz-box-shadow: 1px 1px 2px 0px #aaaaaa;
+          box-shadow: 1px 1px 3px 0px #888888;
+  -webkit-box-shadow: 1px 1px 3px 0px #888888;
+     -moz-box-shadow: 1px 1px 3px 0px #888888;
 }
 .btn-vote {
   color: #fff;
@@ -357,8 +357,7 @@ p.menu-item-separator {
 }
 .slider-image {
   display: inline-block;
-  float: left;
-  margin-right: 5px;
+  margin-right: 1px;
   text-align: center;
 }
 .label-image {

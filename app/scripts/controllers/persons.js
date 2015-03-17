@@ -161,18 +161,17 @@ console.log('loadPersons() - main');
     //notify.info('photoGetOccurrences(' + url + ')');
     Persons.photoGetOccurrences(id, url).then(
       function(response) {
-console.info('+++ photoGetOccurrences response:', response);
-        // TODO: restructure these names... :-(
-        $scope.photosOccurrences = response.searchResults;
-        $scope.photosOccurrencesBestGuess = response.bestGuess;
-        console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
-        //if (response === []) {
-        if (typeof response !== 'undefined' && response.length === 0) {
+        //console.info('+++ photoGetOccurrences response:', response);
+        //console.info('+++ response.length:', response.length);
+        if (response.searchResults.length === 0) {
           console.log('No occurrences found...');
         } else {
           console.info('Occurrences found:', response);
         }
         $scope.photosOccurrencesLoading = false;
+        $scope.photosOccurrences = response.searchResults;
+        $scope.photosOccurrencesBestGuess = response.bestGuess;
+        console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
       },
       function(errorMessage) {
         console.warn(errorMessage);

@@ -160,8 +160,8 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         $personMaster["url"] = $details_url;
         $personMaster["timestamp_last_sync"] = $timestamp;
         $personMaster["page_sum"] = $page_sum;
-        $personMaster["active"] = $active;
         $personDetail = [];
+        $personDetail["active"] = $active;
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
         $personDetail["zone"] = $zone;
@@ -218,7 +218,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
    * @return array
    */
   public function getList($sieves) {
-$this->router->log("debug", "getList(), to test log...");
+    #$this->router->log("debug", "getList(); sieves: " . var_export($sieves, true));
     $list = [];
     $comments = new CommentsController($this->router);
 
@@ -234,7 +234,7 @@ $this->router->log("debug", "getList(), to test log...");
         "nationality" => $person["nationality"],
         "vote" => $person["vote"],
         "age" => $person["age"],
-        "thruthfulness" => "no", # TODO: if at least one photo is !thrustful, person is !thrustful...
+        "thruthfulness" => "unknown", # TODO: if at least one photo is !thrustful, person is !thrustful...
         "photo_path_small_showcase" => $this->photoGetByShowcase($person["id"], true)["path_small"],
         "comments_count" => $comments->countByPerson($person["id"]),
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
@@ -251,6 +251,9 @@ $this->router->log("debug", "getList(), to test log...");
     $numPages = 2;
 
     $response = [];
+    $response["bestGuess"] = null;
+    $response["searchResults"] = [];
+
     if ($results = $googleSearch->searchImage($imageUrl, $numPages)) {
       if ($results["best_guess"]) {
         $response["bestGuess"] = $results["best_guess"];
