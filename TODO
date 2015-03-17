@@ -1,5 +1,5 @@
 TODO 1.0:
- - when saving photo url, normalize it (strip "../../"...) - DONE - TO BE TESTED @home
+ - filter all sites defined and all *esc...* sites from "occurrences"
  - thruthfulness => thrutful /g
  - thruthfulness in persons and person views => "yes", "no", "unknown"... (add 'thruthfulness' field to person table...)
  - handle all exceptions at least with notify.error() ...
@@ -8,6 +8,8 @@ TODO 1.0:
  - in google search results page, handle error "Google thinks we're bot and won't process our requests"...
  - before google search, check image has already thruthful flag...
  - move style="..." from all views to style.css...
+ - handle user writes...
+ - handle guest write warning
 
 TODO 2.0:
  - I18n (?...)
@@ -46,3 +48,4 @@ DONE:
  - DB::getAllSieved(): select SYSTEM and USER fields...???!!!
  - throw new Exception("error getting persons with filters", 0, $e): PDO.$e not reported...
  - handle css fake on persons view (at least one fake photo ? fake : thruthful)
+ - when saving photo url, normalize it (strip "../../"...) - DONE - TO BE TESTED @home

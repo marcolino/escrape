@@ -140,6 +140,7 @@ class DB extends PDO {
     }
   }
 
+  # TODO: duplicate getAllSieved to getAllPersonsSieved
   public function getAllSieved($table, $sieves) { # TODO: select SYSTEM and USER fields...???!!!
     $params = [];
     $tableMaster = $table;
@@ -147,10 +148,10 @@ class DB extends PDO {
     try {
       #$sql = "SELECT * FROM '$table' WHERE 1 = 1";
       $sql = "
-        SELECT person.*, person_detail.*
-        FROM person
-        JOIN person_detail
-        ON person.id = person_detail.id_person
+        SELECT {$tableMaster}.*, {$tableDetail}.*
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.id_person
         WHERE 1 = 1
       ";
       if (
@@ -235,29 +236,21 @@ class DB extends PDO {
     }
   }
 
+  # TODO: duplicate to getPersonsSieved
   public function get($table, $id) {
-
-/* 
-
-by Marco Solari:
-
-SELECT p.id, p.key
-FROM person AS p
-LEFT JOIN person_detail AS d
-ON p.id = d.id_person
-GROUP BY p.id, p.key
-
-by Yura Ivanov:
-
-SELECT p.*, d.*
-FROM person AS p
-JOIN person_detail AS d
-ON p.id = d.id_person
-WHERE p.id = ?
-
-*/
+    $tableMaster = $table;
+    $tableDetail = $table . "_" . "detail";
     try {
-      $sql = "SELECT * FROM $table WHERE id = :id LIMIT 1";
+#     $sql = "SELECT * FROM $table WHERE id = :id LIMIT 1";
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.id_person
+        WHERE 1 = 1
+      ";
+      $sql .= " AND ";
+      $sql .= "{$tableMaster}.id = :id";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":id", $id, PDO::PARAM_INT);
       $statement->execute();
