@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Erase dababase (DB + photos) and re-sync it
+
+echo "erasing database..."
+sudo rm -rf /var/www/html/escrape/api/db/*
+echo "re-syncing persons..."
+curl -X GET -i localhost/escrape/api/persons/sync && echo

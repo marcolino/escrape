@@ -19,13 +19,13 @@ class Router {
 
     date_default_timezone_set($timezone);
     $app = new \Slim\Slim();
-    $app->configureMode('development', function () use ($app, $logPath, $logNameFormat, $debugMode) {
+    $app->configureMode("development", function () use ($app, $logPath, $logNameFormat, $debugMode) {
       $app->config([
         "debug" => $debugMode,
       ]);
       $log = $app->getLog();
       $log->setEnabled(true);
-      $log->setLevel($debugMode ? \Slim\Log::DEBUG :  \Slim\Log::ERROR);
+      $log->setLevel($debugMode ? \Slim\Log::DEBUG : \Slim\Log::ERROR);
       $log->setWriter(new \Slim\Extras\Log\DateTimeFileWriter([
         "path" => $logPath,
         "name_format" => $logNameFormat,

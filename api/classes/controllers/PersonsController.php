@@ -171,6 +171,7 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote; # vote ([0-9])
 
+        $id = null;
         if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
           $id = $p[0]["id"];
           $this->router->log("debug", " °°° updating person: $key °°°");
@@ -212,7 +213,7 @@ $userId = 2;
 
     # set loop
     foreach ($persons as $person) {
-      if (isset($person["_uniqcode_"]) {
+      if (isset($person["_uniqcode_"])) {
         $this->db->set("person", $id, $person);
       }
     }
@@ -224,15 +225,16 @@ $userId = 2;
 #print "get($id)\n";
     $person = $this->db->get("person", $id);
     $photos = $this->db->getByField("photo", "id_person", $id);
-    $person["photos"] = $photos;
+####$person["photos"] = $photos;
 #print " person: "; var_export($person);
+$this->router->log("info", "person($id): " . var_export($person));
     return $person;
   }
   
   public function add($personMaster, $personDetail) {
     return $this->db->add("person", $personMaster, $personDetail);
   }
-  
+
   public function set($id, $person) {
     return $this->db->set("person", $id, $person);
   }
@@ -276,9 +278,6 @@ $userId = 2;
       // fields with only "detail" table values (they can be multiple)
       foreach (
         [
-          "id_person",
-          "key",
-          "site_key",
           "name",
           "phone",
           "nationality",

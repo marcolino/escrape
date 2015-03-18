@@ -238,7 +238,7 @@ class DB extends PDO {
       // first lower user id's (system is 1)
       $sql .= " ORDER BY " .
         "{$tableDetail}.id_user ASC," .
-        "{$tableMaster}.id_person ASC" # TODO: do we need this ordering?
+        "{$tableDetail}.id_person ASC" # TODO: do we need this ordering?
       ;
 
       $statement = $this->db->prepare($sql);
