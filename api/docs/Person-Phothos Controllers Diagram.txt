@@ -12,7 +12,7 @@ PersonController
     }
   }
 
-  getList() {
+  getAll() {
     getPhotoShowcase($person["id"], true)
     comments->countByPerson($person["id"])
     comments->getAverageValutationByPerson($person["id"])

@@ -21,11 +21,10 @@ class PersonsController {
   }
 
   /**
-  * Sync persons
-  *
-  * @param  array $parameters
-  * @return boolean
-  */
+   * Sync persons
+   *
+   * @return boolean: true if everything successful, false otherwise
+   */
   public function sync() {
     $this->router->log("info", "sync()");
     $this->network = new Network(); // TODO: initialize $this->network in constructor?
@@ -190,6 +189,37 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     return !$error;
   }
 
+  /**
+   * Assert persons uniqueness
+   *
+   * @return boolean: true if everything successful, false otherwise
+   */
+  public function assertUniqueness() {
+    $this->router->log("info", "assertUniqueness()");
+$userId = 2;
+    $persons = $this->db->getAllSieved("person", null, $userId);
+    # check loops
+    foreach ($persons as $person1) {
+      foreach ($persons as $person2) {
+        #if ($person2["_uniqcode_"]) { continue; } # TODO: ???
+        if ($person1["phone"] === $person2["phone"]) {
+          $person2["_uniqcode_"] = true;
+        } else {
+          $person2["_uniqcode_"] = false;
+        }
+      }
+    }
+
+    # set loop
+    foreach ($persons as $person) {
+      if (isset($person["_uniqcode_"]) {
+        $this->db->set("person", $id, $person);
+      }
+    }
+
+    return true;
+  }
+
   public function get($id) {
 #print "get($id)\n";
     $person = $this->db->get("person", $id);
@@ -212,20 +242,71 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
   }
   
   /**
-   * get persons list
+   * get all persons list, filtered with given sieves
    *
    * @param  array $sieves
    * @return array
    */
-  public function getList($sieves) {
-    #$this->router->log("debug", "getList(); sieves: " . var_export($sieves, true));
-    $list = [];
+  public function getAllSieved($sieves) {
+    #$this->router->log("debug", "getAllSieved(); sieves: " . var_export($sieves, true));
+    $result = [];
     $comments = new CommentsController($this->router);
 
-    #$this->router->log("debug", " *** getList() - sieves:" . var_export($sieves, true));
-    #foreach ($this->db->getAll("person") as $personId => $person) {
-    foreach ($this->db->getAllSieved("person", $sieves) as $personId => $person) {
-      $list[$personId] = [
+    #$this->router->log("debug", " *** getAllSieved() - sieves:" . var_export($sieves, true));
+    #foreach ($this->db->getAllSieved("person") as $personId => $person) {
+    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
+    foreach ($this->db->getAllSieved("person", $sieves, $userId) as $person) {
+      // N.B: here we (could) get multiple records for each person id
+      $pid = $person["id_person"];
+      if (!isset($result[$pid])) {
+        $result[$pid] = []; // ititialize this person array in results
+      }
+
+      // fields with only "master" table values
+      foreach (
+        [
+          "id_person",
+          "key",
+          "site_key",
+        ] as $field
+      ) {
+        $result[$pid][$field] = $person[$field];
+      }
+
+      // fields with only "detail" table values (they can be multiple)
+      foreach (
+        [
+          "id_person",
+          "key",
+          "site_key",
+          "name",
+          "phone",
+          "nationality",
+          "vote",
+          "age",
+          "thruthfulness",
+        ] as $field
+      ) {
+        if (isset($person[$field])) {
+          if (!isset($result[$pid][$field])) {
+            $result[$pid][$field] = $person[$field];
+          } else {
+            $result[$pid][$field] .= ", " . $person[$field];
+          }
+          #$this->router->log("debug", "field: <$field> ");
+          #$this->router->log("debug", "field: result[$pid][$field] = " . $person[$field]);
+        }
+      }
+      #$this->router->log("debug", "result: " . var_export($result, true));
+
+      // fields "calculated"
+      $result[$pid]["thruthfulness"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
+      $result[$pid]["photo_path_small_showcase"] = $this->photoGetByShowcase($pid, true)["path_small"];
+      $result[$pid]["comments_count"] = $comments->countByPerson($pid);
+      $result[$pid]["comments_average_valutation"] = $comments->getAverageValutationByPerson($pid);
+
+/* OLD - ONE TABLE - VERSION
+      $result[$personId] = [
         "id" => $person["id"],
         "key" => $person["key"],
         "site_key" => $person["site_key"],
@@ -239,8 +320,10 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         "comments_count" => $comments->countByPerson($person["id"]),
         "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
       ];
+*/
+      #$this->router->log("debug", var_export($result, true));
     }
-    return $list;
+    return $result;
   }
 
   public function photoGetOccurrences($id, $imageUrl) {

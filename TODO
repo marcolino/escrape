@@ -1,5 +1,8 @@
 TODO 1.0:
- - filter all sites defined and all *esc...* sites from "occurrences"
+ - pass user id from authentication to service.js, and to API
+ - filter all sites defined and all esc* sites from "occurrences"
+ - handle 'active' flag when syncing
+ - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
  - thruthfulness => thrutful /g
  - thruthfulness in persons and person views => "yes", "no", "unknown"... (add 'thruthfulness' field to person table...)
  - handle all exceptions at least with notify.error() ...
@@ -10,9 +13,12 @@ TODO 1.0:
  - move style="..." from all views to style.css...
  - handle user writes...
  - handle guest write warning
+ - options: town / attitude
+ - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
 
 TODO 2.0:
  - I18n (?...)
+ - move to https
 
 DONE:
  - search() should issue a persons reload...

@@ -47,20 +47,15 @@ class Router {
           $this->success($persons->test());
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->post("/get", function() { # ==================
         try {
           $persons = new PersonsController($this);
-          $data = json_decode($this->app->request()->getBody(), true); // sencond parameter uses associative arrays instead of stdClass
-          //$data = $this->app->request()->get("data"); // get 'data' from GET parameters
-          $this->success($persons->getList($data));
+          $sieves = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
+          $this->success($persons->getAllSieved($sieves));
         } catch (Exception $e) {
           $this->error($e);
-        #} catch (PDOException $e) {
-        #  $this->error($e);
         }
       });
       $this->app->get("/get/:id", function($id) { # ======================
@@ -69,8 +64,6 @@ class Router {
           $this->success($persons->get($id));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->get("/sync", function() { # =============================
@@ -78,8 +71,6 @@ class Router {
           $persons = new PersonsController($this);
           $this->success($persons->sync());
         } catch (Exception $e) {
-          $this->error($e);
-        } catch (PDOException $e) {
           $this->error($e);
         }
       });
@@ -91,8 +82,6 @@ class Router {
           $this->success($persons->photoGetOccurrences($data->id, $data->url));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->get("/search/:query", function($query) { # ==============
@@ -100,8 +89,6 @@ class Router {
           $persons = new PersonsController($this);
           $this->success($persons->searchByName($query));
         } catch (Exception $e) {
-          $this->error($e);
-        } catch (PDOException $e) {
           $this->error($e);
         }
       });
@@ -114,8 +101,6 @@ class Router {
           $this->success($persons->set($id, $data));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->post("/insert", function() { # ==========================
@@ -125,8 +110,6 @@ class Router {
           $this->success($persons->insert($data));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->delete("/delete/:id", function($id) { # =================
@@ -135,8 +118,6 @@ class Router {
           //$data = json_decode($this->app->request()->getBody());
           $this->success($persons->delete($id));
         } catch (Exception $e) {
-          $this->error($e);
-        } catch (PDOException $e) {
           $this->error($e);
         }
       });
@@ -154,8 +135,6 @@ class Router {
           #$this->success($users->register($username, $password));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->post("/login", function() { # ===========================
@@ -168,8 +147,6 @@ class Router {
           #$this->success($users->login($username, $password));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->delete("/delete/:id", function($id) { # ==================
@@ -177,8 +154,6 @@ class Router {
           $users = new UsersController($this);
           $this->success($users->delete($id));
         } catch (Exception $e) {
-          $this->error($e);
-        } catch (PDOException $e) {
           $this->error($e);
         }
       });
@@ -192,8 +167,6 @@ class Router {
           $this->success($comments->getAll());
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->get("/get/:id", function($id) { # =======================
@@ -201,8 +174,6 @@ class Router {
           $comments = new CommentsController($this);
           $this->success($comments->get($id));
         } catch (Exception $e) {
-          $this->error($e);
-        } catch (PDOException $e) {
           $this->error($e);
         }
       });
@@ -212,8 +183,6 @@ class Router {
           $this->success($comments->getByPhone($phone));
         } catch (Exception $e) {
           $this->error($e);
-        } catch (PDOException $e) {
-          $this->error($e);
         }
       });
       $this->app->post("/sync", function() { # ============================
@@ -222,8 +191,6 @@ class Router {
           $comments = new CommentsController($this);
           $this->success($comments->sync());
         } catch (Exception $e) {
-          $this->error($e);
-        } catch (PDOException $e) {
           $this->error($e);
         }
       });

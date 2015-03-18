@@ -11,6 +11,7 @@ class DB extends PDO {
   const DB_USER = null;
   const DB_PASS = null;
   const DB_CHARSET = "utf8";
+  const DB_SYSTEM_USER_ID = "1"; # TODO: can we use a constant here?
   private $db;
 
   public function __construct($router) {
@@ -84,16 +85,29 @@ class DB extends PDO {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           id_person INTEGER,
           id_user INTEGER,
+          id_uniqcode INTEGER,
           active VARCHAR(8),
           name TEXT,
           sex TEXT,
           zone TEXT,
           address TEXT,
           description TEXT,
+          notes TEXT,
           phone VARCHAR(16),
           nationality VARCHAR(2),
           age TEXT,
           vote INTEGER
+         );
+         CREATE UNIQUE INDEX IF NOT EXISTS key_phone ON person_detail (phone);
+        "
+      );
+      $this->db->exec(
+        "CREATE TABLE if not exists person_uniqcode (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_user INTEGER,
+          id_person_1 INTEGER,
+          id_person_2 INTEGER,
+          uniq INTEGER
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_phone ON person_detail (phone);
         "
@@ -141,18 +155,19 @@ class DB extends PDO {
   }
 
   # TODO: duplicate getAllSieved to getAllPersonsSieved
-  public function getAllSieved($table, $sieves) { # TODO: select SYSTEM and USER fields...???!!!
-    $params = [];
+  public function getAllSieved($table, $sieves, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
     $tableMaster = $table;
     $tableDetail = $table . "_" . "detail";
+    $params = [];
+
     try {
-      #$sql = "SELECT * FROM '$table' WHERE 1 = 1";
+      $userIdSystem = self::DB_SYSTEM_USER_ID;
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.*
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.id_person
-        WHERE 1 = 1
+        WHERE (id_user = {$userIdSystem} OR id_user = {$userId})
       ";
       if (
         $sieves &&
@@ -220,6 +235,11 @@ class DB extends PDO {
         $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
       }
 
+      // first lower user id's (system is 1)
+      $sql .= " ORDER BY " .
+        "{$tableDetail}.id_user ASC," .
+        "{$tableMaster}.id_person ASC" # TODO: do we need this ordering?
+      ;
 
       $statement = $this->db->prepare($sql);
       foreach ($params as $key => &$value) {
@@ -319,9 +339,11 @@ class DB extends PDO {
     }
   }
 
-  public function add($table, $arrayMaster, $arrayDetail = null) {
+  public function add($table, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = $table;
+    $tableDetail = $table . "_" . "detail";
+
     try { // add master data
-      $tableMaster = $table;
       $fields = $values = "";
       foreach ($arrayMaster as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
@@ -333,20 +355,20 @@ class DB extends PDO {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();
-      if ($statement->rowCount() != 1) {
-        throw new Exception("insert into table $tableMaster did insert " . $statement->rowCount() . " records");
+      $count = $statement->rowCount();
+      if ($count != 1) {
+        throw new Exception("can't add record to table $tableMaster (added $count records)");
       }
       $lastInsertId = $this->db->lastInsertId();
     } catch (PDOException $e) {
-      throw new Exception("can't add record to $tableMaster: " . $e->getMessage());
+      throw new Exception("can't add record to table $tableMaster: " . $e->getMessage());
     }
 
     if (!empty($arrayDetail)) {
-      $arrayDetail["id_person"] = $lastInsertId; // add master person_id to detail table
-      $arrayDetail["id_user"] = 1; // add user_id to detail table # TODO: GET REAL USER ID!!!
+      $arrayDetail["id_person"] = $lastInsertId; // add master person id to this detail record
+      $arrayDetail["id_user"] = $userId; // add user id to this detail record
   
       try { // add details data
-        $tableDetail = $table . "_" . "detail";
         $fields = $values = "";
         foreach ($arrayDetail as $key => $value) {
           $fields .= ($fields ? ", " : "") . $key;
@@ -360,16 +382,14 @@ class DB extends PDO {
           $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
         }
         $statement->execute();
-        if ($statement->rowCount() != 1) {
-          throw new Exception("insert into table $tableDetail did insert " . $statement->rowCount() . " records");
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't add record to table $tableDetail (added $count records)");
         }
-        $lastInsertId = $this->db->lastInsertId();
-  
-  
-        
+        $lastInsertId = $this->db->lastInsertId();        
         return $lastInsertId;
       } catch (PDOException $e) {
-        throw new Exception("can't add record to $tableDetail: " . $e->getMessage());
+        throw new Exception("can't add record to table $tableDetail: " . $e->getMessage());
       }
     }
   }

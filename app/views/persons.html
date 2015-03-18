@@ -3,28 +3,8 @@
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
     <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
-<!--
-OLD, NO FAKE LABEL
-      <a ng-href="#/details/{{person.id}}">
-        <div class="img-rounded img-clip-container" style="background:#333">
-          <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" />
-        </div>
-      </a>
--->
-<!--
-NEW, NO FAKE LABEL, BUT ROW IS TOO HIGH
-      <span class="slider-image">
-        <a ng-href="#/details/{{person.id}}">
-            <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip" />
-            <br>
-            <span Xng-if="person.photo.thruthfulness === 'false'">
-              <img src="images/watermarks/fake-label.png" class="label-image" />
-            </span>
-        </a>
-      </span>
--->
-      <span class="img-clip-container" style="background:#333">
-        <a ng-href="#/details/{{person.id}}">
+      <span class="img-clip-container" NOstyle="background:#333">
+        <a ng-href="#/details/{{person.id_person}}">
           <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip"
             ng-class="{
               'img-thruthful-yes': person.thruthfulness === 'yes',
@@ -34,7 +14,6 @@ NEW, NO FAKE LABEL, BUT ROW IS TOO HIGH
           />
         </a>
       </span>
-
      </div>
     <div class="col-xs-8 col-sm-9 col-md-9 col-lg-9">
       <div class="row" style="padding-bottom:2px;">
