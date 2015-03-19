@@ -205,7 +205,10 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
     $persons_count = count($persons);
     for ($i = 0; $i < $persons_count - 1; $i++) {
       for ($j = $i + 1; $j < $persons_count; $j++) {
-        if ($persons[$i]["phone"] === $persons[$j]["phone"]) {
+        if (
+          ($persons[$i]["name"] === $persons[$j]["name"]) ||
+          ($persons[$i]["phone"] === $persons[$j]["phone"])
+        ) {
           $this->db->setPersonsUniqcode($persons[$i]["id"], $persons[$j]["id"], true/*, null (?), SYSTEM user... */);
         }          
       }          

@@ -511,7 +511,8 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
   }
 
   private function sieves2Sql($sieves = null) {
-    $sql = $params = "";
+    $sql = "";
+    $params = [];
 
     if (
       $sieves &&

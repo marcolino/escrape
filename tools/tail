@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # Run a tail of some log files in gnome-terminal windows
+#  and oped database browser
 
 gnome-terminal --geometry=150x12+200+500 -x sh -c "tail -f /var/log/apache2/error.log"
 gnome-terminal --geometry=150x12+240+280 -x sh -c "tail -f /var/www/html/escrape/api/logs/*-*-*.log"
+sqlitebrowser "/var/www/html/escrape/api/db/escrape.sqlite" &

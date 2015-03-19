@@ -1,12 +1,12 @@
 TODO 1.0:
  - pass user id from authentication to service.js, and to API
- - filter all sites defined and all esc* sites from "occurrences"
+ - filter all sites defined and all esc* sites from photos occurrences
  - handle 'active' flag when syncing
  - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
  - thruthfulness => thrutful /g
  - thruthfulness in persons and person views => "yes", "no", "unknown"... (add 'thruthfulness' field to person table...)
  - handle all exceptions at least with notify.error() ...
- - handle sorting by some fields in list page
+ - handle sorting by some fields in list view
  - in google search results page, make buttons (Fake, Thrutful, Don't know) visible... (results in  a scroller)
  - in google search results page, handle error "Google thinks we're bot and won't process our requests"...
  - before google search, check image has already thruthful flag...
@@ -15,6 +15,7 @@ TODO 1.0:
  - handle guest write warning
  - options: town / attitude
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
+ - sync: skip person page if page sum matches with last synced...
 
 TODO 2.0:
  - I18n (?...)
