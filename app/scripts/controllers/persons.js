@@ -58,7 +58,7 @@ $scope.images = [
 
   // watch for sieves changes
   $scope.authenticationService = Authentication;
-  $scope.$watch('authenticationService.getSievesDigest()', function(newValue, oldValue/*, scope*/) {
+  $scope.$watch('authenticationService.getSievesDigest()', function(/*newValue, oldValue*//*, scope*/) {
 console.log('WATCH - calling loadPersons()...');
     loadPersons(); // load persons list
   }, false);
@@ -85,7 +85,7 @@ console.log('loadPersons() - main');
 */
   } else { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
-      if (!cfg.fake) { console.log('person:', person); }
+      if (!!cfg.fake) { console.log('person(', $scope.personId, ')', person); }
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       console.log('Persons.getPerson:', $scope.person);
       //$scope.person = person;

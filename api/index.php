@@ -49,11 +49,19 @@ class Router {
           $this->error($e);
         }
       });
+      $this->app->get("/testuniqcode", function() { # ============================
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->testuniqcode());
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
       $this->app->post("/get", function() { # ==================
         try {
           $persons = new PersonsController($this);
           $sieves = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($persons->getAllSieved($sieves));
+          $this->success($persons->getListSieved($sieves));
         } catch (Exception $e) {
           $this->error($e);
         }

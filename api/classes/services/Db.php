@@ -1,4 +1,5 @@
 <?php
+
 /**
  * DB class
  *
@@ -37,6 +38,7 @@ class DB extends PDO {
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
       }
+      $this->userIdSystem = self::DB_SYSTEM_USER_ID;
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
     }
@@ -98,7 +100,7 @@ class DB extends PDO {
           age TEXT,
           vote INTEGER
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS key_phone ON person_detail (phone);
+         CREATE UNIQUE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "
       );
       $this->db->exec(
@@ -107,9 +109,10 @@ class DB extends PDO {
           id_user INTEGER,
           id_person_1 INTEGER,
           id_person_2 INTEGER,
-          uniq INTEGER
+          same INTEGER
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS key_phone ON person_detail (phone);
+         CREATE INDEX IF NOT EXISTS id_person_1_idx ON person_uniqcode (id_person_1);
+         CREATE INDEX IF NOT EXISTS id_person_2_idx ON person_uniqcode (id_person_2);
         "
       );
       $this->db->exec(
@@ -154,88 +157,23 @@ class DB extends PDO {
     }
   }
 
-  # TODO: duplicate getAllSieved to getAllPersonsSieved
-  public function getAllSieved($table, $sieves, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
-    $tableMaster = $table;
-    $tableDetail = $table . "_" . "detail";
+  public function getPersonListSieved($sieves, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+    $tableMaster = "person";
+    $tableDetail = "person" . "_" . "detail";
     $params = [];
 
     try {
-      $userIdSystem = self::DB_SYSTEM_USER_ID;
+      list($sql, $params) = $this->sieves2Sql($sieves);
+
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.*
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.id_person
-        WHERE (id_user = {$userIdSystem} OR id_user = {$userId})
-      ";
-      if (
-        $sieves &&
-        $sieves["search"] &&
-        $sieves["search"]["term"]
-      ) {
-        $params["searchTerm"] = $sieves["search"]["term"];
-        $sql .= " AND ";
-        $sql .= "(
-          name LIKE '%' || :searchTerm || '%' OR
-          description LIKE '%' || :searchTerm || '%' OR
-          phone LIKE '%' || :searchTerm || '%' OR
-          zone LIKE '%' || :searchTerm || '%' OR
-          address LIKE '%' || :searchTerm || '%'
-        )";
-      }
-      if (
-        $sieves &&
-        $sieves["filters"] &&
-        $sieves["filters"]["active"]
-      ) {
-        if ($sieves["filters"]["active"] !== "any") {
-          $params["active"] = $sieves["filters"]["active"];
-          $sql .= " AND ";
-          $sql .= "active = :active";
-        }
-      }
-      if (
-        $sieves &&
-        $sieves["filters"] &&
-        $sieves["filters"]["nationality"]
-      ) {
-        $params["nationality"] = $sieves["filters"]["nationality"];
-        $sql .= " AND ";
-        $sql .= "nationality = :nationality";
-      }
-      if (
-        $sieves &&
-        $sieves["filters"] &&
-        $sieves["filters"]["voteMin"]
-      ) {
-        $params["voteMin"] = $sieves["filters"]["voteMin"];
-        $sql .= " AND ";
-        $sql .= "vote >= :voteMin";
-      }
-      if (
-        $sieves &&
-        $sieves["filters"] &&
-        $sieves["filters"]["commentsCountMin"]
-      ) {
-        $params["commentsCountMin"] = $sieves["filters"]["commentsCountMin"];
-        $sql .= " AND ";
-        $sql .= "(SELECT COUNT(*) FROM comment WHERE id_person = person.id) >= :commentsCountMin";
-      }
-      if (
-        $sieves &&
-        $sieves["filters"] &&
-        $sieves["filters"]["age"] &&
-        $sieves["filters"]["age"]["min"] &&
-        $sieves["filters"]["age"]["max"]
-      ) {
-        $params["ageMin"] = $sieves["filters"]["age"]["min"];
-        $params["ageMax"] = $sieves["filters"]["age"]["max"];
-        $sql .= " AND ";
-        $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
-      }
+        WHERE (id_user = {$this->userIdSystem} OR id_user = {$userId})
+      " . $sql;
 
-      // first lower user id's (system is 1)
+      // order to get lower user id first (system is the lowest: 1)
       $sql .= " ORDER BY " .
         "{$tableDetail}.id_user ASC," .
         "{$tableDetail}.id_person ASC" # TODO: do we need this ordering?
@@ -256,12 +194,10 @@ class DB extends PDO {
     }
   }
 
-  # TODO: duplicate to getPersonsSieved
-  public function get($table, $id) {
-    $tableMaster = $table;
-    $tableDetail = $table . "_" . "detail";
+  public function getPerson($id, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "person";
+    $tableDetail = "person" . "_" . "detail";
     try {
-#     $sql = "SELECT * FROM $table WHERE id = :id LIMIT 1";
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.*
         FROM {$tableMaster}
@@ -269,21 +205,128 @@ class DB extends PDO {
         ON {$tableMaster}.id = {$tableDetail}.id_person
         WHERE 1 = 1
       ";
-      $sql .= " AND ";
-      $sql .= "{$tableMaster}.id = :id";
+      $sql .= " AND {$tableMaster}.id = :id";
+      $sql .= " AND {$tableDetail}.id_user = :id_user";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":id", $id, PDO::PARAM_INT);
+      $statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get table $table: " . $e->getMessage());
+    }
+  }
+
+  public function getPersonsUniqcode($id_person_1, $id_person_2, $userId = self::DB_SYSTEM_USER_ID) {
+    $table = "person_uniqcode";
+    try {
+      $sql = "
+        SELECT id, same
+        FROM {$table}
+        WHERE (id_user = {$this->userIdSystem} OR id_user = {$userId})
+        AND (
+          id_person_1 = :id_person_1 AND
+          id_person_2 = :id_person_2
+        ) OR (
+          id_person_1 = :id_person_2 AND
+          id_person_2 = :id_person_1
+        )
+        ORDER BY id_user DESC -- lower id_user (systems's) last
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":id_person_1", $id_person_1, PDO::PARAM_INT);
+      $statement->bindParam(":id_person_2", $id_person_2, PDO::PARAM_INT);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      if ($result) { // at least one record present
+        return $result; // return only first (user's, if present) record
+      } else { // no records present
+        return null; // no uniqcode set for these persons
+      }
+    } catch (PDOException $e) {
+      throw new Exception("can't get persons uniq code in table $table: " . $e->getMessage());
+    }
+  }
+
+  public function setPersonsUniqcode($id_person_1, $id_person_2, $same, $userId = self::DB_SYSTEM_USER_ID) {
+    $table = "person_uniqcode";
+    try {
+      $result = $this->getPersonsUniqcode($id_person_1, $id_person_2, $userId);
+$this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result, true));
+      $count = count($result);
+      if ($count > 0) { // a uniqcode already present for these persons, update it
+        if ($result["same"] === $same) { // current value is equal to the value to be set
+          ; // do nothing
+        } else { // current value is different from the value to be set
+          $id = $result["id"];
+          $sql = "
+            UPDATE {$table}
+            SET same = :same
+            WHERE (id = {$id})
+          ";
+          $statement = $this->db->prepare($sql);
+          $statement->bindParam(":same", $same, PDO::PARAM_INT);
+          $statement->execute();
+          $count = $statement->rowCount();
+          if ($count != 1) {
+           throw new Exception("can't update persons [$id_person_1] and [$id_person_2] uniq code in table $table: " . $e->getMessage());
+          }
+        }
+      } else { // a uniqcode not yet present for these persons, insert it
+        $sql = "
+          INSERT INTO {$table}
+          (id_user, id_person_1, id_person_2, same)
+          VALUES
+          (:id_user, :id_person_1, :id_person_2, :same)
+        ";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
+        $statement->bindParam(":id_person_1", $id_person_1, PDO::PARAM_INT);
+        $statement->bindParam(":id_person_2", $id_person_2, PDO::PARAM_INT);
+        $statement->bindParam(":same", $same, PDO::PARAM_INT);
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+         throw new Exception("can't insert persons [$id_person_1] and [$id_person_2] uniq code in table $table: " . $e->getMessage());
+        }
+      }
+      return $same;
+    } catch (PDOException $e) {
+      throw new Exception("can't set persons uniq code in table $table: " . $e->getMessage());
+    }
+  }
+
+
+
+  /*
+   * hereafter generic table functions
+   */
+
+  public function get($table, $id) {
+    try {
+      $sql = "
+        SELECT *
+        FROM {$table}
+        WHERE id = :id
+      ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":id", $id, PDO::PARAM_INT);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("can't get $table person: " . $e->getMessage());
+      throw new Exception("can't get record from table $table: " . $e->getMessage());
     }
   }
 
-  public function getByField($table, $fieldName, $fieldValue) {
+  public function getByField($table, $fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
     try {
-      $sql = "SELECT * FROM $table WHERE $fieldName = :$fieldName";
+      $sql = "
+        SELECT *
+        FROM {$table}
+        WHERE $fieldName = :$fieldName
+      ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
       $statement->execute();
@@ -300,7 +343,11 @@ class DB extends PDO {
       foreach ($array as $key => $value) {
         $where .= ($where ? " AND " : "") . $key . " = " . ":" . $key;
       }
-      $sql = "SELECT * FROM $table WHERE $where";
+      $sql = "
+        SELECT *
+        FROM {$table}
+        WHERE $where
+      ";
       $statement = $this->db->prepare($sql);
       foreach ($array as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
@@ -315,7 +362,11 @@ class DB extends PDO {
 
   public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
     try {
-      $sql = "select avg($fieldName) as avg from $table where id_person = :id_person";
+      $sql = "
+        SELECT AVG($fieldName) AS avg
+        FROM {$table}
+        WHERE id_person = :id_person
+      ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . "id_person", $idPerson); #, PDO::PARAM_STR);
       $statement->execute();
@@ -328,7 +379,11 @@ class DB extends PDO {
 
   public function countByField($table, $fieldName, $fieldValue) {
     try {
-      $sql = "SELECT COUNT($fieldName) AS count FROM $table WHERE $fieldName = :fieldValue";
+      $sql = "
+        SELECT COUNT($fieldName) AS count
+        FROM {$table}
+        WHERE $fieldName = :fieldValue
+      ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":fieldValue", $fieldValue); #, PDO::PARAM_STR);
       $statement->execute();
@@ -341,7 +396,6 @@ class DB extends PDO {
 
   public function add($table, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = $table;
-    $tableDetail = $table . "_" . "detail";
 
     try { // add master data
       $fields = $values = "";
@@ -349,7 +403,12 @@ class DB extends PDO {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
-      $sql = "INSERT INTO $tableMaster ($fields) VALUES ($values)";
+      $sql = "
+        INSERT INTO {$tableMaster}
+        ($fields)
+        VALUES
+        ($values)
+      ";
       $statement = $this->db->prepare($sql);
       foreach ($arrayMaster as $key => &$value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
@@ -365,6 +424,8 @@ class DB extends PDO {
     }
 
     if (!empty($arrayDetail)) {
+      $tableDetail = $table . "_" . "detail";
+
       $arrayDetail["id_person"] = $lastInsertId; // add master person id to this detail record
       $arrayDetail["id_user"] = $userId; // add user id to this detail record
   
@@ -375,7 +436,12 @@ class DB extends PDO {
           $values .= ($values ? ", " : "") . ":" . $key;
         }
   
-        $sql = "INSERT INTO $tableDetail ($fields) VALUES ($values)";
+        $sql = "
+          INSERT INTO {$tableDetail}
+          ($fields)
+          VALUES
+          ($values)
+        ";
 #throw new Exception("detail sql: [$sql]");
         $statement = $this->db->prepare($sql);
         foreach ($arrayDetail as $key => &$value) {
@@ -400,7 +466,13 @@ class DB extends PDO {
       foreach ($array as $key => $value) {
         $set .= ($set ? ", " : "") . $key . "=" . ":" . $key;
       }
-      $sql = "UPDATE $table SET $set WHERE id = :id";
+      $sql = "
+        UPDATE
+        {$table}
+        SET
+        $set
+        WHERE id = :id
+      ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);
       foreach ($array as $key => &$value) {
@@ -419,7 +491,11 @@ class DB extends PDO {
 
   public function delete($table, $id) {
     try {
-      $sql = "DELETE FROM $table WHERE id = :id";
+      $sql = "
+        DELETE
+        FROM {$table}
+        WHERE id = :id
+      ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);
       $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
@@ -432,6 +508,77 @@ class DB extends PDO {
     } catch (PDOException $e) {
       throw new Exception("can't delete from $table: " . $e->getMessage());
     }
+  }
+
+  private function sieves2Sql($sieves = null) {
+    $sql = $params = "";
+
+    if (
+      $sieves &&
+      $sieves["search"] &&
+      $sieves["search"]["term"]
+    ) {
+      $params["searchTerm"] = $sieves["search"]["term"];
+      $sql .= " AND ";
+      $sql .= "(
+        name LIKE '%' || :searchTerm || '%' OR
+        description LIKE '%' || :searchTerm || '%' OR
+        phone LIKE '%' || :searchTerm || '%' OR
+        zone LIKE '%' || :searchTerm || '%' OR
+        address LIKE '%' || :searchTerm || '%'
+      )";
+    }
+    if (
+      $sieves &&
+      $sieves["filters"] &&
+      $sieves["filters"]["active"]
+    ) {
+      if ($sieves["filters"]["active"] !== "any") {
+        $params["active"] = $sieves["filters"]["active"];
+        $sql .= " AND ";
+        $sql .= "active = :active";
+      }
+    }
+    if (
+      $sieves &&
+      $sieves["filters"] &&
+      $sieves["filters"]["nationality"]
+    ) {
+      $params["nationality"] = $sieves["filters"]["nationality"];
+      $sql .= " AND ";
+      $sql .= "nationality = :nationality";
+    }
+    if (
+      $sieves &&
+      $sieves["filters"] &&
+      $sieves["filters"]["voteMin"]
+    ) {
+      $params["voteMin"] = $sieves["filters"]["voteMin"];
+      $sql .= " AND ";
+      $sql .= "vote >= :voteMin";
+    }
+    if (
+      $sieves &&
+      $sieves["filters"] &&
+      $sieves["filters"]["commentsCountMin"]
+    ) {
+      $params["commentsCountMin"] = $sieves["filters"]["commentsCountMin"];
+      $sql .= " AND ";
+      $sql .= "(SELECT COUNT(*) FROM comment WHERE id_person = person.id) >= :commentsCountMin";
+    }
+    if (
+      $sieves &&
+      $sieves["filters"] &&
+      $sieves["filters"]["age"] &&
+      $sieves["filters"]["age"]["min"] &&
+      $sieves["filters"]["age"]["max"]
+    ) {
+      $params["ageMin"] = $sieves["filters"]["age"]["min"];
+      $params["ageMax"] = $sieves["filters"]["age"]["max"];
+      $sql .= " AND ";
+      $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
+    }
+    return [ $sql, $params ];
   }
 
   private function profileForSpeed($method) { # TODO: to be tested...

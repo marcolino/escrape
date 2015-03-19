@@ -187,50 +187,73 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
         }
       }
     }
+
+    // sync persons uniqueness after sync completed
+    $this->syncPersonsUniqueness();
+
     return !$error;
   }
 
   /**
    * Assert persons uniqueness
-   *
-   * @return boolean: true if everything successful, false otherwise
    */
-  public function assertUniqueness() {
+  public function syncPersonsUniqueness() {
     $this->router->log("info", "assertUniqueness()");
-$userId = 2;
-    $persons = $this->db->getAllSieved("person", null, $userId);
-    # check loops
-    foreach ($persons as $person1) {
-      foreach ($persons as $person2) {
-        #if ($person2["_uniqcode_"]) { continue; } # TODO: ???
-        if ($person1["phone"] === $person2["phone"]) {
-          $person2["_uniqcode_"] = true;
-        } else {
-          $person2["_uniqcode_"] = false;
-        }
-      }
-    }
+    $persons = $this->db->getPersonListSieved(null);
 
-    # set loop
-    foreach ($persons as $person) {
-      if (isset($person["_uniqcode_"])) {
-        $this->db->set("person", $id, $person);
-      }
-    }
-
-    return true;
+    # check every couple of persons (avoiding permutations)
+    $persons_count = count($persons);
+    for ($i = 0; $i < $persons_count - 1; $i++) {
+      for ($j = $i + 1; $j < $persons_count; $j++) {
+        if ($persons[$i]["phone"] === $persons[$j]["phone"]) {
+          $this->db->setPersonsUniqcode($persons[$i]["id"], $persons[$j]["id"], true/*, null (?), SYSTEM user... */);
+        }          
+      }          
+    }          
   }
 
+  /**
+   * Get persons uniqueness value
+   *
+   * @return null/boolean  null  if same value is not set (persons are probably not the same)
+   *                       true  if same value is set (persons are not the same)
+   *                       false if same value is set (persons are the same)
+   */
+  public function getPersonsUniqueness($personId1, $personId2, $userId = self::DB_SYSTEM_USER_ID) {
+    $this->router->log("info", "getPersonsUniqueness()");
+    $result = $this->db->getPersonsUniqcode($personId1, $personId2, $userId);
+    if (!$result) {
+      return null;
+    } else {
+      return $result["same"];
+    }
+  }
+
+  /**
+   * Set persons uniqueness value
+   *
+   * @return boolean  true    if value was set successfully
+   *                  false   if some error occurred
+   */
+  public function setPersonsUniqueness($personId1, $personId2, $same, $userId = self::DB_SYSTEM_USER_ID) {
+    $this->router->log("info", "setPersonsUniqueness()");
+    return $this->db->setPersonsUniqcode($personId1, $personId2, $same, $userId);
+  }
+
+# TODO: pass $userId to db functions, in user functions (not in system ones...)
+
   public function get($id) {
+$this->router->log("info", " +++ get person [$id]: " . var_export($id, true));
 #print "get($id)\n";
     $person = $this->db->get("person", $id);
     $photos = $this->db->getByField("photo", "id_person", $id);
-####$person["photos"] = $photos;
+    $person["photos"] = $photos;
 #print " person: "; var_export($person);
-$this->router->log("info", "person($id): " . var_export($person));
+$this->router->log("info", " !!! person($id): " . var_export($person, true));
     return $person;
   }
   
+  # TODO: add $userId...
   public function add($personMaster, $personDetail) {
     return $this->db->add("person", $personMaster, $personDetail);
   }
@@ -249,19 +272,17 @@ $this->router->log("info", "person($id): " . var_export($person));
    * @param  array $sieves
    * @return array
    */
-  public function getAllSieved($sieves) {
-    #$this->router->log("debug", "getAllSieved(); sieves: " . var_export($sieves, true));
+  public function getListSieved($sieves) {
+    #$this->router->log("debug", "getListSieved(); sieves: " . var_export($sieves, true));
     $result = [];
     $comments = new CommentsController($this->router);
 
-    #$this->router->log("debug", " *** getAllSieved() - sieves:" . var_export($sieves, true));
-    #foreach ($this->db->getAllSieved("person") as $personId => $person) {
     $userId = 2; # TODO: get logged user id (from "authdata"?) ...
-    foreach ($this->db->getAllSieved("person", $sieves, $userId) as $person) {
+    foreach ($this->db->getPersonListSieved($sieves, $userId) as $person) {
       // N.B: here we (could) get multiple records for each person id
       $pid = $person["id_person"];
       if (!isset($result[$pid])) {
-        $result[$pid] = []; // ititialize this person array in results
+        $result[$pid] = []; // initialize this person array in results
       }
 
       // fields with only "master" table values
@@ -303,24 +324,6 @@ $this->router->log("info", "person($id): " . var_export($person));
       $result[$pid]["photo_path_small_showcase"] = $this->photoGetByShowcase($pid, true)["path_small"];
       $result[$pid]["comments_count"] = $comments->countByPerson($pid);
       $result[$pid]["comments_average_valutation"] = $comments->getAverageValutationByPerson($pid);
-
-/* OLD - ONE TABLE - VERSION
-      $result[$personId] = [
-        "id" => $person["id"],
-        "key" => $person["key"],
-        "site_key" => $person["site_key"],
-        "name" => $person["name"],
-        "phone" => $person["phone"],
-        "nationality" => $person["nationality"],
-        "vote" => $person["vote"],
-        "age" => $person["age"],
-        "thruthfulness" => "unknown", # TODO: if at least one photo is !thrustful, person is !thrustful...
-        "photo_path_small_showcase" => $this->photoGetByShowcase($person["id"], true)["path_small"],
-        "comments_count" => $comments->countByPerson($person["id"]),
-        "comments_average_valutation" => $comments->getAverageValutationByPerson($person["id"]),
-      ];
-*/
-      #$this->router->log("debug", var_export($result, true));
     }
     return $result;
   }
@@ -440,12 +443,14 @@ $this->router->log("info", "person($id): " . var_export($person));
     $photo->timestampCreation(time());
     $photo->thruthfulness("unknown"); // this is an offline-set property (it's very expensive to calculate)
     $photo->showcase($showcase);
+$this->router->log("debug", " photoAdd [$idPerson] X ");
    
     // store this photo
     if (($number = $this->photoStore($idPerson, $photo)) === false) {
       $this->router->log("error", "photo " . $photo->url() . " for person id " . $idPerson . " could not be stored locally");
       return false; // error storing photo locally
     }
+$this->router->log("debug", " photoAdd [$idPerson] 7");
     $photo->number($number);
 
     // add this photo to database
@@ -538,8 +543,9 @@ $this->router->log("info", "person($id): " . var_export($person));
    * @return integer: >= 0       the progressive number of the photo
    */
   public function photoStore($idPerson, $photo) {
-    #$this->router->log("debug", "photoStore - storing photo");
+$this->router->log("debug", "photoStore - storing photo");
     $keyPerson = $this->db->get("person", $idPerson)["key"];
+$this->router->log("debug", "photoStore - storing photo 0");
     $personPhotosCount = $this->photoGetCount($idPerson);
     $number = $personPhotosCount + 1;
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
@@ -549,6 +555,8 @@ $this->router->log("info", "person($id): " . var_export($person));
     $dirnameSmall = $dirname . "small" . "/";
     $pathnameFull = $dirnameFull . $filename . "." . $fileext;
     $pathnameSmall = $dirnameSmall . $filename . "." . $fileext;
+
+$this->router->log("debug", "photoStore - storing photo 1");
 
     // assure photos directories existence
     foreach ([ $dirnameFull, $dirnameSmall ] as $d) {
@@ -561,6 +569,7 @@ $this->router->log("info", "person($id): " . var_export($person));
         ; # directory already exists, not the first photo for this person
       }
     }
+$this->router->log("debug", "photoStore - storing photo 2");
 
     // store the full and small bitmaps to file-system
     if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {
@@ -755,17 +764,33 @@ $this->router->log("info", "person($id): " . var_export($person));
 
     return true;
   }
-}
 
-/*
-  # CLI class test
-  require_once "classes/services/Network.php";
-  require_once "classes/services/GoogleSearch.php";
-  $pc = new PersonsController(null);
-  $id = 1;
-  $imageUrl = "http://www.meteoweb.eu/wp-content/uploads/2013/07/cristoforetti.jpg";
-  $result = $pc->photoGetOccurrences($id, $imageUrl);
-  var_dump($result);
-*/
+  public function testuniqcode() {
+    $userId = 2; # TODO...
+    $p1 = 1;
+    $p2 = 2;
+
+    $this->router->log("debug", "getPersonsUniqcode($p1, $p2, $userId)");
+    $result = $this->db->getPersonsUniqcode($p1, $p2, $userId);
+    $this->router->log("debug", " Xresult: " . var_export($result, true));
+
+    $this->router->log("debug", "setPersonsUniqcode($p1, $p2, true)");
+    $result = $this->db->setPersonsUniqcode($p1, $p2, true, $userId);
+    $this->router->log("debug", " Xresult: " . var_export($result, true));
+
+    $this->router->log("debug", "getPersonsUniqcode($p1, $p2, $userId)");
+    $result = $this->db->getPersonsUniqcode($p1, $p2, $userId);
+    $this->router->log("debug", " Xresult: " . var_export($result, true));
+
+    $this->router->log("debug", "setPersonsUniqcode($p1, $p2, false)");
+    $result = $this->db->setPersonsUniqcode($p1, $p2, false, $userId);
+    $this->router->log("debug", " Xresult: " . var_export($result, true));
+
+    $this->router->log("debug", "getPersonsUniqcode($p1, $p2, $userId)");
+    $result = $this->db->getPersonsUniqcode($p1, $p2, $userId);
+    $this->router->log("debug", " Xresult: " . var_export($result, true));
+    return true;
+  }
+}
 
 ?>

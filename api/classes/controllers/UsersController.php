@@ -41,6 +41,7 @@ class UsersController {
       "role" => "user",
     ];
     $this->db->add("user", $user);
+# TODO: $user["userId" => $userId]; ...
     return [ "success" => true, "user" => $user ];
   }
 
@@ -50,6 +51,7 @@ class UsersController {
       "password" => $this->scramblePassword($password)
     ]);
     if (count($user) === 1) {
+# TODO: $user["userId" => $userId]; ...
       return [ "success" => true, "user" => $user[0] ];
     } else {
       return [ "message" => "Wrong username/password, please try again" ];
