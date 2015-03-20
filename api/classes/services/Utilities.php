@@ -30,12 +30,24 @@
  /**
   * Checks if an array is multi dimensional
   *
-  * @param array $array   the arry to be checked
+  * @param array $array   the array to be checked
   * @return boolean       true if the array is multi dimensional, false otherwise
   */
   function is_array_multi($array) {
     return (count($array, COUNT_RECURSIVE) > count($array));
   }
 
+  /**
+   * Returns the sign of a number;
+   * if the absolute value of the number is very low (even not exactly 0, 0 is returned.
+   *
+   * @param number $number   the number
+   * @return integer          1  if the number is positive
+   *                         -1  if the number is negative
+   *                          0  if the number is (close to) zero
+   */
+  function sign($number) {
+    return abs($number) >= 0.00001 ? abs($number) / $number : 0;
+  }
 
 ?>

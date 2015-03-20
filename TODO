@@ -1,5 +1,6 @@
 TODO 1.0:
  - pass user id from authentication to service.js, and to API
+ - test photosCardDeckMerge() in real life...
  - filter all sites defined and all esc* sites from photos occurrences
  - handle 'active' flag when syncing
  - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)

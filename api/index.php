@@ -92,6 +92,15 @@ class Router {
           $this->error($e);
         }
       });
+      $this->app->post("/photo/get/carddeck", function() { # ===========
+        try {
+          $persons = new PersonsController($this);
+          $data = json_decode($this->app->request()->getBody()); // content-type: application/json
+          $this->success($persons->photoGetCardDeck($data->urls));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
       $this->app->get("/search/:query", function($query) { # ==============
         try {
           $persons = new PersonsController($this);

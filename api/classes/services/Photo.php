@@ -82,7 +82,7 @@ class Photo {
       return $this->bitmapSmall;
     }
     $this->load();
-    $bitmapSmall = $this->scaleByHeight($this->bitmap, $this->options["smallHeight"]);
+    $bitmapSmall = $this->photoScaleByHeight($this->bitmap, $this->options["smallHeight"]);
     $this->bitmapSmall = $this->convertBitmapToInternalType($bitmapSmall);
     return $this->bitmapSmall;
   }
@@ -332,7 +332,7 @@ class Photo {
   /**
    * Returns a scaled version of a bitmap, given an height
    */
-  private function scaleByHeight($bitmap, $height) {
+  private function photoScaleByHeight($bitmap, $height) {
     // calculate the new width to keep the same proportions
     $width = (($this->width() * $height) / $this->height());
     // create the image from the bitmap
@@ -444,12 +444,135 @@ class Photo {
   }
 
   /**
+   * Returns a merged image from a collection of images,
+   * arranged as a deck of cards.
+   * Result size will be PNG format;
+   * it's size will be 20% bigger than the biggest source image;
+   * it's background will be transparent.
+   *
+   * @param  array $imageUrls         source images urls (or filenames)
+   * @return null                     some error occurred 
+   *         bitmap                   merged image bitbmap
+   */
+  public function photoGetCardDeck($imagesUrls) {
+    $scaleFactor = 120 / 100; // scale factor of output image relative to the biggest of source images
+
+    // Load images from urls (or filenames)
+    $count = count($imagesUrls);
+    $images = [];
+    $widthMax = 0;
+    $heightMax = 0;
+    for ($n = 0; $n < $count; $n++) {
+      $imageUrl = $imagesUrls[$n];
+      switch (strtolower(pathinfo($imageUrl, PATHINFO_EXTENSION))) {
+        case 'jpeg':
+        case 'jpg': // JPEG image
+          $image = imagecreatefromjpeg($imageUrl);
+          break;
+        case 'png': // PNG image
+          $image = imagecreatefrompng($imageUrl);
+          break;
+        case 'gif': // GIF image
+          $image = imagecreatefromgif($imageUrl);
+          break;
+        default: // unforeseen type image, skip it
+          contiue;
+        break;
+      }
+      if (!$image) {
+        #print "can't transform [$imageUrl] to image\n";
+        contiue;
+      }
+      $images[$n] = [];
+      $images[$n]["bitmap"] = $this->imageTransparent($image);
+      $images[$n]["width"] = imagesx($image);
+      $images[$n]["height"] = imagesy($image);
+      $widthMax = max($widthMax, $images[$n]["width"]);
+      $heightMax = max($heightMax, $images[$n]["height"]);
+    }
+    $count = count($images);
+    if ($count <= 0) {
+      #die("0 good images found\n");
+      return false; // no suitable image found
+    }
+
+    // create the new image container with the new size
+    $height = $heightMax * $scaleFactor;
+    $width = $widthMax * $scaleFactor;
+
+    $image = $this->imageTransparent(imagecreatetruecolor($width, $height));
+
+    for ($n = 0; $n < $count; $n++) {
+      // calculate the rotation degrees for this image
+      $notSoFlatDegrees = 20; // a card deck is never 180 degrees wide, but some degree less...
+      $degrees = ($notSoFlatDegrees / 2) + (((180 - $notSoFlatDegrees) / (1 + $count)) * (1 + $n));
+      $degrees = - ($degrees - 90);
+
+      # calculate small offsets to better dispose 'cards' in 'deck'
+      $hUnit = $height / 36;
+      $wUnit = ($width - $images[$n]["width"]) / 2;
+      $top = ((1 * $hUnit) * sin(deg2rad($n * (180 / ($count - 1))))) - (1 * $hUnit);
+      $sign = sign(cos(deg2rad($n * (180 / ($count - 1)))));
+      $left = ($sign ? -$sign : 1) * $wUnit + -((1 * $wUnit) * (cos(deg2rad($n * (180 / ($count - 1)))) * (1)));
+
+      // rotate image
+      $imageBigger = $this->imageSurfaceResize($images[$n]["bitmap"], $width, $height);
+      $verticalMargin = ($height - $images[$n]["height"]) / 2;
+      $horizontalMargin = ($width - $images[$n]["width"]) / 2;
+      $colorTransparent = imageColorAllocateAlpha($imageBigger, 0, 0, 0, 127);
+      $imageRotated = $this->imageTransparent(imagerotate($imageBigger, $degrees, $colorTransparent));
+
+      // merge the rotated image to the base image
+      imagecopyresampled(
+        $image, $imageRotated,
+        $left, $top, 0, 0, # left, top, right, bottom
+        $images[$n]["width"], $images[$n]["height"],
+        $width, $height
+      );
+      imagedestroy($imageRotated);
+    }
+    // produce the new bitmap
+    ob_start();
+    if (!imagepng($image, NULL, 0)) { // no compression
+      #die("can't create final image\n");
+      return false;
+    }
+    $bitmap = ob_get_contents();
+    ob_end_clean();
+    imagedestroy($image);
+    // return the new bitmap
+    return $bitmap;
+  }
+
+  public function imageTransparent($image) {
+    imagesavealpha($image, true);
+    $colorTransparent = imagecolorallocatealpha($image, 0, 0, 0, 127);
+    imagefill($image, 0, 0, $colorTransparent);
+    return $image;
+  }
+
+  /**
+   * Resizes the surface of an image, preserving transparency
+   */
+  public function imageSurfaceResize($image, $width, $height) {
+    $widthSource = imagesx($image);
+    $heightSource = imagesy($image);
+    $imageNew = $this->imageTransparent(imagecreatetruecolor($width, $height));
+    imagecopy(
+      $imageNew, $image,
+      ($width - $widthSource) / 2, ($height - $heightSource) / 2, 0, 0, # left, top, right, bottom
+      $widthSource, $heightSource
+    );
+    return $imageNew;
+  }
+
+  /**
    * Downloads an url
    *
    * @param  string $url:             source url
    * @return array [ output, mime ]   an array; first element is url content, second is mime type
    */
-  private function getUrlContents($url) {
+  private function USE_NETWOR_VERSION_getUrlContents($url) {
     $user_agent = "Mozilla";
     $ch = curl_init();
     if (($errno = curl_errno($ch))) {

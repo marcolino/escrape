@@ -359,6 +359,17 @@ $this->router->log("info", " !!! person($id): " . var_export($person, true));
     return $response;
   }
 
+  public function photoGetCardDeck($imageUrls) {
+    $photo = new Photo([ "url" => null ]); # TODO: change classto support null url instantiation...
+    if (($cardDeck = $photo->photoGetCardDeck($imageUrls)) === false) {
+      # TODO: return default card deck, if can't build one
+      $this->router->log("debug", " can't create photo card deck, returning default card deck...");
+      #$cardDeck = file_get_contents("../app/images/referral-sites/card-deck-default.png"); # TODO: ...
+throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
+    }
+    return $cardDeck;
+  }
+
   private function cleanName($value) {
     $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
     $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
