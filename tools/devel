@@ -1,12 +1,17 @@
 #!/bin/bash
 #
 # Run project development tools:
+#  - run database browser
 #  - run tail of apache error log
 #  - run tail of slim log
-#  - run database browser
 #  - run grunt server
+#  - run editor
 
-gnome-terminal --geometry=150x12+200+500 -x sh -c "tail -f /var/log/apache2/error.log"
-gnome-terminal --geometry=150x12+240+280 -x sh -c "tail -f /var/www/html/escrape/api/logs/*-*-*.log"
 sqlitebrowser "/var/www/html/escrape/api/db/escrape.sqlite" &
+sleep 1
+gnome-terminal --geometry=150x12+150+500 -x sh -c "tail -f /var/log/apache2/error.log"
+gnome-terminal --geometry=150x12+190+280 -x sh -c "tail -f /var/www/html/escrape/api/logs/*-*-*.log"
+gnome-terminal --geometry=100x8+230+120 -x sh -c "tail -f /var/www/html/escrape/api/logs/curl.log"
+subl
+killall grunt 2>/dev/null
 grunt serve

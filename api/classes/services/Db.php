@@ -98,9 +98,10 @@ class DB extends PDO {
           phone VARCHAR(16),
           nationality VARCHAR(2),
           age TEXT,
-          vote INTEGER
+          vote INTEGER,
+          showcase INTEGER
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
+         CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "
       );
       $this->db->exec(
@@ -146,6 +147,7 @@ class DB extends PDO {
           path_small TEXT,
           sum VARCHAR(32),
           timestamp_creation INTEGER,
+          timestamp_last_modification INTEGER,
           signature VARCHAR(256),
           showcase INTEGER,
           thruthfulness INTEGER

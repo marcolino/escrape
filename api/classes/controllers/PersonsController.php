@@ -17,6 +17,7 @@ class PersonsController {
   function __construct($router) {
     require_once "setup/persons.php"; // persons setup
     $this->router = $router;
+    $this->network = new Network();
     $this->db = $router->db;
   }
 
@@ -26,17 +27,17 @@ class PersonsController {
    * @return boolean: true if everything successful, false otherwise
    */
   public function sync() {
-    $this->router->log("info", "sync()");
-    $this->network = new Network(); // TODO: initialize $this->network in constructor?
+    $this->router->log("info", "sync() ---------------------");
     $error = false; // track errors while sync'ing
 
     foreach ($this->sitesDefinitions as $siteKey => $site) {
-      $useTor = true; // use TOR proxy to sync
+      #$useTor = true; // use TOR proxy to sync
+      $useTor = $site["accepts-tor"]; // use TOR proxy to sync
       $url = $site["url"] . "/" . $site["path"];
       $this->router->log("debug", "site: " . $siteKey);
-#if ($siteKey === "toe") continue; # TODO: DEBUG-ONLY
+
       getUrlContents:
-      $this->router->log("info", "getUrlContents($url) (TOR: $useTor)");
+      $this->router->log("info", "getUrlContents($url) (TOR: " . ($useTor ? "true" : "false") . ")");
       $page = $this->network->getUrlContents($url, $site["charset"], null, false, $useTor);
 
       if ($page === FALSE) {
@@ -66,7 +67,7 @@ class PersonsController {
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-if ($n > 7) break; # TODO: DEBUG-ONLY
+#if ($n > 12) break; # TODO: DEBUG-ONLY
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -178,14 +179,18 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
           $this->set($id, $personMaster, $personDetail); # TODO...
         } else { # new key, insert it
           $this->router->log("debug", " ^^^ inserting person: $key ^^^");
-          $person["timestamp_creation"] = $timestamp;
+          $personMaster["timestamp_creation"] = $timestamp;
           $id = $this->add($personMaster, $personDetail);
         }
         // add photos
         foreach ($photosUrls as $photoUrl) {
           $this->photoAdd($id, $site["url"] . "/" . $photoUrl);
+#break;
         }
+        $this->router->log("debug", " === person finished: $key ===");
+#break;
       }
+#break;
     }
 
     // sync persons uniqueness after sync completed
@@ -246,13 +251,13 @@ if ($n > 7) break; # TODO: DEBUG-ONLY
 # TODO: pass $userId to db functions, in user functions (not in system ones...)
 
   public function get($id) {
-$this->router->log("info", " +++ get person [$id]: " . var_export($id, true));
+#$this->router->log("info", " +++ get person [$id]: " . var_export($id, true));
 #print "get($id)\n";
     $person = $this->db->get("person", $id);
     $photos = $this->db->getByField("photo", "id_person", $id);
     $person["photos"] = $photos;
 #print " person: "; var_export($person);
-$this->router->log("info", " !!! person($id): " . var_export($person, true));
+#$this->router->log("info", " !!! person($id): " . var_export($person, true));
     return $person;
   }
   
@@ -433,17 +438,26 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     $photoUrl = str_replace("../", "", $photoUrl);
 
     // build photo object from url
-    $photo = new Photo([ "url" => $photoUrl ]); # TODO: can we avoid download with curl "get header only", comparing modification timestamps?
+    $photo = new Photo([ "url" => $photoUrl ]);
+
+    $photos = $this->db->getByField("photo", "id_person", $idPerson);
+
+    // check if photo url did not change from last download
+    if ($this->photoCheckLastModified($idPerson, $photo, $photos)) {
+      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is not changed, ignoring");
+      return false; // same Last-Modified tag found
+    }
 
     // check if photo is an exact duplicate
-    if ($this->photoCheckDuplication($idPerson, $photo)) {
+    if ($this->photoCheckDuplication($idPerson, $photo, $photos)) {
       $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is a duplicate, ignoring");
       return false; // duplicate found
     }
 
     // check if photo has similarities
     $photo->signature();
-    if ($this->photoCheckSimilarity($idPerson, $photo)) {
+
+    if ($this->photoCheckSimilarity($idPerson, $photo, $photos)) {
       $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is a similarity, ignoring");
       return false; // similarity found
     }
@@ -457,18 +471,15 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     $photo->timestampCreation(time());
     $photo->thruthfulness("unknown"); // this is an offline-set property (it's very expensive to calculate)
     $photo->showcase($showcase);
-$this->router->log("debug", " photoAdd [$idPerson] X ");
    
     // store this photo
     if (($number = $this->photoStore($idPerson, $photo)) === false) {
       $this->router->log("error", "photo " . $photo->url() . " for person id " . $idPerson . " could not be stored locally");
       return false; // error storing photo locally
     }
-$this->router->log("debug", " photoAdd [$idPerson] 7");
     $photo->number($number);
 
     // add this photo to database
-    #$this->router->log("debug", "photoAdd() - adding photo n° [$number] to db");
     return $this->db->add("photo", $this->photo2Data($photo));
   }
 
@@ -489,6 +500,7 @@ $this->router->log("debug", " photoAdd [$idPerson] 7");
         ($property === "path_small") ||
         ($property === "sum") ||
         ($property === "timestamp_creation") ||
+        ($property === "timestamp_last_modification") ||
         ($property === "signature") ||
         ($property === "showcase") ||
         ($property === "thruthfulness")
@@ -499,6 +511,53 @@ $this->router->log("debug", " photoAdd [$idPerson] 7");
   }
 
   /**
+   * Check photo last modification timestamp
+   *
+   * @param  integer $idPerson:     the id of person to check for photo last modification
+   * @param  Photo: $photo          the photo object to check for last modification
+   * @param  Photo array: $photos   the photos array of this person
+   * @return boolean: true          if photo has not been modified
+   *                  false         if photo has been modified (and should be downloaded)
+   */
+  private function photoCheckLastModified($idPerson, $photo, $photos) {
+    $photoLastModificationTimestamp = $photo->getLastModificationTimestamp();
+    if ($photos !== []) {
+      if (is_array_multi($photos)) { // more than one result returned
+        foreach ($photos as $p) {
+##$this->router->log("debug", "p[url]:" . $p["url"] . ", photo[url]:" . $photo->url());
+##$this->router->log("debug", "p[t_l_p]: (" . $p["timestamp_last_modification"] . ") =?= (" . $photoLastModificationTimestamp . ")");
+          if ($p["url"] === $photo->url()) {
+##$this->router->log("debug", "p[url]:" . $p["url"] . " FOUNDDDDDDDDDD");
+            if ($p["timestamp_last_modification"] && $photoLastModificationTimestamp) {
+              if (intval($p["timestamp_last_modification"]) !== $photoLastModificationTimestamp) {
+                // the last modification timestamp of existing photo is greater or equal to
+                // the last modification timestamp of the photo to be downloaded
+                $this->router->log("debug", "photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)");
+#$this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
+                return true;
+              } else {
+                // the last modification timestamp of existing photo did not change
+                $this->router->log("debug", "photoCheckLastModified: LastModificationTime did not change, SKIP it £££££");
+              }
+            } else {
+              // the last modification timestamp of existing photo was not already set, new photo
+              $this->router->log("debug", "photoCheckLastModified: LastModificationTime NOT SET, NEW PHOTO, DOWNLOAD");
+            }
+          } else {
+            // this is not the photo we are checking
+            #$this->router->log("debug", "photoCheckLastModified - photo->url(): " . $photo->url() . ": LastModificationTime not this url...");
+          }
+        }
+      } else { // not more than one result returned
+        # TODO: check if this is possible...
+        throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
+      }
+    }
+#$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: [$photoLastModificationTimestamp] =?= " . var_export($photos, true));
+    return false;
+  }
+
+  /**
    * Check for photo exact duplication
    *
    * @param  integer $idPerson:  the id of person to check for photo duplication
@@ -506,44 +565,61 @@ $this->router->log("debug", " photoAdd [$idPerson] 7");
    * @return boolean: true       if photo is a duplicate
    *                  false      if photo is not a fuplicate
    */
-  private function photoCheckDuplication($idPerson, $photo) {
-    $photos = $this->db->getByField("photo", "id_person", $idPerson);
-    if (is_array_multi($photos)) { // more than one result returned
-      foreach ($photos as $p) {
-        if ($p["sum"] === $photo->sum()) { // the checksum matches
-          #$this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
-          return true;
+  private function photoCheckDuplication($idPerson, $photo, $photos) {
+    if ($photos !== []) {
+      if (is_array_multi($photos)) { // more than one result returned
+        foreach ($photos as $p) {
+          if ($p["sum"] === $photo->sum()) { // the checksum matches
+            #$this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+            return true;
+          }
         }
-      }
-    } else { // not more than one result returned
-      if ($photos) { // exactly one result returned
-        $p = $photos;
-        if ($p["sum"] === $photo->sum()) { // the checksum matches
-          #$this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
-          return true;
+      } else { // not more than one result returned
+        # TODO: check if this is possible...
+        throw new Exception("photoCheckDuplication(): returned one-level array:" . var_export($photos, true));
+/*  
+        if ($photos) { // exactly one result returned
+          $p = $photos;
+          if ($p["sum"] === $photo->sum()) { // the checksum matches
+            #$this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+            return true;
+          }
         }
+*/  
       }
     }
     return false;
   }
 
-  private function photoCheckSimilarity($idPerson, $photo) {
-    $photos = $this->db->getByField("photo", "id_person", $idPerson);
-    if (is_array_multi($photos)) { // more than one result returned
-      foreach ($photos as $p) {
-        $photo2 = new Photo([ "data" => $p ]);
-        if ($photo->checkSimilarity($photo2)) {
-          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
-          return true;
+  /**
+   * Check for photo similarity
+   *
+   * @param  integer $idPerson:  the id of person to check for photo similarity
+   * @param  Photo: $photo       the photo object to check for similarity
+   * @return boolean: true       if photo is similar to some else photo
+   *                  false      if photo is not similar to some else photo
+   */
+  private function photoCheckSimilarity($idPerson, $photo, $photos) {
+    if ($photos !== []) {
+      if (is_array_multi($photos)) { // more than one result returned
+        foreach ($photos as $p) {
+          $photo2 = new Photo([ "data" => $p ]);
+          if ($photo->checkSimilarity($photo2)) {
+            #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+            return true;
+          }
         }
-      }
-    } else { // not more than one result returned
-      if ($photos) { // one result returned
-        $photo2 = new Photo([ "data" => $photos ]);
-        if ($photo->checkSimilarity($photo2)) {
-          #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
-          return true;
+      } else { // not more than one result returned
+        throw new Exception("photoCheckSimilarity(): returned one-level array!" . " SHOULD NOT HAPPEN!!!");
+/*  
+        if ($photos) { // one result returned
+          $photo2 = new Photo([ "data" => $photos ]);
+          if ($photo->checkSimilarity($photo2)) {
+            #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+            return true;
+          }
         }
+*/  
       }
     }
     return false;
@@ -557,9 +633,9 @@ $this->router->log("debug", " photoAdd [$idPerson] 7");
    * @return integer: >= 0       the progressive number of the photo
    */
   public function photoStore($idPerson, $photo) {
-$this->router->log("debug", "photoStore - storing photo");
+    #$this->router->log("debug", "photoStore - storing photo");
+
     $keyPerson = $this->db->get("person", $idPerson)["key"];
-$this->router->log("debug", "photoStore - storing photo 0");
     $personPhotosCount = $this->photoGetCount($idPerson);
     $number = $personPhotosCount + 1;
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
@@ -570,20 +646,17 @@ $this->router->log("debug", "photoStore - storing photo 0");
     $pathnameFull = $dirnameFull . $filename . "." . $fileext;
     $pathnameSmall = $dirnameSmall . $filename . "." . $fileext;
 
-$this->router->log("debug", "photoStore - storing photo 1");
-
     // assure photos directories existence
     foreach ([ $dirnameFull, $dirnameSmall ] as $d) {
       if (!file_exists($d)) {
         if (!mkdir($d, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!
           throw new Exception("can't create folder $d");
         }
-        $this->router->log("debug", "the directory $d has been created");
+        #$this->router->log("debug", "the directory $d has been created");
       } else {
         ; # directory already exists, not the first photo for this person
       }
     }
-$this->router->log("debug", "photoStore - storing photo 2");
 
     // store the full and small bitmaps to file-system
     if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {

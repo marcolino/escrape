@@ -1,4 +1,5 @@
 TODO 1.0:
+ - analize 2015-22-03.log ...
  - pass user id from authentication to service.js, and to API
  - test photosCardDeckMerge() in real life...
  - filter all sites defined and all esc* sites from photos occurrences
@@ -17,6 +18,15 @@ TODO 1.0:
  - options: town / attitude
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
  - sync: skip person page if page sum matches with last synced...
+ - person detail view: replace static google street + goggle street indications with dynamic google street view:+indications: http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7/
+ - change persons sitesDefinitions:
+  $this->sitesDefinitions = [
+    "..." => [
+      ...
+      "charset" => "utf-8",
+      "accepts-tor" => <boolean>,
+ - remove "is_array_multi()" check, after db fechtall's...
+ - $this->sitesDefinitions = [ ... "access-denied-pattern" (CAPTCHA / banned your access)
 
 TODO 2.0:
  - I18n (?...)

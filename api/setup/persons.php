@@ -4,6 +4,7 @@
       "url" => "http://www.sexyguidaitalia.com",
       "path" => "escort/torino",
       "charset" => "utf-8",
+      "accepts-tor" => true,
       "patterns" => [
         "security-check" => "/Please complete the security check to access/s",
         "person" => "/<DIV class=\"(?:top|thumbsUp)\".*?>(.*?)<\/DIV>/s",
@@ -25,6 +26,7 @@
       "url" => "http://www.torinoerotica.com",
       "charset" => "CP1252",
       "path" => "annunci_Escort_singole_Piemonte_Torino.html",
+      "accepts-tor" => true,
       "patterns" => [
         "security-check" => "/TODO SECURITY CHECK/s", # TODO
         "person" => "/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s",

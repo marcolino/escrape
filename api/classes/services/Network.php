@@ -13,20 +13,20 @@ define("RETRIES_MAX",       3); # TODO: increase on production... (?)
 define("REDIRECTS_MAX",     9);
 
 /*
-$net = new Network();
-$url = "http://www.torinoerotica.com/wt_foto!annunci!124646!Anteprime!700x525!top1_8.jpeg";
-#$url = "http://whatismyip.org";
-#$maxPages = 2;
-#$results = $net->searchImage($imageUrl, $maxPages);
-print "starting...\n"; flush();
-try {
-  $results = $net->getUrlContents($url, "utf-8", false, false);
-} catch (Exception $e) {
-  die("error getting url [$url] with curl: " . $e->getMessage());
-}
-print "results:\n";
-var_dump ($results);
+# DEBUG: testing! ####################################################
+$url_sg = "http://www.sexyguidaitalia.com/public/23836/copertina.jpg?t=635625002387860017";
+$url_te = "http://www.torinoerotica.com/wt_foto!annunci!114646!Anteprime!700x525!mmmmmmmmmmmmm.jpeg";
+
+$n = new Network();
+
+$timestamp = $n->getLastModificationTimestampFromUrl($url_sg);
+print "Last modification timestamp from [$url_sg]: [$timestamp]" . "\n";
+
+$timestamp = $n->getLastModificationTimestampFromUrl($url_te);
+print "Last modification timestamp from [$url_te]: [$timestamp]" . "\n";
+
 exit;
+######################################################################
 */
 
 class Network {
@@ -68,27 +68,26 @@ class Network {
       CURLOPT_STDERR => $log, // log session
       CURLOPT_VERBOSE => 1, // produce a verbose log
       CURLINFO_HEADER_OUT => 1, // get info about the transfer
+      CURLOPT_RETURNTRANSFER => 1, // return contents
     ];
-#    if ($encoding) { // add encoding option
-#      $curlOptions = $curlOptions + [
-#        CURLOPT_ENCODING => $encoding, // set requested encoding
-#      ];
-#    }
+
     if (!$header) { // add header options
       $curlOptions = $curlOptions + [
         CURLOPT_HEADER => 0, // do not return header
-        CURLOPT_RETURNTRANSFER => 1, // return contents
+        #CURLOPT_RETURNTRANSFER => 1, // return contents # TODO: ????????????????????
+        CURLOPT_NOBODY => 0,
       ];
     } else {
       $curlOptions = $curlOptions + [
         CURLOPT_HEADER => 1, // return header
-        CURLOPT_RETURNTRANSFER => 0, // do not return contents
+        #CURLOPT_RETURNTRANSFER => 0, // do not return contents # TODO: ????????????????????
+        CURLOPT_NOBODY => 1,
       ];
     }
 
     if ($tor) { // add TOR options
       if (defined("TOR_HOST") && defined("TOR_PORT")) {
-        #if ($this->ping(TOR_HOST, TOR_PORT, 1)) { // check TOR server is available
+        #if ($this->ping(TOR_HOST, TOR_PORT)) { // check TOR server is available
           // TOR server is requested, defined and available, let's use it
           $curlOptions += [
             CURLOPT_PROXY => "http://" . TOR_HOST . ":" . TOR_PORT . "/", // use TOR proxy
@@ -108,7 +107,7 @@ class Network {
     $retry = 0;
     retry:
     try {
-      fwrite($log, date("c") . ": " . "starting curl for url [$url]\n");
+      fwrite($log, date("c") . ": " . "starting curl for url [$url] (tor: " . ($tor ? "TRUE" : "FALSE") . ")\n");
       $ch = curl_init(); // initialize curl operation
       if (($errno = curl_errno($ch))) {
         throw new Exception("can't initialize curl: " . curl_strerror($errno));
@@ -120,7 +119,6 @@ class Network {
       if (($errno = curl_errno($ch))) { // handle timeouts with some retries
         if ($errno === CURLE_OPERATION_TIMEDOUT) { // timeouts can be probably recovered...
           # TODO: ensure timeouts can be recovered, otherwise remove this retries stuff...
-          fwrite($log, "\n");
           $retry++;
           fwrite($log, date("c") . ": " . "timeout executing curl to [$url], retry n. $retry\n");
           if ($retry < RETRIES_MAX) {
@@ -132,17 +130,87 @@ class Network {
         fwrite($log, date("c") . ": " . "can't execute curl to [$url]: " . curl_strerror($errno) . "\n");
         throw new Exception("can't  execute curl to [$url]: " . curl_strerror($errno));
       }
+      curl_close($ch);
+      if ($log) {
+        fwrite($log, "---\n");
+        fclose($log);
+      }
     } catch (Exception $e) {
       throw new Exception("error getting url [$url] with curl: " . $e->getMessage());
     }
-    curl_close($ch);
-    if ($log) {
-      fwrite($log, "\n");
-      fclose($log);
-    }
-    return ($charset == "utf-8") ? $data : iconv($charset, "utf-8", $data);
+    return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
   }
 
+  /**
+   * Get image contents (issue a getUrlContents() without TOR)
+   *
+   * @param  string $url        url to be retrieved
+   * @return string             image contents
+   */
+  public function getImageFromUrl($url) {
+    $retval = $this->getUrlContents($url, null, null, false, false);
+    if (!$retval) { # TODO: check content of image... (HTML, for example...)
+      $type = "empty";
+      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $type);
+    }
+    return $retval;
+  }
+
+  /**
+   * Get image 'Last-Modified' header value
+   *
+   * @param  string $url        url to be retrieved
+   * @return null               no last modification timestamp in header
+   *         integer            last modification timestamp
+   */
+  public function getLastModificationTimestampFromUrl($url) {
+    $headers = $this->getUrlContents($url, null, null, true, false);
+    $headers = explode("\n", trim($headers));
+    $lastModifiedDate = null;
+    $timestamp = null;
+    foreach ($headers as $line) {
+      if (strtok($line, ":") === "Last-Modified") {
+        $parts = explode(":", $line);
+        array_shift($parts);
+        $lastModifiedDate = trim(implode(":", $parts));
+      }
+    }
+    if ($lastModifiedDate) {
+      $lastModifiedDate = trim($lastModifiedDate);
+      $timestamp = http_date_to_timestamp($lastModifiedDate);
+    }
+    return $timestamp;
+  }
+
+  /**
+   * Get mime type of url content
+   *
+   * @param  string $url        url to be retrieved
+   * @return string             mime type
+   */
+  public function getMimeFromUrl($url) {
+    $headers = $this->getUrlContents($url, null, null, true, false);
+    $headers = explode("\n", trim($headers));
+    $mime = null;
+    foreach ($headers as $line) {
+      if (strtok($line, ":") === "Content-Type") {
+        $parts = explode(":", $line);
+        $mime = trim($parts[1]);
+        break;
+      }
+    }
+    return $mime;
+  }
+
+  /**
+   * Pings a host:port to check for it's presence
+   *
+   * @param  string $host       host name to be pinged
+   * @param  integer $port      port to be pinged (default: 80)
+   * @param  integer $timeout   maximum time to wait before failing, in seconds (default: 3)
+   * @return booleal            true    if host:port did answer
+   *                            false   if host:port did not answer
+   */
   public function ping($host, $port = 80, $timeout = 3) {
     $fsock = fsockopen($host, $port, $errno, $errstr, $timeout);
     return ($fsock) ? true : false;

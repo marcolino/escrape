@@ -6,14 +6,33 @@
  *
  */
 
+/**
+  * Converts a *http* date from format
+  * "Weewkday, Year MonthName day hour:minute:second TIMEZONE" to UNIX timestamp
+  *
+  * @param string $date   source date to be converted
+  * @return string        UNIX timestamp conevrsion of the given date
+  */
+  function http_date_to_timestamp($date) {
+    # "Fri, 13 Mar 2015 11:36:24 GMT";
+    list($wday, $date) = explode(",", $date);
+    $date = trim($date);
+    list($day, $monthname, $year, $hms, $tz) = explode(" ", $date);
+    $month = date("m", strtotime($monthname));
+    list($hour, $minute, $second) = explode(":", $hms);
+    $timestamp = mktime($hour, $minute, $second, $month, $day, $year);
+    return $timestamp;
+  }
+
  /**
   * Converts a *localized* date from format
   * "Year MonthName day, hour:minute:second" to UNIX timestamp
   *
   * @param string $date   source date to be converted
-  * @return string      UNIX timestamp conevrsion of the given date
+  * @return string        UNIX timestamp conevrsion of the given date
   */
   function date_to_timestamp($date) {
+    # "2015 Marzo 27 12:24:55";
     $timestamp = "0";
     for ($m = 1; $m <= 12; $m++) {
       $month_name = ucfirst(strftime("%B", mktime(0, 0, 0, $m)));
@@ -26,6 +45,7 @@
     }
     return $timestamp;
   }
+# TODO: merge these 2 functions...
 
  /**
   * Checks if an array is multi dimensional

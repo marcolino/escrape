@@ -27,6 +27,8 @@ class Photo {
       $this->options["signaturePixelsPerSide"] = self::SIGNATURE_PIXELS_PER_SIDE;
     }
 
+    $this->network = new Network();
+
     // initialize photo
     if ($source && isset($source["url"])) { // from url
       $this->fromUrl($source["url"]);
@@ -127,7 +129,11 @@ class Photo {
       return $this->image;
     }
     $this->load();
-    return $this->image = imagecreatefromstring($this->bitmap());
+    try {
+      return $this->image = imagecreatefromstring($this->bitmap());
+    } catch(Exception $e) {
+      throw new Exception("bitmap is not in image recognized format: [" . $this->bitmap() . "]");
+    }
   }
 
   /**
@@ -138,7 +144,11 @@ class Photo {
       return $this->imageFull;
     }
     $this->load();
-    return $this->imageFull = imagecreatefromstring($this->bitmapFull());
+    try {
+      return $this->imageFull = imagecreatefromstring($this->bitmapFull());
+    } catch(Exception $e) {
+      throw new Exception("bitmap is not in image recognized format: [" . $this->bitmap() . "]");
+    }
   }
 
   /**
@@ -149,7 +159,11 @@ class Photo {
       return $this->imageSmall;
     }
     $this->load();
-    return $this->imageSmall = imagecreatefromstring($this->bitmapSmall());
+    try {
+      return $this->imageSmall = imagecreatefromstring($this->bitmapSmall());
+    } catch(Exception $e) {
+      throw new Exception("bitmap is not in image recognized format: [" . $this->bitmap() . "]");
+    }
   }
 
   public function width() {
@@ -290,7 +304,45 @@ class Photo {
     if (!isset($this->url)) {
       throw new Exception("Can't load photo: no url source specified");
     }
-    list($this->bitmap, $this->mime) = $this->getUrlContents($this->url); // download photo
+
+    #list($this->bitmap, $this->mime) = $this->getUrlContents($this->url); // download photo
+
+    try {
+      // get photo contents
+      #$this->bitmap = $network->getUrlContents($this->url); #, null, null, false, false); // download photo
+      
+      #$this->bitmap = $network->getUrlContents($this->url, null, null, false, false); // download photo without TOR
+      $this->bitmap = $this->network->getImageFromUrl($this->url);
+# TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() befor downloading... !!!
+# TODO: HANDLE CAPTCHA MESSAGE: "Why do I have to complete a CAPTCHA?" (?) HOWEVER, CHECK bitmap is image!
+      if (
+        (strpos($this->bitmap, "Why do I have to complete a CAPTCHA?") !== false) OR
+        (strpos($this->bitmap, "The owner of this website (www.sexyguidaitalia.com) has banned your access based on your browser's signature") !== false)
+      ) {
+        throw new Exception("error getting image [$this->url]: " . "Site denies access...");
+      }
+    } catch(Exception $e) {
+      throw new Exception("error getting image [$this->url] contents: " . $e->getMessage());
+    }
+
+    try {
+      $this->mime = $this->network->getMimeFromUrl($this->url);
+    } catch(Exception $e) {
+      throw new Exception("error getting image [$this->url] mime type: " . $e->getMessage());
+    }
+  }
+
+  /**
+   * Gets photo last modification timestamp
+   */
+  public function getLastModificationTimestamp() {
+    if (isset($this->timestamp_last_modification)) {
+#throw new Exception("OLD LMT !!!");
+      return $this->timestamp_last_modification;
+    }
+    $this->timestamp_last_modification = $this->network->getLastModificationTimestampFromUrl($this->url());
+#throw new Exception("NEW LMT: " . $this->timestamp_last_modification);
+    return $this->timestamp_last_modification;
   }
 
   /**
@@ -544,6 +596,9 @@ class Photo {
     return $bitmap;
   }
 
+  /**
+   * Adds transparency to an image
+   */
   public function imageTransparent($image) {
     imagesavealpha($image, true);
     $colorTransparent = imagecolorallocatealpha($image, 0, 0, 0, 127);
@@ -564,33 +619,6 @@ class Photo {
       $widthSource, $heightSource
     );
     return $imageNew;
-  }
-
-  /**
-   * Downloads an url
-   *
-   * @param  string $url:             source url
-   * @return array [ output, mime ]   an array; first element is url content, second is mime type
-   */
-  private function USE_NETWOR_VERSION_getUrlContents($url) {
-    $user_agent = "Mozilla";
-    $ch = curl_init();
-    if (($errno = curl_errno($ch))) {
-      throw new Exception("can't initialize curl: " . curl_strerror($errno));
-    }
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-    $output = curl_exec($ch);
-    if (($errno = curl_errno($ch))) {
-      throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
-    }
-    $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-    curl_close($ch);
-    return [ $output, $mime ];
   }
 
   /**
