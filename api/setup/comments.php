@@ -18,9 +18,10 @@
       ],
     ],
   ];
-
+/*
   // TODO: we don't need these anymore, using Network.php's methods...
   $googleSearchMinDelayRange = [ 30, 75 ]; // range for random delay
   $googleSearchDelayAfterUnusualTraffic = 7200; // 120 minutes
   $googleSearchLastTimestamp = 0; // last query timestamp
+*/
 ?>

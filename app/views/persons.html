@@ -7,9 +7,9 @@
         <a ng-href="#/details/{{person.id_person}}">
           <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip"
             ng-class="{
-              'img-thruthful-yes': person.thruthfulness === 'yes',
-              'img-thruthful-no': person.thruthfulness === 'no',
-              'img-thruthful-unknown': person.thruthfulness === 'unknown',
+              'img-thruthful-yes': person.thruthful === 'yes',
+              'img-thruthful-no': person.thruthful === 'no',
+              'img-thruthful-unknown': person.thruthful === 'unknown',
             }"
           />
         </a>

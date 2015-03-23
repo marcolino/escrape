@@ -1,12 +1,10 @@
 TODO 1.0:
- - analize 2015-22-03.log ...
- - pass user id from authentication to service.js, and to API
- - test photosCardDeckMerge() in real life...
- - filter all sites defined and all esc* sites from photos occurrences
+ - add 'api/setup' to .gitignore @HOME (.gitignore is not committed...)
+ - profile @HOME (enabling apd_set_pprof_trace() at the bottom of index.php) @HOME (can't run Pecl/apd with PHP 5.6 (from Remi) on Centos 6.6 @OFFICE... :-()
  - handle 'active' flag when syncing
+ - handle flag to close 'options', more than 'filters'...
  - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
- - thruthfulness => thrutful /g
- - thruthfulness in persons and person views => "yes", "no", "unknown"... (add 'thruthfulness' field to person table...)
+ - thruthful in persons and person views => "yes", "no", "unknown"... (set 'thruthful' field to person_detail table...)
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list view
  - in google search results page, make buttons (Fake, Thrutful, Don't know) visible... (results in  a scroller)
@@ -14,19 +12,17 @@ TODO 1.0:
  - before google search, check image has already thruthful flag...
  - move style="..." from all views to style.css...
  - handle user writes...
- - handle guest write warning
+ - handle guest tentative write warning
  - options: town / attitude
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
- - sync: skip person page if page sum matches with last synced...
+ - sync: skip person page if page sum matches with last synced... (do we save anything worth?)
  - person detail view: replace static google street + goggle street indications with dynamic google street view:+indications: http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7/
  - change persons sitesDefinitions:
-  $this->sitesDefinitions = [
-    "..." => [
-      ...
-      "charset" => "utf-8",
-      "accepts-tor" => <boolean>,
  - remove "is_array_multi()" check, after db fechtall's...
  - $this->sitesDefinitions = [ ... "access-denied-pattern" (CAPTCHA / banned your access)
+ - sgi/esc.../annuncio/adv2945: check phone pattern...
+ - test photosCardDeckMerge() in real life...
+ - filter all sites defined and all esc* sites from photos 'occurrences'
 
 TODO 2.0:
  - I18n (?...)
@@ -67,3 +63,8 @@ DONE:
  - throw new Exception("error getting persons with filters", 0, $e): PDO.$e not reported...
  - handle css fake on persons view (at least one fake photo ? fake : thruthful)
  - when saving photo url, normalize it (strip "../../"...) - DONE - TO BE TESTED @home
+ - analize 2015-22-03.log ...
+ - $this->sitesDefinitions = [ "..." => [ ... "charset" => "utf-8", "accepts-tor" => <boolean>,
+ - pass user id from authentication to service.js, and to API (BUT, WHAT WAS THE REASON?? ... however, no, we could use username ('*' ...))
+ - thruthfulness => thrutful /g
+ 

@@ -225,13 +225,13 @@ class Photo {
     return $this->timestamp_creation = $value;
   }
 
-  public function thruthfulness($value = null) {
+  public function thruthful($value = null) {
     if (!$value) {
-      if (isset($this->thruthfulness)) {
-        return $this->thruthfulness;
+      if (isset($this->thruthful)) {
+        return $this->thruthful;
       }
     }
-    return $this->thruthfulness = $value;
+    return $this->thruthful = $value;
   }
 
   public function showcase($value = null) {

@@ -30,14 +30,14 @@ app.service('notify', function(cfg, toastr) {
     var type = '';
     var maxlen = 500;
     for (var i = 0; i < args.length; i++) { // multiple elements array
+      if (retval) {
+        retval += sep;
+      }
       type = typeof args[i];
       if (type === 'number' || type === 'string') { // not numeric/string type
         retval += args[i];
       } else {
         retval += JSON.stringify(args[i]);
-      }
-      if (retval) {
-        retval += sep;
       }
     }
 

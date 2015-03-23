@@ -22,6 +22,66 @@ class PersonsController {
   }
 
   /**
+   * Get all defined countries in sites
+   *
+   * @return array: all countries defined
+   */
+  public function getSitesCountries() {
+    $this->router->log("info", "getSitesCountries() ---");
+    $countries = [];
+    foreach ($this->sitesDefinitions as $siteKey => $site) {
+      $url = $site["url"];
+      #$this->router->log("debug", "site: " . $siteKey);
+      $this->router->log("info", "getUrlContents($url)");
+      $page = $this->network->getUrlContents($url, $site["charset"]);
+      if ($page === FALSE) {
+        $this->router->log("error", "can't get main page on site [$siteKey]");
+        continue;
+      }
+      # TODO: grep countries from site's main page...
+      $countries = [ # TODO: ...
+        "it" => "Italy",
+        "ch" => "Swizerland",
+      ];
+    }
+    #$this->router->log("debug", "countries:" . var_export($countries, true));
+    return $countries;
+  }
+
+  /**
+   * Get all defined cities in sites for specified country code
+   *
+   * @return array: all cities defined for specified country code
+   */
+  public function getSitesCities($countryCode) {
+    $this->router->log("info", "getSitesCities($countryCode) ---");
+    $cities = [];
+    foreach ($this->sitesDefinitions as $siteKey => $site) {
+      $url = $site["url"];
+      #$this->router->log("debug", "site: " . $siteKey);
+      $this->router->log("info", "getUrlContents($url)");
+      $page = $this->network->getUrlContents($url, $site["charset"]);
+      if ($page === FALSE) {
+        $this->router->log("error", "can't get main page on site [$siteKey]");
+        continue;
+      }
+      # TODO: grep cities from site's main page...
+      $cities[] = [
+        "to" => [
+          "name" => "Torino",
+          "path" => "e...../torino",
+        ],
+        "mi" => [
+          "name" => "Milano",
+          "path" => "e...../milano",
+        ],
+      ]; #"torino" => "annunci_E....._s......_Piemonte_Torino.html",
+    }
+    #$this->router->log("debug", "cities:" . var_export($cities, true));
+    return $cities;
+  }
+
+  /**
    * Sync persons
    *
    * @return boolean: true if everything successful, false otherwise
@@ -48,7 +108,7 @@ class PersonsController {
       if (preg_match_all($site["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
-        if (preg_match($site["patterns"]["security-check"], $persons_page, $matches) >= 1) {
+        if (preg_match($site["patterns"]["ban-text"], $persons_page, $matches) >= 1) {
           if ($useTor) {
             $this->router->log("info", "site [$siteKey] asks a security check; retrying without TOR...");
             $useTor = false;
@@ -67,7 +127,7 @@ class PersonsController {
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-#if ($n > 12) break; # TODO: DEBUG-ONLY
+if ($n > 24) break; # TODO: DEBUG-ONLY
 
         if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -312,7 +372,7 @@ class PersonsController {
           "nationality",
           "vote",
           "age",
-          "thruthfulness",
+          "thruthful",
         ] as $field
       ) {
         if (isset($person[$field])) {
@@ -328,7 +388,7 @@ class PersonsController {
       #$this->router->log("debug", "result: " . var_export($result, true));
 
       // fields "calculated"
-      $result[$pid]["thruthfulness"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
+      $result[$pid]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
       $result[$pid]["photo_path_small_showcase"] = $this->photoGetByShowcase($pid, true)["path_small"];
       $result[$pid]["comments_count"] = $comments->countByPerson($pid);
       $result[$pid]["comments_average_valutation"] = $comments->getAverageValutationByPerson($pid);
@@ -469,7 +529,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     $photo->domain();
     $photo->sum();
     $photo->timestampCreation(time());
-    $photo->thruthfulness("unknown"); // this is an offline-set property (it's very expensive to calculate)
+    $photo->thruthful("unknown"); // this is an offline-set property (it's very expensive to calculate)
     $photo->showcase($showcase);
    
     // store this photo
@@ -503,7 +563,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
         ($property === "timestamp_last_modification") ||
         ($property === "signature") ||
         ($property === "showcase") ||
-        ($property === "thruthfulness")
+        ($property === "thruthful")
       )
       $data[$property] = $value;
     }
@@ -709,7 +769,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
    */
   public function photoCheckThruthfulness($idPerson, $number) {
     $photo = $this->photoGetByNumber($idPerson, $number);
-    return $photo["thruthfulness"];
+    return $photo["thruthful"];
   }
 
   /**
@@ -785,6 +845,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
 
 
   public function test() {
+$this->router->log("debug", "test START");
     $photosUrls[0] = [
       "/scienzefanpage/wp-content/uploads/2013/12/samantha-cristoforetti-futura.jpg",
       "/scienzefanpage/wp-content/uploads/2012/07/donna-italiana-spazio1-300x225.jpg",
@@ -813,7 +874,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     ];
     $personMaster[1] = [];
     $personMaster[1]["key"] = "twitter-789012";
-    $personMaster[1]["site_key"] = "twitter";
+    $personMaster[1]["site_key"] = "facebook";
     $personMaster[1]["url"] = "http://www.newshd.net";
     $personMaster[1]["timestamp_last_sync"] = 1424248678;
     $personMaster[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
@@ -849,6 +910,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
       }
     }
 
+$this->router->log("debug", "test OK");
     return true;
   }
 

@@ -1,7 +1,7 @@
 'use strict';
  
 app.controller('AuthenticationController',
-  function ($scope, $rootScope, $location, $aside, $cookieStore, $timeout, cfg, Authentication, Countries) {
+  function ($scope, $rootScope, $location, $aside, $cookieStore, $timeout, cfg, Authentication, Countries, Persons) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
     $scope.sievesDefaults = {
@@ -20,6 +20,8 @@ app.controller('AuthenticationController',
         nationality: '',
       },
       options: {
+        countryCode: cfg.countryCode,
+        cityCode: cfg.cityCode,
       },
     };
     $scope.sievesOriginal = {};
@@ -60,6 +62,8 @@ app.controller('AuthenticationController',
           sieves.filters.age.min + '\0' +
           sieves.filters.age.max + '\0' +
           sieves.filters.nationality.countryCode + '\0'
+          sieves.filters.options.countryCode + '\0'
+          sieves.filters.options.cityCode + '\0'
         ;
       }
       Authentication.setSievesDigest(digest);
@@ -76,13 +80,10 @@ app.controller('AuthenticationController',
       Authentication.register($scope.username, $scope.password, function(response) {
         console.log('register():', response);
         $scope.dataLoading = false;
-        //if (response.contents.success) {
         if (response.success) {
-          //setCredentials(response.contents);
           setCredentials(response);
           $location.path('/#');
         } else {
-          //$scope.error = response.contents.message;
           $scope.error = response.message;
         }
       });
@@ -94,15 +95,11 @@ app.controller('AuthenticationController',
       Authentication.login($scope.username, $scope.password, function(response) {
         console.log('login():', response);
         $scope.dataLoading = false;
-        //if (response.contents.success) {
         if (response.success) {
-          //setCredentials(response.contents);
           setCredentials(response);
-          $scope.loadSieves(); // reload sieves
-          $scope.setSievesDigest(null); // force a persons reload
+          $scope.loadSieves(true); // reload sieves, (forcing the reloading)
           $location.path('/#');
         } else {
-          //$scope.error = response.contents.message;
           $scope.error = response.message;
         }
       });
@@ -111,8 +108,7 @@ app.controller('AuthenticationController',
     $scope.logout = function () {
       console.log('logout()');
       Authentication.clearCredentials();
-      $scope.loadSieves(); // reload sieves
-      $scope.setSievesDigest(null); // force a persons reload
+      $scope.loadSieves(true); // reload sieves, (forcing the reloading)
     };
 
     $scope.signedIn = function () {
@@ -186,6 +182,13 @@ app.controller('AuthenticationController',
     };
 
     $scope.activeCountries = function () {
+      /*
+      console.info('activeCountries:', {
+        '': 'any country',
+        'ar': 'Argentina',
+        '..': '...',
+      });
+      */
       // TODO: get from persons...
       return {
         '': 'any country',
@@ -217,9 +220,19 @@ app.controller('AuthenticationController',
       }
     };
 
-    $scope.setFilterNationalityCountry = function (code) {
-      $scope.sieves.filters.nationality =code;
+    $scope.setFilterNationalityCountry = function (countryCode) {
+      $scope.sieves.filters.nationality = countryCode;
       $scope.storeSieves('filters');
+    };
+
+    $scope.setOptionSitesCountryCode = function (countryCode) {
+      $scope.sieves.options.countryCode = countryCode;
+      $scope.storeSieves('options');
+    };
+
+    $scope.setOptionSitesCityCode = function (cityCode) {
+      $scope.sieves.options.cityCode = cityCode;
+      $scope.storeSieves('options');
     };
 
 /*
@@ -239,11 +252,7 @@ app.controller('AuthenticationController',
       });
     };
 
-    function setCredentials (response) {
-      Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
-    }
-
-    $scope.loadSieves = function () {
+    $scope.loadSieves = function (force) {
 console.log('=== $scope.loadSieves', $scope.sieves);
       $scope.sieves = {};
       var key = cfg.site.name;
@@ -261,6 +270,31 @@ console.log('=== $scope.loadSieves', $scope.sieves);
       $rootScope.sieves = $scope.sieves;
       angular.copy($scope.sieves, $scope.sievesOriginal); // save loaded sieves as sievesOriginal, to be able to check for modifications
       console.log('$scope.sievesOriginal:', $scope.sievesOriginal);
+
+      if (force === true) {
+        $scope.setSievesDigest(null); // reset sieves digest (this forces a persons reload)
+      }
+
+      Persons.getSitesCountries(function(response) {
+        console.log('************* getSitesCountries():', response);
+        if (response.success) {
+          $scope.sitesCountries = response;
+        } else {
+          $scope.error = response;
+          console.error('!!!!!!!!: ', response);
+        }
+      });
+
+      Persons.getSitesCountries($scope.sieves.options.countryCode, function(response) {
+        console.log('************* getSitesCities():', response);
+        if (response.success) {
+          $scope.sitesCountries = response;
+        } else {
+          $scope.error = response;
+          console.error('!!!!!!!!: ', response);
+        }
+      });
+
     };
 
     $scope.storeSieves = function () {
@@ -301,6 +335,10 @@ console.log('=== $scope.loadSieves', $scope.sieves);
       console.log('reset sieves to defaults for section ' + section + ':', $scope.sieves);
       $rootScope.sieves = $scope.sieves;
     };
+
+    function setCredentials (response) {
+      Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
+    }
 
     // load sieves (search, filters, options, ...)
     $scope.loadSieves();

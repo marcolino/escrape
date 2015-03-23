@@ -21,11 +21,13 @@ $scope.images = [
   $scope.person.timestamp_last_sync = 0;
   /* jshint camelcase: true */
 
+/*
   $scope.sites = {
     'google+': 'googleplus.com',
     'linkedin': 'linkedin.com',
     'facebook': 'facebook.com',
   };
+*/
   $scope.personId = $routeParams.personId;
   $scope.tabs = {
     'main': {

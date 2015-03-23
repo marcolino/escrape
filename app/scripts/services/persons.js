@@ -83,7 +83,21 @@ app.service('Persons', function($http, $q, cfg, notify) {
           url: url,
         },
       }).then(handleSuccess, handleError);
-    }
+    },
+
+    getSitesCountries: function () {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getSitesCountries',
+      }).then(handleSuccess, handleError);
+    },
+
+    getSitesCities: function (countryCode) {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getSitesCities' + '/' + countryCode,
+      }).then(handleSuccess, handleError);
+    },
 
   });
 

@@ -201,13 +201,13 @@ app.service('Countries', function() {
   };
 
   return {
+    countries: countries,
     getCountryName: function(countryCode) {
       return countries[countryCode];
     },
     getCountryClass: function(countryCode) {
       return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
     },
-    countries: countries,
   };
 
 });

@@ -2,11 +2,11 @@
   $this->sitesDefinitions = [
     "sexyguidaitalia" => [
       "url" => "http://www.sexyguidaitalia.com",
-      "path" => "escort/torino",
+      "path" => "escort/torino", # TODO: get path from selected city...
       "charset" => "utf-8",
       "accepts-tor" => true,
       "patterns" => [
-        "security-check" => "/Please complete the security check to access/s",
+        "ban-text" => "/Please complete the security check to access/s",
         "person" => "/<DIV class=\"(?:top|thumbsUp)\".*?>(.*?)<\/DIV>/s",
         "person-id" => "/<div .*?class=\"wraptocenter\">.*?<a href=\".*?\/([^\/\"]+)\".*?>.*?<\/div>/s",
         "person-details-url" => "/<div .*?class=\"wraptocenter\">.*?<a href=\"(.*?)\".*?>.*?<\/div>/s",
@@ -25,10 +25,10 @@
     "torinoerotica" => [
       "url" => "http://www.torinoerotica.com",
       "charset" => "CP1252",
-      "path" => "annunci_Escort_singole_Piemonte_Torino.html",
+      "path" => "annunci_Escort_singole_Piemonte_Torino.html", # TODO: get path from selected city...
       "accepts-tor" => true,
       "patterns" => [
-        "security-check" => "/TODO SECURITY CHECK/s", # TODO
+        "ban-text" => "/TODO SECURITY CHECK/s", # TODO
         "person" => "/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s",
         "person-id" => "/<a href=\".*?([^\_]*?)\.html\".*?>.*?<\/a>/s",
         "person-details-url" => "/<a href=\"(.*?)\".*?>.*?<\/a>/s",

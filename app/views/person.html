@@ -28,9 +28,9 @@
               <span ng-repeat="(number, photo) in person.photos" class="slider-image">
               <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
               <a href="" ng-click="tabSelect('photos', number)" class="no-text-decoration">
-                <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" ng-class="{'img-fake': photo.thruthfulness === 'false'}" class="img-rounded img-clip" />
+                <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" ng-class="{'img-fake': photo.thruthful === 'false'}" class="img-rounded img-clip" />
                 <br>
-                <span ng-if="photo.thruthfulness === 'false'">
+                <span ng-if="photo.thruthful === 'false'">
                   <img src="images/watermarks/fake-label.png" class="label-image" />
                 </span>
               </a>

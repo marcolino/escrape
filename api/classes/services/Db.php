@@ -51,6 +51,20 @@ class DB extends PDO {
     # TODO: always use text or varchar ... ?
     try {
       $this->db->exec(
+        "CREATE TABLE IF NOT EXISTS global (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          field_name TEXT,
+          field_value TEXT
+         );
+         CREATE UNIQUE INDEX IF NOT EXISTS field_name_idx ON user (field_name);
+         -- populate with default values --
+         --INSERT INTO global (field_name, field_value)
+         --VALUES ('site_country_code', 'it');
+         --INSERT INTO global (field_name, field_value)
+         --VALUES ('site_city_code', 'to')
+        "
+      );
+      $this->db->exec(
         "CREATE TABLE IF NOT EXISTS user (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username VARCHAR(16),
@@ -60,13 +74,17 @@ class DB extends PDO {
          );
          CREATE UNIQUE INDEX IF NOT EXISTS username_idx ON user (username);
          -- populate with default system user --
+         --INSERT INTO user (username, password, email, role)
+         --SELECT '*', '-', '', 'system'
+         --WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = '*');
          INSERT INTO user (username, password, email, role)
-         SELECT '*', '-', '', 'system'
-         WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = '*');
+         VALUES ('*', '-', '', 'system')
          -- populate with default admin user --
+         --INSERT INTO user (username, password, email, role)
+         --SELECT 'marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin'
+         --WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = 'marco');
          INSERT INTO user (username, password, email, role)
-         SELECT 'marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin'
-         WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = 'marco');
+         VALUES ('marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin')
         "
       );
       $this->db->exec(
@@ -77,7 +95,9 @@ class DB extends PDO {
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
-          page_sum TEXT
+          page_sum TEXT,
+          site_country_code VARCHAR(2), -- TODO: use it!
+          site_city_code VARCHAR(2) -- TODO: use it!
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
         "
@@ -99,7 +119,8 @@ class DB extends PDO {
           nationality VARCHAR(2),
           age TEXT,
           vote INTEGER,
-          showcase INTEGER
+          showcase INTEGER,
+          thruthful INTEGER
          );
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "
@@ -150,7 +171,7 @@ class DB extends PDO {
           timestamp_last_modification INTEGER,
           signature VARCHAR(256),
           showcase INTEGER,
-          thruthfulness INTEGER
+          thruthful INTEGER
          );
         "
       );

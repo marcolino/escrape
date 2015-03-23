@@ -12,13 +12,13 @@ require "classes/services/GoogleSearch.php";
 class Router {
 
   public function __construct() {
-    $timezone = "Europe/Rome"; // default timezone
+    require_once "setup/cfg.php"; // global configuration setup
     $logPath = "./logs/"; // logs path
     $logNameFormat = "Y-m-d"; // logs name format (passed to date())
-    $debugMode = true; // debug mode flag
 
-    date_default_timezone_set($timezone);
+    date_default_timezone_set($this->cfg["timezone"]);
     $app = new \Slim\Slim();
+    $debugMode = $this->cfg["debugMode"];
     $app->configureMode("development", function () use ($app, $logPath, $logNameFormat, $debugMode) {
       $app->config([
         "debug" => $debugMode,
@@ -35,7 +35,6 @@ class Router {
     $this->app = $app;
     $this->db = new DB($this);
     $this->logs = [];
-
   }
 
   public function run() {
@@ -134,6 +133,22 @@ class Router {
           $persons = new PersonsController($this);
           //$data = json_decode($this->app->request()->getBody());
           $this->success($persons->delete($id));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->get("/getSitesCountries", function() { # =======================
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->getSitesCountries());
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->get("/getSitesCities/:countryCode", function($countryCode) { # ==
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->getSitesCities($countryCode));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -380,6 +395,7 @@ class Router {
 
 ini_set("display_errors", "On");
 error_reporting(E_ALL);
+#apd_set_pprof_trace(); # to profile API
 $router = new Router();
 $router->run();
 
