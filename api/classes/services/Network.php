@@ -2,6 +2,9 @@
 
 require_once __DIR__ . "/../../lib/random_user_agent.php";
 
+define("_COOKIE_FILE", __DIR__ . "/../../logs/curl.cookie");
+define("_LOG_FILE", __DIR__ . "/../../logs/curl.log");
+
 /*
 # DEBUG: testing! ####################################################
 $url_sg = "http://www.sexyguidaitalia.com/public/23836/copertina.jpg?t=635625002387860017";
@@ -21,8 +24,8 @@ exit;
 
 class Network {
 
-  const COOKIE_FILE =      __DIR__ . "/../../logs/curl.cookie";
-  const LOG_FILE =         __DIR__ . "/../../logs/curl.log"; # TODO: use only while developing...
+  const COOKIE_FILE =      _COOKIE_FILE;
+  const LOG_FILE =         _LOG_FILE; # TODO: use only while developing...
   const TOR_HOST =         "127.0.0.1"; // TOR host
   const TOR_PORT =         "9050"; // TOR port
   const TIMEOUT_CONNECT =  10; # TODO: increase on production... (?)
@@ -66,7 +69,7 @@ class Network {
       CURLOPT_USERAGENT => random_user_agent(), // use a random user agent
       CURLOPT_COOKIEFILE => self::COOKIE_FILE, // set cookie file
       CURLOPT_COOKIEJAR => self::COOKIE_FILE, // set cookie jar
-      CURLOPT_STDERR => $this->log, // log session
+      #CURLOPT_STDERR => $this->log, // log session
       CURLOPT_VERBOSE => 1, // produce a verbose log
       CURLINFO_HEADER_OUT => 1, // get info about the transfer
       CURLOPT_RETURNTRANSFER => 1, // return contents
@@ -113,24 +116,25 @@ class Network {
       }
       curl_setopt_array($ch, $curlOptions);
 
+      #$this->logWrite("downloading [$url]...");
       $data = curl_exec($ch); // start curl operation
 
       if (($errno = curl_errno($ch))) { // handle timeouts with some retries
         if ($errno === CURLE_OPERATION_TIMEDOUT) { // timeouts can be probably recovered...
           # TODO: ensure timeouts can be recovered, otherwise remove this retries stuff...
           $retry++;
-          $this->logWrite("timeout executing curl to [$url], retry n. $retry");
+          #$this->logWrite("timeout executing curl to [$url], retry n. $retry");
           if ($retry < self::RETRIES_MAX) {
             goto retry;
           } else {
             throw new Exception("timeout retries exhausted executing curl to [$url]");
           }
         }
-        $this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
+        #$this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
         throw new Exception("can't  execute curl to [$url]: " . curl_strerror($errno));
       }
       curl_close($ch);
-      $this->logClose();
+      #$this->logClose();
     } catch (Exception $e) {
       throw new Exception("error getting url [$url] with curl: " . $e->getMessage());
     }
@@ -160,6 +164,7 @@ class Network {
    *         integer            last modification timestamp
    */
   public function getLastModificationTimestampFromUrl($url) {
+    $this->logWrite("getLastModificationTimestampFromUrl()");
     $headers = $this->getUrlContents($url, null, null, true, false);
     $headers = explode("\n", trim($headers));
     $lastModifiedDate = null;
@@ -185,6 +190,7 @@ class Network {
    * @return string             mime type
    */
   public function getMimeFromUrl($url) {
+    $this->logWrite("getMimeFromUrl()");
     $headers = $this->getUrlContents($url, null, null, true, false);
     $headers = explode("\n", trim($headers));
     $mime = null;
@@ -214,12 +220,14 @@ class Network {
 
   private function logInit() {
     if (!$this->log) { // check it's not already initialized
-      if (defined(self::LOG_FILE)) {
+      if (null !== self::LOG_FILE) {
         if (($log = @fopen(self::LOG_FILE, "a+")) !== false) { // curl session log file
           $this->log = $log;
+#die($log);
           return true;
         }
       }
+      #$this->log = @fopen("/dev/null", "a+"); // curl session log file to null device
     }
     return false;
   }
@@ -228,6 +236,7 @@ class Network {
     if ($this->log) {
       $num_args = func_num_args(); // we accept a variable number of arguments, of any type
       $args = func_get_args();
+      $msg = "";
       for ($n = 0; $n < $num_args; $n++) {
         $arg = array_shift($args);
         switch (gettype($arg)) {
@@ -247,7 +256,6 @@ class Network {
         }
       }
       fwrite($this->log, date("c") . ": " . $msg . "\n");
-      fclose($this->log);
     }
   }
 

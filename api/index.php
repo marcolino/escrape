@@ -395,7 +395,6 @@ class Router {
 
 ini_set("display_errors", "On");
 error_reporting(E_ALL);
-#apd_set_pprof_trace(); # to profile API
 $router = new Router();
 $router->run();
 

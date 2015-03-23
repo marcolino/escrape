@@ -50,6 +50,7 @@ class DB extends PDO {
   public function createTables() {
     # TODO: always use text or varchar ... ?
     try {
+/*
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS global (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,6 +65,7 @@ class DB extends PDO {
          --VALUES ('site_city_code', 'to')
         "
       );
+*/
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS user (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,17 +76,11 @@ class DB extends PDO {
          );
          CREATE UNIQUE INDEX IF NOT EXISTS username_idx ON user (username);
          -- populate with default system user --
-         --INSERT INTO user (username, password, email, role)
-         --SELECT '*', '-', '', 'system'
-         --WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = '*');
          INSERT INTO user (username, password, email, role)
-         VALUES ('*', '-', '', 'system')
+         VALUES ('*', '-', '', 'system');
          -- populate with default admin user --
-         --INSERT INTO user (username, password, email, role)
-         --SELECT 'marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin'
-         --WHERE NOT EXISTS(SELECT 1 FROM user WHERE username = 'marco');
          INSERT INTO user (username, password, email, role)
-         VALUES ('marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin')
+         VALUES ('marco', '10b82717350f8d5408080b4900b665e8', 'marcosolari@gmail.com', 'admin');
         "
       );
       $this->db->exec(
