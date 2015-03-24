@@ -174,8 +174,8 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $personMaster["url"] = $details_url;
         $personMaster["timestamp_last_sync"] = $timestamp;
         $personMaster["page_sum"] = $page_sum;
+        $personMaster["active"] = $active;
         $personDetail = [];
-        $personDetail["active"] = $active;
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
         $personDetail["zone"] = $zone;
@@ -185,11 +185,12 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $personDetail["nationality"] = $nationality;
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote; # vote ([0-9])
-        $personDetail["new"] = false;
+        $personDetail["new"] = 0;
 
         #$id = null;
         #if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
         if ($personId) { # old key, update it
+$this->router->log("debug", " UPDATING ");
           #$id = $p[0]["id"];
           #$this->router->log("debug", " °°° updating person: $key °°°");
           #$this->set($id, $personMaster, $personDetail); # TODO...
@@ -197,9 +198,10 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
           # TODO: remember old value someway, before updating ???
           $this->set($personId, $personMaster, $personDetail);
         } else { # new key, insert it
+$this->router->log("debug", " INSERTING ");
           #$this->router->log("debug", " ^^^ inserting person: $key ^^^");
           $personMaster["timestamp_creation"] = $timestamp;
-          $personDetail["new"] = true;
+          $personDetail["new"] = 1;
           $personId = $this->add($personMaster, $personDetail);
 
           foreach ($photosUrls as $photoUrl) { // add photos
@@ -385,15 +387,15 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
   }
   
   # TODO: add $userId...
-  public function add($personMaster, $personDetail) {
+  public function add($personMaster, $personDetail) { # TODO: $userId !!!
     return $this->db->add("person", $personMaster, $personDetail);
   }
 
-  public function set($id, $person) {
-    return $this->db->set("person", $id, $person);
+  public function set($id, $personMaster, $personDetail) { # TODO: $userId !!!
+    return $this->db->set("person", $id, $personMaster, $personDetail);
   }
 
-  public function delete($id) {
+  public function delete($id) { # TODO: $userId !!!
     return $this->db->delete("person", $id);
   }
   

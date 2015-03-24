@@ -439,7 +439,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
       if ($count != 1) {
         throw new Exception("can't add record to table $tableMaster (added $count records)");
       }
-      $lastInsertId = $this->db->lastInsertId();
+      $lastMasterInsertId = $this->db->lastInsertId();
     } catch (PDOException $e) {
       throw new Exception("can't add record to table $tableMaster: " . $e->getMessage());
     }
@@ -447,7 +447,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
     if (!empty($arrayDetail)) {
       $tableDetail = $table . "_" . "detail";
 
-      $arrayDetail["id_person"] = $lastInsertId; // add master person id to this detail record
+      $arrayDetail["id_person"] = $lastMasterInsertId; // add master person id to this detail record
       $arrayDetail["id_user"] = $userId; // add user id to this detail record
   
       try { // add details data
@@ -463,7 +463,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
           VALUES
           ($values)
         ";
-#throw new Exception("detail sql: [$sql]");
+#throw new Exception("detail sql: [$sql], arrayDetail:" . var_export($arrayDetail, true));
         $statement = $this->db->prepare($sql);
         foreach ($arrayDetail as $key => &$value) {
           $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
@@ -473,41 +473,70 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
         if ($count != 1) {
           throw new Exception("can't add record to table $tableDetail (added $count records)");
         }
-        $lastInsertId = $this->db->lastInsertId();        
-        return $lastInsertId;
+        $lastDetailInsertId = $this->db->lastInsertId();
       } catch (PDOException $e) {
         throw new Exception("can't add record to table $tableDetail: " . $e->getMessage());
       }
     }
+    return $lastMasterInsertId;
   }
 
-  public function set($table, $id, $array) {
+  public function set($table, $id, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = $table;
+#throw new Exception("SET 1, ARRAY_DETAIL: " . var_export($arrayDetail, true));
+
     try {
       $set = "";
-      foreach ($array as $key => $value) {
+#throw new Exception("master sql: arrayMaster:" . var_export($arrayMaster, true));
+      foreach ($arrayMaster as $key => $value) {
         $set .= ($set ? ", " : "") . $key . "=" . ":" . $key;
       }
       $sql = "
-        UPDATE
-        {$table}
-        SET
-        $set
+        UPDATE {$tableMaster}
+        SET $set
         WHERE id = :id
       ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);
-      foreach ($array as $key => &$value) {
+      foreach ($arrayMaster as $key => $value) {
         $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
       }
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("update into table $table for id [$id] did update " . $statement->rowCount() . " records");
+        throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
       }
-      return $id;
     } catch (PDOException $e) {
-      throw new Exception("can't set record to $table: " . $e->getMessage());
+      throw new Exception("can't update record to $tableMaster: " . $e->getMessage());
     }
+
+    if (!empty($arrayDetail)) {
+      $tableDetail = $table . "_" . "detail";
+
+#throw new Exception("detail sql: arrayDetail:" . var_export($arrayDetail, true));
+      #$arrayDetail["id_person"] = $id; // add master person id to this detail record
+      $arrayDetail["id_user"] = $userId; // add user id to this detail record
+  
+      try { // add details data
+        $sql = "
+          UPDATE {$tableDetail}
+          SET $set
+          WHERE id_person = :id
+        ";
+        $statement = $this->db->prepare($sql);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't update record in table $tableDetail (updated $count records)");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't update record in table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $id;
   }
 
   public function delete($table, $id) {

@@ -2,7 +2,8 @@
 #
 # Erase dababase (DB + photos) and re-sync it
 
+clear
 echo "erasing database..."
 sudo rm -rf /var/www/html/escrape/api/db/*
 echo "re-syncing persons..."
-curl -X GET -i localhost/escrape/api/persons/sync && echo
+time curl -X GET -i localhost/escrape/api/persons/sync && echo
