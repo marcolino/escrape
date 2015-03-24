@@ -87,13 +87,15 @@ class DB extends PDO {
         "CREATE TABLE if not exists person (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           key VARCHAR(32),
+          site_country_code VARCHAR(2), -- TODO: use it!
+          site_city_code VARCHAR(2), -- TODO: use it!
           site_key VARCHAR(16),
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
           page_sum TEXT,
-          site_country_code VARCHAR(2), -- TODO: use it!
-          site_city_code VARCHAR(2) -- TODO: use it!
+          --active VARCHAR(8),
+          active INTEGER
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
         "
@@ -104,7 +106,6 @@ class DB extends PDO {
           id_person INTEGER,
           id_user INTEGER,
           id_uniqcode INTEGER,
-          active VARCHAR(8),
           name TEXT,
           sex TEXT,
           zone TEXT,
@@ -116,7 +117,8 @@ class DB extends PDO {
           age TEXT,
           vote INTEGER,
           showcase INTEGER,
-          thruthful INTEGER
+          thruthful INTEGER,
+          new INTEGER
          );
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "

@@ -81,6 +81,14 @@ class Router {
           $this->error($e);
         }
       });
+      $this->app->get("/sync/new", function() { # =========================
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->sync(true));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
       $this->app->post("/photo/get/occurrences", function() { # ===========
         try {
           $persons = new PersonsController($this);

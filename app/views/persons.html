@@ -33,7 +33,7 @@
         </div>
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
           <div class="person-site">
-            <button type="button" class="btn" ng-attr-title="referral site: {{person.site_key}}">
+            <button type="button" class="btn" ng-attr-title="referral site: {{person.site_key}}" onclick="window.open('//facebook.com'); window.open('//twitter.com');"><!-- TODO: handle multiple referral sites opening... -->
               <div class="img-rounded"><img ng-src="images/referral-sites/{{person.site_key}}.png" class="img-rounded img-site" /></div>
             </button>
           </div>
@@ -50,12 +50,21 @@
             </button>
           </div>
         </div>
-        <div class="col-xs-3 col-sm-2 col-md-2 col-lg-3">
+        <div class="col-xs-2 col-sm-1 col-md-1 col-lg-2">
           <div class="person-vote">
             <button class="btn btn-warning" type="button" ng-attr-title="vote: {{person.vote||5}}">
               <i class="glyphicon glyphicon-thumbs-up"></i>&nbsp;<span class="badge">{{person.vote||5}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
             </button>
           </div>
+        </div>
+        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+          <span ng-if="person.new">
+            <div class="person-new">
+              <button class="btn btn-danger" type="button" title="this person is new">
+                <i class="glyphicon glyphicon-star"></i>
+              </button>
+            </div>
+          </span>
         </div>
       </div>
     </div>

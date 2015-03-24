@@ -4,19 +4,19 @@
   <form name="form" ng-submit="register()" role="form">
     <div class="form-group">
       <label for="username">Username</label>
-      <i class="fa fa-key"></i>
+      <!--<i class="fa fa-key"></i>-->
       <input type="text" name="username" id="username" class="form-control" ng-model="username" required autofocus="true" />
       <span ng-show="form.username.$dirty && form.username.$error.required" class="help-block">Username is required</span>
     </div>
     <div class="form-group">
       <label for="password">Password</label>
-      <i class="fa fa-lock"></i>
+      <!--<i class="fa fa-lock"></i>-->
       <input type="password" name="password" id="password" class="form-control" ng-model="password" required />
       <span ng-show="form.password.$dirty && form.password.$error.required" class="help-block">Password is required</span>
     </div>
     <div class="form-group">
       <label for="password">Password verification</label>
-      <i class="fa fa-lock"></i>
+      <!--<i class="fa fa-lock"></i>-->
       <input type="password" name="passwordVerify" id="passwordVerify" class="form-control" ng-model="passwordVerify" required  equals="{{password}}"/>
       <span ng-show="form.passwordVerify.$dirty && form.passwordVerify.$error.required" class="help-block">Password verification is required</span>
       <span ng-show="form.passwordVerify.$dirty && form.passwordVerify.$error.equals" class="help-block">Password verification doesn't match</span>

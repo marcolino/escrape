@@ -20,8 +20,10 @@ app.controller('AuthenticationController',
         nationality: '',
       },
       options: {
+        isopened: false,
         countryCode: cfg.countryCode,
         cityCode: cfg.cityCode,
+        categoryCode: cfg.category,
       },
     };
     $scope.sievesOriginal = {};
@@ -39,7 +41,8 @@ app.controller('AuthenticationController',
               e.stopPropagation();
             }
             // set new sieves digest in service
-            this.setSievesDigest($scope.sieves);
+//console.error($scope.sieves);
+              this.setSievesDigest($scope.sieves);
           };
         }
       }).result.then(
@@ -61,9 +64,10 @@ app.controller('AuthenticationController',
           sieves.filters.commentsCountMin + '\0' +
           sieves.filters.age.min + '\0' +
           sieves.filters.age.max + '\0' +
-          sieves.filters.nationality.countryCode + '\0'
-          sieves.filters.options.countryCode + '\0'
-          sieves.filters.options.cityCode + '\0'
+          sieves.filters.nationality.countryCode + '\0' +
+          sieves.options.countryCode + '\0' +
+          sieves.options.cityCode + '\0' +
+          sieves.options.categoryCode + '\0'
         ;
       }
       Authentication.setSievesDigest(digest);
@@ -181,6 +185,21 @@ app.controller('AuthenticationController',
       ];
     };
 
+    $scope.sitesCategories = function() {
+      return $scope.cfg.fake ? {
+        'x': 'X',
+        'y': 'Y',
+      } : {
+        'f': 'Female',
+        'm': 'Male',
+      };
+    };
+
+    $scope.getSitesCategory = function(categoryCode) {
+      var siteCategories = $scope.sitesCategories();
+      return siteCategories[categoryCode];
+    };
+
     $scope.activeCountries = function () {
       /*
       console.info('activeCountries:', {
@@ -227,6 +246,7 @@ app.controller('AuthenticationController',
 
     $scope.setOptionSitesCountryCode = function (countryCode) {
       $scope.sieves.options.countryCode = countryCode;
+      $scope.sieves.options.cityCode = $scope.sitesCountries[countryCode].cityCodeDefault;
       $scope.storeSieves('options');
     };
 
@@ -235,25 +255,20 @@ app.controller('AuthenticationController',
       $scope.storeSieves('options');
     };
 
-/*
-    // TODO: these two functions are similar in person controller: how to have only one instance?
-    $scope.getCountry = function(countryCode) {
-      return Countries.getCountry(countryCode);
+    $scope.setOptionSitesCategoryCode = function (categoryCode) {
+      $scope.sieves.options.categoryCode = categoryCode;
+      $scope.storeSieves('options');
     };
 
-    $scope.getCountryClass = function(countryCode) {
-      return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
-    };
-*/
-    $scope.toggleSectionOpened = function (section/*, isopened*/) {
-      // store filters on filters opened toggle to save opened status
+    $scope.toggleSectionOpened = function (section) {
+      // store filters on section opened toggle to save opened status
       $timeout(function() {
         $scope.storeSieves(section);
       });
     };
 
     $scope.loadSieves = function (force) {
-console.log('=== $scope.loadSieves', $scope.sieves);
+      //console.log('=== $scope.loadSieves', $scope.sieves);
       $scope.sieves = {};
       var key = cfg.site.name;
       if ($scope.signedIn()) { // add authdata to key, if user is signed in
@@ -266,7 +281,6 @@ console.log('=== $scope.loadSieves', $scope.sieves);
       if (!$scope.sieves) {
         $scope.sieves = angular.copy($scope.sievesDefaults);
       }
-      console.log('loaded sieves:', $scope.sieves);
       $rootScope.sieves = $scope.sieves;
       angular.copy($scope.sieves, $scope.sievesOriginal); // save loaded sieves as sievesOriginal, to be able to check for modifications
       console.log('$scope.sievesOriginal:', $scope.sievesOriginal);
@@ -275,26 +289,20 @@ console.log('=== $scope.loadSieves', $scope.sieves);
         $scope.setSievesDigest(null); // reset sieves digest (this forces a persons reload)
       }
 
-      Persons.getSitesCountries(function(response) {
-        console.log('************* getSitesCountries():', response);
-        if (response.success) {
-          $scope.sitesCountries = response;
-        } else {
-          $scope.error = response;
-          console.error('!!!!!!!!: ', response);
-        }
+      Persons.getSitesCountries().then(function(response) {
+        $scope.sitesCountries = response;
       });
-
-      Persons.getSitesCountries($scope.sieves.options.countryCode, function(response) {
-        console.log('************* getSitesCities():', response);
-        if (response.success) {
-          $scope.sitesCountries = response;
-        } else {
-          $scope.error = response;
-          console.error('!!!!!!!!: ', response);
-        }
+      $scope.$watch('sieves.options.countryCode', function() {
+        console.log('$watch: Hey, sieves.options.countryCode has changed!');
+        Persons.getSitesCities($scope.sieves.options.countryCode).then(function(response) {
+          $scope.sitesCities = response;
+          if (typeof $scope.sieves.options.cityCode === 'undefined') {
+            if (typeof $scope.sitesCountries !== 'undefined' && typeof $scope.sieves.options.countryCode !== 'undefined') {
+              $scope.sieves.options.cityCode = $scope.sitesCountries[$scope.sieves.options.countryCode].cityCodeDefault;
+            }
+          }
+        });
       });
-
     };
 
     $scope.storeSieves = function () {
@@ -336,8 +344,8 @@ console.log('=== $scope.loadSieves', $scope.sieves);
       $rootScope.sieves = $scope.sieves;
     };
 
-    function setCredentials (response) {
-      Authentication.setCredentials(response.user.username, response.user.password, response.user.role);
+    function setCredentials (data) {
+      Authentication.setCredentials(data.user.username, data.user.password, data.user.role);
     }
 
     // load sieves (search, filters, options, ...)

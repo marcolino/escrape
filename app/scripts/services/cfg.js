@@ -4,7 +4,7 @@ var apiUri = 'http://0.0.0.0'; // server is local
 
 // DEBUG ONLY ////////////////////////////////////////////////////
 function atHome() {
-//if (1) {return false;} // TODO: mobile @ office...
+  //if (1) {return false;} // TODO: mobile @ office...
   return (
     (typeof navigator !== 'undefined' && typeof navigator.appVersion !== 'undefined' &&
      navigator.appVersion.indexOf('Linux') !== -1) || // Chrome

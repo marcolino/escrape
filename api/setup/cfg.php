@@ -4,5 +4,6 @@
     "timezone" => "Europe/Rome",
     "sitesCountryCode" => "it",
     "sitesCityCode" => "to",
+    "categoryCode" => "",
   ];
 ?>

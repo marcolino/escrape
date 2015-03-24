@@ -1,10 +1,9 @@
 TODO 1.0:
- - add 'api/setup' to .gitignore @HOME (.gitignore is not committed...)
- - profile @HOME (enabling apd_set_pprof_trace() at the bottom of index.php) @HOME (can't run Pecl/apd with PHP 5.6 (from Remi) on Centos 6.6 @OFFICE... :-()
- - handle 'active' flag when syncing
- - handle flag to close 'options', more than 'filters'...
+ - handle 'timestamp_last_sync' (and 'active'...) flag when syncing
+ - [sS]ites => [sS]ources
  - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
- - thruthful in persons and person views => "yes", "no", "unknown"... (set 'thruthful' field to person_detail table...)
+ - thruthful "unknown" => undefined
+ - thruthful in persons and person views => "yes", "no", undefined... (set 'thruthful' field to person_detail table...)
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list view
  - in google search results page, make buttons (Fake, Thrutful, Don't know) visible... (results in  a scroller)
@@ -16,7 +15,7 @@ TODO 1.0:
  - options: town / attitude
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
  - sync: skip person page if page sum matches with last synced... (do we save anything worth?)
- - person detail view: replace static google street + goggle street indications with dynamic google street view:+indications: http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7/
+ - person detail view: replace static google street + goggle street indications with dynamic google street view:+indications (see: <http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7>)
  - change persons sitesDefinitions:
  - remove "is_array_multi()" check, after db fechtall's...
  - $this->sitesDefinitions = [ ... "access-denied-pattern" (CAPTCHA / banned your access)
@@ -25,8 +24,15 @@ TODO 1.0:
  - filter all sites defined and all esc* sites from photos 'occurrences'
 
 TODO 2.0:
- - I18n (?...)
- - move to https
+ - I18n (?...) (see:
+     - <https://docs.angularjs.org/guide/i18n>
+     - <https://angular-gettext.rocketeer.be>
+     - <https://github.com/angular/bower-angular-i18n>
+     - <https://github.com/lgalfaso/angular-dynamic-i18n>
+   )
+ - move to https (see: <https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps>)
+ - fake => customization ...
+ - ?
 
 DONE:
  - search() should issue a persons reload...
@@ -67,4 +73,6 @@ DONE:
  - $this->sitesDefinitions = [ "..." => [ ... "charset" => "utf-8", "accepts-tor" => <boolean>,
  - pass user id from authentication to service.js, and to API (BUT, WHAT WAS THE REASON?? ... however, no, we could use username ('*' ...))
  - thruthfulness => thrutful /g
- 
+ - handle flag to close 'options', more than 'filters'...
+ - add 'api/setup' to .gitignore @HOME (.gitignore is not committed...)
+ - profile @HOME (enabling apd_set_pprof_trace() at the bottom of index.php) @HOME (can't run Pecl/apd with PHP 5.6 (from Remi) on Centos 6.6 @OFFICE... :-() (No, using xdebug @HOME)

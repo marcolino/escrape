@@ -22,84 +22,26 @@ class PersonsController {
   }
 
   /**
-   * Get all defined countries in sites
-   *
-   * @return array: all countries defined
-   */
-  public function getSitesCountries() {
-    $this->router->log("info", "getSitesCountries() ---");
-    $countries = [];
-    foreach ($this->sitesDefinitions as $siteKey => $site) {
-      $url = $site["url"];
-      #$this->router->log("debug", "site: " . $siteKey);
-      $this->router->log("info", "getUrlContents($url)");
-      $page = $this->network->getUrlContents($url, $site["charset"]);
-      if ($page === FALSE) {
-        $this->router->log("error", "can't get main page on site [$siteKey]");
-        continue;
-      }
-      # TODO: grep countries from site's main page...
-      $countries = [ # TODO: ...
-        "it" => "Italy",
-        "ch" => "Swizerland",
-      ];
-    }
-    #$this->router->log("debug", "countries:" . var_export($countries, true));
-    return $countries;
-  }
-
-  /**
-   * Get all defined cities in sites for specified country code
-   *
-   * @return array: all cities defined for specified country code
-   */
-  public function getSitesCities($countryCode) {
-    $this->router->log("info", "getSitesCities($countryCode) ---");
-    $cities = [];
-    foreach ($this->sitesDefinitions as $siteKey => $site) {
-      $url = $site["url"];
-      #$this->router->log("debug", "site: " . $siteKey);
-      $this->router->log("info", "getUrlContents($url)");
-      $page = $this->network->getUrlContents($url, $site["charset"]);
-      if ($page === FALSE) {
-        $this->router->log("error", "can't get main page on site [$siteKey]");
-        continue;
-      }
-      # TODO: grep cities from site's main page...
-      $cities[] = [
-        "to" => [
-          "name" => "Torino",
-          "path" => "e...../torino",
-        ],
-        "mi" => [
-          "name" => "Milano",
-          "path" => "e...../milano",
-        ],
-      ]; #"torino" => "annunci_E....._s......_Piemonte_Torino.html",
-    }
-    #$this->router->log("debug", "cities:" . var_export($cities, true));
-    return $cities;
-  }
-
-  /**
    * Sync persons
    *
-   * @return boolean: true if everything successful, false otherwise
+   * @param  boolean $newKeysOnly   to sync only new persons (default: false)
+   * @return boolean:               true if everything successful, false otherwise
    */
-  public function sync() {
+  public function sync($newKeysOnly = false) {
     $this->router->log("info", "sync() ---------------------");
     $error = false; // track errors while sync'ing
 
     foreach ($this->sitesDefinitions as $siteKey => $site) {
       #$useTor = true; // use TOR proxy to sync
       $useTor = $site["accepts-tor"]; // use TOR proxy to sync
+      # TODO: handle country / city / category (instead of a fixed path)
       $url = $site["url"] . "/" . $site["path"];
       $this->router->log("debug", "site: " . $siteKey);
 
       getUrlContents:
       $this->router->log("info", "getUrlContents($url) (TOR: " . ($useTor ? "true" : "false") . ")");
+      # TODO: try ... catch ... (here and for all Network public methods...)
       $page = $this->network->getUrlContents($url, $site["charset"], null, false, $useTor);
-
       if ($page === FALSE) {
         $this->router->log("error", "can't get page contents on site [$siteKey]");
         continue;
@@ -138,6 +80,18 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
           continue;
         }
 
+        # check if key is new or not ###
+        $personId = null;
+        if (($person = $this->db->getByField("person", "key", $key))) { # old key
+          $personId = $person[0]["id"];
+          $this->router->log("debug", " °-°-° old person: $key (id: $personId) °-°-°");
+          if ($newKeysOnly) { // requested to sync only new keys, skip this old key
+            continue;
+          }
+        } else {
+          $this->router->log("debug", " O-O-O new person: $key (id: $id) O-O-O");
+        }
+
         if (preg_match($site["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
           $details_url = $site["url"] . "/" . $matches[1];
         } else {
@@ -146,14 +100,14 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
           continue;
         }
 
-        $this->router->log("debug", $details_url);
-        // TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
+        $this->router->log("debug", "person details url: [$details_url]");
+        # TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
+        # TODO: try ... catch ...
         if (($page_details = $this->network->getUrlContents($details_url, $site["charset"], null, false, $useTor)) === FALSE) {
           $this->router->log("error", "can't get person $n url contents on site [$siteKey], giving up with this person");
           $error = true;
           continue;
         }
-        $timestamp = time(); # current timestamp, we don't have page last modification date...
         $page_sum = md5($page_details);
 
         if (preg_match($site["patterns"]["person-phone"], $page_details, $matches) >= 1) {
@@ -211,8 +165,8 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $address = "Via Roma, 123, Torino";
         $age = 28;
         $vote = 7;
-        # TODO: add logic to handle 'active' flag
-        $active = "yes"; // 'yes' / 'no' / 'syncing' (?)
+        $timestamp = time(); // current timestamp, source sites usually don't set page last modification date...
+        $active = true; // true / false
 
         $personMaster = [];
         $personMaster["key"] = $key;
@@ -231,32 +185,141 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $personDetail["nationality"] = $nationality;
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote; # vote ([0-9])
+        $personDetail["new"] = false;
 
-        $id = null;
-        if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
-          $id = $p[0]["id"];
-          $this->router->log("debug", " °°° updating person: $key °°°");
-          $this->set($id, $personMaster, $personDetail); # TODO...
+        #$id = null;
+        #if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
+        if ($personId) { # old key, update it
+          #$id = $p[0]["id"];
+          #$this->router->log("debug", " °°° updating person: $key °°°");
+          #$this->set($id, $personMaster, $personDetail); # TODO...
+
+          # TODO: remember old value someway, before updating ???
+          $this->set($personId, $personMaster, $personDetail);
         } else { # new key, insert it
-          $this->router->log("debug", " ^^^ inserting person: $key ^^^");
+          #$this->router->log("debug", " ^^^ inserting person: $key ^^^");
           $personMaster["timestamp_creation"] = $timestamp;
-          $id = $this->add($personMaster, $personDetail);
+          $personDetail["new"] = true;
+          $personId = $this->add($personMaster, $personDetail);
+
+          foreach ($photosUrls as $photoUrl) { // add photos
+            $this->photoAdd($personId, $site["url"] . "/" . $photoUrl);
+          }
         }
-        // add photos
-        foreach ($photosUrls as $photoUrl) {
-          $this->photoAdd($id, $site["url"] . "/" . $photoUrl);
-#break;
-        }
+        # TODO: REALLY DO NOT ADD PHOTOS FOR OLD KEYS/PERSONS ???
+        #       ADDING PHOTOS ONLY FOR NEW KEYS/PERSONSWE ARE WAY FASTER,
+        #       BUT WE COULD MISS SOME NEW / CHANGED / REMOVED PHOTO...
+        #       (NO, REMOVED PHOTOS ARE HOWEVER (CORRECTLY) KEPT IN DATABASE).
+        #// add photos
+        #foreach ($photosUrls as $photoUrl) {
+        #  $this->photoAdd($id, $site["url"] . "/" . $photoUrl);
+        #}
         $this->router->log("debug", " === person finished: $key ===");
 #break;
       }
 #break;
     }
 
+/* TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+    // set "active" flag
+    $result = [];
+    $userId = 1; # TODO: get "admin" id ...
+    foreach ($this->db->getPersonListSieved(null, $userId) as $person) {
+      $active = ...;
+    }
+*/
+
     // sync persons uniqueness after sync completed
     $this->syncPersonsUniqueness();
 
     return !$error;
+  }
+
+  /**
+   * Get all defined countries in sites
+   *
+   * @return array: all countries defined
+   */
+  public function getSitesCountries() {
+    $this->router->log("info", "getSitesCountries() ---");
+    $countries = [];
+/*
+    foreach ($this->sitesDefinitions as $siteKey => $site) {
+      $url = $site["url"];
+      #$this->router->log("debug", "site: " . $siteKey);
+      $this->router->log("info", "getUrlContents($url)");
+      $page = $this->network->getUrlContents($url, $site["charset"]);
+      if ($page === FALSE) {
+        $this->router->log("error", "can't get main page on site [$siteKey]");
+        continue;
+      }
+      # TODO: grep countries from site's main page...
+    }
+*/
+    # TODO: save to db "global" table, to avoid re-scraping on every request...
+    $countries = [ # TODO: ...
+      "it" => [
+        "name" => "Italy",
+        "path" => "e...../italy",
+        "cityCodeDefault" => "to",
+      ],
+      "ch" => [
+        "name" => "Swizerland",
+        "path" => "e...../switzerland",
+        "cityCodeDefault" => "zh",
+      ],
+    ];
+    return $countries;
+  }
+
+  /**
+   * Get all defined cities in sites for specified country code
+   *
+   * @return array: all cities defined for specified country code
+   */
+  public function getSitesCities($countryCode) {
+    $this->router->log("info", "getSitesCities($countryCode) ---");
+    $cities = [];
+/*
+    foreach ($this->sitesDefinitions as $siteKey => $site) {
+      $url = $site["url"];
+      #$this->router->log("debug", "site: " . $siteKey);
+      $this->router->log("info", "getUrlContents($url)");
+      $page = $this->network->getUrlContents($url, $site["charset"]);
+      if ($page === FALSE) {
+        $this->router->log("error", "can't get main page on site [$siteKey]");
+        continue;
+      }
+      # TODO: grep cities from site's main page...
+    }
+*/
+    #$this->router->log("debug", "cities:" . var_export($cities, true));
+    # TODO: save to db "global" table, to avoid re-scraping on every request...
+    if ($countryCode === "it") {
+      $cities = [
+        "to" => [
+          "name" => "Torino",
+          "path" => "e...../torino",
+        ],
+        "mi" => [
+          "name" => "Milano",
+          "path" => "e...../milano",
+        ],
+      ];
+    }
+    if ($countryCode === "ch") {
+      $cities = [
+        "zh" => [
+          "name" => "Zurich",
+          "path" => "e...../zurich",
+        ],
+        "ge" => [
+          "name" => "Genevre",
+          "path" => "e...../genevre",
+        ],
+      ];
+    }
+    return $cities;
   }
 
   /**
@@ -348,9 +411,9 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
     $userId = 2; # TODO: get logged user id (from "authdata"?) ...
     foreach ($this->db->getPersonListSieved($sieves, $userId) as $person) {
       // N.B: here we (could) get multiple records for each person id
-      $pid = $person["id_person"];
-      if (!isset($result[$pid])) {
-        $result[$pid] = []; // initialize this person array in results
+      $personId = $person["id_person"];
+      if (!isset($result[$personId])) {
+        $result[$personId] = []; // initialize this person array in results
       }
 
       // fields with only "master" table values
@@ -359,9 +422,10 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
           "id_person",
           "key",
           "site_key",
+          "new",
         ] as $field
       ) {
-        $result[$pid][$field] = $person[$field];
+        $result[$personId][$field] = $person[$field];
       }
 
       // fields with only "detail" table values (they can be multiple)
@@ -376,22 +440,22 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         ] as $field
       ) {
         if (isset($person[$field])) {
-          if (!isset($result[$pid][$field])) {
-            $result[$pid][$field] = $person[$field];
+          if (!isset($result[$personId][$field])) {
+            $result[$personId][$field] = $person[$field];
           } else {
-            $result[$pid][$field] .= ", " . $person[$field];
+            $result[$personId][$field] .= ", " . $person[$field];
           }
           #$this->router->log("debug", "field: <$field> ");
-          #$this->router->log("debug", "field: result[$pid][$field] = " . $person[$field]);
+          #$this->router->log("debug", "field: result[$personId][$field] = " . $person[$field]);
         }
       }
       #$this->router->log("debug", "result: " . var_export($result, true));
 
       // fields "calculated"
-      $result[$pid]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
-      $result[$pid]["photo_path_small_showcase"] = $this->photoGetByShowcase($pid, true)["path_small"];
-      $result[$pid]["comments_count"] = $comments->countByPerson($pid);
-      $result[$pid]["comments_average_valutation"] = $comments->getAverageValutationByPerson($pid);
+      $result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
+      $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
+      $result[$personId]["comments_count"] = $comments->countByPerson($personId);
+      $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
     return $result;
   }
@@ -856,8 +920,8 @@ $this->router->log("debug", "test START");
     $personMaster[0]["url"] = "http://static.fanpage.it";
     $personMaster[0]["timestamp_last_sync"] = 1424248678;
     $personMaster[0]["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
+    $personMaster[0]["active"] = false;
     $personDetail[0] = [];
-    $personDetail[0]["active"] = "no";
     $personDetail[0]["name"] = "Samantha";
     $personDetail[0]["sex"] = "F";
     $personDetail[0]["zone"] = "centro";
@@ -867,6 +931,7 @@ $this->router->log("debug", "test START");
     $personDetail[0]["nationality"] = "it";
     $personDetail[0]["age"] = 31;
     $personDetail[0]["vote"] = 8;
+    $personDetail[0]["new"] = true;
     ########################################################################################
     $photosUrls[1] = [
       "/wp-content/gallery/convegno/img_2484.jpg",
@@ -878,8 +943,8 @@ $this->router->log("debug", "test START");
     $personMaster[1]["url"] = "http://www.newshd.net";
     $personMaster[1]["timestamp_last_sync"] = 1424248678;
     $personMaster[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
+    $personMaster[1]["active"] = true;
     $personDetail[1] = [];
-    $personDetail[1]["active"] = "yes";
     $personDetail[1]["name"] = "Elena";
     $personDetail[1]["sex"] = "F";
     $personDetail[1]["zone"] = "centro";
@@ -889,6 +954,7 @@ $this->router->log("debug", "test START");
     $personDetail[1]["nationality"] = "it";
     $personDetail[1]["age"] = 42;
     $personDetail[1]["vote"] = 9;
+    $personDetail[1]["new"] = false;
     ########################################################################################
 
     // add person

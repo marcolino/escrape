@@ -131,7 +131,7 @@ class Network {
           }
         }
         #$this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
-        throw new Exception("can't  execute curl to [$url]: " . curl_strerror($errno));
+        throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
       }
       curl_close($ch);
       #$this->logClose();

@@ -282,21 +282,21 @@ input[readonly].default-cursor {
   color: #888;
   border: 1px solid #ccc;
   border-left: 0;
-  background-color: #fefefe;
+  background-color: #ffffff;
   outline: none;
 }
 .button-search-clear:active {
   color: #444;
   border: 1px solid #ccc;
   border-left: 0;
-  background-color: #fefefe;
+  background-color: #ffffff;
   outline: none;
 }
 .button-search-clear:focus {
   color: #444;
   border: 1px solid #ccc;
   border-left: 0;
-  background-color: #fefefe;
+  background-color: #ffffff;
   outline: none;
 }
 
