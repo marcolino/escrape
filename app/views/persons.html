@@ -1,7 +1,7 @@
 <div class="container">
 
   <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
-    <pre> person: {{person}} </pre>
+    <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
       <span class="img-clip-container" NOstyle="background:#333">
         <a ng-href="#/details/{{person.id_person}}">
@@ -19,13 +19,11 @@
       <div class="row" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
           <div class="person-name">
-            <div class="person-name">
               {{person.name}}
-            </div>
           </div>
         </div>
       </div>
-      <div class="row">
+      <div class="row-fluid">
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
           <button type="button" class="btn" ng-attr-title="nationality: {{person.nationality}}">
             <a ng-href="#/"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></span></a>

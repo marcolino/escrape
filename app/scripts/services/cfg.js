@@ -4,7 +4,6 @@ var apiUri = 'http://0.0.0.0'; // server is local
 
 // DEBUG ONLY ////////////////////////////////////////////////////
 function atHome() {
-return true;
   //if (1) {return false;} // TODO: mobile @ office...
   return (
     (typeof navigator !== 'undefined' && typeof navigator.appVersion !== 'undefined' &&

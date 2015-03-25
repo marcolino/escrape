@@ -38,7 +38,7 @@ class DB extends PDO {
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
       }
-      $this->userIdSystem = self::DB_SYSTEM_USER_ID;
+      $this->userIdSystem = self::DB_SYSTEM_USER_ID; # TODO: use this variable... (?)
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
     }
@@ -50,22 +50,20 @@ class DB extends PDO {
   public function createTables() {
     # TODO: always use text or varchar ... ?
     try {
-/*
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS global (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           field_name TEXT,
           field_value TEXT
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS field_name_idx ON user (field_name);
+         CREATE UNIQUE INDEX IF NOT EXISTS field_name_idx ON global (field_name);
          -- populate with default values --
-         --INSERT INTO global (field_name, field_value)
-         --VALUES ('site_country_code', 'it');
+         INSERT INTO global (field_name, field_value)
+         VALUES ('last_sync_full', '');
          --INSERT INTO global (field_name, field_value)
          --VALUES ('site_city_code', 'to')
         "
       );
-*/
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS user (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,7 +92,6 @@ class DB extends PDO {
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
           page_sum TEXT,
-          --active VARCHAR(8),
           active INTEGER
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
@@ -138,6 +135,7 @@ class DB extends PDO {
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS comment (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_user INTEGER, -- to be handled...
           id_person INTEGER,
           key VARCHAR(32),
           phone VARCHAR(16),
@@ -178,7 +176,7 @@ class DB extends PDO {
     }
   }
 
-  public function getPersonListSieved($sieves, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+  public function getPersonListSieved($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
     $params = [];
@@ -202,7 +200,7 @@ class DB extends PDO {
 
       $statement = $this->db->prepare($sql);
       foreach ($params as $key => &$value) {
-        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+        $statement->bindParam(":" . $key, $value);
       }
       $statement->execute();
 #throw new Exception("sql: [$sql]");
@@ -211,7 +209,7 @@ class DB extends PDO {
       return $result;
     } catch (PDOException $e) {
       #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
-      throw new Exception("can't get $table with filters: " . $e->getMessage()); # TODO: USE THIS METHOD!!!
+      throw new Exception("can't get from $tableMaster, $tableDetail with filters: " . $e->getMessage()); # TODO: USE THIS METHOD EVERYWHERE!!!
     }
   }
 
@@ -236,6 +234,176 @@ class DB extends PDO {
       return $result;
     } catch (PDOException $e) {
       throw new Exception("can't get table $table: " . $e->getMessage());
+    }
+  }
+
+  public function addPerson($arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "person";
+
+    try { // add master data
+      $fields = $values = "";
+      foreach ($arrayMaster as $key => $value) {
+        $fields .= ($fields ? ", " : "") . $key;
+        $values .= ($values ? ", " : "") . ":" . $key;
+      }
+      $sql = "
+        INSERT INTO {$tableMaster}
+        ($fields)
+        VALUES
+        ($values)
+      ";
+      $statement = $this->db->prepare($sql);
+      foreach ($arrayMaster as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($count != 1) {
+        throw new Exception("can't add record to table $tableMaster (added $count records)");
+      }
+      $lastMasterInsertId = $this->db->lastInsertId();
+    } catch (PDOException $e) {
+      throw new Exception("can't add record to table $tableMaster: " . $e->getMessage());
+    }
+
+    if (!empty($arrayDetail)) {
+      $tableDetail = $tableMaster . "_" . "detail";
+
+      $arrayDetail["id_person"] = $lastMasterInsertId; // add master person id to this detail record
+      $arrayDetail["id_user"] = $userId; // add user id to this detail record
+  
+      try { // add details data
+        $fields = $values = "";
+        foreach ($arrayDetail as $key => $value) {
+          $fields .= ($fields ? ", " : "") . $key;
+          $values .= ($values ? ", " : "") . ":" . $key;
+        }
+  
+        $sql = "
+          INSERT INTO {$tableDetail}
+          ($fields)
+          VALUES
+          ($values)
+        ";
+#throw new Exception("detail sql: [$sql], arrayDetail:" . var_export($arrayDetail, true));
+        $statement = $this->db->prepare($sql);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't add record to table $tableDetail (added $count records)");
+        }
+        $lastDetailInsertId = $this->db->lastInsertId();
+      } catch (PDOException $e) {
+        throw new Exception("can't add record to table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $lastMasterInsertId;
+  }
+
+  public function setPerson($id, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "person";
+#throw new Exception("SET 1, ARRAY_DETAIL: " . var_export($arrayDetail, true));
+
+    try {
+      $set = "";
+#throw new Exception("master sql: arrayMaster:" . var_export($arrayMaster, true));
+      foreach ($arrayMaster as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+      }
+      $sql = "
+        UPDATE {$tableMaster}
+        SET $set
+        WHERE id = :id
+      ";
+
+/*
+throw new Exception(
+  " ### setPerson() - master sql: [$sql], " .
+  "arrayMaster: " . var_export($arrayMaster, true)
+);
+*/
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);
+      foreach ($arrayMaster as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($statement->rowCount() != 1) {
+        throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+      }
+    } catch (PDOException $e) {
+      throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
+    }
+#return $id; # !!!!!!!!!!!!!!!!!! SKIP DETAIL ... !!!!!!!!!!!!!!!!!!!!
+
+    if (!empty($arrayDetail)) {
+      $tableDetail = $tableMaster . "_" . "detail";
+
+      $set = "";
+      foreach ($arrayDetail as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+      }
+#throw new Exception("detail sql: arrayDetail:" . var_export($arrayDetail, true));
+      ###$arrayDetail["id_person"] = $id; // add master person id to this detail record
+      ###$arrayDetail["id_user"] = $userId; // add user id to this detail record
+  
+      try { // add details data
+        $sql = "
+          UPDATE {$tableDetail}
+          SET $set
+          WHERE
+           id_person = :id
+          AND
+           id_user = :id_user
+        ";
+
+/*
+throw new Exception(
+  " ### setPerson() - detail sql: [$sql], " .
+  "arrayDetail: " . var_export($arrayDetail, true)
+);
+*/
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':id', $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't update record in table $tableDetail (updated $count records)");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't update record in table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $id;
+  }
+
+  public function deletePerson($id) {
+    $table = "person";
+    try {
+      $sql = "
+        DELETE
+        FROM {$table}
+        WHERE id = :id
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);
+      $statement->bindParam(":" . $key, $value);
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($count != 1) {
+        throw new Exception("delete from $table did not delete one record, but $count: " . $e->getMessage());
+      }
+      return true;
+    } catch (PDOException $e) {
+      throw new Exception("can't delete from $table: " . $e->getMessage());
     }
   }
 
@@ -318,6 +486,23 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
     }
   }
 
+  public function getAverageFieldByPersonId($table, $idPerson, $fieldName) {
+    try {
+      $sql = "
+        SELECT AVG($fieldName) AS avg
+        FROM {$table}
+        WHERE id_person = :id_person
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . "id_person", $idPerson);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get average field by person from $table: " . $e->getMessage());
+    }
+  }
+
 
 
   /*
@@ -349,7 +534,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
         WHERE $fieldName = :$fieldName
       ";
       $statement = $this->db->prepare($sql);
-      $statement->bindParam(":" . $fieldName, $fieldValue); #, PDO::PARAM_STR);
+      $statement->bindParam(":" . $fieldName, $fieldValue);
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
@@ -371,30 +556,13 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
       ";
       $statement = $this->db->prepare($sql);
       foreach ($array as $key => &$value) {
-        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+        $statement->bindParam(":" . $key, $value);
       }
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $results;
     } catch (PDOException $e) {
       throw new Exception("can't get $table by fields: " . $e->getMessage());
-    }
-  }
-
-  public function getAverageFieldByPerson($table, $idPerson, $fieldName) {
-    try {
-      $sql = "
-        SELECT AVG($fieldName) AS avg
-        FROM {$table}
-        WHERE id_person = :id_person
-      ";
-      $statement = $this->db->prepare($sql);
-      $statement->bindParam(":" . "id_person", $idPerson); #, PDO::PARAM_STR);
-      $statement->execute();
-      $result = $statement->fetch(PDO::FETCH_ASSOC);
-      return $result;
-    } catch (PDOException $e) {
-      throw new Exception("can't get average field by person from $table: " . $e->getMessage());
     }
   }
 
@@ -406,7 +574,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
         WHERE $fieldName = :fieldValue
       ";
       $statement = $this->db->prepare($sql);
-      $statement->bindParam(":fieldValue", $fieldValue); #, PDO::PARAM_STR);
+      $statement->bindParam(":fieldValue", $fieldValue);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result["count"];
@@ -415,126 +583,81 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
     }
   }
 
-  public function add($table, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
-    $tableMaster = $table;
-
-    try { // add master data
+  public function add($table, $array, $userId = self::DB_SYSTEM_USER_ID) {
+    try { // add data
       $fields = $values = "";
-      foreach ($arrayMaster as $key => $value) {
+      foreach ($array as $key => $value) {
         $fields .= ($fields ? ", " : "") . $key;
         $values .= ($values ? ", " : "") . ":" . $key;
       }
       $sql = "
-        INSERT INTO {$tableMaster}
+        INSERT INTO {$table}
         ($fields)
         VALUES
         ($values)
       ";
       $statement = $this->db->prepare($sql);
-      foreach ($arrayMaster as $key => &$value) {
-        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+      foreach ($array as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
       }
       $statement->execute();
       $count = $statement->rowCount();
       if ($count != 1) {
-        throw new Exception("can't add record to table $tableMaster (added $count records)");
+        throw new Exception("can't add record to table $table (added $count records)");
       }
-      $lastMasterInsertId = $this->db->lastInsertId();
+      $lastInsertId = $this->db->lastInsertId();
     } catch (PDOException $e) {
-      throw new Exception("can't add record to table $tableMaster: " . $e->getMessage());
+      throw new Exception("can't add record to table $table: " . $e->getMessage());
     }
-
-    if (!empty($arrayDetail)) {
-      $tableDetail = $table . "_" . "detail";
-
-      $arrayDetail["id_person"] = $lastMasterInsertId; // add master person id to this detail record
-      $arrayDetail["id_user"] = $userId; // add user id to this detail record
-  
-      try { // add details data
-        $fields = $values = "";
-        foreach ($arrayDetail as $key => $value) {
-          $fields .= ($fields ? ", " : "") . $key;
-          $values .= ($values ? ", " : "") . ":" . $key;
-        }
-  
-        $sql = "
-          INSERT INTO {$tableDetail}
-          ($fields)
-          VALUES
-          ($values)
-        ";
-#throw new Exception("detail sql: [$sql], arrayDetail:" . var_export($arrayDetail, true));
-        $statement = $this->db->prepare($sql);
-        foreach ($arrayDetail as $key => &$value) {
-          $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
-        }
-        $statement->execute();
-        $count = $statement->rowCount();
-        if ($count != 1) {
-          throw new Exception("can't add record to table $tableDetail (added $count records)");
-        }
-        $lastDetailInsertId = $this->db->lastInsertId();
-      } catch (PDOException $e) {
-        throw new Exception("can't add record to table $tableDetail: " . $e->getMessage());
-      }
-    }
-    return $lastMasterInsertId;
+    return $lastInsertId;
   }
 
-  public function set($table, $id, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
-    $tableMaster = $table;
-#throw new Exception("SET 1, ARRAY_DETAIL: " . var_export($arrayDetail, true));
-
+  public function set($table, $id, $array, $userId = self::DB_SYSTEM_USER_ID) {
     try {
       $set = "";
-#throw new Exception("master sql: arrayMaster:" . var_export($arrayMaster, true));
-      foreach ($arrayMaster as $key => $value) {
-        $set .= ($set ? ", " : "") . $key . "=" . ":" . $key;
+      foreach ($array as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
       }
       $sql = "
-        UPDATE {$tableMaster}
+        UPDATE {$table}
         SET $set
         WHERE id = :id
       ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);
-      foreach ($arrayMaster as $key => $value) {
-        $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+      foreach ($array as $key => $value) {
+        $statement->bindParam(":" . $key, $value);
       }
       $statement->execute();
       $count = $statement->rowCount();
       if ($statement->rowCount() != 1) {
-        throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+        throw new Exception("update into table $table for id [$id] did update " . $statement->rowCount() . " records");
       }
     } catch (PDOException $e) {
-      throw new Exception("can't update record to $tableMaster: " . $e->getMessage());
+      throw new Exception("can't update record to $table: " . $e->getMessage());
     }
+    return $id;
+  }
 
-    if (!empty($arrayDetail)) {
-      $tableDetail = $table . "_" . "detail";
+  public function setByField($table, $fieldName, $fieldValue) {
+    try {
+      $set = $fieldName . " = " . ":" . $fieldName;
+      $sql = "
+        UPDATE {$table}
+        SET $set
+        WHERE field_name = '$fieldName'
+      ";
 
-#throw new Exception("detail sql: arrayDetail:" . var_export($arrayDetail, true));
-      #$arrayDetail["id_person"] = $id; // add master person id to this detail record
-      $arrayDetail["id_user"] = $userId; // add user id to this detail record
-  
-      try { // add details data
-        $sql = "
-          UPDATE {$tableDetail}
-          SET $set
-          WHERE id_person = :id
-        ";
-        $statement = $this->db->prepare($sql);
-        foreach ($arrayDetail as $key => &$value) {
-          $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
-        }
-        $statement->execute();
-        $count = $statement->rowCount();
-        if ($count != 1) {
-          throw new Exception("can't update record in table $tableDetail (updated $count records)");
-        }
-      } catch (PDOException $e) {
-        throw new Exception("can't update record in table $tableDetail: " . $e->getMessage());
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':field_name', $fieldName, PDO::PARAM_STRING);
+      $statement->bindParam(":" . $fieldName, $fieldValue);
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($statement->rowCount() != 1) {
+        throw new Exception("update into table $table for id [$id] did update " . $statement->rowCount() . " records");
       }
+    } catch (PDOException $e) {
+      throw new Exception("can't update record to $table: " . $e->getMessage());
     }
     return $id;
   }
@@ -548,7 +671,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
       ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);
-      $statement->bindParam(":" . $key, $value); #, PDO::PARAM_STR);
+      $statement->bindParam(":" . $key, $value);
       $statement->execute();
       $count = $statement->rowCount();
       if ($count != 1) {
@@ -585,7 +708,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
       $sieves["filters"]["active"]
     ) {
       if ($sieves["filters"]["active"] !== "any") {
-        $params["active"] = $sieves["filters"]["active"];
+        $params["active"] = ($sieves["filters"]["active"] === "yes");
         $sql .= " AND ";
         $sql .= "active = :active";
       }
@@ -632,6 +755,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
     return [ $sql, $params ];
   }
 
+/* WE USE XDEBUG TO PROFILE, REMOVE-ME...
   private function profileForSpeed($method) { # TODO: to be tested...
     $time_start = microtime(true);
     call($method);
@@ -639,6 +763,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
     $time = $time_end - $time_start;
     return $time;
   }
+*/
 
   function __destruct() {
     $this->db = null;

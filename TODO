@@ -1,6 +1,8 @@
 TODO 1.0:
- - handle 'timestamp_last_sync' (and 'active'...) flag when syncing
+ - boolean field ("active") is used as text ("yes" / "no" / ...) ...
  - [sS]ites => [sS]ources
+ - remove "person-img-url" from setup/persons.php @HOME
+ - design a nicer layout for persons view... :-()
  - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
  - thruthful "unknown" => undefined
  - thruthful in persons and person views => "yes", "no", undefined... (set 'thruthful' field to person_detail table...)
@@ -22,6 +24,8 @@ TODO 1.0:
  - sgi/esc.../annuncio/adv2945: check phone pattern...
  - test photosCardDeckMerge() in real life...
  - filter all sites defined and all esc* sites from photos 'occurrences'
+ - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR):
+    check if all-string values in DB can be someway harmful...
 
 TODO 2.0:
  - I18n (?...) (see:
@@ -76,3 +80,5 @@ DONE:
  - handle flag to close 'options', more than 'filters'...
  - add 'api/setup' to .gitignore @HOME (.gitignore is not committed...)
  - profile @HOME (enabling apd_set_pprof_trace() at the bottom of index.php) @HOME (can't run Pecl/apd with PHP 5.6 (from Remi) on Centos 6.6 @OFFICE... :-() (No, using xdebug @HOME)
+ - $timestampLastSyncPerson (in assertPersonsActivity()) seems MD5 (hex), not TIMESTAMP... ???
+ - handle 'timestamp_last_sync' (and 'active'...) flag when syncing

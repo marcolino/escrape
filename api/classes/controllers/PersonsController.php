@@ -24,11 +24,12 @@ class PersonsController {
   /**
    * Sync persons
    *
-   * @param  boolean $newKeysOnly   to sync only new persons (default: false)
+   * @param  boolean $newKeysOnly   if true sync only new persons (default: false)
    * @return boolean:               true if everything successful, false otherwise
    */
   public function sync($newKeysOnly = false) {
     $this->router->log("info", "sync() ---------------------");
+    $timestampStart = time();
     $error = false; // track errors while sync'ing
 
     foreach ($this->sitesDefinitions as $siteKey => $site) {
@@ -80,7 +81,7 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
           continue;
         }
 
-        # check if key is new or not ###
+        # check if key is new or not ####################################################
         $personId = null;
         if (($person = $this->db->getByField("person", "key", $key))) { # old key
           $personId = $person[0]["id"];
@@ -93,22 +94,22 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         }
 
         if (preg_match($site["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
-          $details_url = $site["url"] . "/" . $matches[1];
+          $detailsUrl = $site["url"] . "/" . $matches[1];
         } else {
           $this->router->log("error", "person $n details url not found on site [$siteKey], giving up with this person");
           $error = true;
           continue;
         }
 
-        $this->router->log("debug", "person details url: [$details_url]");
+        $this->router->log("debug", "person details url: [$detailsUrl]");
         # TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
         # TODO: try ... catch ...
-        if (($page_details = $this->network->getUrlContents($details_url, $site["charset"], null, false, $useTor)) === FALSE) {
+        if (($page_details = $this->network->getUrlContents($detailsUrl, $site["charset"], null, false, $useTor)) === FALSE) {
           $this->router->log("error", "can't get person $n url contents on site [$siteKey], giving up with this person");
           $error = true;
           continue;
         }
-        $page_sum = md5($page_details);
+        $pageSum = md5($page_details);
 
         if (preg_match($site["patterns"]["person-phone"], $page_details, $matches) >= 1) {
           $phone = $this->normalizePhone($matches[1]);
@@ -165,16 +166,17 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $address = "Via Roma, 123, Torino";
         $age = 28;
         $vote = 7;
-        $timestamp = time(); // current timestamp, source sites usually don't set page last modification date...
-        $active = true; // true / false
+        $timestampNow = time(); // current timestamp, source sites usually don't set page last modification date...
+        #$active = true; # set out-of-the-loop
+        $new = false;
 
         $personMaster = [];
-        $personMaster["key"] = $key;
+        #$personMaster["key"] = $key;
         $personMaster["site_key"] = $siteKey;
-        $personMaster["url"] = $details_url;
-        $personMaster["timestamp_last_sync"] = $timestamp;
-        $personMaster["page_sum"] = $page_sum;
-        $personMaster["active"] = $active;
+        $personMaster["url"] = $detailsUrl;
+        $personMaster["timestamp_last_sync"] = $timestampNow;
+        $personMaster["page_sum"] = $pageSum;
+        #$personMaster["active"] = $active; # set out-of-the-loop
         $personDetail = [];
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
@@ -184,24 +186,18 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $personDetail["phone"] = $phone;
         $personDetail["nationality"] = $nationality;
         $personDetail["age"] = $age;
-        $personDetail["vote"] = $vote; # vote ([0-9])
-        $personDetail["new"] = 0;
+        $personDetail["vote"] = $vote;
+        $personDetail["new"] = $new;
 
-        #$id = null;
-        #if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
         if ($personId) { # old key, update it
-$this->router->log("debug", " UPDATING ");
-          #$id = $p[0]["id"];
-          #$this->router->log("debug", " °°° updating person: $key °°°");
-          #$this->set($id, $personMaster, $personDetail); # TODO...
-
-          # TODO: remember old value someway, before updating ???
+$this->router->log("debug", " UPDATING ");        
+          # TODO: remember old values someway (how???), before updating (old zone, old phone, ...)?
           $this->set($personId, $personMaster, $personDetail);
         } else { # new key, insert it
 $this->router->log("debug", " INSERTING ");
-          #$this->router->log("debug", " ^^^ inserting person: $key ^^^");
-          $personMaster["timestamp_creation"] = $timestamp;
-          $personDetail["new"] = 1;
+          $personMaster["key"] = $key; // set univoque key only when adding person
+          $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
+          $personDetail["new"] = true; // set new flag to true
           $personId = $this->add($personMaster, $personDetail);
 
           foreach ($photosUrls as $photoUrl) { // add photos
@@ -209,7 +205,7 @@ $this->router->log("debug", " INSERTING ");
           }
         }
         # TODO: REALLY DO NOT ADD PHOTOS FOR OLD KEYS/PERSONS ???
-        #       ADDING PHOTOS ONLY FOR NEW KEYS/PERSONSWE ARE WAY FASTER,
+        #       ADDING PHOTOS ONLY FOR NEW KEYS/PERSONSWE IS WAY FASTER,
         #       BUT WE COULD MISS SOME NEW / CHANGED / REMOVED PHOTO...
         #       (NO, REMOVED PHOTOS ARE HOWEVER (CORRECTLY) KEPT IN DATABASE).
         #// add photos
@@ -222,19 +218,56 @@ $this->router->log("debug", " INSERTING ");
 #break;
     }
 
-/* TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-    // set "active" flag
-    $result = [];
-    $userId = 1; # TODO: get "admin" id ...
-    foreach ($this->db->getPersonListSieved(null, $userId) as $person) {
-      $active = ...;
-    }
-*/
+    if (!$newKeysOnly) { // full sync was requested
+      # TODO: DO WE NEED THIS GLOBAL VARIABLE, OR WE JUST USE $timestampStart IN FOLLOWING assertPersonsActivity()?
+      #// full sync done, set start timestamp to global table field 'last_sync_full'
+      #$this->db->setByField("global", "last_sync_full", $timestampStart);
 
-    // sync persons uniqueness after sync completed
-    $this->syncPersonsUniqueness();
+      # TODO: SHOULD WE CHECK FOR $error !== true TO assertPersonActivity?
+      // assert persons activity after full sync completed
+      $this->assertPersonsActivity($timestampStart);
+    }
+
+    // assert persons uniqueness after sync completed
+    $this->assertPersonsUniqueness();
 
     return !$error;
+  }
+
+  /**
+   * Assert persons activity
+   */
+  private function assertPersonsActivity($timestampStart) {
+    $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
+    $this->router->log("info", " timestamp of last sync start: " . date("c", $timestampStart));
+    foreach ($this->db->getPersonListSieved(/* no sieve, */ /* no user: system user */) as $person) {
+      $timestampLastSyncPerson = $person["timestamp_last_sync"];
+      // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
+      $active = ($timestampLastSyncPerson >= $timestampStart);
+      $this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "TRUE" : "FALSE"));
+      $this->db->setPerson($person["id"], [ "active" => $active ]);
+    }
+  }
+
+  /**
+   * Assert persons uniqueness
+   */
+  public function assertPersonsUniqueness() {
+    $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
+    $persons = $this->db->getPersonListSieved(null);
+
+    # check every couple of persons (avoiding permutations)
+    $persons_count = count($persons);
+    for ($i = 0; $i < $persons_count - 1; $i++) {
+      for ($j = $i + 1; $j < $persons_count; $j++) {
+        if (
+          ($persons[$i]["name"] === $persons[$j]["name"]) ||
+          ($persons[$i]["phone"] === $persons[$j]["phone"])
+        ) {
+          $this->db->setPersonsUniqcode($persons[$i]["id"], $persons[$j]["id"], true);
+        }          
+      }          
+    }          
   }
 
   /**
@@ -325,27 +358,6 @@ $this->router->log("debug", " INSERTING ");
   }
 
   /**
-   * Assert persons uniqueness
-   */
-  public function syncPersonsUniqueness() {
-    $this->router->log("info", "assertUniqueness()");
-    $persons = $this->db->getPersonListSieved(null);
-
-    # check every couple of persons (avoiding permutations)
-    $persons_count = count($persons);
-    for ($i = 0; $i < $persons_count - 1; $i++) {
-      for ($j = $i + 1; $j < $persons_count; $j++) {
-        if (
-          ($persons[$i]["name"] === $persons[$j]["name"]) ||
-          ($persons[$i]["phone"] === $persons[$j]["phone"])
-        ) {
-          $this->db->setPersonsUniqcode($persons[$i]["id"], $persons[$j]["id"], true/*, null (?), SYSTEM user... */);
-        }          
-      }          
-    }          
-  }
-
-  /**
    * Get persons uniqueness value
    *
    * @return null/boolean  null  if same value is not set (persons are probably not the same)
@@ -387,16 +399,16 @@ $this->router->log("debug", " INSERTING ");
   }
   
   # TODO: add $userId...
-  public function add($personMaster, $personDetail) { # TODO: $userId !!!
-    return $this->db->add("person", $personMaster, $personDetail);
+  public function add($personMaster, $personDetail = null) { # TODO: $userId !!!
+    return $this->db->addPerson($personMaster, $personDetail);
   }
 
-  public function set($id, $personMaster, $personDetail) { # TODO: $userId !!!
-    return $this->db->set("person", $id, $personMaster, $personDetail);
+  public function set($id, $personMaster, $personDetail = null) { # TODO: $userId !!!
+    return $this->db->setPerson($id, $personMaster, $personDetail);
   }
 
-  public function delete($id) { # TODO: $userId !!!
-    return $this->db->delete("person", $id);
+  public function deletePerson($id) { # TODO: $userId !!!
+    return $this->db->deletePerson($id);
   }
   
   /**
@@ -910,6 +922,8 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
 
 
 
+  # TODO: REMOVE-ME (can use sync even @OFFICE, now...)
+  # TODO: DEBUG-ONLY
   public function test() {
 $this->router->log("debug", "test START");
     $photosUrls[0] = [
@@ -982,6 +996,7 @@ $this->router->log("debug", "test OK");
     return true;
   }
 
+  # TODO: DEBUG-ONLY
   public function testuniqcode() {
     $userId = 2; # TODO...
     $p1 = 1;
