@@ -101,6 +101,48 @@ body {
   margin-left: -7px;
 }
 
+/* disabled person: lower opacity of it's row, ad draw striped background */
+.person-disabled {
+  opacity: 0.4;
+  filter: alpha(opacity=40);
+  background: repeating-linear-gradient(
+    135deg, #eee, #eee 8px, #fff 8px, #fff 16px
+  );
+}
+
+/* a clearfix, with a minimum height */
+.clearfix-thick {
+  line-height: 5px;
+}
+
+/* use labels as badges (to better control colors) */
+.label-as-badge {
+  NOfont-family: 'Droid Sans', sans-serif;
+  font-size: 0.9em;
+  font-style: normal;
+  font-weight: bold;
+  border-radius: 1.0em;
+  padding: 2px 8px 2px 8px;
+}
+
+/* labels as badges, small */
+.label-as-badge-small {
+  font-size: 0.8em;
+  display: inline-block;
+  vertical-align: top;
+  line-height: 0.8em;
+  margin-top: 4px;
+}
+
+/* labels as badges, superscript */
+.label-as-badge-superscript {
+  display: inline-block;
+  vertical-align: top;
+  font-size: 0.7em;
+  line-height: 0.8em;
+  margin-top: 2px;
+}
+
 /* Listing page */
 .row-gap {
   padding: 2px 0 2px 0;
@@ -133,12 +175,12 @@ body {
   max-width: 64px;
   height: 48px;
 }
-.img-site-container {
+.img-source-container {
   height: 20px;
   text-align: center;
   border: 1px solid #aaa;
 }
-.img-site {
+.img-source {
   width: auto;
   max-height: 18px;
 }
@@ -344,7 +386,7 @@ p.menu-item-separator {
   margin: 0;
 }
 
-.image-referral-site {
+.image-referral-source {
   margin-top: 0px;
   width: 20px;
   height: 20px;  

@@ -145,18 +145,18 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/getSitesCountries", function() { # =======================
+      $this->app->get("/getSourcesCountries", function() { # =======================
         try {
           $persons = new PersonsController($this);
-          $this->success($persons->getSitesCountries());
+          $this->success($persons->getSourcesCountries());
         } catch (Exception $e) {
           $this->error($e);
         }
       });
-      $this->app->get("/getSitesCities/:countryCode", function($countryCode) { # ==
+      $this->app->get("/getSourcesCities/:countryCode", function($countryCode) { # ==
         try {
           $persons = new PersonsController($this);
-          $this->success($persons->getSitesCities($countryCode));
+          $this->success($persons->getSourcesCities($countryCode));
         } catch (Exception $e) {
           $this->error($e);
         }

@@ -1,10 +1,9 @@
 <div class="container">
-
-  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true">
+  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true" ng-class="{'person-disabled': person.name === 'Samantha'}">
     <!--<pre> person: {{person}} </pre>-->
-    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
-      <span class="img-clip-container" NOstyle="background:#333">
-        <a ng-href="#/details/{{person.id_person}}">
+    <div class="col-xs-5 col-sm-3 col-md-2 col-lg-2">
+      <span NOclass="img-clip-container" NOstyle="background:#333" ng-attr-title="{{person.name}}">
+        <a ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
           <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip"
             ng-class="{
               'img-thruthful-yes': person.thruthful === 'yes',
@@ -14,52 +13,64 @@
           />
         </a>
       </span>
-     </div>
-    <div class="col-xs-8 col-sm-9 col-md-9 col-lg-9">
-      <div class="row" style="padding-bottom:2px;">
+<!--
+<div class="visible-never col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="person-name">
+    <span style="text-align: left;">{{person.name}}</span>
+  </div>
+</div>
+-->
+    </div>
+    <div class="col-xs-7 col-sm-9 col-md-10 col-lg-10">
+      <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
           <div class="person-name">
-              {{person.name}}
+            <!-- SUPERSCRIPT BADGE NEW: <span ng-show="person.new === '1'" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
+            <span style="text-align: left;">{{person.name}}</span>
           </div>
         </div>
       </div>
-      <div class="row-fluid">
-        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+      <div class="row">
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
           <button type="button" class="btn" ng-attr-title="nationality: {{person.nationality}}">
             <a ng-href="#/"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></span></a>
           </button>
         </div>
-        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
-          <div class="person-site">
-            <button type="button" class="btn" ng-attr-title="referral site: {{person.site_key}}" onclick="window.open('//facebook.com'); window.open('//twitter.com');"><!-- TODO: handle multiple referral sites opening... -->
-              <div class="img-rounded"><img ng-src="images/referral-sites/{{person.site_key}}.png" class="img-rounded img-site" /></div>
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+          <div class="person-source">
+            <button type="button" class="btn" ng-attr-title="referral source: {{person.source_key}}" onclick="window.open('//facebook.com'); window.open('//twitter.com');"><!-- TODO: handle multiple referral sources opening... -->
+              <div class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></div>
             </button>
           </div>
         </div>
-        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
-          <button type="button" class="btn btn-primary" ng-attr-title="phone: {{person.phone}}">
-            <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone light"></i></a>
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+          <button type="button" class="btn" ng-attr-title="phone: {{person.phone}}">
+            <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone"></i></a>
           </button>
         </div>
-        <div class="col-xs-3 col-sm-2 col-md-2 col-lg-3">
+
+        <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
+
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
           <div class="person-comments-count">
-            <button class="btn btn-info" type="button" ng-attr-title="{{person.comments_count}} comments">
-              <i class="glyphicon glyphicon-bullhorn"></i>&nbsp;<span class="badge">{{person.comments_count}}</span>
+            <button class="btn" type="button" ng-attr-title="{{person.comments_count}} comments">
+              <!--<i class="glyphicon glyphicon-bullhorn text-default"></i>&nbsp;--><span class="label label-as-badge label-info">{{person.comments_count}}</span>
             </button>
           </div>
         </div>
-        <div class="col-xs-2 col-sm-1 col-md-1 col-lg-2">
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
           <div class="person-vote">
-            <button class="btn btn-warning" type="button" ng-attr-title="vote: {{person.vote||5}}">
-              <i class="glyphicon glyphicon-thumbs-up"></i>&nbsp;<span class="badge">{{person.vote||5}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
+            <button class="btn" type="button" ng-attr-title="vote: {{person.vote}}">
+              <!--<i class="glyphicon glyphicon-thumbs-up text-success"></i>&nbsp;--><span class="label label-as-badge label-success">{{person.vote}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
             </button>
           </div>
         </div>
-        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
           <span ng-if="person.new === '1'">
             <div class="person-new">
-              <button class="btn btn-danger" type="button" title="this person is new">
-                <i class="glyphicon glyphicon-star"></i>
+              <button class="btn" type="button" title="this person is new">
+                <i class="glyphicon glyphicon-star text-danger"></i>
+                <!--<span class="label label-as-badge label-danger"><i class="glyphicon glyphicon-star"></i></span>-->
               </button>
             </div>
           </span>

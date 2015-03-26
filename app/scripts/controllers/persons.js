@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, /*Sites, */Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, Countries, Persons, Comments) {
 /*
 $scope.images = [
  'images/users/user-0.jpg',
@@ -17,17 +17,12 @@ $scope.images = [
 
   //$scope.person.timestampCreation = 0; // assigning 0 is of no use..., and ng-cloack seems of no use, either... shell add 0 default on view... :-()
   /* jshint camelcase: false */
+/*
   $scope.person.timestamp_creation = 0;
   $scope.person.timestamp_last_sync = 0;
+*/
   /* jshint camelcase: true */
 
-/*
-  $scope.sites = {
-    'google+': 'googleplus.com',
-    'linkedin': 'linkedin.com',
-    'facebook': 'facebook.com',
-  };
-*/
   $scope.personId = $routeParams.personId;
   $scope.tabs = {
     'main': {

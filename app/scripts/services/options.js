@@ -4,10 +4,10 @@
 app.service('Options', function(Persons) {
   return {
 
-    getSitesCountries: function () {
-      Persons.getSitesCountries().then(
+    getSourcesCountries: function () {
+      Persons.getSourcesCountries().then(
         function(response) {
-          console.info('+++ getSitesCountries response:', response);
+          console.info('+++ getSourcesCountries response:', response);
           //console.info('+++ response.length:', response.length);
           if (response.length === 0) {
             console.log('No countries found...');
@@ -21,10 +21,10 @@ app.service('Options', function(Persons) {
       );
     },
   
-    getSitesCities: function (countryCode) {
-      Persons.getSitesCities(countryCode).then(
+    getSourcesCities: function (countryCode) {
+      Persons.getSourcesCities(countryCode).then(
         function(response) {
-          console.info('+++ getSitesCities response:', response);
+          console.info('+++ getSourcesCities response:', response);
           //console.info('+++ response.length:', response.length);
           if (response.length === 0) {
             console.log('No cities found (for country ' + countryCode + ')...');

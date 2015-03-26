@@ -185,7 +185,7 @@ app.controller('AuthenticationController',
       ];
     };
 
-    $scope.sitesCategories = function() {
+    $scope.sourcesCategories = function() {
       return $scope.cfg.fake ? {
         'x': 'X',
         'y': 'Y',
@@ -195,9 +195,9 @@ app.controller('AuthenticationController',
       };
     };
 
-    $scope.getSitesCategory = function(categoryCode) {
-      var siteCategories = $scope.sitesCategories();
-      return siteCategories[categoryCode];
+    $scope.getSourceCategory = function(categoryCode) {
+      var sourceCategories = $scope.sourcesCategories();
+      return sourceCategories[categoryCode];
     };
 
     $scope.activeCountries = function () {
@@ -244,18 +244,18 @@ app.controller('AuthenticationController',
       $scope.storeSieves('filters');
     };
 
-    $scope.setOptionSitesCountryCode = function (countryCode) {
+    $scope.setOptionSourcesCountryCode = function (countryCode) {
       $scope.sieves.options.countryCode = countryCode;
-      $scope.sieves.options.cityCode = $scope.sitesCountries[countryCode].cityCodeDefault;
+      $scope.sieves.options.cityCode = $scope.sourcesCountries[countryCode].cityCodeDefault;
       $scope.storeSieves('options');
     };
 
-    $scope.setOptionSitesCityCode = function (cityCode) {
+    $scope.setOptionSourcesCityCode = function (cityCode) {
       $scope.sieves.options.cityCode = cityCode;
       $scope.storeSieves('options');
     };
 
-    $scope.setOptionSitesCategoryCode = function (categoryCode) {
+    $scope.setOptionSourcesCategoryCode = function (categoryCode) {
       $scope.sieves.options.categoryCode = categoryCode;
       $scope.storeSieves('options');
     };
@@ -289,16 +289,16 @@ app.controller('AuthenticationController',
         $scope.setSievesDigest(null); // reset sieves digest (this forces a persons reload)
       }
 
-      Persons.getSitesCountries().then(function(response) {
-        $scope.sitesCountries = response;
+      Persons.getSourcesCountries().then(function(response) {
+        $scope.sourcesCountries = response;
       });
       $scope.$watch('sieves.options.countryCode', function() {
         console.log('$watch: Hey, sieves.options.countryCode has changed!');
-        Persons.getSitesCities($scope.sieves.options.countryCode).then(function(response) {
-          $scope.sitesCities = response;
+        Persons.getSourcesCities($scope.sieves.options.countryCode).then(function(response) {
+          $scope.sourcesCities = response;
           if (typeof $scope.sieves.options.cityCode === 'undefined') {
-            if (typeof $scope.sitesCountries !== 'undefined' && typeof $scope.sieves.options.countryCode !== 'undefined') {
-              $scope.sieves.options.cityCode = $scope.sitesCountries[$scope.sieves.options.countryCode].cityCodeDefault;
+            if (typeof $scope.sourcesCountries !== 'undefined' && typeof $scope.sieves.options.countryCode !== 'undefined') {
+              $scope.sieves.options.cityCode = $scope.sourcesCountries[$scope.sieves.options.countryCode].cityCodeDefault;
             }
           }
         });

@@ -85,17 +85,17 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
-    getSitesCountries: function () {
+    getSourcesCountries: function () {
       return $http({
         method: 'GET',
-        url: apiUri + 'getSitesCountries',
+        url: apiUri + 'getSourcesCountries',
       }).then(handleSuccess, handleError);
     },
 
-    getSitesCities: function (countryCode) {
+    getSourcesCities: function (countryCode) {
       return $http({
         method: 'GET',
-        url: apiUri + 'getSitesCities' + '/' + countryCode,
+        url: apiUri + 'getSourcesCities' + '/' + countryCode,
       }).then(handleSuccess, handleError);
     },
 

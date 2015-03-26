@@ -1,5 +1,5 @@
 <?php
-  $this->sitesDefinitions = [
+  $this->sourcesDefinitions = [
 /**/
     "facebook" => [
       "url" => "http://localhost/escrape/api/simulations",

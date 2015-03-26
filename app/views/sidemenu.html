@@ -102,8 +102,8 @@
             <input class="form-control default-cursor" id="query" type="text" ng-value="countries.getCountryName(sieves.options.countryCode)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
-            <li ng-repeat="(countryCode, country) in sitesCountries" class="country"> <!-- TODO: class=country??? -->
-              <a ng-click="setOptionSitesCountryCode(countryCode)"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{country.name}}</a>
+            <li ng-repeat="(countryCode, country) in sourcesCountries" class="country"> <!-- TODO: class=country??? -->
+              <a ng-click="setOptionSourcesCountryCode(countryCode)"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{country.name}}</a>
             </li>
           </ul>
         </div>
@@ -113,11 +113,11 @@
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
             <span class="input-group-addon" title="City which persons are listed under"><i class="fa fa-building-o"></i></span>
-            <input class="form-control default-cursor" type="text" ng-value="sitesCities[sieves.options.cityCode].name" />
+            <input class="form-control default-cursor" type="text" ng-value="sourcesCities[sieves.options.cityCode].name" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
-            <li ng-repeat="(cityCode, city) in sitesCities" class="city"> <!-- TODO: class=city??? -->
-              <a ng-click="setOptionSitesCityCode(cityCode)"><span class="city">{{city.name}}</span></a>
+            <li ng-repeat="(cityCode, city) in sourcesCities" class="city"> <!-- TODO: class=city??? -->
+              <a ng-click="setOptionSourcesCityCode(cityCode)"><span class="city">{{city.name}}</span></a>
             </li>
           </ul>
         </div>
@@ -127,11 +127,11 @@
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
             <span class="input-group-addon" title="Category persons belong to"><i ng-show="!cfg.fake" class="fa fa-venus-mars"></i><i ng-show="cfg.fake" class="glyphicon glyphicon-folder-open"></i></span>
-            <input class="form-control default-cursor" type="text" ng-value="getSitesCategory(sieves.options.categoryCode)" />
+            <input class="form-control default-cursor" type="text" ng-value="getSourcesCategory(sieves.options.categoryCode)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
-            <li ng-repeat="(categoryCode, categoryName) in sitesCategories()" class="category"> <!-- TODO: class=category??? -->
-              <a ng-click="setOptionSitesCategoryCode(categoryCode)"><span class="category">{{categoryName}}</span></a>
+            <li ng-repeat="(categoryCode, categoryName) in sourcesCategories()" class="category"> <!-- TODO: class=category??? -->
+              <a ng-click="setOptionSourcesCategoryCode(categoryCode)"><span class="category">{{categoryName}}</span></a>
             </li>
           </ul>
         </div>

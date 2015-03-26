@@ -61,7 +61,7 @@ class DB extends PDO {
          INSERT INTO global (field_name, field_value)
          VALUES ('last_sync_full', '');
          --INSERT INTO global (field_name, field_value)
-         --VALUES ('site_city_code', 'to')
+         --VALUES ('source_city_code', 'to')
         "
       );
       $this->db->exec(
@@ -85,9 +85,9 @@ class DB extends PDO {
         "CREATE TABLE if not exists person (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           key VARCHAR(32),
-          site_country_code VARCHAR(2), -- TODO: use it!
-          site_city_code VARCHAR(2), -- TODO: use it!
-          site_key VARCHAR(16),
+          source_country_code VARCHAR(2), -- TODO: use it!
+          source_city_code VARCHAR(2), -- TODO: use it!
+          source_key VARCHAR(16),
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,

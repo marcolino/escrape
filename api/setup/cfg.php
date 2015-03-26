@@ -2,8 +2,8 @@
   $this->cfg = [
     "debugMode" => true,
     "timezone" => "Europe/Rome",
-    "sitesCountryCode" => "it",
-    "sitesCityCode" => "to",
+    "sourcesCountryCode" => "it",
+    "sourcesCityCode" => "to",
     "categoryCode" => "",
   ];
 ?>

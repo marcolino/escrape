@@ -32,37 +32,37 @@ class PersonsController {
     $timestampStart = time();
     $error = false; // track errors while sync'ing
 
-    foreach ($this->sitesDefinitions as $siteKey => $site) {
+    foreach ($this->sourcesDefinitions as $sourceKey => $source) {
       #$useTor = true; // use TOR proxy to sync
-      $useTor = $site["accepts-tor"]; // use TOR proxy to sync
+      $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
-      $url = $site["url"] . "/" . $site["path"];
-      $this->router->log("debug", "site: " . $siteKey);
+      $url = $source["url"] . "/" . $source["path"];
+      $this->router->log("debug", "source: " . $sourceKey);
 
       getUrlContents:
       $this->router->log("info", "getUrlContents($url) (TOR: " . ($useTor ? "true" : "false") . ")");
       # TODO: try ... catch ... (here and for all Network public methods...)
-      $page = $this->network->getUrlContents($url, $site["charset"], null, false, $useTor);
+      $page = $this->network->getUrlContents($url, $source["charset"], null, false, $useTor);
       if ($page === FALSE) {
-        $this->router->log("error", "can't get page contents on site [$siteKey]");
+        $this->router->log("error", "can't get page contents on source [$sourceKey]");
         continue;
       }
       $persons_page = $page;
-      if (preg_match_all($site["patterns"]["person"], $persons_page, $matches)) {
+      if (preg_match_all($source["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
-        if (preg_match($site["patterns"]["ban-text"], $persons_page, $matches) >= 1) {
+        if (preg_match($source["patterns"]["ban-text"], $persons_page, $matches) >= 1) {
           if ($useTor) {
-            $this->router->log("info", "site [$siteKey] asks a security check; retrying without TOR...");
+            $this->router->log("info", "source [$sourceKey] asks a security check; retrying without TOR...");
             $useTor = false;
             goto getUrlContents;
           } else {
-            $this->router->log("error", "site [$siteKey] asks a security check even without TOR, giving up with this site");
+            $this->router->log("error", "source [$sourceKey] asks a security check even without TOR, giving up with this source");
             $error = true;
             continue;
           }
         }
-        $this->router->log("error", "not any person pattern found on site [$siteKey], giving up with this site");
+        $this->router->log("error", "not any person pattern found on source [$sourceKey], giving up with this source");
         $error = true;
         continue;
       }
@@ -72,11 +72,11 @@ class PersonsController {
         $n++;
 if ($n > 2) break; # TODO: DEBUG-ONLY
 
-        if (preg_match($site["patterns"]["person-id"], $person_cell, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
-          $key = $siteKey . "-" . $id;
+          $key = $sourceKey . "-" . $id;
         } else {
-          $this->router->log("error", "person $n id not found on site [$siteKey], giving up with this person");
+          $this->router->log("error", "person $n id not found on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
@@ -93,10 +93,10 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
           $this->router->log("debug", " O-O-O new person: $key (id: $id) O-O-O");
         }
 
-        if (preg_match($site["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
-          $detailsUrl = $site["url"] . "/" . $matches[1];
+        if (preg_match($source["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
+          $detailsUrl = $source["url"] . "/" . $matches[1];
         } else {
-          $this->router->log("error", "person $n details url not found on site [$siteKey], giving up with this person");
+          $this->router->log("error", "person $n details url not found on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
@@ -104,61 +104,61 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $this->router->log("debug", "person details url: [$detailsUrl]");
         # TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
         # TODO: try ... catch ...
-        if (($page_details = $this->network->getUrlContents($detailsUrl, $site["charset"], null, false, $useTor)) === FALSE) {
-          $this->router->log("error", "can't get person $n url contents on site [$siteKey], giving up with this person");
+        if (($page_details = $this->network->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor)) === FALSE) {
+          $this->router->log("error", "can't get person $n url contents on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
         $pageSum = md5($page_details);
 
-        if (preg_match($site["patterns"]["person-phone"], $page_details, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-phone"], $page_details, $matches) >= 1) {
           $phone = $this->normalizePhone($matches[1]);
         } else {
-          $this->router->log("error", "person $n phone not found on site [$siteKey], giving up with this person");
+          $this->router->log("error", "person $n phone not found on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
           
-        if (preg_match_all($site["patterns"]["person-photo"], $page_details, $matches) >= 1) {
+        if (preg_match_all($source["patterns"]["person-photo"], $page_details, $matches) >= 1) {
           $photosUrls = $matches[1];
         } else {
-          $this->router->log("error", "photo pattern not found on site [$siteKey], giving up with this person");
+          $this->router->log("error", "photo pattern not found on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
 
-        if (preg_match($site["patterns"]["person-name"], $page_details, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-name"], $page_details, $matches) >= 1) {
           $name = $this->cleanName($matches[1]);
         } else {
-          #$this->router->log("warning", "person $n name not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n name not found on source [$sourceKey]");
           $name = "";
         }
         
-        if (preg_match($site["patterns"]["person-sex"], $page_details, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-sex"], $page_details, $matches) >= 1) {
           $sex = $matches[1];
         } else {
-          #$this->router->log("warning", "person $n sex not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n sex not found on source [$sourceKey]");
           $sex = "";
         }
 
-        if (preg_match($site["patterns"]["person-zone"], $page_details, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-zone"], $page_details, $matches) >= 1) {
           $zone = $matches[1];
         } else {
-          #$this->router->log("info", "person $n zone not found on site [$siteKey]");
+          #$this->router->log("info", "person $n zone not found on source [$sourceKey]");
           $zone = "";
         }
         
-        if (preg_match($site["patterns"]["person-description"], $page_details, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-description"], $page_details, $matches) >= 1) {
           $description = $matches[1];
         } else {
-          #$this->router->log("warning", "person $n description not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n description not found on source [$sourceKey]");
           $description = "";
         }
  
-        if (preg_match($site["patterns"]["person-nationality"], $page_details, $matches) >= 1) {
+        if (preg_match($source["patterns"]["person-nationality"], $page_details, $matches) >= 1) {
           $nationality = $this->normalizeNationality($matches[1]);
         } else {
-          #$this->router->log("warning", "person $n nationality not found on site [$siteKey]");
+          #$this->router->log("warning", "person $n nationality not found on source [$sourceKey]");
           $nationality = "";
         }
         
@@ -166,13 +166,13 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $address = "Via Roma, 123, Torino";
         $age = 28;
         $vote = 7;
-        $timestampNow = time(); // current timestamp, source sites usually don't set page last modification date...
+        $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
         #$active = true; # set out-of-the-loop
         $new = false;
 
         $personMaster = [];
         #$personMaster["key"] = $key;
-        $personMaster["site_key"] = $siteKey;
+        $personMaster["source_key"] = $sourceKey;
         $personMaster["url"] = $detailsUrl;
         $personMaster["timestamp_last_sync"] = $timestampNow;
         $personMaster["page_sum"] = $pageSum;
@@ -201,7 +201,7 @@ $this->router->log("debug", " INSERTING ");
           $personId = $this->add($personMaster, $personDetail);
 
           foreach ($photosUrls as $photoUrl) { // add photos
-            $this->photoAdd($personId, $site["url"] . "/" . $photoUrl);
+            $this->photoAdd($personId, $source["url"] . "/" . $photoUrl);
           }
         }
         # TODO: REALLY DO NOT ADD PHOTOS FOR OLD KEYS/PERSONS ???
@@ -210,7 +210,7 @@ $this->router->log("debug", " INSERTING ");
         #       (NO, REMOVED PHOTOS ARE HOWEVER (CORRECTLY) KEPT IN DATABASE).
         #// add photos
         #foreach ($photosUrls as $photoUrl) {
-        #  $this->photoAdd($id, $site["url"] . "/" . $photoUrl);
+        #  $this->photoAdd($id, $source["url"] . "/" . $photoUrl);
         #}
         $this->router->log("debug", " === person finished: $key ===");
 #break;
@@ -271,24 +271,24 @@ $this->router->log("debug", " INSERTING ");
   }
 
   /**
-   * Get all defined countries in sites
+   * Get all defined countries in sources
    *
    * @return array: all countries defined
    */
-  public function getSitesCountries() {
-    $this->router->log("info", "getSitesCountries() ---");
+  public function getSourcesCountries() {
+    $this->router->log("info", "getSourcesCountries() ---");
     $countries = [];
 /*
-    foreach ($this->sitesDefinitions as $siteKey => $site) {
-      $url = $site["url"];
-      #$this->router->log("debug", "site: " . $siteKey);
+    foreach ($this->sourcesDefinitions as $sourceKey => $source) {
+      $url = $source["url"];
+      #$this->router->log("debug", "source: " . $sourceKey);
       $this->router->log("info", "getUrlContents($url)");
-      $page = $this->network->getUrlContents($url, $site["charset"]);
+      $page = $this->network->getUrlContents($url, $source["charset"]);
       if ($page === FALSE) {
-        $this->router->log("error", "can't get main page on site [$siteKey]");
+        $this->router->log("error", "can't get main page on source [$sourceKey]");
         continue;
       }
-      # TODO: grep countries from site's main page...
+      # TODO: grep countries from source's main page...
     }
 */
     # TODO: save to db "global" table, to avoid re-scraping on every request...
@@ -308,24 +308,24 @@ $this->router->log("debug", " INSERTING ");
   }
 
   /**
-   * Get all defined cities in sites for specified country code
+   * Get all defined cities in sources for specified country code
    *
    * @return array: all cities defined for specified country code
    */
-  public function getSitesCities($countryCode) {
-    $this->router->log("info", "getSitesCities($countryCode) ---");
+  public function getSourcesCities($countryCode) {
+    $this->router->log("info", "getSourcesCities($countryCode) ---");
     $cities = [];
 /*
-    foreach ($this->sitesDefinitions as $siteKey => $site) {
-      $url = $site["url"];
-      #$this->router->log("debug", "site: " . $siteKey);
+    foreach ($this->sourcesDefinitions as $sourceKey => $source) {
+      $url = $source["url"];
+      #$this->router->log("debug", "source: " . $sourceKey);
       $this->router->log("info", "getUrlContents($url)");
-      $page = $this->network->getUrlContents($url, $site["charset"]);
+      $page = $this->network->getUrlContents($url, $source["charset"]);
       if ($page === FALSE) {
-        $this->router->log("error", "can't get main page on site [$siteKey]");
+        $this->router->log("error", "can't get main page on source [$sourceKey]");
         continue;
       }
-      # TODO: grep cities from site's main page...
+      # TODO: grep cities from source's main page...
     }
 */
     #$this->router->log("debug", "cities:" . var_export($cities, true));
@@ -435,7 +435,7 @@ $this->router->log("debug", " INSERTING ");
         [
           "id_person",
           "key",
-          "site_key",
+          "source_key",
           "new",
         ] as $field
       ) {
@@ -507,7 +507,7 @@ $this->router->log("debug", " INSERTING ");
     if (($cardDeck = $photo->photoGetCardDeck($imageUrls)) === false) {
       # TODO: return default card deck, if can't build one
       $this->router->log("debug", " can't create photo card deck, returning default card deck...");
-      #$cardDeck = file_get_contents("../app/images/referral-sites/card-deck-default.png"); # TODO: ...
+      #$cardDeck = file_get_contents("../app/images/referral-sources/card-deck-default.png"); # TODO: ...
 throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     }
     return $cardDeck;
@@ -525,7 +525,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
 
   private function normalizePhone($phone) {
 /*
-    if (preg_match($site["patterns"]["person-phone-unavailable"])) {
+    if (preg_match($source["patterns"]["person-phone-unavailable"])) {
       $result = "PERSON_UNAVAILABLE"; # TODO: ...
     } else
     if (preg_match($patternEmail)) {
@@ -932,7 +932,7 @@ $this->router->log("debug", "test START");
     ];
     $personMaster[0] = [];
     $personMaster[0]["key"] = "linkedin-123456";
-    $personMaster[0]["site_key"] = "linkedin";
+    $personMaster[0]["source_key"] = "linkedin";
     $personMaster[0]["url"] = "http://static.fanpage.it";
     $personMaster[0]["timestamp_last_sync"] = 1424248678;
     $personMaster[0]["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
@@ -955,7 +955,7 @@ $this->router->log("debug", "test START");
     ];
     $personMaster[1] = [];
     $personMaster[1]["key"] = "twitter-789012";
-    $personMaster[1]["site_key"] = "facebook";
+    $personMaster[1]["source_key"] = "facebook";
     $personMaster[1]["url"] = "http://www.newshd.net";
     $personMaster[1]["timestamp_last_sync"] = 1424248678;
     $personMaster[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
