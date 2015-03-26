@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Controller: PersonsCtrl', function () {
+describe('Controller: PersonsController', function () {
 
   // load the controller's module
   beforeEach(module('escrapeApp'));
@@ -11,13 +11,12 @@ describe('Controller: PersonsCtrl', function () {
   // Initialize the controller and a mock scope
   beforeEach(inject(function ($controller, $rootScope) {
     scope = $rootScope.$new();
-    PersonsCtrl = $controller('PersonsCtrl', {
+    PersonsCtrl = $controller('PersonsController', {
       $scope: scope
     });
   }));
 
-  it('should attach a list of awesomeThings to the scope', function () {
-    //expect(scope.awesomeThings.length).toBe(3);
+  it('3 should be 3', function () {
     expect(3).toBe(3);
   });
 });

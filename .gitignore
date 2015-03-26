@@ -7,4 +7,4 @@ api/db
 api/logs
 api/setup/persons.php
 api/setup/comments.php
-app/images/referral-sites
+app/images/referral-sources

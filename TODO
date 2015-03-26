@@ -20,10 +20,24 @@ TODO 1.0:
  - remove all "is_array_multi()" checks (after db fechtall's...) (are we sure it's unuseful?)
  - sgi/esc.../annuncio/adv2945: check phone pattern...
  - test photosCardDeckMerge() in real life...
- - filter all sites defined and all esc* sites from photos 'occurrences'
+ - filter all sites defined and all esc* sites from photos 'occurrences' (and add also "http://esc...profil.com/", ...)
  - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR):
     check if all-string values in DB can be someway harmful...
  - put more info (more than the name) in "ng-attr-title" for person's photo (in persons view)
+ - save Sublime Text 3 (3080) license key:
+—– BEGIN LICENSE —–
+K-20
+Single User License
+EA7E-940129
+3A099EC1 C0B5C7C5 33EBF0CF BE82FE3B
+EAC2164A 4F8EC954 4E87F1E5 7E4E85D6
+C5605DE6 DAB003B4 D60CA4D0 77CB1533
+3C47F579 FB3E8476 EB3AA9A7 68C43CD9
+8C60B563 80FE367D 8CAD14B3 54FB7A9F
+4123FFC4 D63312BA 141AF702 F6BBA254
+B094B9C0 FAA4B04C 06CC9AFC FD412671
+82E3AEE0 0F0FAAA7 8FA773C9 383A9E18
+—— END LICENSE ——
 
 TODO 2.0:
  - I18n (?...) (see:
