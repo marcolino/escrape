@@ -5,6 +5,10 @@ var apiUri = 'http://0.0.0.0'; // server is local
 // DEBUG ONLY ////////////////////////////////////////////////////
 function atHome() {
   //if (1) {return false;} // TODO: mobile @ office...
+/*
+    (typeof navigator !== 'undefined' && typeof navigator.platform !== 'undefined' &&
+     navigator.platform.indexOf('armv7l') !== -1) || // Chrome on Android
+*/
   return (
     (typeof navigator !== 'undefined' && typeof navigator.appVersion !== 'undefined' &&
      navigator.appVersion.indexOf('Linux') !== -1) || // Chrome
@@ -21,6 +25,10 @@ app.constant('cfg', {
     name: 'eScrape',
     description: 'the ultimate web contacts manager',
     version: latestTag, // sync'ed with latest git tag with a post-commit hook
+  },
+  client: {
+    OS: navigator.oscpu,
+    platform: navigator.platform,
   },
   apiUri: apiUri + '/escrape/api',
   fake: fake, // DEBUG ONLY

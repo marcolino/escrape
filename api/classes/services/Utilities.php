@@ -70,4 +70,13 @@
     return abs($number) >= 0.00001 ? abs($number) / $number : 0;
   }
 
+  /**
+   * Converts any kind of object/variable to it's string representation.
+   *
+   * @param mixed $mixed      the object/variable
+   * @return string           the object/variable's string representation
+   */
+  function any2string ($mixed) {
+    return var_export($mixed, true);
+  }
 ?>

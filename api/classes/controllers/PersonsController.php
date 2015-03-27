@@ -165,7 +165,7 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         # TODO: add logic to grab this data from person's (or comments) page
         $address = "Via Roma, 123, Torino";
         $age = 28;
-        $vote = 7;
+        $vote = 7; # TODO: JUST TO TEST BUTTONS WIDTH
         $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
         #$active = true; # set out-of-the-loop
         $new = false;
@@ -223,9 +223,11 @@ $this->router->log("debug", " INSERTING ");
       #// full sync done, set start timestamp to global table field 'last_sync_full'
       #$this->db->setByField("global", "last_sync_full", $timestampStart);
 
-      # TODO: SHOULD WE CHECK FOR $error !== true TO assertPersonActivity?
-      // assert persons activity after full sync completed
-      $this->assertPersonsActivity($timestampStart);
+      // assert persons activity after full sync completed, if we get no error
+      //  (to avoid marking all persons as not-active when a source is not available...)
+      if (!$error) {
+        $this->assertPersonsActivity($timestampStart);
+      }
     }
 
     // assert persons uniqueness after sync completed
@@ -235,7 +237,8 @@ $this->router->log("debug", " INSERTING ");
   }
 
   /**
-   * Assert persons activity
+   * Assert persons activity: compare person's last sync'd timestamp with a given timestamp
+   *  ("timestampStart" parameter), the timestamp last (or this) sync started.
    */
   private function assertPersonsActivity($timestampStart) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
@@ -264,7 +267,7 @@ $this->router->log("debug", " INSERTING ");
           ($persons[$i]["name"] === $persons[$j]["name"]) ||
           ($persons[$i]["phone"] === $persons[$j]["phone"])
         ) {
-          $this->db->setPersonsUniqcode($persons[$i]["id"], $persons[$j]["id"], true);
+          $this->setPersonsUniqueness($persons[$i]["id"], $persons[$j]["id"], true);
         }          
       }          
     }          
@@ -313,8 +316,10 @@ $this->router->log("debug", " INSERTING ");
    * @return array: all cities defined for specified country code
    */
   public function getSourcesCities($countryCode) {
-    $this->router->log("info", "getSourcesCities($countryCode) ---");
     $cities = [];
+    if ($countryCode) {
+      $this->router->log("info", "getSourcesCities($countryCode) ---");
+    }
 /*
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
       $url = $source["url"];
@@ -358,14 +363,15 @@ $this->router->log("debug", " INSERTING ");
   }
 
   /**
-   * Get persons uniqueness value
+   * Get two persons uniqueness value (are they assumed to be the same person)
    *
    * @return null/boolean  null  if same value is not set (persons are probably not the same)
    *                       true  if same value is set (persons are not the same)
    *                       false if same value is set (persons are the same)
    */
-  public function getPersonsUniqueness($personId1, $personId2, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getPersonsUniqueness($personId1, $personId2, $userId = null) {
     $this->router->log("info", "getPersonsUniqueness()");
+    # TODO: check null in $userId causes default value (DB_SYSTEM_USER_ID) set in $this->db->getPersonsUniqcode()... !!!
     $result = $this->db->getPersonsUniqcode($personId1, $personId2, $userId);
     if (!$result) {
       return null;
@@ -375,13 +381,14 @@ $this->router->log("debug", " INSERTING ");
   }
 
   /**
-   * Set persons uniqueness value
+   * Set persons uniqueness value (they are assumed to be the same person)
    *
    * @return boolean  true    if value was set successfully
    *                  false   if some error occurred
    */
-  public function setPersonsUniqueness($personId1, $personId2, $same, $userId = self::DB_SYSTEM_USER_ID) {
-    $this->router->log("info", "setPersonsUniqueness()");
+  public function setPersonsUniqueness($personId1, $personId2, $same, $userId = null) {
+    $this->router->log("info", "setPersonsUniqueness($personId1, $personId2)");
+    # TODO: check null in $userId causes default value (DB_SYSTEM_USER_ID) set in $this->db->getPersonsUniqcode()... !!!
     return $this->db->setPersonsUniqcode($personId1, $personId2, $same, $userId);
   }
 
@@ -412,7 +419,7 @@ $this->router->log("debug", " INSERTING ");
   }
   
   /**
-   * get all persons list, filtered with given sieves
+   * get all persons list, filtered with given sieves, and 'uniquified'
    *
    * @param  array $sieves
    * @return array
@@ -423,11 +430,14 @@ $this->router->log("debug", " INSERTING ");
     $comments = new CommentsController($this->router);
 
     $userId = 2; # TODO: get logged user id (from "authdata"?) ...
+
     foreach ($this->db->getPersonListSieved($sieves, $userId) as $person) {
       // N.B: here we (could) get multiple records for each person id
       $personId = $person["id_person"];
       if (!isset($result[$personId])) {
         $result[$personId] = []; // initialize this person array in results
+      } else { # TODO: should never happen...
+        throw new Exception("Assertion failed: getListSieved(): (isset(\$result[\$personId])"); # TODO: JUST TO DEBUG!
       }
 
       // fields with only "master" table values
@@ -437,6 +447,8 @@ $this->router->log("debug", " INSERTING ");
           "key",
           "source_key",
           "new",
+          "timestamp_creation",
+          "timestamp_last_sync",
         ] as $field
       ) {
         $result[$personId][$field] = $person[$field];
@@ -453,7 +465,7 @@ $this->router->log("debug", " INSERTING ");
           "thruthful",
         ] as $field
       ) {
-        if (isset($person[$field])) {
+        if (isset($person[$field])) { // merge master and detail fields in result
           if (!isset($result[$personId][$field])) {
             $result[$personId][$field] = $person[$field];
           } else {
@@ -466,12 +478,67 @@ $this->router->log("debug", " INSERTING ");
       #$this->router->log("debug", "result: " . var_export($result, true));
 
       // fields "calculated"
-      $result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
+      //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
       $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
       $result[$personId]["comments_count"] = $comments->countByPerson($personId);
       $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
-    return $result;
+
+    # TODO: move following code to $this->personsUniquify() ...
+    // check uniqcodes table, to possibly merge persons with more than one source
+    $uniqcodes = $this->db->getPersonsUniqcodes($userId);
+$this->router->log("debug", "getListSieved(), uniqcodes: " . var_export($uniqcodes, true));
+/*
+$uniqcodes = [
+  [
+    'id' => '1',
+    'id_user' => '1',
+    'id_person_1' => '1',
+    'id_person_2' => '2',
+    'same' => '1',
+  ],
+  [
+    'id' => '2',
+    'id_user' => '1',
+    'id_person_1' => '7',
+    'id_person_2' => '123',
+    'same' => '1',
+  ],
+  ...
+]
+*/
+    foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
+      foreach ($result as $personId => $person) { // scan all persons in result
+        if ($personId === $uniqcode["id_person_1"]) {
+        # TODO...
+        $this->mergeList($result, $uniqcode["id_person_1"], $uniqcode["id_person_2"]);
+      }
+    }
+
+  }
+
+  /**
+   * merge two elements in a list of persons
+   *
+   * @param reference to array of array   $result    the array of persons, by reference
+   * @result boolean                      true       success (the array of persons is merged)
+   *                                      false      some error occurred (exception thrown)
+   */
+  private function mergeList(&$result, $id_person_1, $id_person_2) {
+    $sep = ",";
+    foreach ($fields as fieldname => $fieldvalue) {
+      # TODO: analyze each field, and verify that consumers will always be satisfied, after the merge...
+      switch ($fieldname) {
+        case "key":
+          $result[$id_person_1][$fieldname] .= $sep . $result[$id_person_2][$fieldname];
+          break;
+        default:
+          $result[$id_person_1][$fieldname] .= $sep . $result[$id_person_2][$fieldname];
+          break;
+      }
+    }
+    unset($result[$id_person_2]);
+    return true;
   }
 
   public function photoGetOccurrences($id, $imageUrl) {

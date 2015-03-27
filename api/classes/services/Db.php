@@ -12,7 +12,7 @@ class DB extends PDO {
   const DB_USER = null;
   const DB_PASS = null;
   const DB_CHARSET = "utf8";
-  const DB_SYSTEM_USER_ID = "1"; # TODO: can we use a constant here?
+  const DB_SYSTEM_USER_ID = "1";
   private $db;
 
   public function __construct($router) {
@@ -38,7 +38,7 @@ class DB extends PDO {
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
       }
-      $this->userIdSystem = self::DB_SYSTEM_USER_ID; # TODO: use this variable... (?)
+      $this->userIdSystem = intval(self::DB_SYSTEM_USER_ID); # TODO: use this variable... (?)
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
     }
@@ -407,13 +407,43 @@ throw new Exception(
     }
   }
 
-  public function getPersonsUniqcode($id_person_1, $id_person_2, $userId = self::DB_SYSTEM_USER_ID) {
+  /**
+   * get all persons uniqueness codes
+   */
+  public function getPersonsUniqcodes($userId = self::DB_SYSTEM_USER_ID) {
     $table = "person_uniqcode";
     try {
       $sql = "
-        SELECT id, same
+        SELECT id, id_user, id_person_1, id_person_2, same
         FROM {$table}
-        WHERE (id_user = {$this->userIdSystem} OR id_user = {$userId})
+        WHERE (id_user = :id_user_system OR id_user = :id_user)
+        ORDER BY id_user DESC -- lower id_user (systems's) last
+      ";
+$this->router->log("debug", " getPersonsUniqcodes() - sql: [$sql]" . any2string([$this->userIdSystem, $userId]));
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id_user_system', $this->userIdSystem);
+      $statement->bindParam(':id_user', $userId);
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+$this->router->log("debug", " getPersonsUniqcodes() - result: [".any2string($result)."]");
+      if ($result) { // at least one record present
+        return $result; // return only first (user's, if present) record
+      } else { // no records present
+        return null; // no uniqcode set for any person
+      }
+    } catch (PDOException $e) {
+      throw new Exception("can't get persons uniq codes in table $table: " . $e->getMessage());
+    }
+  }
+
+  public function getPersonsUniqcode($id_person_1, $id_person_2, $userId = self::DB_SYSTEM_USER_ID) {
+    $table = "person_uniqcode";
+    if ($userId === null) $userId = intval(self::DB_SYSTEM_USER_ID); # TODO: BLAHHHHH
+    try {
+      $sql = "
+        SELECT id, id_user, same
+        FROM {$table}
+        WHERE (id_user = :id_user_system OR id_user = :id_user)
         AND (
           id_person_1 = :id_person_1 AND
           id_person_2 = :id_person_2
@@ -423,7 +453,10 @@ throw new Exception(
         )
         ORDER BY id_user DESC -- lower id_user (systems's) last
       ";
+$this->router->log("debug", " getPersonsUniqcode() - sql: [$sql], userId: " . any2string($userId) . ", userIdSystem: " . any2string($this->userIdSystem));
       $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id_user_system', $this->userIdSystem);
+      $statement->bindParam(':id_user', $userId);
       $statement->bindParam(":id_person_1", $id_person_1, PDO::PARAM_INT);
       $statement->bindParam(":id_person_2", $id_person_2, PDO::PARAM_INT);
       $statement->execute();
@@ -440,22 +473,30 @@ throw new Exception(
 
   public function setPersonsUniqcode($id_person_1, $id_person_2, $same, $userId = self::DB_SYSTEM_USER_ID) {
     $table = "person_uniqcode";
+    if ($userId === null) $userId = intval(self::DB_SYSTEM_USER_ID); # TODO: BLAHHHHH
     try {
       $result = $this->getPersonsUniqcode($id_person_1, $id_person_2, $userId);
-$this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result, true));
+$this->router->log("debug", " getPersonsUniqcode($id_person_1, $id_person_2) => " . var_export($result, true));
       $count = count($result);
       if ($count > 0) { // a uniqcode already present for these persons, update it
+$this->router->log("debug", " EXISTING UNIQCODE");
         if ($result["same"] === $same) { // current value is equal to the value to be set
+$this->router->log("debug", "  SAME VALUE IS ALREADY [$same], DO NOTHING...");
           ; // do nothing
         } else { // current value is different from the value to be set
+$this->router->log("debug", "  SAME VALUE IS *NOT* ALREADY [$same], UPDATING...");
           $id = $result["id"];
           $sql = "
             UPDATE {$table}
             SET same = :same
-            WHERE (id = {$id})
+            WHERE
+             (id = :id) AND
+             (user_id = :id_user)
           ";
           $statement = $this->db->prepare($sql);
           $statement->bindParam(":same", $same, PDO::PARAM_INT);
+          $statement->bindParam(":id", $id, PDO::PARAM_INT);
+          $statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
           $statement->execute();
           $count = $statement->rowCount();
           if ($count != 1) {
@@ -463,6 +504,7 @@ $this->router->log("debug", " setPersonsUniqCode - result:" . var_export($result
           }
         }
       } else { // a uniqcode not yet present for these persons, insert it
+$this->router->log("debug", " NEW UNIQCODE");
         $sql = "
           INSERT INTO {$table}
           (id_user, id_person_1, id_person_2, same)

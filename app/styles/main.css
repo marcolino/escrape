@@ -70,6 +70,10 @@ body {
   margin-left: 5px;
 }
 
+.btn-wider {
+  min-width: 64px;
+}
+
 /* element rotation - 90° clock-wise */
 .rotate90cw {
   -webkit-transform:rotate(90deg);
@@ -145,7 +149,7 @@ body {
 
 /* Listing page */
 .row-gap {
-  padding: 2px 0 2px 0;
+  padding: 5px 0 5px 0;
   border-top: 1px solid #e0e0e0;
 }
 .person-name {
