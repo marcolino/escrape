@@ -75,6 +75,8 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         if (preg_match($source["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
           $key = $sourceKey . "-" . $id;
+#if ($id !== "adv2945") {$this->router->log("info", "[$id] !== adv2945"); continue; } #################
+#if ($id === "adv2945") {$this->router->log("info", "[$id] === adv2945, FOUND !!!"); } #############
         } else {
           $this->router->log("error", "person $n id not found on source [$sourceKey], giving up with this person");
           $error = true;
@@ -484,6 +486,8 @@ $this->router->log("debug", " INSERTING ");
       $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
 
+return $result;
+
     # TODO: move following code to $this->personsUniquify() ...
     // check uniqcodes table, to possibly merge persons with more than one source
     $uniqcodes = $this->db->getPersonsUniqcodes($userId);
@@ -510,34 +514,36 @@ $uniqcodes = [
     foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
       foreach ($result as $personId => $person) { // scan all persons in result
         if ($personId === $uniqcode["id_person_1"]) {
-        # TODO...
-        $this->mergeList($result, $uniqcode["id_person_1"], $uniqcode["id_person_2"]);
+          # TODO...
+          $this->mergeList($result, $uniqcode["id_person_1"], $uniqcode["id_person_2"]);
+        }
       }
     }
 
   }
 
   /**
-   * merge two elements in a list of persons
+   * merge two elements in a two levels array
    *
-   * @param reference to array of array   $result    the array of persons, by reference
-   * @result boolean                      true       success (the array of persons is merged)
+   * @param reference to array of array   $array     the array, by reference
+   * @result boolean                      true       success (the two elements have been merged)
    *                                      false      some error occurred (exception thrown)
    */
-  private function mergeList(&$result, $id_person_1, $id_person_2) {
-    $sep = ",";
-    foreach ($fields as fieldname => $fieldvalue) {
+  private function mergeList(&$array, $id1, $id2) {
+    $sep = "\x01";
+    $fields = [ "key", "name", "sex", "zone", "address", "description", "notes", "phone", "nationality", "age", "vote", "showcase", "thruthful", "new" ];
+    foreach ($fields as $fieldname => $fieldvalue) {
       # TODO: analyze each field, and verify that consumers will always be satisfied, after the merge...
       switch ($fieldname) {
         case "key":
-          $result[$id_person_1][$fieldname] .= $sep . $result[$id_person_2][$fieldname];
+          $array[$id1][$fieldname] .= $sep . $array[$id2][$fieldname];
           break;
         default:
-          $result[$id_person_1][$fieldname] .= $sep . $result[$id_person_2][$fieldname];
+          $array[$id1][$fieldname] .= $sep . $array[$id2][$fieldname];
           break;
       }
     }
-    unset($result[$id_person_2]);
+    unset($array[$id2]);
     return true;
   }
 

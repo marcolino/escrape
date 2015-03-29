@@ -7,11 +7,16 @@
 #  - run grunt server
 #  - run editor
 
-sqlitebrowser "/var/www/html/escrape/api/db/escrape.sqlite" &
+dirapplogs="/var/www/html/escrape/api/logs"
+dirhttplogs="/var/log/apache2"
+dirappdb="/var/www/html/escrape/api/db"
+
+/bin/rm "$dirapplogs/*-*-*.log"
+sqlitebrowser "$dirappdb/escrape.sqlite" &
 sleep 1
-gnome-terminal --geometry=150x12+150+500 -x sh -c "tail -f /var/log/apache2/error.log"
-gnome-terminal --geometry=150x12+190+280 -x sh -c "tail -f /var/www/html/escrape/api/logs/*-*-*.log"
-gnome-terminal --geometry=100x8+230+120 -x sh -c "tail -f /var/www/html/escrape/api/logs/curl.log"
+gnome-terminal --geometry=150x12+150+500 -x sh -c "tail -f $dirhttplogs/error.log"
+gnome-terminal --geometry=150x12+190+280 -x sh -c "tail -f $dirapplogs/*-*-*.log"
+gnome-terminal --geometry=100x8+230+120 -x sh -c "tail -f $dirapplogs/curl.log"
 subl
 killall grunt 2>/dev/null
 grunt serve

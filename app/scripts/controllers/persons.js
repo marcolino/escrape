@@ -63,6 +63,7 @@ console.log('WATCH - calling loadPersons()...');
   // private methods
   function applyPersons(newPersons) {
     $scope.persons = newPersons;
+console.log('PERSONS: ', newPersons);
   }
 
   function loadPersons() {

@@ -111,6 +111,12 @@ module.exports = function (grunt) {
       }
     },
 
+    open: {
+      dev: {
+        path: 'http://127.0.0.1:9000/',
+      },
+    },
+
     // Make sure code styles are up to par and there are no obvious mistakes
     jshint: {
       options: {
@@ -366,8 +372,9 @@ module.exports = function (grunt) {
       'wiredep',
       'concurrent:server',
       'autoprefixer',
+      'open',
       'connect:livereload',
-      'watch'
+      'watch',
     ]);
   });
 
@@ -404,6 +411,6 @@ module.exports = function (grunt) {
   grunt.registerTask('default', [
     'newer:jshint',
     'test',
-    'build'
+    'build',
   ]);
 };
