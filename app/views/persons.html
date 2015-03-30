@@ -1,8 +1,18 @@
-<div class="container">
-  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':true" ng-class="{'person-disabled': person.name === 'Samantha'}">
+<div NOclass="container">
+  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':false" ng-class="{'person-disabled': person.name === 'Samantha'}">
     <!--<pre> person: {{person}} </pre>-->
-    <div class="col-xs-5 col-sm-3 col-md-2 col-lg-2">
-      <span NOclass="img-clip-container" NOstyle="background:#333" ng-attr-title="{{person.name}}">
+    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
+      <a href="" ng-click="multiShow('{{person.id_person}}')" class="no-text-decoration">
+        <span style="vertical-align:top;">
+          <span ng-if="person.multi === 1">
+            <i class="fa fa-plus-square" NOstyle="color:darkgreen"></i>
+          </span>
+          <span ng-if="person.multi !== 1">
+            <i class="fa fa-fw"></i>
+          </span>
+        </span>
+      </a>
+      <span class="img-clip-container" style="background:#333" ng-attr-title="{{person.name}}">
         <a ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
           <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip"
             ng-class="{
@@ -20,8 +30,9 @@
   </div>
 </div>
 -->
+
     </div>
-    <div class="col-xs-7 col-sm-9 col-md-10 col-lg-10">
+    <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
 
       <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">

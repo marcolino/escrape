@@ -1,6 +1,11 @@
 {
   "name": "escrape",
-  "version": "0.0.0",
+  "version": "0.0.2",
+  "private": true, "//": "remove before publishing...",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/marcolino/escrape.git"
+  },
   "dependencies": {},
   "devDependencies": {
     "grunt": "^0.4.1",

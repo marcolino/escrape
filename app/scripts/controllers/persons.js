@@ -212,6 +212,12 @@ console.log('loadPersons() - main');
     );
   };
 
+  $scope.multiShow = function(id) {
+    console.log('multiShow('+id+')');
+    $rootScope.sieves.multi = id;
+    loadPersons();
+  };
+
   $scope.vote = function(vote) {
     if (vote > 0) {
       $scope.person.vote = Math.min(cfg.person.vote.max, $scope.person.vote + vote);

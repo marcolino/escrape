@@ -111,15 +111,18 @@ class DB extends PDO {
           notes TEXT,
           phone VARCHAR(16),
           nationality VARCHAR(2),
-          age TEXT,
+          age INTEGER,
           vote INTEGER,
           showcase INTEGER,
           thruthful INTEGER,
-          new INTEGER
+          new INTEGER,
+          uniq_prev TEXT,
+          uniq_next TEXT
          );
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "
       );
+/*
       $this->db->exec(
         "CREATE TABLE if not exists person_uniqcode (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -132,6 +135,7 @@ class DB extends PDO {
          CREATE INDEX IF NOT EXISTS id_person_2_idx ON person_uniqcode (id_person_2);
         "
       );
+*/
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS comment (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -182,15 +186,16 @@ class DB extends PDO {
     $params = [];
 
     try {
-      list($sql, $params) = $this->sieves2Sql($sieves);
-
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.*
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.id_person
         WHERE (id_user = {$this->userIdSystem} OR id_user = {$userId})
-      " . $sql;
+      ";
+
+      list($sqlSieves, $params) = $this->sieves2Sql($sieves);
+      $sql .= $sqlSieves;
 
       // order to get lower user id first (system is the lowest: 1)
       $sql .= " ORDER BY " .
@@ -303,21 +308,22 @@ class DB extends PDO {
     return $lastMasterInsertId;
   }
 
-  public function setPerson($id, $arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function setPerson($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
 #throw new Exception("SET 1, ARRAY_DETAIL: " . var_export($arrayDetail, true));
 
-    try {
-      $set = "";
+    if (!empty($arrayMaster)) {
+      try {
+        $set = "";
 #throw new Exception("master sql: arrayMaster:" . var_export($arrayMaster, true));
-      foreach ($arrayMaster as $key => $value) {
-        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
-      }
-      $sql = "
-        UPDATE {$tableMaster}
-        SET $set
-        WHERE id = :id
-      ";
+        foreach ($arrayMaster as $key => $value) {
+          $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+        }
+        $sql = "
+          UPDATE {$tableMaster}
+          SET $set
+          WHERE id = :id
+        ";
 
 /*
 throw new Exception(
@@ -325,20 +331,21 @@ throw new Exception(
   "arrayMaster: " . var_export($arrayMaster, true)
 );
 */
-      $statement = $this->db->prepare($sql);
-      $statement->bindParam(':id', $id, PDO::PARAM_INT);
-      foreach ($arrayMaster as $key => &$value) {
-        $statement->bindParam(":" . $key, $value);
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':id', $id, PDO::PARAM_INT);
+        foreach ($arrayMaster as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($statement->rowCount() != 1) {
+          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
       }
-      $statement->execute();
-      $count = $statement->rowCount();
-      if ($statement->rowCount() != 1) {
-        throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
-      }
-    } catch (PDOException $e) {
-      throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
-    }
 #return $id; # !!!!!!!!!!!!!!!!!! SKIP DETAIL ... !!!!!!!!!!!!!!!!!!!!
+    }
 
     if (!empty($arrayDetail)) {
       $tableDetail = $tableMaster . "_" . "detail";
@@ -794,6 +801,26 @@ $this->router->log("debug", " NEW UNIQCODE");
       $sql .= " AND ";
       $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
     }
+
+/* TODO: HANDLE UNIQUENES.................................
+    // multi: MASTER,secondUniqId,thirdUniqId,..., or firstUniqId,SLAVE,thirdUniqId,..., or NULL
+    if (
+      $sieves &&
+      $sieves["multi"]
+    ) {
+      $sql .= " AND ";
+      $multiParts = explode(',', $string);
+      $sql .= "((multi IS NULL) OR ";
+      $sql .= "(multi LIKE '%MASTER%')";
+      foreach ($multiParts as $multipart) {
+        $sql .= " OR (multi LIKE '%,$multipart,%')";
+      }
+      $sql .= ")";
+    } else {
+      $sql .= " AND ";
+      $sql .= "((multi IS NULL) OR (multi LIKE '%MASTER%''))"; // if multi starts with a 'X', it is the master of a 'uniquified' group
+    }
+*/
     return [ $sql, $params ];
   }
 

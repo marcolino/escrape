@@ -190,6 +190,8 @@ if ($n > 2) break; # TODO: DEBUG-ONLY
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote;
         $personDetail["new"] = $new;
+        $personDetail["uniq_prev"] = null;
+        $personDetail["uniq_next"] = null;
 
         if ($personId) { # old key, update it
 $this->router->log("debug", " UPDATING ");        
@@ -210,6 +212,9 @@ $this->router->log("debug", " INSERTING ");
         #       ADDING PHOTOS ONLY FOR NEW KEYS/PERSONSWE IS WAY FASTER,
         #       BUT WE COULD MISS SOME NEW / CHANGED / REMOVED PHOTO...
         #       (NO, REMOVED PHOTOS ARE HOWEVER (CORRECTLY) KEPT IN DATABASE).
+        # IDEA: WE COULD CHECK DETAILS PAGE MD5: IF NOT CHANGED, *PROBABLY*
+        #       PHOTOS DIDN'T CHANGE (FOR SURE NO PHOTO WAS ADDED, BUT IT REMOTELY
+        #       COULD BE CHANGED...).
         #// add photos
         #foreach ($photosUrls as $photoUrl) {
         #  $this->photoAdd($id, $source["url"] . "/" . $photoUrl);
@@ -258,6 +263,51 @@ $this->router->log("debug", " INSERTING ");
    * Assert persons uniqueness
    */
   public function assertPersonsUniqueness() {
+    $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
+    $persons = $this->db->getPersonListSieved(null);
+
+    # check every couple of persons (avoiding permutations)
+    $persons_count = count($persons);
+    for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
+      $personsById[$persons[$i]["id"]] = $persons[$i];
+    }
+#$this->router->log("info", "personsById:" . any2string($personsById));
+
+    for ($i = 0; $i < $persons_count - 1; $i++) {
+      for ($j = $i + 1; $j < $persons_count; $j++) {
+        if (
+          ($persons[$i]["name"] === $persons[$j]["name"]) ||
+          ($persons[$i]["phone"] === $persons[$j]["phone"])
+        ) { // these two persons are unique
+          $id1 = $persons[$i]["id"];
+          $id2 = $persons[$j]["id"];
+
+          // follow next unique chain, and add the 2nd person id as additional unique (next) person
+          $idNext = $personsById["$id1"]["uniq_next"];
+          while ($idNext && $personsById["$idNext"]["uniq_next"]) {
+            $idNext = $personsById["$idNext"]["uniq_next"];
+          }
+          $id = $idNext ? $idNext : $id1;
+          $personsById["$id"]["uniq_next"] = $id2;
+          $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
+
+          // follow prev unique chain, and add the 1nd person id as additional unique (previous) person
+          $idPrev = $personsById["$id2"]["uniq_prev"];
+          while ($idPrev && $personsById["$idPrev"]["uniq_prev"]) {
+            $idPrev = $personsById["$idPrev"]["uniq_prev"];
+          }
+          $id = $idPrev ? $idPrev : $id2;
+          $personsById["$id"]["uniq_prev"] = $id1;
+          $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
+        }
+      }
+    }
+  }
+
+  /**
+   * Assert persons uniqueness OLD
+   */
+  public function assertPersonsUniquenessOLDDDDDDDDDDDDDD() {
     $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
     $persons = $this->db->getPersonListSieved(null);
 
@@ -401,7 +451,23 @@ $this->router->log("debug", " INSERTING ");
 #print "get($id)\n";
     $person = $this->db->get("person", $id);
     $photos = $this->db->getByField("photo", "id_person", $id);
+    #$person["photos"] = $photos;
+    ###################################################################################
+    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
+    $uniqcodes = $this->db->getPersonsUniqcodes($userId);
+    if (is_array($uniqcodes)) {
+      foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
+# TODO: DEBUG.LOG...
+        if ($id == $uniqcode["id_person_1"]) {
+          // append photos fron the other 'uniq' person
+          $result = $photos;
+          $photos = $result + $this->db->get("photo", $uniqcode["id_person_2"]);
+        }
+      }
+    }
+    ###################################################################################
     $person["photos"] = $photos;
+
 #print " person: "; var_export($person);
 #$this->router->log("info", " !!! person($id): " . var_export($person, true));
     return $person;
@@ -486,66 +552,105 @@ $this->router->log("debug", " INSERTING ");
       $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
 
-return $result;
+/*
+    # uniquify persons
+    $this->personsUniquify($result);
+*/
 
-    # TODO: move following code to $this->personsUniquify() ...
+    return $result;
+  }
+
+/*
+  / **
+   * uniquify all persons
+   *
+   * @param reference to array of array   $persons           the persons array, by reference
+   * @result boolean                      true               success (the two elements have been merged)
+   *                                      exception thrown   some error occurred
+   * /
+  private function personsUniquify(&$persons) {
+    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
+
     // check uniqcodes table, to possibly merge persons with more than one source
     $uniqcodes = $this->db->getPersonsUniqcodes($userId);
-$this->router->log("debug", "getListSieved(), uniqcodes: " . var_export($uniqcodes, true));
-/*
-$uniqcodes = [
-  [
-    'id' => '1',
-    'id_user' => '1',
-    'id_person_1' => '1',
-    'id_person_2' => '2',
-    'same' => '1',
-  ],
-  [
-    'id' => '2',
-    'id_user' => '1',
-    'id_person_1' => '7',
-    'id_person_2' => '123',
-    'same' => '1',
-  ],
-  ...
-]
-*/
-    foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
-      foreach ($result as $personId => $person) { // scan all persons in result
-        if ($personId === $uniqcode["id_person_1"]) {
-          # TODO...
-          $this->mergeList($result, $uniqcode["id_person_1"], $uniqcode["id_person_2"]);
+      / *
+        $uniqcodes = [
+          [
+            'id' => '1',
+            'id_user' => '1',
+            'id_person_1' => '1',
+            'id_person_2' => '2',
+                'same' => '1',
+          ],
+          [
+            'id' => '2',
+            'id_user' => '1',
+            'id_person_1' => '7',
+            'id_person_2' => '123',
+            'same' => '1',
+          ],
+          ...
+        ]
+      * /
+    if (is_array($uniqcodes)) {
+      foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
+        foreach ($persons as $personId => $person) { // scan all persons in result
+          if ($personId == $uniqcode["id_person_1"]) {
+            #$this->mergeList($persons, $uniqcode["id_person_1"], $uniqcode["id_person_2"]);
+            $persons[$uniqcode["id_person_1"], $uniqcode["id_person_2"]);
+          }
         }
       }
     }
 
+    return true;
   }
+*/
 
-  /**
-   * merge two elements in a two levels array
+/*
+  / **
+   * merge two persons
    *
-   * @param reference to array of array   $array     the array, by reference
-   * @result boolean                      true       success (the two elements have been merged)
-   *                                      false      some error occurred (exception thrown)
-   */
-  private function mergeList(&$array, $id1, $id2) {
-    $sep = "\x01";
+   * @param reference to array of array   $persons           the persons array, by reference
+   * @result boolean                      true               success (the two elements have been merged)
+   *                                      exception thrown   some error occurred
+   * /
+  private function mergeList(&$persons, $id1, $id2) {
+    #$sep = "\x01";
+    $sep = ",";
     $fields = [ "key", "name", "sex", "zone", "address", "description", "notes", "phone", "nationality", "age", "vote", "showcase", "thruthful", "new" ];
-    foreach ($fields as $fieldname => $fieldvalue) {
+    foreach ($fields as $field) {
       # TODO: analyze each field, and verify that consumers will always be satisfied, after the merge...
-      switch ($fieldname) {
+      switch ($field) {
         case "key":
-          $array[$id1][$fieldname] .= $sep . $array[$id2][$fieldname];
+          #$persons[$id1][$field] .= ($sep . $persons[$id2][$field]);
+          break;
+        case "phone":
+          $persons[$id1][$field] .= ($sep . $persons[$id2][$field]);
           break;
         default:
-          $array[$id1][$fieldname] .= $sep . $array[$id2][$fieldname];
+$this->router->log("debug", "PERSON $id1 DATA: " . any2string($persons[$id1]));
+$this->router->log("debug", " * merging keys - field: " . $field);
+          if (isset($persons[$id1][$field])) {
+            if (isset($persons[$id2][$field])) {
+              $persons[$id1][$field] .= ($sep . $persons[$id2][$field]); // both of $id1 and $id2 persons field set
+            } else {
+              ; // only $id1 person field set
+            }
+          } else {
+            if (isset($persons[$id2][$field])) {
+              $persons[$id1][$field] = $persons[$id2][$field]; // only $id2 person field set
+            } else {
+              ; // none of $id1 and $id2 persons field set
+            }            
+          }
           break;
       }
     }
-    unset($array[$id2]);
+    unset($persons[$id2]);
     return true;
   }
+*/
 
   public function photoGetOccurrences($id, $imageUrl) {
     $person = $this->db->get("person", $id);
@@ -740,7 +845,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
           if ($p["url"] === $photo->url()) {
 ##$this->router->log("debug", "p[url]:" . $p["url"] . " FOUNDDDDDDDDDD");
             if ($p["timestamp_last_modification"] && $photoLastModificationTimestamp) {
-              if (intval($p["timestamp_last_modification"]) !== $photoLastModificationTimestamp) {
+              if ($p["timestamp_last_modification"] != $photoLastModificationTimestamp) {
                 // the last modification timestamp of existing photo is greater or equal to
                 // the last modification timestamp of the photo to be downloaded
                 $this->router->log("debug", "photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)");
@@ -889,12 +994,25 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
   /**
    * Get all photos of person
    *
-   * @param  integer $idPerson the id of the person's photo
+   * @param  integer $personId the person id of the photo
    * @return array[][]         if photos found
    *         null              if photos not found
    */
-  private function photoGetAll($idPerson) {
-    $photos = $this->db->get("photo", $idPerson);
+  private function photoGetAll($personId) {
+$this->router->log("debug", "photoGetAll($personId)");
+    $photos = $this->db->get("photo", $personId);
+
+# DO WE NEED UNIQUENESS MERGE HERE ??? ##################################################
+    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
+    $uniqcodes = $this->db->getPersonsUniqcodes($userId);
+    foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
+      if ($personId == $uniqcode["id_person_1"]) {
+        // append photos fron the other 'uniq' person
+        $result = $photos;
+        $photos = $result + $this->db->get("photo", $uniqcode["id_person_2"]);
+      }
+    }
+#########################################################################################
     return $photos;
   }
 

@@ -2,6 +2,7 @@ TODO 1.0:
  - decide where/how/if to display the name of person in persons view on extra-small screens
  - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
  - in PersonsController: get logged user id (from "authdata"?) ...
+ - in PersonsController: $idPerson =?=> $personId ???
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list view
  - in google search results page, make buttons (Fake, Thrutful, Don't know) always visible... (results in  a scroller)
