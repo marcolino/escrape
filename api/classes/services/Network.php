@@ -109,7 +109,7 @@ class Network {
     $retry = 0;
     retry:
     try {
-      $this->logWrite("starting curl for url [$url] (tor: " . ($tor ? "TRUE" : "FALSE") . ")");
+      $this->logWrite("curl to [$url]" . ($tor ? " (TOR)" : ""));
       $ch = curl_init(); // initialize curl operation
       if (($errno = curl_errno($ch))) {
         throw new Exception("can't initialize curl: " . curl_strerror($errno));
@@ -164,7 +164,7 @@ class Network {
    *         integer            last modification timestamp
    */
   public function getLastModificationTimestampFromUrl($url) {
-    $this->logWrite("getLastModificationTimestampFromUrl()");
+    #$this->logWrite("getLastModificationTimestampFromUrl()");
     $headers = $this->getUrlContents($url, null, null, true, false);
     $headers = explode("\n", trim($headers));
     $lastModifiedDate = null;
@@ -190,7 +190,7 @@ class Network {
    * @return string             mime type
    */
   public function getMimeFromUrl($url) {
-    $this->logWrite("getMimeFromUrl()");
+    #$this->logWrite("getMimeFromUrl()");
     $headers = $this->getUrlContents($url, null, null, true, false);
     $headers = explode("\n", trim($headers));
     $mime = null;

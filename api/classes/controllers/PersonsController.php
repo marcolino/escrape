@@ -70,7 +70,7 @@ class PersonsController {
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-if ($n > 2) break; # TODO: DEBUG-ONLY
+if ($n > 40) break; # TODO: DEBUG-ONLY
 
         if (preg_match($source["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -849,7 +849,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
                 // the last modification timestamp of existing photo is greater or equal to
                 // the last modification timestamp of the photo to be downloaded
                 $this->router->log("debug", "photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)");
-#$this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
+$this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
                 return true;
               } else {
                 // the last modification timestamp of existing photo did not change
@@ -869,7 +869,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
         throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
       }
     }
-#$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: [$photoLastModificationTimestamp] =?= " . var_export($photos, true));
+$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: [$photoLastModificationTimestamp] =?= " . var_export($photos, true));
     return false;
   }
 

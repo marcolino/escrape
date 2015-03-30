@@ -25,6 +25,11 @@ TODO 1.0:
  - why angular locale is not that of browser?
  - var_export($VAR, true) => any2string($VAR)
  - to not call getSourcesCities(undefined) (see slim logs...)
+ - add the possibility for user to add domains to a "black-list" for photos thruthfulness check... For example:
+    - www.reddit.com/
+    - www.theospark.net/
+    - www.pinterest.com/
+ - try to unify getLastModificationTimestampFromUrl($url), getMimeFromUrl($url) to getUrlContents(...) ...
 
 TODO 2.0:
  - I18n (?) (see:

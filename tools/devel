@@ -11,7 +11,7 @@ dirapplogs="/var/www/html/escrape/api/logs"
 dirhttplogs="/var/log/apache2"
 dirappdb="/var/www/html/escrape/api/db"
 
-/bin/rm "$dirapplogs/*-*-*.log"
+sudo /bin/rm "$dirapplogs/"*-*-*.log
 sqlitebrowser "$dirappdb/escrape.sqlite" &
 sleep 1
 gnome-terminal --title="$dirhttplogs/error.log" --geometry=150x12+150+500 -x sh -c "tail -f $dirhttplogs/error.log"
