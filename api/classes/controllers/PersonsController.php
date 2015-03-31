@@ -290,11 +290,10 @@ $this->router->log("debug", " INSERTING ");
             $idNext = $personsById["$idNext"]["uniq_next"];
           }
           $id = $idNext ? $idNext : $id1;
-if ($personsById["$id"]["uniq_next"] == $id2) {
-  $this->router->log("info", "assertPersonsUniqueness() - we are going to setPerson() (a costly op) a uniq_next field value of '$id2' for person id $id, but the value was already there: please test this case in code and avoid updating the DB...");
-}
-          $personsById["$id"]["uniq_next"] = $id2;
-          $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
+          if ($personsById["$id"]["uniq_next"] !== $id2) {
+            $personsById["$id"]["uniq_next"] = $id2;
+            $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
+          }
 
           // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
           $idPrev = $personsById["$id2"]["uniq_prev"];
@@ -302,11 +301,10 @@ if ($personsById["$id"]["uniq_next"] == $id2) {
             $idPrev = $personsById["$idPrev"]["uniq_prev"];
           }
           $id = $idPrev ? $idPrev : $id2;
-if ($personsById["$id"]["uniq_next"] == $id1) {
-  $this->router->log("info", "assertPersonsUniqueness() - we are going to setPerson() (a costly op) a uniq_prev field value of '$id2' for person id $id, but the value was already there: please test this case in code and avoid updating the DB...");
-}
-          $personsById["$id"]["uniq_prev"] = $id1;
-          $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
+          if ($personsById["$id"]["uniq_next"] != $id1) {
+            $personsById["$id"]["uniq_prev"] = $id1;
+            $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
+          }
         }
       }
     }
@@ -546,7 +544,7 @@ if ($personsById["$id"]["uniq_next"] == $id1) {
       $result[$personId]["comments_count"] = $comments->countByPerson($personId);
       $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
-$this->router->log("debug", "getListSieved() - result: " . var_export($result, true));
+#$this->router->log("debug", "getListSieved() - result: " . var_export($result, true));
 
 /*
     # uniquify persons
@@ -673,6 +671,7 @@ $this->router->log("debug", " * merging keys - field: " . $field);
       } else { // no occurrences found
       }
     }
+    unset($googleSearch);
     return $response;
   }
 
@@ -684,6 +683,7 @@ $this->router->log("debug", " * merging keys - field: " . $field);
       #$cardDeck = file_get_contents("../app/images/referral-sources/card-deck-default.png"); # TODO: ...
 throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     }
+    unset($photo);
     return $cardDeck;
   }
 
@@ -802,7 +802,9 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
     $photo->number($number);
 
     // add this photo to database
-    return $this->db->add("photo", $this->photo2Data($photo));
+    $retval = $this->db->add("photo", $this->photo2Data($photo));
+    unset($photo);
+    return $retval;
   }
 
   /**
@@ -875,7 +877,7 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
         throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
       }
     }
-$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: [$photoLastModificationTimestamp] =?= " . var_export($photos, true));
+$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
     return false;
   }
 
@@ -922,13 +924,15 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: [$phot
    *                  false      if photo is not similar to some else photo
    */
   private function photoCheckSimilarity($idPerson, $photo, $photos) {
+    $retval = false;
     if ($photos !== []) {
       if (is_array_multi($photos)) { // more than one result returned
         foreach ($photos as $p) {
           $photo2 = new Photo([ "data" => $p ]);
           if ($photo->checkSimilarity($photo2)) {
             #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
-            return true;
+            $retval = true;
+            break;
           }
         }
       } else { // not more than one result returned
@@ -944,7 +948,8 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: [$phot
 */  
       }
     }
-    return false;
+    unset($photo2);
+    return $retval;
   }
 
   /**

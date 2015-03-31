@@ -1,18 +1,17 @@
 TODO 1.0:
- - decide where/how/if to display the name of person in persons view on extra-small screens
- - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
+ - debug "unification()" method (sort uniq persons to be close each other...)
  - in PersonsController: get logged user id (from "authdata"?) ...
  - in PersonsController: $idPerson =?=> $personId ???
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list view
  - in google search results page, make buttons (Fake, Thrutful, Don't know) always visible... (results in  a scroller)
  - in google search results page, handle error "Google thinks we're bot and won't process our requests"...
+ - in google search results page, add small button "add to white list" after url...
  - before google search, check image has already thruthful flag...
  - move style="..." from all views to style.css...
  - review user writes...
  - handle guest tentative write warning
  - options: contry / city / category (to be handled server side...)
- - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
  - sync: skip person page if page sum matches with last synced... (do we save anything worth?)
  - person detail view: replace static google street + goggle street indications with dynamic google street view:+indications (see: <http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7>)
  - remove all "is_array_multi()" checks (after db fechtall's...) (are we sure it's unuseful?)
@@ -30,6 +29,10 @@ TODO 1.0:
     - www.theospark.net/
     - www.pinterest.com/
  - try to unify getLastModificationTimestampFromUrl($url), getMimeFromUrl($url) to getUrlContents(...) ...
+
+TODO 1.1:
+ - decide where/how/if to display the name of person in persons view on extra-small screens
+ - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
 
 TODO 2.0:
  - I18n (?) (see:
@@ -108,4 +111,5 @@ DONE:
  - save Sublime Text 3 (3080) license key (saved to Dropbox/Privata/Sublime-Text/)
  - remove "person-img-url" from setup/persons.php @HOME
  - sgi/esc.../annuncio/adv2945: check phone pattern... @HOME (on 2015-03-29 it is fine...)
-
+ - design a "unification()" method to "unify" different persons to a single one (be simple, be hungry...)
+ 
