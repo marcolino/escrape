@@ -1,5 +1,6 @@
 html * {
   font-family: 'Droid Sans', sans-serif;
+  outline: none !important;
 }
 
 /* Space out content a bit */
@@ -105,13 +106,21 @@ body {
   margin-left: -7px;
 }
 
-/* disabled person: lower opacity of it's row, ad draw striped background */
-.person-disabled {
+/* inactive person: lower opacity of it's row, ad draw striped background */
+.person-inactive {
   opacity: 0.4;
   filter: alpha(opacity=40);
   background: repeating-linear-gradient(
     135deg, #eee, #eee 8px, #fff 8px, #fff 16px
   );
+}
+
+.person-uniq-id-last {
+  border-bottom: 2px solid #111;
+  NOborder-right: 1px solid #444;
+  NOborder-left: 1px solid #444;
+  NObackground: #ccc;
+  NOborder: 1px dotted blue; /* TODO: think to a better style... */;
 }
 
 /* a clearfix, with a minimum height */
@@ -152,15 +161,24 @@ body {
   padding: 5px 0 5px 0;
   border-top: 1px solid #e0e0e0;
 }
+.showcase-left {
+  display: inline-block;
+  width: 10px;
+  margin-right: 5px;
+  vertical-align: top;
+}
+.showcase-right {
+  display: inline-block;
+}
 .person-name {
   font-size: 1.0em;
   font-style: italic;
 }
 .img-clip-container {
-  /* TODO: set this value in controller, using ng-style (see https://docs.angularjs.org/api/ng/directive/ngStyle) */
+  /* TODO: set this width value in controller, using ng-style (see https://docs.angularjs.org/api/ng/directive/ngStyle) */
   width: 106px; /* bitmap max width (+1+1), should be set dynamically */
   text-align: center;
-  border: 1px solid #eee;
+  NOborder: 1px solid #eee;
 }
 .img-clip {
   width: auto;
@@ -310,6 +328,7 @@ input[readonly].default-cursor {
 }
 .no-text-decoration {
   text-decoration: none !important;
+  DOESNTWORKoutline: none;
 }
 
 /* input search with clear button */
@@ -403,7 +422,7 @@ p.menu-item-separator {
 }
 .slider-image {
   display: inline-block;
-  margin-right: 1px;
+  margin-right: 3px;
   text-align: center;
 }
 .label-image {

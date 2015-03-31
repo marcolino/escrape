@@ -99,6 +99,12 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+    getUniqIds: function (id) {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getUniqIds' + '/' + id,
+      }).then(handleSuccess, handleError);
+    },
   });
 
 });

@@ -209,11 +209,13 @@ class DB extends PDO {
       }
       $statement->execute();
 #throw new Exception("sql: [$sql]");
+#if ($sieves["uniqIds"]) throw new Exception("sql: [$sql]");
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 #throw new Exception("sql: [$sql] => " . var_export($result, true));
       return $result;
     } catch (PDOException $e) {
       #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
+#throw new Exception("sql: [$sql]");
       throw new Exception("can't get from $tableMaster, $tableDetail with filters: " . $e->getMessage()); # TODO: USE THIS METHOD EVERYWHERE!!!
     }
   }
@@ -414,9 +416,10 @@ throw new Exception(
     }
   }
 
-  /**
+/*
+  / **
    * get all persons uniqueness codes
-   */
+   * /
   public function getPersonsUniqcodes($userId = self::DB_SYSTEM_USER_ID) {
     $table = "person_uniqcode";
     try {
@@ -534,6 +537,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       throw new Exception("can't set persons uniq code in table $table: " . $e->getMessage());
     }
   }
+*/
 
   public function getAverageFieldByPersonId($table, $idPerson, $fieldName) {
     try {
@@ -629,6 +633,36 @@ $this->router->log("debug", " NEW UNIQCODE");
       return $result["count"];
     } catch (PDOException $e) {
       throw new Exception("can't count $table by field: " . $e->getMessage());
+    }
+  }
+
+  /**
+   * get list of 'uniq' persons, starting from a given id
+   */
+  public function getUniqIds($id) {
+    $table = "person_detail";
+    try {
+      $idNext = $id;
+      $uniqIds = [ $idNext ];
+      do {
+        $sql = "
+          SELECT uniq_next
+          FROM {$table}
+          WHERE id_person = :id
+        ";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(":id", $idNext);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        $idNext = $result["uniq_next"];
+        if ($idNext) {
+          $uniqIds[] = $idNext;
+        }
+#throw new Exception("getUniqIds - uniqIds: [" . any2string($uniqIds) . "]");
+      } while ($idNext);
+      return $uniqIds;
+    } catch (PDOException $e) {
+      throw new Exception("can't get uniqIds from $table: " . $e->getMessage());
     }
   }
 
@@ -802,25 +836,19 @@ $this->router->log("debug", " NEW UNIQCODE");
       $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
     }
 
-/* TODO: HANDLE UNIQUENES.................................
-    // multi: MASTER,secondUniqId,thirdUniqId,..., or firstUniqId,SLAVE,thirdUniqId,..., or NULL
+    // add condition to get only first 'uniq' persons
+    $sql .= " AND ";
+    $sql .= "uniq_prev is NULL";
     if (
       $sieves &&
-      $sieves["multi"]
+      $sieves["uniqIds"]
     ) {
-      $sql .= " AND ";
-      $multiParts = explode(',', $string);
-      $sql .= "((multi IS NULL) OR ";
-      $sql .= "(multi LIKE '%MASTER%')";
-      foreach ($multiParts as $multipart) {
-        $sql .= " OR (multi LIKE '%,$multipart,%')";
+      foreach ($sieves["uniqIds"] as $uniqId) {
+        $sql .= " OR ";
+        $sql .= "person.id = $uniqId";
       }
-      $sql .= ")";
-    } else {
-      $sql .= " AND ";
-      $sql .= "((multi IS NULL) OR (multi LIKE '%MASTER%''))"; // if multi starts with a 'X', it is the master of a 'uniquified' group
     }
-*/
+
     return [ $sql, $params ];
   }
 

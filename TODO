@@ -50,6 +50,8 @@ You can load the locale you want into localStorage, then refresh the page. Have 
 
  - move to https (see: <https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps>)
  - better generalize for easier customization of sources
+ - in list view show only one page of results (20?, 30?); then, when uner is close
+   to scroll to the end of page, load next page
 
 DONE:
  - search() should issue a persons reload...

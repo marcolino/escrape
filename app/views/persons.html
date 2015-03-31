@@ -1,37 +1,35 @@
 <div NOclass="container">
-  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':false" ng-class="{'person-disabled': person.name === 'Samantha'}">
+  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':false"
+    ng-class="{
+      'person-inactive': person.active === '0',
+      'person-uniq-id-last': uniqIdLast('{{person.id_person}}')
+    }">
     <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
-      <a href="" ng-click="multiShow('{{person.id_person}}')" class="no-text-decoration">
-        <span style="vertical-align:top;">
-          <span ng-if="person.multi === 1">
-            <i class="fa fa-plus-square" NOstyle="color:darkgreen"></i>
-          </span>
-          <span ng-if="person.multi !== 1">
-            <i class="fa fa-fw"></i>
-          </span>
-        </span>
-      </a>
-      <span class="img-clip-container" style="background:#333" ng-attr-title="{{person.name}}">
-        <a ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
-          <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-rounded img-clip"
+      <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
+        <a href="" ng-click="uniqIdShow('{{person.id_person}}')" class="no-text-decoration">
+          <i class="fa fa-fw"
             ng-class="{
-              'img-thruthful-yes': person.thruthful === 'yes',
-              'img-thruthful-no': person.thruthful === 'no',
-              'img-thruthful-unknown': person.thruthful === 'unknown',
-            }"
-          />
+            'fa-plus-square': uniqIdFirst('{{person.id_person}}') && !uniqIdFirstIsShown('{{person.id_person}}'),
+            'fa-minus-square': uniqIdFirst('{{person.id_person}}') && uniqIdFirstIsShown('{{person.id_person}}')
+           }"></i>
         </a>
-      </span>
-<!--
-<div class="visible-never col-xs-12 col-sm-12 col-md-12 col-lg-12">
-  <div class="person-name">
-    <span style="text-align: left;">{{person.name}}</span>
-  </div>
-</div>
--->
-
+      </div>
+      <div class="showcase-right">
+        <div class="img-rounded img-clip-container" style="background:#222" ng-attr-title="{{person.name}}">
+          <a href="" ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
+            <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="NOimg-rounded img-clip"
+              ng-class="{
+                'img-thruthful-yes': person.thruthful === 'yes',
+                'img-thruthful-no': person.thruthful === 'no',
+                'img-thruthful-unknown': person.thruthful === 'unknown',
+              }"
+            />
+          </a>
+        </div>
+      </div>
     </div>
+
     <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
 
       <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
@@ -81,7 +79,7 @@
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
           <span ng-if="person.new === '1'">
             <div class="person-new">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person is new (was created on {{person.timestamp_creation * 1000 | date:'medium'}})" >
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is new (first seen on {{person.timestamp_creation * 1000 | date:'dd MMMM yyyy, hh:mm'}})" ><!-- TODO: set a variable in controller ('personCreationDateFormat'?) -->
                 <i class="glyphicon glyphicon-star text-danger"></i>
                 <!--<span class="label label-as-badge label-danger"><i class="glyphicon glyphicon-star"></i></span>-->
               </button>
@@ -89,7 +87,7 @@
           </span>
           <span ng-if="person.new !== '1'">
             <div class="person-notnew">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="date this person last sync'd is {{person.timestamp_last_sync * 1000 | date:'medium'}}">
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is old (first seen on {{person.timestamp_creation * 1000 | date:'medium'}}">
                 <i class="glyphicon glyphicon-star"></i>
                 <!--<span class="label label-as-badge"><i class="glyphicon glyphicon-star"></i></span>-->
               </button>

@@ -161,6 +161,14 @@ class Router {
           $this->error($e);
         }
       });
+      $this->app->get("/getUniqIds/:id", function($id) { # ==========================
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->getUniqIds($id));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
     }); # ===================================================================
 
     # === users group =======================================================

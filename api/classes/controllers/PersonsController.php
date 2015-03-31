@@ -266,13 +266,14 @@ $this->router->log("debug", " INSERTING ");
     $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
     $persons = $this->db->getPersonListSieved(null);
 
-    # check every couple of persons (avoiding permutations)
+    # build an array of persons indexed by id, instead then by a progressive counter
     $persons_count = count($persons);
     for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
       $personsById[$persons[$i]["id"]] = $persons[$i];
     }
 #$this->router->log("info", "personsById:" . any2string($personsById));
 
+    # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count - 1; $i++) {
       for ($j = $i + 1; $j < $persons_count; $j++) {
         if (
@@ -281,6 +282,7 @@ $this->router->log("debug", " INSERTING ");
         ) { // these two persons are unique
           $id1 = $persons[$i]["id"];
           $id2 = $persons[$j]["id"];
+  $this->router->log("info", "assertPersonsUniqueness() - found 'uniq' persons: " . $persons[$i]['key'] . " and " . $persons[$j]['key']);
 
           // follow next unique chain, and add the 2nd person id as additional unique (next) person
           $idNext = $personsById["$id1"]["uniq_next"];
@@ -288,41 +290,26 @@ $this->router->log("debug", " INSERTING ");
             $idNext = $personsById["$idNext"]["uniq_next"];
           }
           $id = $idNext ? $idNext : $id1;
+if ($personsById["$id"]["uniq_next"] == $id2) {
+  $this->router->log("info", "assertPersonsUniqueness() - we are going to setPerson() (a costly op) a uniq_next field value of '$id2' for person id $id, but the value was already there: please test this case in code and avoid updating the DB...");
+}
           $personsById["$id"]["uniq_next"] = $id2;
           $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
 
-          // follow prev unique chain, and add the 1nd person id as additional unique (previous) person
+          // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
           $idPrev = $personsById["$id2"]["uniq_prev"];
           while ($idPrev && $personsById["$idPrev"]["uniq_prev"]) {
             $idPrev = $personsById["$idPrev"]["uniq_prev"];
           }
           $id = $idPrev ? $idPrev : $id2;
+if ($personsById["$id"]["uniq_next"] == $id1) {
+  $this->router->log("info", "assertPersonsUniqueness() - we are going to setPerson() (a costly op) a uniq_prev field value of '$id2' for person id $id, but the value was already there: please test this case in code and avoid updating the DB...");
+}
           $personsById["$id"]["uniq_prev"] = $id1;
           $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
         }
       }
     }
-  }
-
-  /**
-   * Assert persons uniqueness OLD
-   */
-  public function assertPersonsUniquenessOLDDDDDDDDDDDDDD() {
-    $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
-    $persons = $this->db->getPersonListSieved(null);
-
-    # check every couple of persons (avoiding permutations)
-    $persons_count = count($persons);
-    for ($i = 0; $i < $persons_count - 1; $i++) {
-      for ($j = $i + 1; $j < $persons_count; $j++) {
-        if (
-          ($persons[$i]["name"] === $persons[$j]["name"]) ||
-          ($persons[$i]["phone"] === $persons[$j]["phone"])
-        ) {
-          $this->setPersonsUniqueness($persons[$i]["id"], $persons[$j]["id"], true);
-        }          
-      }          
-    }          
   }
 
   /**
@@ -414,13 +401,14 @@ $this->router->log("debug", " INSERTING ");
     return $cities;
   }
 
-  /**
+/*
+  / **
    * Get two persons uniqueness value (are they assumed to be the same person)
    *
    * @return null/boolean  null  if same value is not set (persons are probably not the same)
    *                       true  if same value is set (persons are not the same)
    *                       false if same value is set (persons are the same)
-   */
+   * /
   public function getPersonsUniqueness($personId1, $personId2, $userId = null) {
     $this->router->log("info", "getPersonsUniqueness()");
     # TODO: check null in $userId causes default value (DB_SYSTEM_USER_ID) set in $this->db->getPersonsUniqcode()... !!!
@@ -432,17 +420,18 @@ $this->router->log("debug", " INSERTING ");
     }
   }
 
-  /**
+  / **
    * Set persons uniqueness value (they are assumed to be the same person)
    *
    * @return boolean  true    if value was set successfully
    *                  false   if some error occurred
-   */
+   * /
   public function setPersonsUniqueness($personId1, $personId2, $same, $userId = null) {
     $this->router->log("info", "setPersonsUniqueness($personId1, $personId2)");
     # TODO: check null in $userId causes default value (DB_SYSTEM_USER_ID) set in $this->db->getPersonsUniqcode()... !!!
     return $this->db->setPersonsUniqcode($personId1, $personId2, $same, $userId);
   }
+*/
 
 # TODO: pass $userId to db functions, in user functions (not in system ones...)
 
@@ -453,6 +442,7 @@ $this->router->log("debug", " INSERTING ");
     $photos = $this->db->getByField("photo", "id_person", $id);
     #$person["photos"] = $photos;
     ###################################################################################
+/*
     $userId = 2; # TODO: get logged user id (from "authdata"?) ...
     $uniqcodes = $this->db->getPersonsUniqcodes($userId);
     if (is_array($uniqcodes)) {
@@ -465,6 +455,7 @@ $this->router->log("debug", " INSERTING ");
         }
       }
     }
+*/
     ###################################################################################
     $person["photos"] = $photos;
 
@@ -508,6 +499,9 @@ $this->router->log("debug", " INSERTING ");
         throw new Exception("Assertion failed: getListSieved(): (isset(\$result[\$personId])"); # TODO: JUST TO DEBUG!
       }
 
+      // store each person by it's person id ("id" field is relative to details table)
+      $result[$personId] = $person;
+/*
       // fields with only "master" table values
       foreach (
         [
@@ -544,6 +538,7 @@ $this->router->log("debug", " INSERTING ");
         }
       }
       #$this->router->log("debug", "result: " . var_export($result, true));
+*/
 
       // fields "calculated"
       //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
@@ -551,6 +546,7 @@ $this->router->log("debug", " INSERTING ");
       $result[$personId]["comments_count"] = $comments->countByPerson($personId);
       $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
+$this->router->log("debug", "getListSieved() - result: " . var_export($result, true));
 
 /*
     # uniquify persons
@@ -689,6 +685,16 @@ $this->router->log("debug", " * merging keys - field: " . $field);
 throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     }
     return $cardDeck;
+  }
+
+  public function getUniqIds($id) {
+    if (($uniqIds = $this->db->getUniqIds($id))) {
+$this->router->log("debug", "+++ getUniqIds: " . any2String($uniqIds));
+      return $uniqIds;
+    } else {
+$this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
+      return [];
+    }
   }
 
   private function cleanName($value) {
@@ -1113,6 +1119,7 @@ $this->router->log("debug", "photoGetAll($personId)");
 
 
 
+/*
   # TODO: REMOVE-ME (can use sync even @OFFICE, now...)
   # TODO: DEBUG-ONLY
   public function test() {
@@ -1214,6 +1221,7 @@ $this->router->log("debug", "test OK");
     $this->router->log("debug", " Xresult: " . var_export($result, true));
     return true;
   }
+*/
 }
 
 ?>

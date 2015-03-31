@@ -14,9 +14,9 @@ dirappdb="/var/www/html/escrape/api/db"
 sudo /bin/rm "$dirapplogs/"*-*-*.log
 sqlitebrowser "$dirappdb/escrape.sqlite" &
 sleep 1
-gnome-terminal --title="$dirhttplogs/error.log" --geometry=150x12+150+500 -x sh -c "tail -f $dirhttplogs/error.log"
-gnome-terminal --title="$dirapplogs/*-*-*.log" --geometry=150x12+190+280 -x sh -c "tail -f $dirapplogs/*-*-*.log"
-gnome-terminal --title="$dirapplogs/curl.log" --geometry=100x8+230+120 -x sh -c "tail -f $dirapplogs/curl.log"
+gnome-terminal --title="$dirhttplogs/error.log" --geometry=150x12+150+500 -x sh -c "less +F $dirhttplogs/error.log"
+gnome-terminal --title="$dirapplogs/*-*-*.log" --geometry=150x12+190+280 -x sh -c "less +F $dirapplogs/*-*-*.log"
+gnome-terminal --title="$dirapplogs/curl.log" --geometry=100x8+230+120 -x sh -c "less +F $dirapplogs/curl.log"
 subl
 killall grunt 2>/dev/null
 grunt serve

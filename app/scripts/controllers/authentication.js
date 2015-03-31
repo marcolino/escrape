@@ -25,6 +25,7 @@ app.controller('AuthenticationController',
         cityCode: cfg.cityCode,
         categoryCode: cfg.category,
       },
+      uniqIds: [],
     };
     $scope.sievesOriginal = {};
 

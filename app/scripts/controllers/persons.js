@@ -212,10 +212,47 @@ console.log('loadPersons() - main');
     );
   };
 
-  $scope.multiShow = function(id) {
-    console.log('multiShow('+id+')');
-    $rootScope.sieves.multi = id;
-    loadPersons();
+  $scope.uniqIdShow = function(id) {
+    if ($scope.uniqIdFirstIsShown()) {
+      // this 'uniq' person is already opened
+      var length = $rootScope.sieves.uniqIds.length;
+      $rootScope.sieves.uniqIds = [];
+      if (length > 0) {
+        console.log('uniqIdShow('+id+') => CLOSING...');
+        loadPersons();
+      }
+    } else {
+      Persons.getUniqIds(id).then(function(uniqIds) {
+        console.log('uniqIdShow('+id+') => ', uniqIds);
+        $rootScope.sieves.uniqIds = uniqIds;
+        if (uniqIds.length > 0) {
+          loadPersons();
+        }
+      });
+    }
+  };
+
+  $scope.uniqIdFirst = function(id) {
+    var person = $scope.persons[id];
+    return (
+      (person['uniq_prev'] === null) &&
+      (person['uniq_next'] !== null)
+    );
+  };
+
+  $scope.uniqIdLast = function(id) {
+    var person = $scope.persons[id];
+    return (
+      (person['uniq_prev'] !== null) &&
+      (person['uniq_next'] === null)
+    );
+  };
+
+  $scope.uniqIdFirstIsShown = function(id) {
+    return !(
+      ($rootScope.sieves.uniqIds.length === 0) ||
+      ($rootScope.sieves.uniqIds[0] === parseInt(id))
+    );
   };
 
   $scope.vote = function(vote) {

@@ -2,8 +2,12 @@
 #
 # Erase dababase (DB + photos) and re-sync it
 
+clean=${1}
+
 clear
-#echo "erasing database..."
-#sudo rm -rf /var/www/html/escrape/api/db/*
+if [ "$clean" = "clean" ]; then
+  echo "erasing database..."
+  sudo rm -rf /var/www/html/escrape/api/db/*
+fi
 echo "re-syncing persons..."
 time curl -X GET -i localhost/escrape/api/persons/sync && echo
