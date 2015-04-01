@@ -62,26 +62,29 @@ console.log('WATCH - calling loadPersons()...');
 
   // private methods
   function applyPersons(newPersons) {
+    console.log('PERSONS: ', newPersons);
     $scope.persons = newPersons;
-console.log('PERSONS: ', newPersons);
+    //$scope.persons = order(newPersons);
   }
 
   function loadPersons() {
-console.log('loadPersons() - $rootScope.sieves:', $rootScope.sieves);
+    //console.log('loadPersons() - $rootScope.sieves:', $rootScope.sieves);
     Persons.getPersons($rootScope.sieves).then(function(persons) {
       applyPersons(persons);
     });
   }
 
-  if (!$scope.personId) { // load persons list
-/*
-console.log('loadPersons() - main');
-    //loadPersons();
-    Persons.getPersons($rootScope.sieves).then(function(persons) {
-      $scope.persons = persons;
+  function order(obj) { // TODO: !!!...
+    console.info('order() - ', obj);
+    //var list = {"you": 100, "me": 75, "foo": 116, "bar": 15};
+    var objSorted = Object.keys(obj).sort(function(a, b) {
+      return obj[a].name >= obj[b].name
     });
-*/
-  } else { // load single person
+    console.info(objSorted);
+    return(objSorted);
+  }
+
+  if ($scope.personId) { // load single person
     Persons.getPerson($scope.personId).then(function(person) {
       if (!!cfg.fake) { console.log('person(', $scope.personId, ')', person); }
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
@@ -90,7 +93,8 @@ console.log('loadPersons() - main');
       $scope.person.nationality = 'it';
       //$scope.person.nat = $scope.person.nationality; // TODO... ???
       $scope.person.vote = 5;
-      $scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
+      //$scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
+      $scope.person.streetAddress = $scope.person.address;
       $scope.person.streetRegion = 'it';
       $scope.$watch('person.streetAddress', function() {
          console.log('$watch: Hey, person.streetAddress has changed!');
@@ -106,7 +110,71 @@ console.log('loadPersons() - main');
     });
   }
 
+
   // public methods
+
+  $scope.isUniqPrimary = function(personId) {
+    //console.log('@ isUniqPrimary('+personId+')');
+    /* jshint camelcase: false */
+    return ($scope.persons[personId].uniq_prev === null);
+    // TODO: why other camel_case fields do not throw camel_case warning?
+    /* jshint camelcase: true */
+  };
+
+  $scope.isUniqPrimaryShown = function(personId) {
+    //console.log('@ isUniqPrimaryShown('+personId+')');
+    /* jshint camelcase: false */
+    return (
+      $scope.isUniqPrimary(personId) &&
+      $scope.persons[personId].uniq_opened
+    );
+    /* jshint camelcase: true */
+  };
+
+  $scope.uniqShow = function(personId) {
+    //console.log('@ uniqPrimaryOpen('+personId+')');
+    /* jshint camelcase: false */
+    if ($scope.isUniqPrimary(personId)) {
+      var opened = $scope.persons[personId].uniq_opened ? false : true;
+      $scope.persons[personId].uniq_opened = opened;
+      var id = personId;
+      do {
+        id = $scope.persons[id].uniq_next;
+        if (id) {
+          $scope.persons[id].uniq_opened = opened;
+        }
+      } while (id);
+    } else {
+      console.error('ASSERT FAILURE: Can\'t uniqShow('+personId+') on a secondary uniq!!!'); // TODO...
+    }
+    /* jshint camelcase: true */
+  };
+
+  $scope.isUniqShown = function(personId) {
+    //console.log('@ isUniqShown('+personId+')');
+    /* jshint camelcase: false */
+    return (
+      $scope.isUniqPrimary(personId) ||
+      ($scope.persons[personId].uniq_opened === true)
+    );
+    /* jshint camelcase: true */
+  };
+
+/*
+  $scope.setUniqPrimaryFlag = function(persons) {
+    console.log('setUniqPrimaryFlag:', persons);
+    var show = false;
+    angular.forEach(persons, function(person) {
+      var id = person.id_person;
+      if (person.uniqPrev === null) {
+        show = true;
+      }
+      person['uniqShow'] = show;
+    });
+  };
+*/
+
+/*
   $scope.setProperty = function(id, prop) {
     console.info('setProperty():', id, prop);
     Persons.setProperty(id, prop).then(
@@ -120,6 +188,7 @@ console.log('loadPersons() - main');
     //// reset the form once values have been consumed
     //$scope.form.name = '';
   };
+*/
 
   $scope.addPerson = function() {
     Persons.addPerson($scope.form.name).then(
@@ -212,6 +281,13 @@ console.log('loadPersons() - main');
     );
   };
 
+/*
+  $scope.personIsSingleOrUniqFirst = function(id) {
+    return true;
+  };
+*/
+
+/*
   $scope.uniqIdShow = function(id) {
     if ($scope.uniqIdFirstIsShown()) {
       // this 'uniq' person is already opened
@@ -231,29 +307,42 @@ console.log('loadPersons() - main');
       });
     }
   };
+*/
 
+/*
   $scope.uniqIdFirst = function(id) {
     var person = $scope.persons[id];
+if (id === 1) {
+console.info('$scope.uniqIdFirst('+id+')');
+console.info('$scope.persons:', $scope.persons);
+console.info('$scope.persons[person[\'uniqNext\']][\'uniqPrev\']:', $scope.persons[person['uniqNext']]['uniqPrev']);
+}
     return (
-      (person['uniq_prev'] === null) &&
-      (person['uniq_next'] !== null)
+      (person['uniqPrev'] === null) &&
+      (person['uniqNext'] !== null) &&
+      ($scope.persons[person['uniqNext']]['uniqPrev'] === id)
     );
   };
+*/
 
+/*
   $scope.uniqIdLast = function(id) {
     var person = $scope.persons[id];
     return (
-      (person['uniq_prev'] !== null) &&
-      (person['uniq_next'] === null)
+      (person['uniqPrev'] !== null) &&
+      (person['uniqNext'] === null)
     );
   };
+*/
 
+/*
   $scope.uniqIdFirstIsShown = function(id) {
     return !(
       ($rootScope.sieves.uniqIds.length === 0) ||
       ($rootScope.sieves.uniqIds[0] === parseInt(id))
     );
   };
+*/
 
   $scope.vote = function(vote) {
     if (vote > 0) {

@@ -5,11 +5,12 @@ app.service('Persons', function($http, $q, cfg, notify) {
 
   // private methods
   function handleSuccess(response) {
-    console.info('SUCCESS - response.data:', response.data);
+    //console.info('SUCCESS - response.data:', response.data);
     if (response.data.error) {
       notify.error(response.data.error);
       return $q.reject(response.data.error); // TODO: what does $q.reject does, exactly???
     } else {
+      //console.log('RESPONSE.DATA: ', response.data);
       return response.data;
     }
   }
@@ -45,6 +46,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+/*
     setProperty: function (id, property) {
       return $http({
         method: 'PUT',
@@ -52,7 +54,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
         data: property,
       }).then(handleSuccess, handleError);
     },
-
+*/
     addPerson: function (name) {
       return $http({
         method: 'POST',
@@ -99,12 +101,14 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+/*
     getUniqIds: function (id) {
       return $http({
         method: 'GET',
         url: apiUri + 'getUniqIds' + '/' + id,
       }).then(handleSuccess, handleError);
     },
+*/
   });
 
 });

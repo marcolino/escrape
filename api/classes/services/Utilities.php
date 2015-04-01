@@ -51,7 +51,8 @@
   * Checks if an array is multi dimensional
   *
   * @param array $array   the array to be checked
-  * @return boolean       true if the array is multi dimensional, false otherwise
+  * @return boolean       true  if the array is multi dimensional
+  *                       false otherwise
   */
   function is_array_multi($array) {
     return (count($array, COUNT_RECURSIVE) > count($array));
@@ -79,4 +80,16 @@
   function any2string ($mixed) {
     return var_export($mixed, true);
   }
-?>
+
+/**
+  * Checks if a string represents an absolute url (http / https)
+  *
+  * @param string $string   the string to be checked
+  * @return boolean         true  if the string represents an absolute url (http / https),
+  *                         false otherwise 
+  */
+  function is_absolute_url($string) {
+    return preg_match("/^https?:\/\//", $string);
+  }
+
+ ?>

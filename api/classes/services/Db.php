@@ -180,9 +180,12 @@ class DB extends PDO {
     }
   }
 
-  public function getPersonListSieved($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+  public function getPersonList($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
+    if ($userId === null) {
+      $userId = self::DB_SYSTEM_USER_ID; // handle case where userId is set, but null
+    }
     $params = [];
 
     try {
@@ -211,7 +214,7 @@ class DB extends PDO {
 #throw new Exception("sql: [$sql]");
 #if ($sieves["uniqIds"]) throw new Exception("sql: [$sql]");
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#throw new Exception("sql: [$sql] => " . var_export($result, true));
+#throw new Exception("result length: " . count($result));
       return $result;
     } catch (PDOException $e) {
       #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
@@ -539,7 +542,7 @@ $this->router->log("debug", " NEW UNIQCODE");
   }
 */
 
-  public function getAverageFieldByPersonId($table, $idPerson, $fieldName) {
+  public function getAverageFieldByPersonId($table, $personId, $fieldName) {
     try {
       $sql = "
         SELECT AVG($fieldName) AS avg
@@ -547,7 +550,7 @@ $this->router->log("debug", " NEW UNIQCODE");
         WHERE id_person = :id_person
       ";
       $statement = $this->db->prepare($sql);
-      $statement->bindParam(":" . "id_person", $idPerson);
+      $statement->bindParam(":" . "id_person", $personId);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
@@ -636,9 +639,10 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
   }
 
-  /**
+/*
+  / **
    * get list of 'uniq' persons, starting from a given id
-   */
+   * /
   public function getUniqIds($id) {
     $table = "person_detail";
     try {
@@ -665,6 +669,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       throw new Exception("can't get uniqIds from $table: " . $e->getMessage());
     }
   }
+*/
 
   public function add($table, $array, $userId = self::DB_SYSTEM_USER_ID) {
     try { // add data
@@ -836,6 +841,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
     }
 
+/*
     // add condition to get only first 'uniq' persons
     $sql .= " AND ";
     $sql .= "uniq_prev is NULL";
@@ -848,7 +854,7 @@ $this->router->log("debug", " NEW UNIQCODE");
         $sql .= "person.id = $uniqId";
       }
     }
-
+*/
     return [ $sql, $params ];
   }
 

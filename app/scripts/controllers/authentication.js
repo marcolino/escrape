@@ -25,7 +25,10 @@ app.controller('AuthenticationController',
         cityCode: cfg.cityCode,
         categoryCode: cfg.category,
       },
-      uniqIds: [],
+      //uniqIds: [],
+      user: {
+        id: null,
+      },
     };
     $scope.sievesOriginal = {};
 
@@ -68,7 +71,8 @@ app.controller('AuthenticationController',
           sieves.filters.nationality.countryCode + '\0' +
           sieves.options.countryCode + '\0' +
           sieves.options.cityCode + '\0' +
-          sieves.options.categoryCode + '\0'
+          sieves.options.categoryCode + '\0' +
+          sieves.user.id + '\0'
         ;
       }
       Authentication.setSievesDigest(digest);
@@ -269,7 +273,6 @@ app.controller('AuthenticationController',
     };
 
     $scope.loadSieves = function (force) {
-      //console.log('=== $scope.loadSieves', $scope.sieves);
       $scope.sieves = {};
       var key = cfg.site.name;
       if ($scope.signedIn()) { // add authdata to key, if user is signed in
@@ -281,8 +284,13 @@ app.controller('AuthenticationController',
       $scope.sieves = $cookieStore.get(key);
       if (!$scope.sieves) {
         $scope.sieves = angular.copy($scope.sievesDefaults);
+        if ($scope.signedIn()) {
+          $scope.sieves.user.id = $rootScope.globals.currentUser.id;
+          //console.info('!!! loadSieves() - $scope.sieves.user.id:', $scope.sieves.user.id);
+        }
       }
       $rootScope.sieves = $scope.sieves;
+
       angular.copy($scope.sieves, $scope.sievesOriginal); // save loaded sieves as sievesOriginal, to be able to check for modifications
       console.log('$scope.sievesOriginal:', $scope.sievesOriginal);
 
@@ -324,19 +332,18 @@ app.controller('AuthenticationController',
       switch (section) {
         default:
         case null:
-          //$scope.sieves = angular.copy($scope.sievesDefaults);
           angular.copy($scope.sievesDefaults, $scope.sieves);
           break;
         case 'search':
-          //$scope.sieves.search = angular.copy($scope.sievesDefaults.search);
           angular.copy($scope.sievesDefaults.search, $scope.sieves.search);
           break;
         case 'filters':
-          //$scope.sieves.filters = angular.copy($scope.sievesDefaults.filters);
           angular.copy($scope.sievesDefaults.filters, $scope.sieves.filters);
           break;
         case 'options':
-          //$scope.sieves.options = angular.copy($scope.sievesDefaults.options);
+          angular.copy($scope.sievesDefaults.options, $scope.sieves.options);
+          break;
+        case 'user':
           angular.copy($scope.sievesDefaults.options, $scope.sieves.options);
           break;
       }
@@ -346,7 +353,7 @@ app.controller('AuthenticationController',
     };
 
     function setCredentials (data) {
-      Authentication.setCredentials(data.user.username, data.user.password, data.user.role);
+      Authentication.setCredentials(data.user.id, data.user.username, data.user.password, data.user.role);
     }
 
     // load sieves (search, filters, options, ...)

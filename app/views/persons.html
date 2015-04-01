@@ -1,5 +1,7 @@
-<div NOclass="container">
-  <div class="row row-gap" ng-repeat="(id, person) in persons | orderObjectBy:'comments_count':false"
+<div class="container-compact">
+  <!-- <div class="row row-gap" ng-repeat="(idx, person) in persons | orderObjectBy:'comments_count':false" -->
+  <div class="row row-gap" ng-repeat="person in persons"
+    ng-show="isUniqShown('{{person.id_person}}')"
     ng-class="{
       'person-inactive': person.active === '0',
       'person-uniq-id-last': uniqIdLast('{{person.id_person}}')
@@ -7,11 +9,11 @@
     <!--<pre> person: {{person}} </pre>-->
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
       <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
-        <a href="" ng-click="uniqIdShow('{{person.id_person}}')" class="no-text-decoration">
+        <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
           <i class="fa fa-fw"
             ng-class="{
-            'fa-plus-square': uniqIdFirst('{{person.id_person}}') && !uniqIdFirstIsShown('{{person.id_person}}'),
-            'fa-minus-square': uniqIdFirst('{{person.id_person}}') && uniqIdFirstIsShown('{{person.id_person}}')
+            'fa-plus-square': isUniqPrimary('{{person.id_person}}'),
+            'fa-minus-square': isUniqPrimaryShown('{{person.id_person}}')
            }"></i>
         </a>
       </div>

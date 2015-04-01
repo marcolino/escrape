@@ -43,18 +43,18 @@ class CommentsController {
     return $this->db->getByField("comment", "phone", $phone);
   }
   
-  public function countByPerson($idPerson) {
-    if (!$idPerson) {
+  public function countByPerson($personId) {
+    if (!$personId) {
       throw new Exception("can't get comments count by person: no person id specified");
     }
-    return $this->db->countByField("comment", "id_person", $idPerson);
+    return $this->db->countByField("comment", "id_person", $personId);
   }
 
-  public function getAverageValutationByPerson($idPerson) {
-    if (!$idPerson) {
+  public function getAverageValutationByPerson($personId) {
+    if (!$personId) {
       throw new Exception("can't get comments average valutation by person: no person id specified");
     }
-    return $this->db->getAverageFieldByPersonId("comment", $idPerson, "content_valutation")["avg"];
+    return $this->db->getAverageFieldByPersonId("comment", $personId, "content_valutation")["avg"];
   }
 
   /**

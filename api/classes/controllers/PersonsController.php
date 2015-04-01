@@ -205,7 +205,12 @@ $this->router->log("debug", " INSERTING ");
           $personId = $this->add($personMaster, $personDetail);
 
           foreach ($photosUrls as $photoUrl) { // add photos
-            $this->photoAdd($personId, $source["url"] . "/" . $photoUrl);
+            #if (preg_match("/^https?:\/\//", $photoUrl)) { // absolute photo url
+            if (is_absolute_url($photoUrl)) { // absolute photo url
+              $this->photoAdd($personId, $photoUrl);
+            } else { // relative photo url
+              $this->photoAdd($personId, $source["url"] . "/" . $photoUrl);
+            }
           }
         }
         # TODO: REALLY DO NOT ADD PHOTOS FOR OLD KEYS/PERSONS ???
@@ -250,7 +255,7 @@ $this->router->log("debug", " INSERTING ");
   private function assertPersonsActivity($timestampStart) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     $this->router->log("info", " timestamp of last sync start: " . date("c", $timestampStart));
-    foreach ($this->db->getPersonListSieved(/* no sieve, */ /* no user: system user */) as $person) {
+    foreach ($this->db->getPersonList(/* no sieve, */ /* no user: system user */) as $person) {
       $timestampLastSyncPerson = $person["timestamp_last_sync"];
       // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
       $active = ($timestampLastSyncPerson >= $timestampStart);
@@ -264,7 +269,7 @@ $this->router->log("debug", " INSERTING ");
    */
   public function assertPersonsUniqueness() {
     $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
-    $persons = $this->db->getPersonListSieved(null);
+    $persons = $this->db->getPersonList(null);
 
     # build an array of persons indexed by id, instead then by a progressive counter
     $persons_count = count($persons);
@@ -436,7 +441,7 @@ $this->router->log("debug", " INSERTING ");
   public function get($id) {
 #$this->router->log("info", " +++ get person [$id]: " . var_export($id, true));
 #print "get($id)\n";
-    $person = $this->db->get("person", $id);
+    $person = $this->db->getPerson($id);
     $photos = $this->db->getByField("photo", "id_person", $id);
     #$person["photos"] = $photos;
     ###################################################################################
@@ -476,25 +481,31 @@ $this->router->log("debug", " INSERTING ");
   }
   
   /**
-   * get all persons list, filtered with given sieves, and 'uniquified'
+   * get all persons list, filtered with given data sieves
    *
-   * @param  array $sieves
+   * @param  array $data
    * @return array
    */
-  public function getListSieved($sieves) {
-    #$this->router->log("debug", "getListSieved(); sieves: " . var_export($sieves, true));
+  public function getList($data) {
+$this->router->log("debug", " ..... getList(); userId: " . $data["user"]["id"]);
     $result = [];
+$this->router->log("debug", " ..... 2");
+    $userId = $data["user"]["id"];
+$this->router->log("debug", " ..... 3");
     $comments = new CommentsController($this->router);
+$this->router->log("debug", " ..... 4");
 
-    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
-
-    foreach ($this->db->getPersonListSieved($sieves, $userId) as $person) {
+    $persons = $this->db->getPersonList($data, $userId);
+$this->router->log("debug", " ..... 5");
+$this->router->log("debug", " ..... getPersonList => ");
+#$this->router->log("debug", " ..... getPersonList => " . var_export($persons, true));
+    foreach ($persons as $person) {
       // N.B: here we (could) get multiple records for each person id
       $personId = $person["id_person"];
       if (!isset($result[$personId])) {
         $result[$personId] = []; // initialize this person array in results
       } else { # TODO: should never happen...
-        throw new Exception("Assertion failed: getListSieved(): (isset(\$result[\$personId])"); # TODO: JUST TO DEBUG!
+        throw new Exception("Assertion failed: getList(): (isset(\$result[\$personId])"); # TODO: JUST TO DEBUG!
       }
 
       // store each person by it's person id ("id" field is relative to details table)
@@ -544,13 +555,14 @@ $this->router->log("debug", " INSERTING ");
       $result[$personId]["comments_count"] = $comments->countByPerson($personId);
       $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
     }
-#$this->router->log("debug", "getListSieved() - result: " . var_export($result, true));
+#$this->router->log("debug", "getList() - result: " . var_export($result, true));
 
 /*
     # uniquify persons
     $this->personsUniquify($result);
 */
 
+$this->router->log("@@@ result: ", any2string($result));
     return $result;
   }
 
@@ -687,6 +699,7 @@ throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
     return $cardDeck;
   }
 
+/*
   public function getUniqIds($id) {
     if (($uniqIds = $this->db->getUniqIds($id))) {
 $this->router->log("debug", "+++ getUniqIds: " . any2String($uniqIds));
@@ -696,6 +709,7 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
       return [];
     }
   }
+*/
 
   private function cleanName($value) {
     $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
@@ -750,44 +764,44 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
   /**
    * Add a photo
    *
-   * @param  integer $idPerson the id of the person's photo
+   * @param  integer $personId the id of the person's photo
    * @param  string $photoUrl  the url of the photo
    * @return integer: false    photo not added (duplication / similarity)
    *                  >= 0     photo added to filesystem and to database
    */
-  public function photoAdd($idPerson, $photoUrl) {
+  public function photoAdd($personId, $photoUrl) {
     // 'normalize' relative urls
     $photoUrl = str_replace("../", "", $photoUrl);
 
     // build photo object from url
     $photo = new Photo([ "url" => $photoUrl ]);
 
-    $photos = $this->db->getByField("photo", "id_person", $idPerson);
+    $photos = $this->db->getByField("photo", "id_person", $personId);
 
     // check if photo url did not change from last download
-    if ($this->photoCheckLastModified($idPerson, $photo, $photos)) {
-      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is not changed, ignoring");
+    if ($this->photoCheckLastModified($personId, $photo, $photos)) {
+      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is not changed, ignoring");
       return false; // same Last-Modified tag found
     }
 
     // check if photo is an exact duplicate
-    if ($this->photoCheckDuplication($idPerson, $photo, $photos)) {
-      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is a duplicate, ignoring");
+    if ($this->photoCheckDuplication($personId, $photo, $photos)) {
+      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is a duplicate, ignoring");
       return false; // duplicate found
     }
 
     // check if photo has similarities
     $photo->signature();
 
-    if ($this->photoCheckSimilarity($idPerson, $photo, $photos)) {
-      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " is a similarity, ignoring");
+    if ($this->photoCheckSimilarity($personId, $photo, $photos)) {
+      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is a similarity, ignoring");
       return false; // similarity found
     }
-    $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $idPerson . " SEEMS NEW, ADDING...");
+    $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING...");
 
     $showcase = true; # TODO: decide $showcase (flag to denote showcase photo) ...
 
-    $photo->idPerson($idPerson);
+    $photo->idPerson($personId);
     $photo->domain();
     $photo->sum();
     $photo->timestampCreation(time());
@@ -795,8 +809,8 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
     $photo->showcase($showcase);
    
     // store this photo
-    if (($number = $this->photoStore($idPerson, $photo)) === false) {
-      $this->router->log("error", "photo " . $photo->url() . " for person id " . $idPerson . " could not be stored locally");
+    if (($number = $this->photoStore($personId, $photo)) === false) {
+      $this->router->log("error", "photo " . $photo->url() . " for person id " . $personId . " could not be stored locally");
       return false; // error storing photo locally
     }
     $photo->number($number);
@@ -837,13 +851,13 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
   /**
    * Check photo last modification timestamp
    *
-   * @param  integer $idPerson:     the id of person to check for photo last modification
+   * @param  integer $personId:     the id of person to check for photo last modification
    * @param  Photo: $photo          the photo object to check for last modification
    * @param  Photo array: $photos   the photos array of this person
    * @return boolean: true          if photo has not been modified
    *                  false         if photo has been modified (and should be downloaded)
    */
-  private function photoCheckLastModified($idPerson, $photo, $photos) {
+  private function photoCheckLastModified($personId, $photo, $photos) {
     $photoLastModificationTimestamp = $photo->getLastModificationTimestamp();
     if ($photos !== []) {
       if (is_array_multi($photos)) { // more than one result returned
@@ -884,12 +898,12 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoL
   /**
    * Check for photo exact duplication
    *
-   * @param  integer $idPerson:  the id of person to check for photo duplication
+   * @param  integer $personId:  the id of person to check for photo duplication
    * @param  Photo: $photo       the photo object to check for duplication
    * @return boolean: true       if photo is a duplicate
    *                  false      if photo is not a fuplicate
    */
-  private function photoCheckDuplication($idPerson, $photo, $photos) {
+  private function photoCheckDuplication($personId, $photo, $photos) {
     if ($photos !== []) {
       if (is_array_multi($photos)) { // more than one result returned
         foreach ($photos as $p) {
@@ -918,12 +932,12 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoL
   /**
    * Check for photo similarity
    *
-   * @param  integer $idPerson:  the id of person to check for photo similarity
+   * @param  integer $personId:  the id of person to check for photo similarity
    * @param  Photo: $photo       the photo object to check for similarity
    * @return boolean: true       if photo is similar to some else photo
    *                  false      if photo is not similar to some else photo
    */
-  private function photoCheckSimilarity($idPerson, $photo, $photos) {
+  private function photoCheckSimilarity($personId, $photo, $photos) {
     $retval = false;
     if ($photos !== []) {
       if (is_array_multi($photos)) { // more than one result returned
@@ -955,15 +969,15 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoL
   /**
    * Store a photo on local file system
    *
-   * @param  integer $idPerson   the id of the person for which to store photo
+   * @param  integer $personId   the id of the person for which to store photo
    * @param  Photo $photo        the photo to be stored
    * @return integer: >= 0       the progressive number of the photo
    */
-  public function photoStore($idPerson, $photo) {
+  public function photoStore($personId, $photo) {
     #$this->router->log("debug", "photoStore - storing photo");
 
-    $keyPerson = $this->db->get("person", $idPerson)["key"];
-    $personPhotosCount = $this->photoGetCount($idPerson);
+    $keyPerson = $this->db->get("person", $personId)["key"];
+    $personPhotosCount = $this->photoGetCount($personId);
     $number = $personPhotosCount + 1;
     $dirname = self::PHOTOS_PATH . $keyPerson . "/";
     $filename = sprintf("%03d", $number);
@@ -1030,12 +1044,12 @@ $this->router->log("debug", "photoGetAll($personId)");
   /**
    * Get a photo of person given it's number
    *
-   * @param  integer $idPerson   the id of the person whose photo to load
+   * @param  integer $personId   the id of the person whose photo to load
    * @param  integer $number     the progressive number of the photo
    * @return array   the photo structure
    */
-  private function photoGetByNumber($idPerson, $number) {
-    $photos = $this->db->getByFields("photo", [ "id_person" => $idPerson, "number" => $number ]);
+  private function photoGetByNumber($personId, $number) {
+    $photos = $this->db->getByFields("photo", [ "id_person" => $personId, "number" => $number ]);
     return $photos[0];
   }
 
@@ -1047,39 +1061,39 @@ $this->router->log("debug", "photoGetAll($personId)");
    *                 "no"        if photo is not uniqu on the web
    *                 "unknown"   if photo uniqueness on the web is unknown
    */
-  public function photoCheckThruthfulness($idPerson, $number) {
-    $photo = $this->photoGetByNumber($idPerson, $number);
+  public function photoCheckThruthfulness($personId, $number) {
+    $photo = $this->photoGetByNumber($personId, $number);
     return $photo["thruthful"];
   }
 
   /**
    * Get photos of person given their showcase flag
    *
-   * @param  integer $idPerson   the id of the person whose photo to load
+   * @param  integer $personId   the id of the person whose photo to load
    * @param  integer $showcase   showcase flag (true / false)
    * @return array   the photo structure
    */
-  private function photoGetByShowcase($idPerson, $showcase) {
-    $photos = $this->db->getByFields("photo", [ "id_person" => $idPerson, "showcase" => $showcase ]);
+  private function photoGetByShowcase($personId, $showcase) {
+    $photos = $this->db->getByFields("photo", [ "id_person" => $personId, "showcase" => $showcase ]);
     return $photos[0];
   }
 
   /**
    * Get count of photos of person
    *
-   * @param  integer $idPerson the id of the person's photo
+   * @param  integer $personId the id of the person's photo
    * @return integer           the number of photos of this person
    */
-  public function photoGetCount($idPerson) {
-    $count = $this->db->countByField("photo", "id_person", $idPerson);
-    #$this->router->log("debug", "photoGetCount($idPerson): $count");
+  public function photoGetCount($personId) {
+    $count = $this->db->countByField("photo", "id_person", $personId);
+    #$this->router->log("debug", "photoGetCount($personId): $count");
     return $count;
   }
 
   /**
    * Show a photo of person
    *
-   * @param  integer $idPerson the id of the person's photo
+   * @param  integer $personId the id of the person's photo
    * @param  integer $number   the progressive number of the photo in the person's photos collection
    * @param  string $type      the type of the photo:
    *                             - "full"    shows the full version (default)
@@ -1088,8 +1102,8 @@ $this->router->log("debug", "photoGetAll($personId)");
    *
    * TODO: do we need this function, or will always use "<img ns-src='{{person.photo_path}}'>" ?
    */
-  public function photoShow($idPerson, $number, $type = "full") {
-    $photo = $this->db->getByFields("photo", ["id_person" => $idPerson, "number" => $number ]);
+  public function photoShow($personId, $number, $type = "full") {
+    $photo = $this->db->getByFields("photo", ["id_person" => $personId, "number" => $number ]);
     if (!empty($photo)) {
       header("Content-Type: " . $photo["mime"]);
       switch ($type) {

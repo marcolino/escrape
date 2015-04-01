@@ -27,7 +27,9 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
   service.login = function (username, password, callback) {
     $http.post(apiUri + 'login', { username: username, password: password })
     .success(function (response) {
-      if (!response.success) {
+      if (!response.success && response.message) {
+        notify.error(response.message);
+        return($q.reject(response.message));
       }
       callback(response);
     })
@@ -45,15 +47,17 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
     });
   };
 
-  service.setCredentials = function (username, password, role) {
+  service.setCredentials = function (id, username, password, role) {
     var authdata = Base64.encode(username + ':' + password);
     $rootScope.globals = {
       currentUser: {
+        id: id,
         username: username,
         role: role,
         authdata: authdata
       }
     };
+//console.warn('service.setCredentials() - globals:', $rootScope.globals);
 
     $http.defaults.headers.common['Authorization'] = 'Basic' + ' ' + authdata; // jshint ignore:line
     $cookieStore.put('globals', $rootScope.globals);

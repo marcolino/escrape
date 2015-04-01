@@ -4,10 +4,10 @@ PersonController
       db->add("person", $person)
     add($person)
       db->set("person", $id, $person)
-    photoAdd($idPerson, $photoUrl) {
-      photoCheckDuplication($idPerson, $photo)
-      photoCheckSimilarity($idPerson, $photo)
-        photoStore($idPerson, $photo)
+    photoAdd($personId, $photoUrl) {
+      photoCheckDuplication($personId, $photo)
+      photoCheckSimilarity($personId, $photo)
+        photoStore($personId, $photo)
         db->add("photo", $photo)
     }
   }
@@ -18,17 +18,17 @@ PersonController
     comments->getAverageValutationByPerson($person["id"])
   }
 
-  photoAdd($idPerson, $photoUrl) {
-  photoStore($idPerson, $photo)
-  photoGet($idPerson, $number)
-  photoGetAll($idPerson)
-  photoGetByNumber($idPerson, $number)
-  photoGetByShowcase($idPerson, $showcase)
-  photoShow($idPerson, $number, $type = "full")
-  photoCheckDuplication($idPerson, $photo)
-  photoCheckSimilarity($idPerson, $photo)
+  photoAdd($personId, $photoUrl) {
+  photoStore($personId, $photo)
+  photoGet($personId, $number)
+  photoGetAll($personId)
+  photoGetByNumber($personId, $number)
+  photoGetByShowcase($personId, $showcase)
+  photoShow($personId, $number, $type = "full")
+  photoCheckDuplication($personId, $photo)
+  photoCheckSimilarity($personId, $photo)
   photoCheckThruthfulness($photo)
-  photoGetCount($idPerson)
+  photoGetCount($personId)
   photoGoogleSearch()
 
 

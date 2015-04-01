@@ -59,8 +59,8 @@ class Router {
       $this->app->post("/get", function() { # ==================
         try {
           $persons = new PersonsController($this);
-          $sieves = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($persons->getListSieved($sieves));
+          $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
+          $this->success($persons->getList($data));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -161,6 +161,7 @@ class Router {
           $this->error($e);
         }
       });
+/*
       $this->app->get("/getUniqIds/:id", function($id) { # ==========================
         try {
           $persons = new PersonsController($this);
@@ -169,6 +170,7 @@ class Router {
           $this->error($e);
         }
       });
+*/
     }); # ===================================================================
 
     # === users group =======================================================
