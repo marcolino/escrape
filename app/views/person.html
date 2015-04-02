@@ -204,26 +204,26 @@
       <div ng-show="!photosOccurrencesLoading && photosOccurrencesBestGuess">
         Best guess for this photo is: <a ng-href="{{photosOccurrencesBestGuess.href}}" target="_blank"><i>{{photosOccurrencesBestGuess.text}}</i></a>
       </div>
-      <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
-      <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences">
-        <a ng-href="{{photosOccurrence.href}}" target="_blank" class="no-text-decoration">
-          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-1">
-            <div class="img-rounded img-clip-small-container">
-              <img ng-src="{{photosOccurrence.imgsrc}}" class="img-rounded img-clip-small" />
-            </div>
-          </div>
-          <div class="col-xs-8 col-sm-10 col-md-10 col-lg-11">
-            <div class="row">
-              <div class="col">
-                <i style="color:darkgreen"><small><span ng-bind-html="photosOccurrence.hrefShort"></span></small></i>
-              </div>
-              <div class="col">
-                <span ng-bind-html="photosOccurrence.text"></span>
+      <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;"><!-- TODO: ... -->
+        <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences">
+          <a ng-href="{{photosOccurrence.href}}" target="_blank" class="no-text-decoration">
+            <div class="col-xs-4 col-sm-2 col-md-2 col-lg-1">
+              <div class="img-rounded img-clip-small-container">
+                <img ng-src="{{photosOccurrence.imgsrc}}" class="img-rounded img-clip-small" />
               </div>
             </div>
-          </div>
-        </a>
-      </div>
+            <div class="col-xs-8 col-sm-10 col-md-10 col-lg-11">
+              <div class="row">
+                <div class="col">
+                  <i style="color:darkgreen"><small><span ng-bind-html="photosOccurrence.hrefShort"></span></small></i>
+                </div>
+                <div class="col">
+                  <span ng-bind-html="photosOccurrence.text"></span>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
       </div>
       <div ng-show="!photosOccurrencesLoading && photosOccurrences.length === 0">
         <div class="text-center">

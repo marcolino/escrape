@@ -1,101 +1,146 @@
 <div class="container-compact">
-  <!-- <div class="row row-gap" ng-repeat="(idx, person) in persons | orderObjectBy:'comments_count':false" -->
-  <div class="row row-gap" ng-repeat="person in persons"
-    ng-show="isUniqShown('{{person.id_person}}')"
-    ng-class="{
-      'person-inactive': person.active === '0',
-      'person-uniq-id-last': uniqIdLast('{{person.id_person}}')
-    }">
-    <!--<pre> person: {{person}} </pre>-->
+  <!-- fixed-header -->
+  <div class="row persons-header right-scrollbar-placeholder">
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
-      <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
-        <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
-          <i class="fa fa-fw"
-            ng-class="{
-            'fa-plus-square': isUniqPrimary('{{person.id_person}}'),
-            'fa-minus-square': isUniqPrimaryShown('{{person.id_person}}')
-           }"></i>
-        </a>
-      </div>
-      <div class="showcase-right">
-        <div class="img-rounded img-clip-container" ng-attr-title="{{person.name}}">
-          <a href="" ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
-            <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="NOimg-rounded img-clip"
-              ng-class="{
-                'img-thruthful-yes': person.thruthful === 'yes',
-                'img-thruthful-no': person.thruthful === 'no',
-                'img-thruthful-unknown': person.thruthful === 'unknown',
-              }"
-            />
-          </a>
-        </div>
-      </div>
     </div>
-
     <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
 
       <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-          <div class="person-name">
-            <!-- SUPERSCRIPT BADGE NEW: <span ng-show="person.new === '1'" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
-            <span style="text-align: left;">{{person.name}}</span>
-          </div>
+          <span class="persons-header-label">name</span>
         </div>
       </div>
 
       <div class="row">
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <button type="button" class="btn btn-default btn-wider" ng-attr-title="nationality: {{person.nationality}}">
-            <a ng-href="#/"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></a>
-          </button>
+          <span class="persons-header-label">nationality</span>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="person-source">
-            <button type="button" class="btn btn-default btn-wider" ng-attr-title="referral source: {{person.source_key}}" onclick="window.open('//facebook.com'); window.open('//twitter.com');"><!-- TODO: handle multiple referral sources opening... -->
-              <div class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></div>
-            </button>
-          </div>
+          <span class="persons-header-label">source</span>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone}}">
-            <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone"></i></a>
-          </button>
+          <span class="persons-header-label">phone</span>
         </div>
 
         <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
 
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="person-comments-count">
-            <button class="btn btn-default btn-wider" type="button" ng-attr-title="{{person.comments_count}} comments">
-              <!--<i class="glyphicon glyphicon-bullhorn text-default"></i>&nbsp;--><span class="label label-as-badge label-info">{{person.comments_count}}</span>
-            </button>
-          </div>
+          <button type="button" class="btn btn-default btn-wider" ng-click="setSortCriteria('comments')">
+            <span class="persons-header-label">
+              comments <i class="glyphicon glyphicon-circle-arrow-down"></i>
+            </span>
+          </button>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="person-vote">
-            <button class="btn btn-default btn-wider" type="button" ng-attr-title="vote: {{person.vote}}">
-              <!--<i class="glyphicon glyphicon-thumbs-up text-success"></i>&nbsp;--><span class="label label-as-badge label-success">{{person.vote}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
-            </button>
-          </div>
+          <span class="persons-header-label">vote</span>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <span ng-if="person.new === '1'">
-            <div class="person-new">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is new (first seen on {{person.timestamp_creation * 1000 | date:'dd MMMM yyyy, hh:mm'}})" ><!-- TODO: set a variable in controller ('personCreationDateFormat'?) -->
-                <i class="glyphicon glyphicon-star text-danger"></i>
-                <!--<span class="label label-as-badge label-danger"><i class="glyphicon glyphicon-star"></i></span>-->
+          <span class="persons-header-label">new</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /fixed-header -->
+
+  <div style="max-height: 220px; overflow-y: auto; overflow-x: hidden;"><!-- TODO: ... -->
+    <!-- TODO: REMOVE-ME, we are sorting persons object in controller...
+    <div class="row row-gap" ng-repeat="(idx, person) in persons | orderObjectBy:'comments_count':false"
+    -->
+    <div class="row row-gap" ng-repeat="person in personsList"
+      ng-show="isUniqShown('{{person.id_person}}')"
+      ng-class="{
+        'person-inactive': person.active === '0',
+        'person-uniq-id-last': isUniqLast('{{person.id_person}}')
+      }">
+      <!--<pre> person: {{person}} </pre>-->
+      <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
+        <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
+          <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
+            <i class="fa fa-fw"
+              ng-class="{
+              'fa-plus-square': isUniqPrimary('{{person.id_person}}'),
+              'fa-minus-square': isUniqPrimaryShown('{{person.id_person}}')
+             }"></i>
+          </a>
+        </div>
+        <div class="showcase-right">
+          <div class="img-rounded img-clip-container" ng-attr-title="{{person.name}}">
+            <a href="" ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
+              <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="NOimg-rounded img-clip"
+                ng-class="{
+                  'img-thruthful-yes': person.thruthful === 'yes',
+                  'img-thruthful-no': person.thruthful === 'no',
+                  'img-thruthful-unknown': person.thruthful === 'unknown',
+                }"
+              />
+            </a>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
+  
+        <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
+          <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <div class="person-name">
+              <!-- SUPERSCRIPT BADGE NEW: <span ng-show="person.new === '1'" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
+              <span style="text-align: left;">{{person.name}}</span>
+            </div>
+          </div>
+        </div>
+  
+        <div class="row">
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <button type="button" class="btn btn-default btn-wider" ng-attr-title="nationality: {{person.nationality}}">
+              <a ng-href="#/"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></a>
+            </button>
+          </div>
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+              <button type="button" class="btn btn-default btn-wider" ng-attr-title="referral source: {{person.source_key}}" onclick="window.open('//facebook.com'); window.open('//twitter.com');"><!-- TODO: handle multiple referral sources opening... -->
+                <div class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></div>
+              </button>
+          </div>
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone}}">
+              <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone"></i></a>
+            </button>
+          </div>
+  
+          <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
+  
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <div class="person-comments-count">
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="{{person.comments_count}} comments">
+                <!--<i class="glyphicon glyphicon-bullhorn text-default"></i>&nbsp;--><span class="label label-as-badge label-info">{{person.comments_count}}</span>
               </button>
             </div>
-          </span>
-          <span ng-if="person.new !== '1'">
-            <div class="person-notnew">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is old (first seen on {{person.timestamp_creation * 1000 | date:'medium'}}">
-                <i class="glyphicon glyphicon-star"></i>
-                <!--<span class="label label-as-badge"><i class="glyphicon glyphicon-star"></i></span>-->
+          </div>
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <div class="person-vote">
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="vote: {{person.vote}}">
+                <!--<i class="glyphicon glyphicon-thumbs-up text-success"></i>&nbsp;--><span class="label label-as-badge label-success">{{person.vote}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
               </button>
             </div>
-          </span>
-           
+          </div>
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <span ng-if="person.new === '1'">
+              <div class="person-new">
+                <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is new (first seen on {{person.timestamp_creation * 1000 | date:'dd MMMM yyyy, hh:mm'}})" ><!-- TODO: set a variable in controller ('personCreationDateFormat'?) -->
+                  <i class="glyphicon glyphicon-star text-danger"></i>
+                  <!--<span class="label label-as-badge label-danger"><i class="glyphicon glyphicon-star"></i></span>-->
+                </button>
+              </div>
+            </span>
+            <span ng-if="person.new !== '1'">
+              <div class="person-notnew">
+                <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is old (first seen on {{person.timestamp_creation * 1000 | date:'medium'}}">
+                  <i class="glyphicon glyphicon-star"></i>
+                  <!--<span class="label label-as-badge"><i class="glyphicon glyphicon-star"></i></span>-->
+                </button>
+              </div>
+            </span>
+             
+          </div>
         </div>
       </div>
     </div>

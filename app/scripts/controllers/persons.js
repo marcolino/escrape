@@ -52,6 +52,7 @@ $scope.images = [
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   $scope.cfg = cfg; // make cfg data available to scope
   $scope.username = $rootScope.username; // TODO: get username from Authentication service...
+  $scope.sortCriteria = {};
 
   // watch for sieves changes
   $scope.authenticationService = Authentication;
@@ -61,10 +62,13 @@ console.log('WATCH - calling loadPersons()...');
   }, false);
 
   // private methods
-  function applyPersons(newPersons) {
-    console.log('PERSONS: ', newPersons);
-    $scope.persons = newPersons;
-    //$scope.persons = order(newPersons);
+  function applyPersons(persons) {
+    console.log('PERSONS: ', persons);
+persons[2].active = '0'; // TODO: DEBUG ONLY
+persons[3].comments_count = 44; // TODO: DEBUG-ONLY
+    $scope.persons = persons; // TODO: persons => personsList ...
+    //$scope.sortCriteria.name = true;
+    $scope.personsList = sortObjectToList(persons, $scope.sortCriteria);
   }
 
   function loadPersons() {
@@ -74,14 +78,42 @@ console.log('WATCH - calling loadPersons()...');
     });
   }
 
-  function order(obj) { // TODO: !!!...
-    console.info('order() - ', obj);
-    //var list = {"you": 100, "me": 75, "foo": 116, "bar": 15};
-    var objSorted = Object.keys(obj).sort(function(a, b) {
-      return obj[a].name >= obj[b].name
-    });
-    console.info(objSorted);
-    return(objSorted);
+  function sortObjectToList(object, criteria) { // obj is an object of objects
+    var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
+      if (criteria.name) {
+        return object[a].name >= object[b].name;
+      }
+      if (criteria.comments) {
+        return object[a].comments_count < object[b].comments_count;
+      }
+      return object[a].name >= object[b].name;
+    }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
+
+    // aggregate uniq lists in sorted list
+    /* jshint camelcase: false */
+    var len = list.length;
+    for (var i = 0; i < len; i++) {
+      if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
+        var next;
+        for (var j = searchArrayById(list, list[i].uniq_next); j !== null; j = next) {
+          next = searchArrayById(list, list[j].uniq_next);
+          var src = j;
+          var dst = ++i;
+          list.move(src, dst);
+        }
+      }
+    }
+    /* jshint camelcase: true */
+    return list;
+  }
+
+  function searchArrayById(array, id) {
+    for (var i = 0; i < array.length; i++) {
+      if (array[i].id === id) {
+        return i;
+      }
+    }
+    return null;
   }
 
   if ($scope.personId) { // load single person
@@ -110,14 +142,38 @@ console.log('WATCH - calling loadPersons()...');
     });
   }
 
-
   // public methods
+
+  $scope.setSortCriteria = function(criterium) {
+    $scope.sortCriteria[criterium] = true;
+    loadPersons(); // load persons list - TODO: we can avoid this, just repeat sorting???
+    //sortObjectToList($scope.persons, $scope.sortCriteria);
+  };
 
   $scope.isUniqPrimary = function(personId) {
     //console.log('@ isUniqPrimary('+personId+')');
     /* jshint camelcase: false */
-    return ($scope.persons[personId].uniq_prev === null);
+    return (
+      ($scope.persons[personId].uniq_prev === null) &&
+      ($scope.persons[personId].uniq_next !== null)
+    );
     // TODO: why other camel_case fields do not throw camel_case warning?
+    /* jshint camelcase: true */
+  };
+
+  $scope.isUniqPrimaryOrSingle = function(personId) {
+    //console.log('@ isUniqPrimary('+personId+')');
+    /* jshint camelcase: false */
+    return ($scope.persons[personId].uniq_prev === null);
+    /* jshint camelcase: true */
+  };
+
+  $scope.isUniqLast = function(personId) {
+    /* jshint camelcase: false */
+    return (
+      ($scope.persons[personId].uniq_prev !== null) &&
+      ($scope.persons[personId].uniq_next === null)
+    );
     /* jshint camelcase: true */
   };
 
@@ -154,7 +210,7 @@ console.log('WATCH - calling loadPersons()...');
     //console.log('@ isUniqShown('+personId+')');
     /* jshint camelcase: false */
     return (
-      $scope.isUniqPrimary(personId) ||
+      $scope.isUniqPrimaryOrSingle(personId) ||
       ($scope.persons[personId].uniq_opened === true)
     );
     /* jshint camelcase: true */

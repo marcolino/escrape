@@ -12,6 +12,14 @@ body {
 */
 }
 
+.navbar-compact {
+  margin-bottom: 0px;
+}
+
+.container-compact {
+  padding: 10px 10px 10px 10px;
+}
+
 /*
 .container {
   padding: 10px 10px 10px 10px;
@@ -72,7 +80,7 @@ body {
 }
 
 .btn-wider {
-  min-width: 64px;
+  min-width: 48px;
 }
 
 /* element rotation - 90° clock-wise */
@@ -106,6 +114,25 @@ body {
   margin-left: -7px;
 }
 
+.persons-header {
+  padding-bottom: 3px;
+}
+
+/* right-scrollbar-placeholder, for persons header labels */
+.right-scrollbar-placeholder {
+  margin-right: 2px;
+}
+
+/* header labels in persons view */
+.persons-header-label {
+  font-size: 0.9em;
+  NOfont-style: italic;
+  NOtext-align: left;
+  NObackground: #efefef;
+  NOcolor: white;
+  color: #222;
+}
+
 /* inactive person: lower opacity of it's row, ad draw striped background */
 .person-inactive {
   opacity: 0.4;
@@ -120,7 +147,6 @@ body {
   NOborder-right: 1px solid #444;
   NOborder-left: 1px solid #444;
   NObackground: #ccc;
-  NOborder: 1px dotted blue; /* TODO: think to a better style... */;
 }
 
 /* a clearfix, with a minimum height */
