@@ -114,7 +114,7 @@ class GoogleSearch {
       return $result; // main results div not found
     }
     $c = count($dom->find("div.srg")) > 1 ? 1 : 0; // if this is first page, we have 2 divs, first with
-                                                   // some irrelevant links, so skip the first page
+                                               // some irrelevant links, so skip the first page
     $d = $dom->find("div.srg", $c); // get second div (if this is first page), or first div
     if (!is_object($d)) {
       return $result; // main results div not found
@@ -123,19 +123,20 @@ class GoogleSearch {
     // get text, href and imgsrc from links
     $n = 0;
     $textMaxLen = 64;
+# TODO: sometimes here is produced an error (catch on line 176...)
     try {
-    foreach($d->find('div.rc') as $div) {
-      $a = $div->find('h3.r a', 0);
-      $hrefShort = $a->href;
-      if (strlen($hrefShort) > $textMaxLen) {
-        $hrefShort = substr($hrefShort, 0, $textMaxLen) . "&hellip;";
+      foreach($d->find('div.rc') as $div) {
+        $a = $div->find('h3.r a', 0);
+        $hrefShort = $a->href;
+        if (strlen($hrefShort) > $textMaxLen) {
+          $hrefShort = substr($hrefShort, 0, $textMaxLen) . "&hellip;";
+        }
+        $result[$n]["text"] = htmlspecialchars_decode($a->plaintext, ENT_QUOTES);
+        $result[$n]["href"] = $a->href;
+        $result[$n]["hrefShort"] = $hrefShort;
+        $result[$n]['imgsrc'] = $div->find('div.th img', 0)->src;
+        $n++;
       }
-      $result[$n]["text"] = htmlspecialchars_decode($a->plaintext, ENT_QUOTES);
-      $result[$n]["href"] = $a->href;
-      $result[$n]["hrefShort"] = $hrefShort;
-      $result[$n]['imgsrc'] = $div->find('div.th img', 0)->src;
-      $n++;
-    }
     } catch (Exception $e) {
       throw new Exception("error searching results in dom: " . $e->getMessage());
     }
@@ -162,24 +163,50 @@ class GoogleSearch {
     try {
       // get first page dom
       $dom = is_file($imageUrl) ? $this->getLocalImageSearchDom($imageUrl) : $this->getRemoteImageSearchDom($this->searchRemoteImage.$imageUrl);
+    } catch (Exception $e) {
+      throw new Exception("error searching image [$imageUrl] (get local/remote image search dom): " . $e->getMessage());
+    }
+    try {
       $bestGuess = $this->getBestGuess($dom); // get best guess from first page
+    } catch (Exception $e) {
+      throw new Exception("error searching image [$imageUrl] (get best guess): " . $e->getMessage());
+    }
+    try {
       $searchResults = $this->getSearchResults($dom); // get search results from first page
+      # TODO: MEMORY EXAUSTED (Alenia, TE, 3336701415, first photo)
+    } catch (Exception $e) {
+      throw new Exception("error searching image [$imageUrl] (get search results): " . $e->getMessage());
+    }
+    try {
       $nextPageA = $dom->find("#nav a.pn", 0); // check if we have "next page" link (if we don't - it's the only page)
       $dom->clear();
-      for ($i = 1; $i < $numPages && $nextPageA; $i++) { // loop through pages [2 - $numPages]
+    } catch (Exception $e) {
+      throw new Exception("error searching image [$imageUrl] (dom find): " . $e->getMessage());
+    }
+    for ($i = 1; $i < $numPages && $nextPageA; $i++) { // loop through pages [2 - $numPages]
 #$searchResults[] = [ "text" => "$i", "imgsrc" => "http://www.1.com/1.jpg", "href" => "http://www.1.com/", "hrefShort" => "http://www.1.com" ];
+      try {
         $dom = $this->getRemoteImageSearchDom($this->googleDomain.htmlspecialchars_decode($nextPageA->href));
+      } catch (Exception $e) {
+        throw new Exception("error searching image [$imageUrl] (get remote image search dom): " . $e->getMessage());
+      }
+      try {
         $searchResults = array_merge($searchResults, $this->getSearchResults($dom)); // get search results from page and merge with available results
+      } catch (Exception $e) {
+        throw new Exception("error searching image [$imageUrl] (array merge): " . $e->getMessage());
+      }
+      try {
         $nextPageA = $dom->find("#nav a.pn", 0); // check if we have "next page" link (if we don't it's last page)
         $dom->clear();
-        sleep(1);
+      } catch (Exception $e) {
+        throw new Exception("error searching image [$imageUrl] (dom find): " . $e->getMessage());
       }
+      sleep(1);
       return [ "best_guess" => $bestGuess, "search_results" => $searchResults ];
-    } catch (Exception $e) {
-      throw new Exception("error searching image [$imageUrl]: " . $e->getMessage());
+    #} catch (Exception $e) {
+    #  throw new Exception("error searching image [$imageUrl]: " . $e->getMessage());
     }
   }
-
 }
 
 ?>
