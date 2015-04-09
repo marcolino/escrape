@@ -28,9 +28,9 @@ Array.prototype.move = function (fromIndex, toIndex) {
   //    howMany = 1;
   var howMany = 1;
   fromIndex = parseInt(fromIndex) || 0;
-  fromIndex = fromIndex < 0 ? array.length + fromIndex : fromIndex;
+  fromIndex = fromIndex < 0 ? this.length + fromIndex : fromIndex;
   toIndex = parseInt(toIndex) || 0;
-  toIndex = toIndex < 0 ? array.length + toIndex : toIndex;
+  toIndex = toIndex < 0 ? this.length + toIndex : toIndex;
   toIndex = toIndex <= fromIndex ? toIndex : toIndex <= fromIndex + howMany ? fromIndex : toIndex - howMany;
   this.splice.apply(this, [toIndex, 0].concat(this.splice(fromIndex, howMany)));
   /*

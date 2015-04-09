@@ -79,6 +79,9 @@ body {
   margin-left: 5px;
 }
 
+.btn-shorter {
+  padding: 0 5px 0 5px;
+}
 .btn-wider {
   min-width: 48px;
 }

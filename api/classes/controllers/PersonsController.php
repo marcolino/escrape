@@ -33,6 +33,7 @@ class PersonsController {
     $error = false; // track errors while sync'ing
 
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
+#if ($sourceKey !== "torinoerotica") continue; # TODO: DEBUG-ONLY
       #$useTor = true; // use TOR proxy to sync
       $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
@@ -70,7 +71,7 @@ class PersonsController {
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
-if ($n > 40) break; # TODO: DEBUG-ONLY
+#if ($n > 32) break; # TODO: DEBUG-ONLY
 
         if (preg_match($source["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
@@ -204,11 +205,14 @@ $this->router->log("debug", " INSERTING ");
           $personDetail["new"] = true; // set new flag to true
           $personId = $this->add($personMaster, $personDetail);
 
+#$this->router->log("debug", " PERSON: " . any2string($personMaster) . any2string($personDetail));
+
           foreach ($photosUrls as $photoUrl) { // add photos
             #if (preg_match("/^https?:\/\//", $photoUrl)) { // absolute photo url
             if (is_absolute_url($photoUrl)) { // absolute photo url
               $this->photoAdd($personId, $photoUrl);
             } else { // relative photo url
+#$this->router->log("debug", " RELATIVE PHOTO URL: " . $source["url"] . "@/@" . $photoUrl);
               $this->photoAdd($personId, $source["url"] . "/" . $photoUrl);
             }
           }
@@ -276,23 +280,27 @@ $this->router->log("debug", " INSERTING ");
     for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
       $personsById[$persons[$i]["id"]] = $persons[$i];
     }
-#$this->router->log("info", "personsById:" . any2string($personsById));
 
     # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count - 1; $i++) {
+      #$this->router->log("info", " i: [$i]");
       for ($j = $i + 1; $j < $persons_count; $j++) {
+        #$this->router->log("info", " j: [$j]");
         if (
-          ($persons[$i]["name"] === $persons[$j]["name"]) ||
-          ($persons[$i]["phone"] === $persons[$j]["phone"])
+          //($persons[$i]["name"] === $persons[$j]["name"]) ||
+          (($persons[$i]["phone"] && $persons[$j]["phone"]) && ($persons[$i]["phone"] === $persons[$j]["phone"]))
         ) { // these two persons are unique
           $id1 = $persons[$i]["id"];
           $id2 = $persons[$j]["id"];
-  $this->router->log("info", "assertPersonsUniqueness() - found 'uniq' persons: " . $persons[$i]['key'] . " and " . $persons[$j]['key']);
+          $this->router->log("info", "assertPersonsUniqueness() - found 'uniq' persons: " . $persons[$i]['key'] . " and " . $persons[$j]['key']);
+          #$this->router->log("info", " - phone(id1): " . $persons[$i]["phone"]);
+          #$this->router->log("info", " - phone(id2): " . $persons[$j]["phone"]);
 
           // follow next unique chain, and add the 2nd person id as additional unique (next) person
           $idNext = $personsById["$id1"]["uniq_next"];
           while ($idNext && $personsById["$idNext"]["uniq_next"]) {
-            $idNext = $personsById["$idNext"]["uniq_next"];
+            $idNext = $personsById["$idNext"]["uniq_next"]; // TODO: avoid possibly infinite loops...
+            #$this->router->log("info", "  w1 - idNext: [$idNext] - phone: " . $persons["$idNext"]["phone"]);
           }
           $id = $idNext ? $idNext : $id1;
           if ($personsById["$id"]["uniq_next"] !== $id2) {
@@ -303,7 +311,8 @@ $this->router->log("debug", " INSERTING ");
           // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
           $idPrev = $personsById["$id2"]["uniq_prev"];
           while ($idPrev && $personsById["$idPrev"]["uniq_prev"]) {
-            $idPrev = $personsById["$idPrev"]["uniq_prev"];
+            $idPrev = $personsById["$idPrev"]["uniq_prev"]; // TODO: avoid possibly infinite loops...
+            #$this->router->log("info", "  w2 - idPrev: [$idPrev] - phone: " . $persons["$idPrev"]["phone"]);
           }
           $id = $idPrev ? $idPrev : $id2;
           if ($personsById["$id"]["uniq_next"] != $id1) {
@@ -663,7 +672,7 @@ $this->router->log("debug", " * merging keys - field: " . $field);
     $personDomain = $person["url"];
 
     $googleSearch = new GoogleSearch();
-    $numPages = 2;
+    $numPages = 3;
 
     $response = [];
     $response["bestGuess"] = null;

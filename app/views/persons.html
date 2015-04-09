@@ -1,6 +1,6 @@
 <div class="container-compact">
-  <!-- fixed-header -->
-  <div class="row persons-header right-scrollbar-placeholder">
+  <!-- persons-fixed-header -->
+  <div id="persons-fixed-header" class="row persons-header right-scrollbar-placeholder">
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
     </div>
     <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
@@ -19,13 +19,17 @@
           <span class="persons-header-label">source</span>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <span class="persons-header-label">phone</span>
+          <button type="button" class="btn btn-default btn-shorter" ng-click="setSortCriteria('phone')">
+            <span class="persons-header-label">
+              phone <i class="glyphicon glyphicon-circle-arrow-down"></i>
+            </span>
+          </button>
         </div>
 
         <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
 
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <button type="button" class="btn btn-default btn-wider" ng-click="setSortCriteria('comments')">
+          <button type="button" class="btn btn-default btn-shorter" ng-click="setSortCriteria('comments_count')">
             <span class="persons-header-label">
               comments <i class="glyphicon glyphicon-circle-arrow-down"></i>
             </span>
@@ -40,14 +44,14 @@
       </div>
     </div>
   </div>
-  <!-- /fixed-header -->
+  <!-- /persons-fixed-header -->
 
-  <div style="NOmax-height: 220px; overflow-y: auto; overflow-x: hidden;" resize="-214"><!-- TODO: ... -->
+  <div style="overflow-y: auto; overflow-x: hidden;" resize resize-before="persons-fixed-header" resize-after="footer">
     <!-- TODO: REMOVE-ME, we are sorting persons object in controller...
     <div class="row row-gap" ng-repeat="(idx, person) in persons | orderObjectBy:'comments_count':false"
     -->
     <div class="row row-gap" ng-repeat="person in personsList"
-      ng-show="isUniqShown('{{person.id_person}}')"
+      ng-attr-id="{{person.id_person}}" ng-show="isUniqShown('{{person.id_person}}')"
       ng-class="{
         'person-inactive': person.active === '0',
         'person-uniq-id-last': isUniqLast('{{person.id_person}}')
@@ -65,7 +69,7 @@
         </div>
         <div class="showcase-right">
           <div class="img-rounded img-clip-container" ng-attr-title="{{person.name}}">
-            <a href="" ng-href="#/details/{{person.id_person}}" class="no-text-decoration">
+            <a href="" ng-click="open('{{person.id_person}}')" class="no-text-decoration">
               <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="NOimg-rounded img-clip"
                 ng-class="{
                   'img-thruthful-yes': person.thruthful === 'yes',

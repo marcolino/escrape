@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, cfg, notify, Authentication, Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, cfg, notify, Authentication, Countries, Persons, Comments/*, Sieves*/) {
 /*
 $scope.images = [
  'images/users/user-0.jpg',
@@ -53,6 +53,7 @@ $scope.images = [
   $scope.cfg = cfg; // make cfg data available to scope
   $scope.username = $rootScope.username; // TODO: get username from Authentication service...
   $scope.sortCriteria = {};
+  $scope.detailsId = null;
 
   // watch for sieves changes
   $scope.authenticationService = Authentication;
@@ -61,14 +62,23 @@ console.log('WATCH - calling loadPersons()...');
     loadPersons(); // load persons list
   }, false);
 
+/*
+ $scope.$on('$viewContentLoaded', function() {
+    console.info('***************** viewContentLoaded');
+    $scope.goto('18');
+  });
+*/
+
   // private methods
   function applyPersons(persons) {
     console.log('PERSONS: ', persons);
-persons[2].active = '0'; // TODO: DEBUG ONLY
-persons[3].comments_count = 44; // TODO: DEBUG-ONLY
-    $scope.persons = persons; // TODO: persons => personsList ...
+    $scope.persons = persons;
     //$scope.sortCriteria.name = true;
     $scope.personsList = sortObjectToList(persons, $scope.sortCriteria);
+    if ($rootScope.detailsId) { // scroll to remembered row id
+      console.info('scope.detailsId:', $rootScope.detailsId);
+      $scope.scrollTo($rootScope.detailsId);
+    }
   }
 
   function loadPersons() {
@@ -79,18 +89,26 @@ persons[3].comments_count = 44; // TODO: DEBUG-ONLY
   }
 
   function sortObjectToList(object, criteria) { // obj is an object of objects
+    /* jshint camelcase: false */
+//console.log('sortObjectToList():', object);
+
     var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
       if (criteria.name) {
-        return object[a].name >= object[b].name;
+        //return object[a].name >= object[b].name;
+        return object[a].name.localeCompare(object[b].name);
       }
-      if (criteria.comments) {
+      if (criteria.phone) {
+        //return object[a].phone >= object[b].phone;
+        return object[a].phone.localeCompare(object[b].phone);
+      }
+      if (criteria.comments_count) {
         return object[a].comments_count < object[b].comments_count;
       }
-      return object[a].name >= object[b].name;
+      //return object[a].name >= object[b].name;
+      return object[a].name.localeCompare(object[b].name);
     }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
 
     // aggregate uniq lists in sorted list
-    /* jshint camelcase: false */
     var len = list.length;
     for (var i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
@@ -144,10 +162,22 @@ persons[3].comments_count = 44; // TODO: DEBUG-ONLY
 
   // public methods
 
+  $scope.open = function(id) {
+    $rootScope.detailsId = id;
+    $location.path('/details/' + id);
+  };
+
+  $scope.scrollTo = function(id) {
+    $timeout(function() {
+      $location.hash(id);
+      $anchorScroll(id);
+      $location.hash(null);
+    });
+  };
+
   $scope.setSortCriteria = function(criterium) {
     $scope.sortCriteria[criterium] = true;
-    loadPersons(); // load persons list - TODO: we can avoid this, just repeat sorting???
-    //sortObjectToList($scope.persons, $scope.sortCriteria);
+    $scope.personsList = sortObjectToList($scope.persons, $scope.sortCriteria);
   };
 
   $scope.isUniqPrimary = function(personId) {
@@ -215,36 +245,6 @@ persons[3].comments_count = 44; // TODO: DEBUG-ONLY
     );
     /* jshint camelcase: true */
   };
-
-/*
-  $scope.setUniqPrimaryFlag = function(persons) {
-    console.log('setUniqPrimaryFlag:', persons);
-    var show = false;
-    angular.forEach(persons, function(person) {
-      var id = person.id_person;
-      if (person.uniqPrev === null) {
-        show = true;
-      }
-      person['uniqShow'] = show;
-    });
-  };
-*/
-
-/*
-  $scope.setProperty = function(id, prop) {
-    console.info('setProperty():', id, prop);
-    Persons.setProperty(id, prop).then(
-      function(data) {
-        console.info('setProperty() success:', data);
-      },
-      function(error) {
-        console.warn(error);
-      }
-    );
-    //// reset the form once values have been consumed
-    //$scope.form.name = '';
-  };
-*/
 
   $scope.addPerson = function() {
     Persons.addPerson($scope.form.name).then(
@@ -338,68 +338,6 @@ persons[3].comments_count = 44; // TODO: DEBUG-ONLY
   };
 
 /*
-  $scope.personIsSingleOrUniqFirst = function(id) {
-    return true;
-  };
-*/
-
-/*
-  $scope.uniqIdShow = function(id) {
-    if ($scope.uniqIdFirstIsShown()) {
-      // this 'uniq' person is already opened
-      var length = $rootScope.sieves.uniqIds.length;
-      $rootScope.sieves.uniqIds = [];
-      if (length > 0) {
-        console.log('uniqIdShow('+id+') => CLOSING...');
-        loadPersons();
-      }
-    } else {
-      Persons.getUniqIds(id).then(function(uniqIds) {
-        console.log('uniqIdShow('+id+') => ', uniqIds);
-        $rootScope.sieves.uniqIds = uniqIds;
-        if (uniqIds.length > 0) {
-          loadPersons();
-        }
-      });
-    }
-  };
-*/
-
-/*
-  $scope.uniqIdFirst = function(id) {
-    var person = $scope.persons[id];
-if (id === 1) {
-console.info('$scope.uniqIdFirst('+id+')');
-console.info('$scope.persons:', $scope.persons);
-console.info('$scope.persons[person[\'uniqNext\']][\'uniqPrev\']:', $scope.persons[person['uniqNext']]['uniqPrev']);
-}
-    return (
-      (person['uniqPrev'] === null) &&
-      (person['uniqNext'] !== null) &&
-      ($scope.persons[person['uniqNext']]['uniqPrev'] === id)
-    );
-  };
-*/
-
-/*
-  $scope.uniqIdLast = function(id) {
-    var person = $scope.persons[id];
-    return (
-      (person['uniqPrev'] !== null) &&
-      (person['uniqNext'] === null)
-    );
-  };
-*/
-
-/*
-  $scope.uniqIdFirstIsShown = function(id) {
-    return !(
-      ($rootScope.sieves.uniqIds.length === 0) ||
-      ($rootScope.sieves.uniqIds[0] === parseInt(id))
-    );
-  };
-*/
-
   $scope.vote = function(vote) {
     if (vote > 0) {
       $scope.person.vote = Math.min(cfg.person.vote.max, $scope.person.vote + vote);
@@ -407,7 +345,8 @@ console.info('$scope.persons[person[\'uniqNext\']][\'uniqPrev\']:', $scope.perso
       $scope.person.vote = Math.max(cfg.person.vote.min, $scope.person.vote + vote);
     }
   };
-  
+*/
+
   $scope.geocode = function(address, region) {
     var geocoder = new google.maps.Geocoder();
     geocoder.geocode({ 'address': address, 'region': region }, function(results, status) {
@@ -428,16 +367,6 @@ console.info('$scope.persons[person[\'uniqNext\']][\'uniqPrev\']:', $scope.perso
       }
     });
   };
-
-/*
-  $scope.getCountryName = function(countryCode) {
-    return Countries.getCountryName(countryCode);
-  };
-
-  $scope.getCountryClass = function(countryCode) {
-    return 'flag' + ' ' + countryCode;
-  };
-*/
 
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {

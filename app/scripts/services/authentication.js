@@ -1,8 +1,8 @@
 'use strict';
  
 app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg, notify) {
-  var apiUri = cfg.apiUri + '/users/';
   var service = {};
+  var apiUri = cfg.apiUri + '/users/';
   var sievesDigest = '';
 
   service.register = function (username, password, callback) {
@@ -77,6 +77,14 @@ console.log('service.setSievesDigest :', sievesDigest);
 
   service.getSievesDigest = function () {
     return sievesDigest;
+  };
+
+  service.signedIn = function () {
+    return (
+      (typeof $rootScope.globals !== 'undefined') &&
+      (typeof $rootScope.globals.currentUser !== 'undefined') &&
+      (typeof $rootScope.globals.currentUser.username !== 'undefined')
+    );
   };
 
   return service;

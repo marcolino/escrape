@@ -48,4 +48,9 @@ app.constant('cfg', {
       max: 75,
     },
   },
+  sources: {
+    countryCode: 'it',
+    cityCode: 'to',
+    category: 'f',
+  },
 });

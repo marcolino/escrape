@@ -1,5 +1,5 @@
 TODO 1.0:
- - save scroll height on persons view when opening details view, and restore it when back to persons view
+ - handle empty/vacation phones while sync'ing
  - handle all exceptions at least with notify.error() ...
  - handle sorting by some fields in list view
  - in google search results page, make buttons (Fake, Thrutful, Don't know) always visible... (results in  a scroller)
@@ -25,11 +25,13 @@ TODO 1.0:
     - www.pinterest.com/
  - try to unify getLastModificationTimestampFromUrl($url), getMimeFromUrl($url) to getUrlContents(...) ...
  - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
+ - think about a way to allow users to add uniquenesses...
  - in "simulation", use public url photos, do not download locally...
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
+ - a better 'resize' directive strategy to calculate it's height based on previous and following elements heights
 
 TODO 2.0:
  - I18n (?) (see:
@@ -50,8 +52,7 @@ You can load the locale you want into localStorage, then refresh the page. Have 
 
  - move to https (see: <https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps>)
  - better generalize for easier customization of sources
- - in list view show only one page of results (20?, 30?); then, when uner is close
-   to scroll to the end of page, load next page
+ - in list view show only one page of results (20?, 30?); then, when user is close to scroll to the end of page, load next page
 
 DONE:
  - search() should issue a persons reload...
@@ -114,3 +115,5 @@ DONE:
  - in PersonsController: get logged user id ...
  - var_export($VAR, true) => any2string($VAR)
  - persons view - person.timestamp_last_sync: set up a date format variable (i.e.: dateFormat = 'EEEE d MMM y h:mm') in controller
+ - save scroll height on persons view when opening details view, and restore it when back to persons view
+ 
