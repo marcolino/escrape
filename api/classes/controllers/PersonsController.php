@@ -79,7 +79,7 @@ class PersonsController {
 #if ($id !== "adv2945") {$this->router->log("info", "[$id] !== adv2945"); continue; } #################
 #if ($id === "adv2945") {$this->router->log("info", "[$id] === adv2945, FOUND !!!"); } #############
         } else {
-          $this->router->log("error", "person $n id not found on source [$sourceKey], giving up with this person");
+          $this->router->log("error", "person $n ($key) id not found on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
@@ -88,36 +88,44 @@ class PersonsController {
         $personId = null;
         if (($person = $this->db->getByField("person", "key", $key))) { # old key
           $personId = $person[0]["id"];
-          $this->router->log("debug", " °-°-° old person: $key (id: $personId) °-°-°");
+          $this->router->log("debug", " old person: $key (id: $personId)");
           if ($newKeysOnly) { // requested to sync only new keys, skip this old key
             continue;
           }
         } else {
-          $this->router->log("debug", " O-O-O new person: $key (id: $id) O-O-O");
+          $this->router->log("debug", " new person: $key (id: $id)");
         }
 
         if (preg_match($source["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
           $detailsUrl = $source["url"] . "/" . $matches[1];
         } else {
-          $this->router->log("error", "person $n details url not found on source [$sourceKey], giving up with this person");
+          $this->router->log("error", "person $n ($key) details url not found, giving up with this person");
           $error = true;
           continue;
         }
 
-        $this->router->log("debug", "person details url: [$detailsUrl]");
+        #$this->router->log("debug", "person details url: [$detailsUrl]");
         # TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
         # TODO: try ... catch ...
         if (($page_details = $this->network->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor)) === FALSE) {
-          $this->router->log("error", "can't get person $n url contents on source [$sourceKey], giving up with this person");
+          $this->router->log("error", "person $n ($key) url contents not found, giving up with this person");
           $error = true;
           continue;
         }
+
+        if (strlen($page_details) <= 0) {
+          $this->router->log("error", "person $n ($key) details page is empty, giving up with this person");
+          $error = true;
+          continue;
+        }
+
         $pageSum = md5($page_details);
 
         if (preg_match($source["patterns"]["person-phone"], $page_details, $matches) >= 1) {
-          $phone = $this->normalizePhone($matches[1]);
+          list($phone, $activeLabel) = $this->normalizePhone($matches[1], $sourceKey);
+$this->router->log("debug", " active label: $activeLabel");
         } else {
-          $this->router->log("error", "person $n phone not found on source [$sourceKey], giving up with this person");
+          $this->router->log("error", "person $n ($key) phone not found, giving up with this person");
           $error = true;
           continue;
         }
@@ -125,7 +133,7 @@ class PersonsController {
         if (preg_match_all($source["patterns"]["person-photo"], $page_details, $matches) >= 1) {
           $photosUrls = $matches[1];
         } else {
-          $this->router->log("error", "photo pattern not found on source [$sourceKey], giving up with this person");
+          $this->router->log("error", "person $n ($key) photo pattern not found, giving up with this person");
           $error = true;
           continue;
         }
@@ -170,8 +178,7 @@ class PersonsController {
         $age = 28;
         $vote = 7; # TODO: JUST TO TEST BUTTONS WIDTH
         $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
-        #$active = true; # set out-of-the-loop
-        $new = false;
+        #$new = false;
 
         $personMaster = [];
         #$personMaster["key"] = $key;
@@ -179,27 +186,28 @@ class PersonsController {
         $personMaster["url"] = $detailsUrl;
         $personMaster["timestamp_last_sync"] = $timestampNow;
         $personMaster["page_sum"] = $pageSum;
-        #$personMaster["active"] = $active; # set out-of-the-loop
+        if ($activeLabel !== null) { $personMaster["active_label"] = $activeLabel; } // if active flag is null, do not set it
+$this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaster["active_label"]);
         $personDetail = [];
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
         $personDetail["zone"] = $zone;
         $personDetail["address"] = $address;
         $personDetail["description"] = $description;
-        $personDetail["phone"] = $phone;
+        if ($phone !== null) { $personDetail["phone"] = $phone; } // if phone is null, do not set it
         $personDetail["nationality"] = $nationality;
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote;
-        $personDetail["new"] = $new;
+        #$personDetail["new"] = $new;
         $personDetail["uniq_prev"] = null;
         $personDetail["uniq_next"] = null;
 
         if ($personId) { # old key, update it
-$this->router->log("debug", " UPDATING ");        
+          #$this->router->log("debug", " UPDATING ");        
           # TODO: remember old values someway (how???), before updating (old zone, old phone, ...)?
           $this->set($personId, $personMaster, $personDetail);
         } else { # new key, insert it
-$this->router->log("debug", " INSERTING ");
+          #$this->router->log("debug", " INSERTING ");
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
           $personDetail["new"] = true; // set new flag to true
@@ -228,7 +236,7 @@ $this->router->log("debug", " INSERTING ");
         #foreach ($photosUrls as $photoUrl) {
         #  $this->photoAdd($id, $source["url"] . "/" . $photoUrl);
         #}
-        $this->router->log("debug", " === person finished: $key ===");
+        $this->router->log("debug", "---");
 #break;
       }
 #break;
@@ -264,6 +272,11 @@ $this->router->log("debug", " INSERTING ");
       // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
       $active = ($timestampLastSyncPerson >= $timestampStart);
       $this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "TRUE" : "FALSE"));
+      if ($person["active_label"] === 0) {
+        $active = false;
+        $this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - active_label = false, forcing active status: active: " . ($active ? "TRUE" : "FALSE"));
+      }
+
       $this->db->setPerson($person["id"], [ "active" => $active ]);
     }
   }
@@ -288,7 +301,7 @@ $this->router->log("debug", " INSERTING ");
         #$this->router->log("info", " j: [$j]");
         if (
           //($persons[$i]["name"] === $persons[$j]["name"]) ||
-          (($persons[$i]["phone"] && $persons[$j]["phone"]) && ($persons[$i]["phone"] === $persons[$j]["phone"]))
+          (($persons[$i]["phone"] !== "0" && $persons[$j]["phone"]) && ($persons[$i]["phone"] === $persons[$j]["phone"]))
         ) { // these two persons are unique
           $id1 = $persons[$i]["id"];
           $id2 = $persons[$j]["id"];
@@ -496,18 +509,12 @@ $this->router->log("debug", " INSERTING ");
    * @return array
    */
   public function getList($data) {
-$this->router->log("debug", " ..... getList(); userId: " . $data["user"]["id"]);
     $result = [];
-$this->router->log("debug", " ..... 2");
     $userId = $data["user"]["id"];
-$this->router->log("debug", " ..... 3");
     $comments = new CommentsController($this->router);
-$this->router->log("debug", " ..... 4");
 
     $persons = $this->db->getPersonList($data, $userId);
-$this->router->log("debug", " ..... 5");
-$this->router->log("debug", " ..... getPersonList => ");
-#$this->router->log("debug", " ..... getPersonList => " . var_export($persons, true));
+$this->router->log("debug", "persons length: " . count($persons));
     foreach ($persons as $person) {
       // N.B: here we (could) get multiple records for each person id
       $personId = $person["id_person"];
@@ -570,8 +577,6 @@ $this->router->log("debug", " ..... getPersonList => ");
     # uniquify persons
     $this->personsUniquify($result);
 */
-
-$this->router->log("@@@ result: ", any2string($result));
     return $result;
   }
 
@@ -730,20 +735,21 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
     return $value;
   }
 
-  private function normalizePhone($phone) {
-/*
-    if (preg_match($source["patterns"]["person-phone-unavailable"])) {
-      $result = "PERSON_UNAVAILABLE"; # TODO: ...
-    } else
-    if (preg_match($patternEmail)) {
-      $result = "EMAIL"; # TODO: ...
+  private function normalizePhone($phone, $sourceKey) {
+    $source = $this->sourcesDefinitions[$sourceKey];
+    if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
+      $phone = "0";
+      $activeLabel = "0";
     } else {
-      $result = preg_replace("/[^\d]*        /", "", $phone);
+      if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
+        $phone = "0";
+        $activeLabel = "0";
+      } else {
+        $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
+        $activeLabel = "1";
+      }
     }
-    return $result;
-*/
-    $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
-    return $phone;
+    return [ $phone, $activeLabel ];
   }
 
   private function normalizeNationality($nationality) {
@@ -879,8 +885,8 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
               if ($p["timestamp_last_modification"] != $photoLastModificationTimestamp) {
                 // the last modification timestamp of existing photo is greater or equal to
                 // the last modification timestamp of the photo to be downloaded
-                $this->router->log("debug", "photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)");
-$this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
+                #$this->router->log("debug", "photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)");
+                #$this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
                 return true;
               } else {
                 // the last modification timestamp of existing photo did not change
@@ -900,7 +906,7 @@ $this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
         throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
       }
     }
-$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
+    #$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
     return false;
   }
 

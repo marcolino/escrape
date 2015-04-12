@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, cfg, notify, Authentication, Countries, Persons, Comments/*, Sieves*/) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $window, cfg, notify, Authentication, Countries, Persons, Comments) {
 /*
 $scope.images = [
  'images/users/user-0.jpg',
@@ -53,7 +53,7 @@ $scope.images = [
   $scope.cfg = cfg; // make cfg data available to scope
   $scope.username = $rootScope.username; // TODO: get username from Authentication service...
   $scope.sortCriteria = {};
-  $scope.detailsId = null;
+  $scope.openedId = null;
 
   // watch for sieves changes
   $scope.authenticationService = Authentication;
@@ -75,9 +75,9 @@ console.log('WATCH - calling loadPersons()...');
     $scope.persons = persons;
     //$scope.sortCriteria.name = true;
     $scope.personsList = sortObjectToList(persons, $scope.sortCriteria);
-    if ($rootScope.detailsId) { // scroll to remembered row id
-      console.info('scope.detailsId:', $rootScope.detailsId);
-      $scope.scrollTo($rootScope.detailsId);
+    if ($rootScope.openedId) { // scroll to remembered row id
+      console.info('scope.openedId:', $rootScope.openedId);
+      $scope.scrollTo($rootScope.openedId);
     }
   }
 
@@ -163,8 +163,12 @@ console.log('WATCH - calling loadPersons()...');
   // public methods
 
   $scope.open = function(id) {
-    $rootScope.detailsId = id;
+    $rootScope.openedId = id;
     $location.path('/details/' + id);
+  };
+
+  $scope.openInNewTab = function(url) {
+    $window.open(url, '_blank');
   };
 
   $scope.scrollTo = function(id) {

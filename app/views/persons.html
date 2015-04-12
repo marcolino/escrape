@@ -56,7 +56,7 @@
         'person-inactive': person.active === '0',
         'person-uniq-id-last': isUniqLast('{{person.id_person}}')
       }">
-      <!--<pre> person: {{person}} </pre>-->
+<pre> person: {{person}} </pre>
       <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
         <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
           <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
@@ -100,12 +100,12 @@
             </button>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-              <button type="button" class="btn btn-default btn-wider" ng-attr-title="referral source: {{person.source_key}}" onclick="window.open('//facebook.com'); window.open('//twitter.com');"><!-- TODO: handle multiple referral sources opening... -->
+              <button type="button" class="btn btn-default btn-wider" ng-attr-title="referral source: {{person.source_key}}" ng-click="openInNewTab('{{person.url}}')">
                 <div class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></div>
               </button>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-            <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone}}">
+            <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone}}" ng-disabled="{{person.phone === '0'}}">
               <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone"></i></a>
             </button>
           </div>

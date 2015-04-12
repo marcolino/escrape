@@ -112,6 +112,7 @@ class Network {
       $this->logWrite("curl to [$url]" . ($tor ? " (TOR)" : ""));
       $ch = curl_init(); // initialize curl operation
       if (($errno = curl_errno($ch))) {
+        $this->logWrite("can't initialize curl: " . curl_strerror($errno));
         throw new Exception("can't initialize curl: " . curl_strerror($errno));
       }
       curl_setopt_array($ch, $curlOptions);
@@ -123,22 +124,23 @@ class Network {
         if ($errno === CURLE_OPERATION_TIMEDOUT) { // timeouts can be probably recovered...
           # TODO: ensure timeouts can be recovered, otherwise remove this retries stuff...
           $retry++;
-          #$this->logWrite("timeout executing curl to [$url], retry n. $retry");
           if ($retry < self::RETRIES_MAX) {
+            $this->logWrite("timeout executing curl to [$url], retry n. $retry");
             goto retry;
           } else {
+            $this->logWrite("timeout executing curl to [$url], retry n. $retry, throwing exception");
             throw new Exception("timeout retries exhausted executing curl to [$url]");
           }
         }
-        #$this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
+        $this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
         throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
       }
       curl_close($ch);
       #$this->logClose();
+      return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
     } catch (Exception $e) {
       throw new Exception("error getting url [$url] with curl: " . $e->getMessage());
     }
-    return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
   }
 
   /**
@@ -151,6 +153,7 @@ class Network {
     $retval = $this->getUrlContents($url, null, null, false, false);
     if (!$retval) { # TODO: check content of image... (HTML, for example...)
       $type = "empty";
+      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $type);
       throw new Exception("error getting image url [$url] with curl: " . "image content is " . $type);
     }
     return $retval;

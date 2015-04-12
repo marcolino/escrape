@@ -92,7 +92,8 @@ class DB extends PDO {
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
           page_sum TEXT,
-          active INTEGER
+          active INTEGER,
+          active_label INTEGER
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
         "
