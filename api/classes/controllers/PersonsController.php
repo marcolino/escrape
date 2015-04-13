@@ -33,7 +33,6 @@ class PersonsController {
     $error = false; // track errors while sync'ing
 
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
-#if ($sourceKey !== "torinoerotica") continue; # TODO: DEBUG-ONLY
       #$useTor = true; // use TOR proxy to sync
       $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
@@ -178,7 +177,7 @@ $this->router->log("debug", " active label: $activeLabel");
         $age = 28;
         $vote = 7; # TODO: JUST TO TEST BUTTONS WIDTH
         $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
-        #$new = false;
+        $new = false;
 
         $personMaster = [];
         #$personMaster["key"] = $key;
@@ -198,7 +197,7 @@ $this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaste
         $personDetail["nationality"] = $nationality;
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote;
-        #$personDetail["new"] = $new;
+        $personDetail["new"] = $new;
         $personDetail["uniq_prev"] = null;
         $personDetail["uniq_next"] = null;
 
@@ -266,18 +265,19 @@ $this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaste
    */
   private function assertPersonsActivity($timestampStart) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
-    $this->router->log("info", " timestamp of last sync start: " . date("c", $timestampStart));
+    #$this->router->log("info", " timestamp of last sync start: " . date("c", $timestampStart));
     foreach ($this->db->getPersonList(/* no sieve, */ /* no user: system user */) as $person) {
-      $timestampLastSyncPerson = $person["timestamp_last_sync"];
-      // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
-      $active = ($timestampLastSyncPerson >= $timestampStart);
-      $this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "TRUE" : "FALSE"));
-      if ($person["active_label"] === 0) {
+      #$this->router->log("info", "  person " . $person["key"] . " - active_label: [" . $person["active_label"] . "]");
+      if ($person["active_label"] === "0") {
         $active = false;
-        $this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - active_label = false, forcing active status: active: " . ($active ? "TRUE" : "FALSE"));
+        #$this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - active_label = false, forcing active status: active: " . ($active ? "1" : "0"));
+      } else {
+        // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
+        $timestampLastSyncPerson = $person["timestamp_last_sync"];
+        $active = ($timestampLastSyncPerson >= $timestampStart);
+        #$this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "1" : "0"));
       }
-
-      $this->db->setPerson($person["id"], [ "active" => $active ]);
+      $this->db->setPerson($person["id"], [ "active" => $active ? 1 : 0 ]);
     }
   }
 

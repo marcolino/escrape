@@ -40,3 +40,33 @@ Array.prototype.move = function (fromIndex, toIndex) {
   return moved;
   */
 };
+
+Array.prototype.hasName = function(value) {
+  for (var i = 0; i < this.length; i++) {
+    if (this[i].name === value) {
+      return true;
+    }
+  }
+  return false;
+};
+
+Array.prototype.removeByName = function(value) {
+  for (var i = 0; i < this.length; i++) {
+    if (this[i].name === value) {
+      this.splice(i, 1);
+      return true;
+    }
+  }
+  return false;
+};
+
+Array.prototype.remove = function() {
+  var what, a = arguments, len = a.length, ax;
+  while (len && this.length) {
+    what = a[--len];
+    while ((ax = this.indexOf(what)) !== -1) {
+      this.splice(ax, 1);
+    }
+  }
+  return this;
+};

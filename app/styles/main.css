@@ -121,6 +121,16 @@ body {
   padding-bottom: 3px;
 }
 
+/* person new attribute */
+.person-new {
+  color: red;
+}
+
+/* person not-new attribute */
+.person-not-new {
+  color: black;
+}
+
 /* right-scrollbar-placeholder, for persons header labels */
 .right-scrollbar-placeholder {
   margin-right: 2px;

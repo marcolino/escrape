@@ -31,9 +31,15 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
       id: null,
     },
     sort: [
-      'name', 
+      {
+        0: {
+          'name': 'name',
+          'direction': 'ascending',
+        },
+      },
     ],
   };
+  service.digest = null;
 
   service.load = function (force) {
     service.sieves = {};
@@ -53,7 +59,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
         //console.info('!!! load() - service.sieves.user.id:', service.sieves.user.id);
       }
     }
-    $rootScope.sieves = service.sieves;
+    //$rootScope.sieves = service.sieves;
 
     angular.copy(service.sieves, service.original); // save loaded sieves as sievesOriginal, to be able to check for modifications
     console.log('Sieves.original:', service.original);
@@ -109,11 +115,14 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     //$rootScope.sieves = $scope.sieves; // TODO: IS THIS OKKKKKK ????????? (SEARCH IN FILES "$rootScope.sieves" ...)
   };
 
+  service.getDigest = function () {
+    return service.digest;
+  };
+
   service.setDigest = function (sieves) {
-    var digest;
     if (sieves) {
-      // TODO: can we write just: "sieves.join('\0')" ???
-      digest =
+      // TODO: can we write just: "service.digest = sieves.join('\0')" ???
+      service.digest =
         sieves.search.term + '\0' +
         sieves.filters.active + '\0' +
         sieves.filters.voteMin + '\0' +
@@ -127,8 +136,10 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
         sieves.user.id + '\0' +
         sieves.sort.join('\0')
       ;
+    } else { // a null value sets a random digest (which will force a reload)
+      service.digest = Math.random();
     }
-    Authentication.setSievesDigest(digest);
+    //Authentication.setSievesDigest(digest);
   };
 
   service.setFilterVoteMin = function (n) {

@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $window, cfg, notify, Authentication, Countries, Persons, Comments) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $filter, $window, cfg, notify, Authentication, Countries, Persons, Comments, Sieves) {
 /*
 $scope.images = [
  'images/users/user-0.jpg',
@@ -54,27 +54,21 @@ $scope.images = [
   $scope.username = $rootScope.username; // TODO: get username from Authentication service...
   $scope.sortCriteria = {};
   $scope.openedId = null;
+  $scope.sieves = Sieves.sieves;
 
   // watch for sieves changes
-  $scope.authenticationService = Authentication;
-  $scope.$watch('authenticationService.getSievesDigest()', function(/*newValue, oldValue*//*, scope*/) {
-console.log('WATCH - calling loadPersons()...');
+  $scope.sievesService = Sieves;
+  $scope.$watch('sievesService.getDigest()', function() {
+    console.log('sievesService.getDigest() CHANGED, RELOADING SIEVES...');
     loadPersons(); // load persons list
   }, false);
-
-/*
- $scope.$on('$viewContentLoaded', function() {
-    console.info('***************** viewContentLoaded');
-    $scope.goto('18');
-  });
-*/
 
   // private methods
   function applyPersons(persons) {
     console.log('PERSONS: ', persons);
     $scope.persons = persons;
     //$scope.sortCriteria.name = true;
-    $scope.personsList = sortObjectToList(persons, $scope.sortCriteria);
+    $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     if ($rootScope.openedId) { // scroll to remembered row id
       console.info('scope.openedId:', $rootScope.openedId);
       $scope.scrollTo($rootScope.openedId);
@@ -82,8 +76,9 @@ console.log('WATCH - calling loadPersons()...');
   }
 
   function loadPersons() {
-    //console.log('loadPersons() - $rootScope.sieves:', $rootScope.sieves);
-    Persons.getPersons($rootScope.sieves).then(function(persons) {
+    //console.log('loadPersons() - Sieves.sieves:', Sieves.sieves);
+    //Persons.getPersons($rootScope.sieves).then(function(persons) {
+    Persons.getPersons(Sieves.sieves).then(function(persons) {
       applyPersons(persons);
     });
   }
@@ -171,18 +166,107 @@ console.log('WATCH - calling loadPersons()...');
     $window.open(url, '_blank');
   };
 
-  $scope.scrollTo = function(id) {
+  $scope.scrollTo = function(personId) {
     $timeout(function() {
-      $location.hash(id);
-      $anchorScroll(id);
+      $location.hash(personId);
+      $anchorScroll(personId);
       $location.hash(null);
     });
   };
 
+  $scope.firstSeen = function(personId) {
+    var MILLISECONDS_PER_DAY = (1000 * 60 * 60 * 24);
+    /* jshint camelcase: false */
+    var timestampCreation = $scope.persons[personId].timestamp_creation * 1000;
+    /* jshint camelcase: true */
+    var firstSeenAsString;
+    var now = new Date();
+    var timestampStartOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var timestampStartOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate()) - (1 * MILLISECONDS_PER_DAY);
+    var timestampOneWeekAgo = new Date(now - (7 * MILLISECONDS_PER_DAY));
+    var timestampOneMonthAgo = new Date(now - (30 * MILLISECONDS_PER_DAY));
+    var timestampOneYearAgo = new Date(now - (365 * MILLISECONDS_PER_DAY));
+    if (timestampCreation >= timestampStartOfToday) { // creation date is today
+      firstSeenAsString = 'today, at ' + $filter('date')(timestampCreation, 'HH:mm');
+    } else {
+      if (timestampCreation >= timestampStartOfYesterday) { // creation date is yesterday
+        firstSeenAsString = 'yesterday, at' + $filter('date')(timestampCreation, 'HH:mm');
+      } else {
+        if (timestampCreation >= timestampOneWeekAgo) { // creation date is one week ago or less
+          firstSeenAsString = 'this last week, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+        } else {
+          if (timestampCreation >= timestampOneMonthAgo) { // creation date is one month ago or less
+            firstSeenAsString = 'this last month, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+          } else {
+            if (timestampCreation >= timestampOneYearAgo) { // creation date is one year ago or less
+              firstSeenAsString = 'this last year, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+            } else { // default, creation date is older than one year since now
+              firstSeenAsString = 'more than one year ago, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+            }
+          }
+        }
+      }
+    }
+    return firstSeenAsString;
+  };
+
+/*
   $scope.setSortCriteria = function(criterium) {
     $scope.sortCriteria[criterium] = true;
     $scope.personsList = sortObjectToList($scope.persons, $scope.sortCriteria);
   };
+*/
+  $scope.addSortCriteria = function(criterium) {
+    if (!$scope.sieves.sort.hasName(criterium)) {
+      var len = $scope.sieves.sort.length;
+      $scope.sieves.sort[len] = { 'name': criterium, 'direction': 'ascending' };
+      $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+    }
+  };
+
+  $scope.delSortCriteria = function(criterium) {
+    if ($scope.sieves.sort.removeByName(criterium)) {
+      $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+    }
+  };
+
+  $scope.hasSortCriteria = function(criterium) {
+    return $scope.sieves.sort.hasName(criterium);
+  };
+
+  $scope.resetSortCriteria = function() {
+    $scope.sieves.sort = Sieves.defaults.sort; // TODO: writing $scope.sieves, does update Sieves.sieves ???
+    $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+  };
+
+  $scope.getSortCriteriaDirection = function(criterium) {
+    if ($scope.sieves.sort.hasName(criterium)) {
+      return $scope.sieves.sort.criterium.direction;
+    } else {
+      return null;
+    }
+  };
+
+  $scope.flipSortCriteriaDirection = function(criterium) {
+    if ($scope.sieves.sort.hasName(criterium)) {
+      if ($scope.sieves.sort.criterium.direction === 'ascending') {
+        $scope.sieves.sort.criterium.direction = 'descending';
+      } else {
+        $scope.sieves.sort.criterium.direction = 'ascending';
+      }
+      $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+    }
+  };
+
+  $scope.setSortCriteriaDirection = function(criterium, direction) {
+    if ($scope.sieves.sort.hasName(criterium)) {
+      if ((direction === 'ascending') || (direction === 'descending')) {
+        $scope.sieves.sort.criterium.direction = direction;
+        $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+      }
+    }
+  };
+
 
   $scope.isUniqPrimary = function(personId) {
     //console.log('@ isUniqPrimary('+personId+')');

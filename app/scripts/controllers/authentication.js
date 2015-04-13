@@ -36,6 +36,7 @@ app.controller('AuthenticationController',
     };
     $scope.sievesOriginal = {};
 */
+    $scope.Sieves = Sieves;
 
     $scope.openSideMenu = function(position) {
       $aside.open({ // side menu instance
@@ -50,8 +51,8 @@ app.controller('AuthenticationController',
               e.stopPropagation();
             }
             // set new sieves digest in service
-//console.error($scope.sieves);
-              Sieves.setDigest($scope.sieves);
+            //console.error($scope.sieves);
+            Sieves.setDigest(Sieves.sieves);
           };
         }
       }).result.then(
@@ -231,7 +232,8 @@ app.controller('AuthenticationController',
     };
 
     $scope.setFilterActive = function (mode) {
-      return Sieves.setFilterActive(mode);
+      Sieves.setFilterActive(mode);
+      //$scope.sieves = Sieves.sieves;
     };
 
     $scope.getClassActive = function(mode) {

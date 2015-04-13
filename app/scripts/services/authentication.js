@@ -3,7 +3,7 @@
 app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg, notify) {
   var service = {};
   var apiUri = cfg.apiUri + '/users/';
-  var sievesDigest = '';
+  //var sievesDigest = '';
 
   service.register = function (username, password, callback) {
     $http.post(apiUri + 'register', { username: username, password: password })
@@ -69,6 +69,7 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
     $http.defaults.headers.common.Authorization = 'Basic'; // + ' '; # ???
   };
 
+/*
   service.setSievesDigest = function (digest) {
     // a null value sets a random digest (which will force a reload)
     sievesDigest = digest ? digest : Math.random();
@@ -78,6 +79,7 @@ console.log('service.setSievesDigest :', sievesDigest);
   service.getSievesDigest = function () {
     return sievesDigest;
   };
+*/
 
   service.signedIn = function () {
     return (

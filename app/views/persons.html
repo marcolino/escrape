@@ -19,9 +19,18 @@
           <span class="persons-header-label">source</span>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <button type="button" class="btn btn-default btn-shorter" ng-click="setSortCriteria('phone')">
+          <button type="button" class="btn btn-default btn-shorter" ng-click="addSortCriteria('phone')">
             <span class="persons-header-label">
-              phone <i class="glyphicon glyphicon-circle-arrow-down"></i>
+              phone
+              <span ng-if="hasSortCriteria('phone')">
+                <i class="glyphicon glyphicon-remove-sign"
+                   ng-click="delSortCriteria('phone')">
+                </i>
+                <i class="glyphicon"
+                   ng-class="{ 'glyphicon-circle-arrow-down': getSortCriteriaDirection('phone') === 'descending', 'glyphicon-circle-arrow-up': getSortCriteriaDirection('phone') === 'ascending' }"
+                   ng-click="flipSortCriteriaDirection('phone')">
+                </i>
+              </span>
             </span>
           </button>
         </div>
@@ -29,7 +38,7 @@
         <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
 
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <button type="button" class="btn btn-default btn-shorter" ng-click="setSortCriteria('comments_count')">
+          <button type="button" class="btn btn-default btn-shorter" ng-click="addSortCriteria('comments_count')">
             <span class="persons-header-label">
               comments <i class="glyphicon glyphicon-circle-arrow-down"></i>
             </span>
@@ -56,7 +65,7 @@
         'person-inactive': person.active === '0',
         'person-uniq-id-last': isUniqLast('{{person.id_person}}')
       }">
-<pre> person: {{person}} </pre>
+<!--<pre> person: {{person}} </pre>-->
       <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
         <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
           <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
@@ -111,7 +120,7 @@
           </div>
   
           <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
-  
+
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <div class="person-comments-count">
               <button class="btn btn-default btn-wider" type="button" ng-attr-title="{{person.comments_count}} comments">
@@ -127,23 +136,11 @@
             </div>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-            <span ng-if="person.new === '1'">
-              <div class="person-new">
-                <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is new (first seen on {{person.timestamp_creation * 1000 | date:'dd MMMM yyyy, hh:mm'}})" ><!-- TODO: set a variable in controller ('personCreationDateFormat'?) -->
-                  <i class="glyphicon glyphicon-star text-danger"></i>
-                  <!--<span class="label label-as-badge label-danger"><i class="glyphicon glyphicon-star"></i></span>-->
-                </button>
-              </div>
-            </span>
-            <span ng-if="person.new !== '1'">
-              <div class="person-notnew">
-                <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is old (first seen on {{person.timestamp_creation * 1000 | date:'medium'}}">
-                  <i class="glyphicon glyphicon-star"></i>
-                  <!--<span class="label label-as-badge"><i class="glyphicon glyphicon-star"></i></span>-->
-                </button>
-              </div>
-            </span>
-             
+            <div class="person-is-new">
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is {{person.new ? '' : 'not '}}new (first seen {{firstSeen(person.id_person)}})">
+                <i class="glyphicon glyphicon-star" ng-class="{ 'person-new': person.new, 'person-not-new': !person.new }"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
