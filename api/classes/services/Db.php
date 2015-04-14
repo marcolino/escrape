@@ -600,6 +600,21 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
   }
 
+  public function getFieldDistinctValues($table, $fieldName, $userId = self::DB_SYSTEM_USER_ID) {
+    try {
+      $sql = "
+        SELECT DISTINCT {$fieldName}
+        FROM {$table}
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->execute();
+      $results = $statement->fetchAll(PDO::FETCH_COLUMN);
+      return $results;
+    } catch (PDOException $e) {
+      throw new Exception("can't get $table field $fieldName distinct values: " . $e->getMessage());
+    }
+  }
+
   public function getByFields($table, $array) {
     try {
       $where = "";
@@ -797,7 +812,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       $sieves["filters"]["active"]
     ) {
       if ($sieves["filters"]["active"] !== "any") {
-        $params["active"] = ($sieves["filters"]["active"] === "yes");
+        $params["active"] = ($sieves["filters"]["active"] === "yes") ? 1 : 0;
         $sql .= " AND ";
         $sql .= "active = :active";
       }

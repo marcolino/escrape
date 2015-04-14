@@ -5,11 +5,9 @@
  * @package CommentsController
  * @author  Marco Solari <marcosolari@gmail.com>
  *
- * Call example for POST:
- *  $ curl -X POST -d 'phone=primo post, content=bello' http://localhost/escrape/api/comments/
  */
 
-# TODO: use Utilities getUrlContents WITH charset !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+# TODO: use Utilities getUrlContents WITH charset !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 require_once "lib/simple_html_dom.php";
 require_once "classes/services/Utilities.php";
@@ -22,39 +20,8 @@ class CommentsController {
   function __construct($router) {
     require_once "setup/comments.php"; // comments setup
     $this->router = $router;
+    $this->network = new Network();
     $this->db = $this->router->db;
-  }
-
-  public function getAll() {
-    return $this->db->getAll("comment");
-  }
-
-  public function get($id) {
-    if (!$id) {
-      throw new Exception("can't get comment: no id specified");
-    }
-    return $this->db->get("comment", $id);
-  }
-  
-  public function getByPhone($phone) {
-    if (!$phone) {
-      throw new Exception("can't get comments by phone: no phone specified");
-    }
-    return $this->db->getByField("comment", "phone", $phone);
-  }
-  
-  public function countByPerson($personId) {
-    if (!$personId) {
-      throw new Exception("can't get comments count by person: no person id specified");
-    }
-    return $this->db->countByField("comment", "id_person", $personId);
-  }
-
-  public function getAverageValutationByPerson($personId) {
-    if (!$personId) {
-      throw new Exception("can't get comments average valutation by person: no person id specified");
-    }
-    return $this->db->getAverageFieldByPersonId("comment", $personId, "content_valutation")["avg"];
   }
 
   /**
@@ -98,7 +65,7 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
   }
 
   /**
-   * Sync comments
+   * Search by phone
    *
    * @param  string $phone
    * @return boolean true: success / false: error
@@ -265,6 +232,38 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
     }
 
     return $count;
+  }
+
+  public function getAll() {
+    return $this->db->getAll("comment");
+  }
+
+  public function get($id) {
+    if (!$id) {
+      throw new Exception("can't get comment: no id specified");
+    }
+    return $this->db->get("comment", $id);
+  }
+  
+  public function getByPhone($phone) {
+    if (!$phone) {
+      throw new Exception("can't get comments by phone: no phone specified");
+    }
+    return $this->db->getByField("comment", "phone", $phone);
+  }
+  
+  public function countByPerson($personId) {
+    if (!$personId) {
+      throw new Exception("can't get comments count by person: no person id specified");
+    }
+    return $this->db->countByField("comment", "id_person", $personId);
+  }
+
+  public function getAverageValutationByPerson($personId) {
+    if (!$personId) {
+      throw new Exception("can't get comments average valutation by person: no person id specified");
+    }
+    return $this->db->getAverageFieldByPersonId("comment", $personId, "content_valutation")["avg"];
   }
 
   private function normalizePhone($phone) {

@@ -29,7 +29,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
   }
 
   // public methods
-  return({
+  return {
 
     getPersons: function (data) {
       return $http({
@@ -109,6 +109,14 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 */
-  });
+
+    getActiveCountries: function (userId) {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getActiveCountries' + '/' + userId,
+      }).then(handleSuccess, handleError);
+    },
+
+  };
 
 });

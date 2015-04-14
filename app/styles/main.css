@@ -82,6 +82,7 @@ body {
 .btn-shorter {
   padding: 0 5px 0 5px;
 }
+
 .btn-wider {
   min-width: 48px;
 }
@@ -367,7 +368,16 @@ input[readonly].default-cursor {
 }
 .no-text-decoration {
   text-decoration: none !important;
-  DOESNTWORKoutline: none;
+  DOESNTWORK-outline: none;
+}
+
+/* persons warning text */
+.persons-warning-text {
+  padding-top: 1.0em;
+  text-align: center;
+  font-size: 1.2em;
+  font-style: italic;
+  color: #ff7200;
 }
 
 /* input search with clear button */

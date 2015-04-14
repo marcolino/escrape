@@ -161,6 +161,14 @@ class Router {
           $this->error($e);
         }
       });
+      $this->app->get("/getActiveCountries/:userId", function($userId) { # ==========
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->getActiveCountries($userId));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
 /*
       $this->app->get("/getUniqIds/:id", function($id) { # ==========================
         try {

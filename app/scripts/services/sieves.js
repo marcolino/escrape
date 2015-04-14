@@ -32,10 +32,8 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     },
     sort: [
       {
-        0: {
-          'name': 'name',
-          'direction': 'ascending',
-        },
+        'name': 'name',
+        'direction': 'ascending',
       },
     ],
   };
@@ -123,6 +121,8 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     if (sieves) {
       // TODO: can we write just: "service.digest = sieves.join('\0')" ???
       service.digest =
+        JSON.stringify(sieves)
+/*
         sieves.search.term + '\0' +
         sieves.filters.active + '\0' +
         sieves.filters.voteMin + '\0' +
@@ -134,12 +134,15 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
         sieves.options.cityCode + '\0' +
         sieves.options.categoryCode + '\0' +
         sieves.user.id + '\0' +
-        sieves.sort.join('\0')
+        JSON.stringify(sieves.sort)
+*/
       ;
     } else { // a null value sets a random digest (which will force a reload)
       service.digest = Math.random();
     }
+    console.log('service.digest:', service.digest);
     //Authentication.setSievesDigest(digest);
+    service.store();
   };
 
   service.setFilterVoteMin = function (n) {

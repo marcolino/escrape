@@ -48,14 +48,15 @@ class Network {
   /**
    * Get url contents
    *
-   * @param  string $url        url to be retrieved
-   * @param  string $charset    charset of url content
-   * @param  array $post        post data array, if needed (otherwise a GET is issued)
-   * @param  boolean $header    flag to get only header from url
-   * @param  boolean $tor       flag to use TOR proxy
-   * @return string             returned content
+   * @param  string $url            url to be retrieved
+   * @param  string $charset        charset of url content
+   * @param  array $post            post data array, if needed (otherwise a GET is issued)
+   * @param  boolean $header        flag to get only header from url
+   * @param  boolean $tor           flag to use TOR proxy
+   * @param  string &$contentType   content type of url content (reference)
+   * @return string                 returned content
    */
-  public function getUrlContents($url, $charset = null, $post = null, $header = false, $tor = true) {
+  public function getUrlContents($url, $charset = null, $post = null, $header = false, $tor = true, &$contentType) {
     $curlOptions = [
       CURLOPT_ENCODING => "gzip,deflate", // automatically decode the response if it's gzipped
       CURLOPT_AUTOREFERER => 1, // automatically update the referer header
@@ -135,6 +136,9 @@ class Network {
         $this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
         throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
       }
+      if ($contentType) {
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+      }
       curl_close($ch);
       #$this->logClose();
       return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
@@ -150,9 +154,15 @@ class Network {
    * @return string             image contents
    */
   public function getImageFromUrl($url) {
-    $retval = $this->getUrlContents($url, null, null, false, false);
-    if (!$retval) { # TODO: check content of image... (HTML, for example...)
+    $contentType = null;
+    $retval = $this->getUrlContents($url, null, null, false, false, $contentType);
+    if (!$retval) {
       $type = "empty";
+      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $type);
+      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $type);
+    }
+    if (!preg_match("/^image\//s", $contentType)) {
+      $type = $contentType;
       $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $type);
       throw new Exception("error getting image url [$url] with curl: " . "image content is " . $type);
     }

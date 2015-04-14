@@ -44,10 +44,10 @@ Array.prototype.move = function (fromIndex, toIndex) {
 Array.prototype.hasName = function(value) {
   for (var i = 0; i < this.length; i++) {
     if (this[i].name === value) {
-      return true;
+      return i;
     }
   }
-  return false;
+  return -1;
 };
 
 Array.prototype.removeByName = function(value) {

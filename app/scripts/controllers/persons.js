@@ -1,27 +1,8 @@
 'use strict';
 
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $filter, $window, cfg, notify, Authentication, Countries, Persons, Comments, Sieves) {
-/*
-$scope.images = [
- 'images/users/user-0.jpg',
- 'images/users/user-1.jpg',
- 'images/users/user-2.jpg',
- 'images/users/user-3.jpg',
- 'images/users/user-4.jpg',
-];
-*/
   $scope.persons = [];
   $scope.person = {};
-
-  // TODO: avoid visualization errors before person is fully loaded...
-
-  //$scope.person.timestampCreation = 0; // assigning 0 is of no use..., and ng-cloack seems of no use, either... shell add 0 default on view... :-()
-  /* jshint camelcase: false */
-/*
-  $scope.person.timestamp_creation = 0;
-  $scope.person.timestamp_last_sync = 0;
-*/
-  /* jshint camelcase: true */
 
   $scope.personId = $routeParams.personId;
   $scope.tabs = {
@@ -54,12 +35,13 @@ $scope.images = [
   $scope.username = $rootScope.username; // TODO: get username from Authentication service...
   $scope.sortCriteria = {};
   $scope.openedId = null;
+  $scope.Sieves = Sieves;
+  $scope.Sieves.load();
   $scope.sieves = Sieves.sieves;
 
   // watch for sieves changes
-  $scope.sievesService = Sieves;
-  $scope.$watch('sievesService.getDigest()', function() {
-    console.log('sievesService.getDigest() CHANGED, RELOADING SIEVES...');
+  $scope.$watch('Sieves.getDigest()', function() {
+    console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
     loadPersons(); // load persons list
   }, false);
 
@@ -84,27 +66,30 @@ $scope.images = [
   }
 
   function sortObjectToList(object, criteria) { // obj is an object of objects
-    /* jshint camelcase: false */
-//console.log('sortObjectToList():', object);
-
+    // order objects by sort criteria
+    //console.log('sortObjectToList():', object, criteria);
     var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
-      if (criteria.name) {
-        //return object[a].name >= object[b].name;
-        return object[a].name.localeCompare(object[b].name);
+      var len = criteria.length;
+      for (var i = 0; i < len; i++) {
+        var crit = criteria[i].name;
+        var dir = criteria[i].direction;
+        if (crit) {
+          if (dir === 'ascending') {
+            if (object[a][crit] > object[b][crit]) { /*console.log(criteria[i].name, 'asc', '>');*/ return 1; }
+            if (object[a][crit] < object[b][crit]) { /*console.log(criteria[i].name, 'asc', '<');*/ return -1; }
+          } else {
+            if (object[a][crit] > object[b][crit]) { /*console.log(criteria[i].name, 'desc', '>');*/ return -1; }
+            if (object[a][crit] < object[b][crit]) { /*console.log(criteria[i].name, 'desc', '<');*/ return 1; }
+          }
+        }
+        // objects are equal, according to this criterium: proceed with next criterium
       }
-      if (criteria.phone) {
-        //return object[a].phone >= object[b].phone;
-        return object[a].phone.localeCompare(object[b].phone);
-      }
-      if (criteria.comments_count) {
-        return object[a].comments_count < object[b].comments_count;
-      }
-      //return object[a].name >= object[b].name;
-      return object[a].name.localeCompare(object[b].name);
+      return 0; // no sort criteria can find an ordering
     }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
 
     // aggregate uniq lists in sorted list
     var len = list.length;
+    /* jshint camelcase: false */
     for (var i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
         var next;
@@ -190,7 +175,7 @@ $scope.images = [
       firstSeenAsString = 'today, at ' + $filter('date')(timestampCreation, 'HH:mm');
     } else {
       if (timestampCreation >= timestampStartOfYesterday) { // creation date is yesterday
-        firstSeenAsString = 'yesterday, at' + $filter('date')(timestampCreation, 'HH:mm');
+        firstSeenAsString = 'yesterday, at ' + $filter('date')(timestampCreation, 'HH:mm');
       } else {
         if (timestampCreation >= timestampOneWeekAgo) { // creation date is one week ago or less
           firstSeenAsString = 'this last week, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
@@ -210,16 +195,13 @@ $scope.images = [
     return firstSeenAsString;
   };
 
-/*
-  $scope.setSortCriteria = function(criterium) {
-    $scope.sortCriteria[criterium] = true;
-    $scope.personsList = sortObjectToList($scope.persons, $scope.sortCriteria);
-  };
-*/
   $scope.addSortCriteria = function(criterium) {
-    if (!$scope.sieves.sort.hasName(criterium)) {
+    //console.info('addSortCriteria()', criterium);
+    var index = $scope.sieves.sort.hasName(criterium);
+    if (index < 0) {
       var len = $scope.sieves.sort.length;
       $scope.sieves.sort[len] = { 'name': criterium, 'direction': 'ascending' };
+      //console.info('sievs sort: ', $scope.sieves.sort);
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
     }
   };
@@ -231,7 +213,7 @@ $scope.images = [
   };
 
   $scope.hasSortCriteria = function(criterium) {
-    return $scope.sieves.sort.hasName(criterium);
+    return ($scope.sieves.sort.hasName(criterium) >= 0);
   };
 
   $scope.resetSortCriteria = function() {
@@ -240,28 +222,31 @@ $scope.images = [
   };
 
   $scope.getSortCriteriaDirection = function(criterium) {
-    if ($scope.sieves.sort.hasName(criterium)) {
-      return $scope.sieves.sort.criterium.direction;
+    var index = $scope.sieves.sort.hasName(criterium);
+    if (index >= 0) {
+      return $scope.sieves.sort[index].direction;
     } else {
       return null;
     }
   };
 
   $scope.flipSortCriteriaDirection = function(criterium) {
-    if ($scope.sieves.sort.hasName(criterium)) {
-      if ($scope.sieves.sort.criterium.direction === 'ascending') {
-        $scope.sieves.sort.criterium.direction = 'descending';
+    var index = $scope.sieves.sort.hasName(criterium);
+    if (index >= 0) {
+      if ($scope.sieves.sort[index].direction === 'ascending') {
+        $scope.sieves.sort[index].direction = 'descending';
       } else {
-        $scope.sieves.sort.criterium.direction = 'ascending';
+        $scope.sieves.sort[index].direction = 'ascending';
       }
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
     }
   };
 
   $scope.setSortCriteriaDirection = function(criterium, direction) {
-    if ($scope.sieves.sort.hasName(criterium)) {
+    var index = $scope.sieves.sort.hasName(criterium);
+    if (index >= 0) {
       if ((direction === 'ascending') || (direction === 'descending')) {
-        $scope.sieves.sort.criterium.direction = direction;
+        $scope.sieves.sort[index].direction = direction;
         $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
       }
     }
@@ -425,7 +410,6 @@ $scope.images = [
     );
   };
 
-/*
   $scope.vote = function(vote) {
     if (vote > 0) {
       $scope.person.vote = Math.min(cfg.person.vote.max, $scope.person.vote + vote);
@@ -433,7 +417,6 @@ $scope.images = [
       $scope.person.vote = Math.max(cfg.person.vote.min, $scope.person.vote + vote);
     }
   };
-*/
 
   $scope.geocode = function(address, region) {
     var geocoder = new google.maps.Geocoder();

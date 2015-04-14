@@ -1,42 +1,15 @@
 'use strict';
  
 app.controller('AuthenticationController',
-  function ($scope, $rootScope, $location, $aside, $timeout, cfg, Authentication, Countries, Sieves) {
+  function ($scope, $rootScope, $location, $aside, $timeout, cfg, Authentication, Countries, Persons, Sieves) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
-/*
-    $scope.sievesDefaults = {
-      search: {
-        term: '',
-      },
-      filters: {
-        isopened: true,
-        active: 'any', // 'any' / 'yes' / 'no'
-        voteMin: 0,
-        commentsCountMin: 0,
-        age: {
-          min: 18,
-          max: 75,
-        },
-        nationality: '',
-      },
-      options: {
-        isopened: false,
-        countryCode: cfg.countryCode,
-        cityCode: cfg.cityCode,
-        categoryCode: cfg.category,
-      },
-      //uniqIds: [],
-      user: {
-        id: null,
-      },
-      sort: [
-        'name', 
-      ],
-    };
-    $scope.sievesOriginal = {};
-*/
     $scope.Sieves = Sieves;
+
+    $scope.init = function () {
+      Sieves.load();
+      $scope.activeCountriesNew();
+    };
 
     $scope.openSideMenu = function(position) {
       $aside.open({ // side menu instance
@@ -63,29 +36,6 @@ app.controller('AuthenticationController',
         }
       );
     };
-
-/*
-    $scope.setSievesDigest = function (sieves) {
-      var digest;
-      if (sieves) {
-        digest =
-          sieves.search.term + '\0' +
-          sieves.filters.active + '\0' +
-          sieves.filters.voteMin + '\0' +
-          sieves.filters.commentsCountMin + '\0' +
-          sieves.filters.age.min + '\0' +
-          sieves.filters.age.max + '\0' +
-          sieves.filters.nationality.countryCode + '\0' +
-          sieves.options.countryCode + '\0' +
-          sieves.options.cityCode + '\0' +
-          sieves.options.categoryCode + '\0' +
-          sieves.user.id + '\0' +
-          sieves.sort.join('\0')
-        ;
-      }
-      Authentication.setSievesDigest(digest);
-    };
-*/
 
     $scope.about = function () {
       $location.path('/about');
@@ -133,7 +83,13 @@ app.controller('AuthenticationController',
       return Authentication.signedIn();
     };
 
-    $scope.getUserName = function () { 
+    $scope.getUserId = function () {
+      if ($scope.signedIn()) {
+        return $rootScope.globals.currentUser.id;
+      }
+    };
+
+    $scope.getUserName = function () {
       if ($scope.signedIn()) {
         return $rootScope.globals.currentUser.username;
       }
@@ -210,14 +166,6 @@ app.controller('AuthenticationController',
     };
 
     $scope.activeCountries = function () {
-      /*
-      console.info('activeCountries:', {
-        '': 'any country',
-        'ar': 'Argentina',
-        '..': '...',
-      });
-      */
-      // TODO: get from persons...
       return {
         '': 'any country',
         'ar': 'Argentina',
@@ -229,6 +177,24 @@ app.controller('AuthenticationController',
         'ru': 'Russia',
         'th': 'Thailand',
       };
+    };
+    
+    $scope.activeCountriesNew = function () {
+      var userId = $scope.getUserId();
+      //return userId;
+      Persons.getActiveCountries(userId).then(function(countries) {
+        $scope.activeCountries = countries;
+        $scope.activeCountries['_'] = 'any country'; // TODO: NOOOOOOOOOOOOOOOOO
+        //countries['_'] = 'any country';
+      });
+/*
+      //countries['_'] = 'any country';
+      return countries;
+*/
+    };
+    
+    $scope.getCountryName = function (countryCode) {
+      return countryCode ? Countries.getCountryName(countryCode) : 'any country';
     };
 
     $scope.setFilterActive = function (mode) {
@@ -249,19 +215,19 @@ app.controller('AuthenticationController',
     };
 
     $scope.setFilterNationalityCountry = function (countryCode) {
-      return Sieves.setFilterNationalityCountry(countryCode);
+      Sieves.setFilterNationalityCountry(countryCode);
     };
 
     $scope.setOptionSourcesCountryCode = function (countryCode) {
-      return Sieves.setOptionSourcesCountryCode(countryCode);
+      Sieves.setOptionSourcesCountryCode(countryCode);
     };
 
     $scope.setOptionSourcesCityCode = function (cityCode) {
-      return Sieves.setOptionSourcesCityCode(cityCode);
+      Sieves.setOptionSourcesCityCode(cityCode);
     };
 
     $scope.setOptionSourcesCategoryCode = function (categoryCode) {
-      return Sieves.setOptionSourcesCategoryCode(categoryCode);
+      Sieves.setOptionSourcesCategoryCode(categoryCode);
     };
 
     $scope.toggleSectionOpened = function (section) {
@@ -277,6 +243,13 @@ app.controller('AuthenticationController',
 
     // load sieves (search, filters, options, ...)
     //$scope.loadSieves();
+
+    /*
     Sieves.load();
+
+    $scope.activeCountriesNew();
+    */
+
+    $scope.init();
   }
 );

@@ -426,6 +426,17 @@ $this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaste
     return $cities;
   }
 
+  /**
+   * Get all countries defined on persons
+   *
+   * @param integer $userId   user id
+   * @return array            all countries defined
+   */
+  public function getActiveCountries($userId = null) {
+    $result = $this->db->getFieldDistinctValues("person_detail", "nationality", $userId);
+    return $result;
+  }
+
 /*
   / **
    * Get two persons uniqueness value (are they assumed to be the same person)
@@ -510,7 +521,7 @@ $this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaste
    */
   public function getList($data) {
     $result = [];
-    $userId = $data["user"]["id"];
+    $userId = $data && $data["user"] ? $data["user"]["id"] : null;
     $comments = new CommentsController($this->router);
 
     $persons = $this->db->getPersonList($data, $userId);
@@ -793,11 +804,15 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
 
     $photos = $this->db->getByField("photo", "id_person", $personId);
 
+/*
+    CURRENTLY, NO SOURCE SITE GIVES A VALID LAST-MODIFICATION-TIMESTAMP FOR THE PHOTOS...
+
     // check if photo url did not change from last download
     if ($this->photoCheckLastModified($personId, $photo, $photos)) {
       $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is not changed, ignoring");
       return false; // same Last-Modified tag found
     }
+*/
 
     // check if photo is an exact duplicate
     if ($this->photoCheckDuplication($personId, $photo, $photos)) {

@@ -1,8 +1,4 @@
 TODO 1.0:
- - handle empty/vacation phones while sync'ing
- - handle all exceptions at least with notify.error() ...
- - handle sorting by some fields in list view
- - in google search results page, make buttons (Fake, Thrutful, Don't know) always visible... (results in  a scroller)
  - in google search results page, handle error "Google thinks we're bot and won't process our requests"...
  - in google search results page, add small button "add to white list" after url...
  - before google search, check image has already thruthful flag...
@@ -13,12 +9,11 @@ TODO 1.0:
  - sync: skip person page if page sum matches with last synced... (do we save anything worth?)
  - person detail view: replace static google street + google street indications with dynamic google street view:+indications (see: <http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7>)
  - remove all "is_array_multi()" checks (after db fechtall's...) (are we sure it's unuseful?)
- - test photosCardDeckMerge() in real life...
+ - test photosCardDeckMerge() in real life... (We don't use it anymore, backup this code and remove from codebase...)
  - filter all sites defined and all esc* sites from photos 'occurrences' (and add also "http://esc...profil.com/", ...)
  - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR):
     check if all-string values in DB can be someway harmful...
  - put more info (more than the name) in "ng-attr-title" for person's photo (in persons view)
- - to not call getSourcesCities(undefined) (see slim logs...)
  - add the possibility for user to add domains to a "black-list" for photos thruthfulness check... For example:
     - www.reddit.com/
     - www.theospark.net/
@@ -26,7 +21,7 @@ TODO 1.0:
  - try to unify getLastModificationTimestampFromUrl($url), getMimeFromUrl($url) to getUrlContents(...) ...
  - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
  - think about a way to allow users to add uniquenesses...
- - in "simulation", use public url photos, do not download locally...
+ - handle all exceptions at least with notify.error() ...
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens
@@ -116,4 +111,8 @@ DONE:
  - var_export($VAR, true) => any2string($VAR)
  - persons view - person.timestamp_last_sync: set up a date format variable (i.e.: dateFormat = 'EEEE d MMM y h:mm') in controller
  - save scroll height on persons view when opening details view, and restore it when back to persons view
- 
+ - in "simulation", use public url photos, do not download locally...
+ - do not call getSourcesCities(undefined) (see slim logs...)
+ - handle empty/vacation phones while sync'ing
+ - handle sorting by some fields in list view
+ - in google search results page, make buttons (Fake, Thrutful, Don't know) always visible... (results in  a scroller)
