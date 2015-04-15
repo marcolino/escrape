@@ -201,14 +201,15 @@ app.service('Countries', function() {
   };
 
   return {
-	  countries: countries,
-	  getCountryName: function(countryCode) {
-      //console.log('=== getCountryName() - countryCode:', countryCode);
-	    //return countryCode ? countries[countryCode] : 'any country';
-	    return countryCode;
-	  },
-	  getCountryClass: function(countryCode) {
-  	  return countryCode ? 'flag' + ' ' + countryCode : 'glyphicon glyphicon-globe';
+	countries: countries,
+	getCountryName: function(countryCode) {
+	  return countries[countryCode];
+	},
+	getCountryClass: function(countryCode) {
+  	  return (countryCode === '') ?
+  	    'glyphicon glyphicon-globe' :
+  	    'flag' + ' ' + countryCode
+  	  ;
   	},
   };
 

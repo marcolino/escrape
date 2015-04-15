@@ -8,7 +8,7 @@ app.controller('AuthenticationController',
 
     $scope.init = function () {
       Sieves.load();
-      $scope.activeCountriesNew();
+      $scope.loadActiveCountries();
     };
 
     $scope.openSideMenu = function(position) {
@@ -165,36 +165,20 @@ app.controller('AuthenticationController',
       return sourcesCategories[categoryCode];
     };
 
-    $scope.activeCountries = function () {
-      return {
-        '': 'any country',
-        'ar': 'Argentina',
-        'br': 'Brasil',
-        'cu': 'Cuba',
-        'es': 'Spain',
-        'fr': 'France',
-        'it': 'Italy',
-        'ru': 'Russia',
-        'th': 'Thailand',
-      };
-    };
-    
-    $scope.activeCountriesNew = function () {
+    $scope.loadActiveCountries = function () {
       var userId = $scope.getUserId();
-      //return userId;
       Persons.getActiveCountries(userId).then(function(countries) {
-        $scope.activeCountries = countries;
-        $scope.activeCountries['_'] = 'any country'; // TODO: NOOOOOOOOOOOOOOOOO
-        //countries['_'] = 'any country';
+        countries.unshift('');
+        // transform array of countryCodes to array of objects { countryCode: countryName }
+        $scope.activeCountries = {};
+        angular.forEach(countries, function(value) {
+          this[value] = $scope.getCountryName(value);
+        }, $scope.activeCountries);
       });
-/*
-      //countries['_'] = 'any country';
-      return countries;
-*/
     };
     
     $scope.getCountryName = function (countryCode) {
-      return countryCode ? Countries.getCountryName(countryCode) : 'any country';
+      return (countryCode === '') ? 'any country' : Countries.getCountryName(countryCode);
     };
 
     $scope.setFilterActive = function (mode) {
@@ -240,15 +224,6 @@ app.controller('AuthenticationController',
     function setCredentials (data) {
       Authentication.setCredentials(data.user.id, data.user.username, data.user.password, data.user.role);
     }
-
-    // load sieves (search, filters, options, ...)
-    //$scope.loadSieves();
-
-    /*
-    Sieves.load();
-
-    $scope.activeCountriesNew();
-    */
 
     $scope.init();
   }

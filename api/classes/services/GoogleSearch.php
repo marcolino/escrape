@@ -50,9 +50,11 @@ class GoogleSearch {
       sleep(TIMEOUT_MOVED);
       $dom = $this->getUrlDom($a);
     }
+/* we handle this situation afterwards
     if (stripos($dom->find("title", 0), "sorry") !== false) { // google thinks we're bot
       throw new Exception("Error: Google thinks we're bot and won't process our requests");
     }
+*/
     return $dom;
   }
 
@@ -114,6 +116,16 @@ class GoogleSearch {
       if (!is_object($dom)) {
         return $result; // main results div not found
       }
+      if (stripos($dom->find("title", 0), "sorry") !== false) { // google thinks we're bot
+        //throw new Exception("Error: Google thinks we're bot and won't process our requests");
+        $result[0] = [];
+        $result[0]["text"] = "Error: Google thinks we're bot and won't process our requests... please, try again later.";
+        $result[0]["href"] = "";
+        $result[0]["hrefShort"] = "";
+        $result[0]["imgsrc"] = "";
+        return $result; // return one result, telling "google thinks we're bot"...
+      }
+
       $c = count($dom->find("div.srg")) > 1 ? 1 : 0; // if this is first page, we have 2 divs, first with
                                                      // some irrelevant links, so skip the first page
       $d = $dom->find("div.srg", $c); // get second div (if this is first page), or first div

@@ -193,7 +193,7 @@
         </div>
         <div class="showcase-right">
           <div class="img-rounded img-clip-container" ng-attr-title="{{person.name}}">
-            <a href="" ng-click="open('{{person.id_person}}')" class="no-text-decoration">
+            <a href="" ng-click="open(person.id_person)" class="no-text-decoration">
               <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="NOimg-rounded img-clip"
                 ng-class="{
                   'img-thruthful-yes': person.thruthful === 'yes',

@@ -69,7 +69,7 @@
             <input class="form-control default-cursor" type="text" ng-value="getCountryName(Sieves.sieves.filters.nationality)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
-            <li ng-repeat="(countryCode, countryName) in activeCountries()" class="flag-li">
+            <li ng-repeat="(countryCode, countryName) in activeCountries" class="flag-li">
               <a ng-click="setFilterNationalityCountry(countryCode)"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{countryName}}</a>
             </li>
           </ul>

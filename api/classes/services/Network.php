@@ -56,7 +56,7 @@ class Network {
    * @param  string &$contentType   content type of url content (reference)
    * @return string                 returned content
    */
-  public function getUrlContents($url, $charset = null, $post = null, $header = false, $tor = true, &$contentType) {
+  public function getUrlContents($url, $charset = null, $post = null, $header = false, $tor = true, &$contentType = null) {
     $curlOptions = [
       CURLOPT_ENCODING => "gzip,deflate", // automatically decode the response if it's gzipped
       CURLOPT_AUTOREFERER => 1, // automatically update the referer header
