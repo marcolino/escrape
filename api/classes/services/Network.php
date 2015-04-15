@@ -81,11 +81,13 @@ class Network {
         CURLOPT_HEADER => 0, // do not return header
         CURLOPT_NOBODY => 0, // do return header
       ];
+$this->logWrite("curl to [$url] - HEADER IS FALSE");
     } else {
       $curlOptions = $curlOptions + [
         CURLOPT_HEADER => 1, // return header
         CURLOPT_NOBODY => 1, // do not return header
       ];
+$this->logWrite("curl to [$url] - HEADER IS TRUE");
     }
 
     if ($tor) { // add TOR options
@@ -136,9 +138,20 @@ class Network {
         $this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
         throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
       }
-      if ($contentType) {
+      #if (!is_null($contentType)) {
         $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-      }
+
+        preg_match('@([\w/+]+)(;\s+charset=(\S+))?@i', $contentType, $matches);
+        if (isset($matches[1])) {
+          $mimeType = $matches[1];
+        }
+        if (isset($matches[3])) {
+          $charset = $matches[3];
+        }
+$this->logWrite("getUrlContents contentType requested - mime type: " . $mimeType);
+$contentType = $mimeType; # TODO: use mimeType...
+throw new Exception("contentType: " . $contentType);
+      #}
       curl_close($ch);
       #$this->logClose();
       return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
@@ -155,7 +168,7 @@ class Network {
    */
   public function getImageFromUrl($url) {
     $contentType = null;
-    $retval = $this->getUrlContents($url, null, null, false, false, $contentType);
+    $retval = $this->getUrlContents($url, null, null, true, false, $contentType);
     if (!$retval) {
       $type = "empty";
       $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $type);

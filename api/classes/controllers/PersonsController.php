@@ -381,9 +381,11 @@ $this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaste
    */
   public function getSourcesCities($countryCode) {
     $cities = [];
+/*
     if ($countryCode) {
       $this->router->log("info", "getSourcesCities($countryCode) ---");
     }
+*/
 /*
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
       $url = $source["url"];
@@ -535,6 +537,13 @@ $this->router->log("debug", "persons length: " . count($persons));
         throw new Exception("Assertion failed: getList(): (isset(\$result[\$personId])"); # TODO: JUST TO DEBUG!
       }
 
+/*
+      // show a null phone
+      if ($person["phone"] === "0") { # TODO: remove this statement, and store 'null' for empty phones, not '0'...
+        $person["phone"] = null;
+      }
+*/
+      
       // store each person by it's person id ("id" field is relative to details table)
       $result[$personId] = $person;
 /*
@@ -575,7 +584,6 @@ $this->router->log("debug", "persons length: " . count($persons));
       }
       #$this->router->log("debug", "result: " . var_export($result, true));
 */
-
       // fields "calculated"
       //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
       $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
@@ -749,11 +757,11 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
   private function normalizePhone($phone, $sourceKey) {
     $source = $this->sourcesDefinitions[$sourceKey];
     if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
-      $phone = "0";
+      $phone = "";
       $activeLabel = "0";
     } else {
       if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
-        $phone = "0";
+        $phone = "";
         $activeLabel = "0";
       } else {
         $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters

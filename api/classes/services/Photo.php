@@ -307,7 +307,7 @@ class Photo {
 
     #list($this->bitmap, $this->mime) = $this->getUrlContents($this->url); // download photo
 
-    try {
+    #try {
       // get photo contents
       #$this->bitmap = $network->getUrlContents($this->url); #, null, null, false, false); // download photo
       
@@ -321,9 +321,9 @@ class Photo {
       ) {
         throw new Exception("error getting image [$this->url]: " . "Site denies access...");
       }
-    } catch(Exception $e) {
-      throw new Exception("error getting image [$this->url] contents: " . $e->getMessage());
-    }
+    #} catch(Exception $e) {
+    #  throw new Exception("error getting image [$this->url] contents: " . $e->getMessage());
+    #}
 
     try {
       $this->mime = $this->network->getMimeFromUrl($this->url);

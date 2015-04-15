@@ -247,7 +247,8 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
   
   public function getByPhone($phone) {
     if (!$phone) {
-      throw new Exception("can't get comments by phone: no phone specified");
+      //throw new Exception("can't get comments by phone: no phone specified");
+      return [];
     }
     return $this->db->getByField("comment", "phone", $phone);
   }
