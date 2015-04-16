@@ -122,7 +122,6 @@ class PersonsController {
 
         if (preg_match($source["patterns"]["person-phone"], $page_details, $matches) >= 1) {
           list($phone, $activeLabel) = $this->normalizePhone($matches[1], $sourceKey);
-$this->router->log("debug", " active label: $activeLabel");
         } else {
           $this->router->log("error", "person $n ($key) phone not found, giving up with this person");
           $error = true;
@@ -186,7 +185,6 @@ $this->router->log("debug", " active label: $activeLabel");
         $personMaster["timestamp_last_sync"] = $timestampNow;
         $personMaster["page_sum"] = $pageSum;
         if ($activeLabel !== null) { $personMaster["active_label"] = $activeLabel; } // if active flag is null, do not set it
-$this->router->log("debug", " \$personMaster[\"active_label\"]: " . $personMaster["active_label"]);
         $personDetail = [];
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
@@ -1116,7 +1114,7 @@ $this->router->log("debug", "photoGetAll($personId)");
    */
   private function photoGetByShowcase($personId, $showcase) {
     $photos = $this->db->getByFields("photo", [ "id_person" => $personId, "showcase" => $showcase ]);
-    return $photos[0];
+    return (is_array($photos) && count($photos) > 0) ? $photos[0] : [];
   }
 
   /**
