@@ -886,7 +886,9 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
     return $data;
   }
 
-  /**
+/*
+    CURRENTLY, NO SOURCE SITE GIVES A VALID LAST-MODIFICATION-TIMESTAMP FOR THE PHOTOS...
+  / **
    * Check photo last modification timestamp
    *
    * @param  integer $personId:     the id of person to check for photo last modification
@@ -894,7 +896,7 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
    * @param  Photo array: $photos   the photos array of this person
    * @return boolean: true          if photo has not been modified
    *                  false         if photo has been modified (and should be downloaded)
-   */
+   * /
   private function photoCheckLastModified($personId, $photo, $photos) {
     $photoLastModificationTimestamp = $photo->getLastModificationTimestamp();
     if ($photos !== []) {
@@ -932,6 +934,7 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
     #$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
     return false;
   }
+*/
 
   /**
    * Check for photo exact duplication
@@ -943,26 +946,26 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
    */
   private function photoCheckDuplication($personId, $photo, $photos) {
     if ($photos !== []) {
-      if (is_array_multi($photos)) { // more than one result returned
+#      if (is_array_multi($photos)) { // more than one result returned
         foreach ($photos as $p) {
           if ($p["sum"] === $photo->sum()) { // the checksum matches
             #$this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
             return true;
           }
         }
-      } else { // not more than one result returned
-        # TODO: check if this is possible...
-        throw new Exception("photoCheckDuplication(): returned one-level array:" . var_export($photos, true));
-/*  
-        if ($photos) { // exactly one result returned
-          $p = $photos;
-          if ($p["sum"] === $photo->sum()) { // the checksum matches
-            #$this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
-            return true;
-          }
-        }
-*/  
-      }
+#      } else { // not more than one result returned
+#        # TODO: check if this is possible...
+#        throw new Exception("photoCheckDuplication(): returned one-level array:" . var_export($photos, true));
+#/*  
+#        if ($photos) { // exactly one result returned
+#          $p = $photos;
+#          if ($p["sum"] === $photo->sum()) { // the checksum matches
+#            #$this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
+#            return true;
+#          }
+#        }
+#*/  
+#      }
     }
     return false;
   }
@@ -978,7 +981,7 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
   private function photoCheckSimilarity($personId, $photo, $photos) {
     $retval = false;
     if ($photos !== []) {
-      if (is_array_multi($photos)) { // more than one result returned
+#      if (is_array_multi($photos)) { // more than one result returned
         foreach ($photos as $p) {
           $photo2 = new Photo([ "data" => $p ]);
           if ($photo->checkSimilarity($photo2)) {
@@ -987,18 +990,18 @@ $this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
             break;
           }
         }
-      } else { // not more than one result returned
-        throw new Exception("photoCheckSimilarity(): returned one-level array!" . " SHOULD NOT HAPPEN!!!");
-/*  
-        if ($photos) { // one result returned
-          $photo2 = new Photo([ "data" => $photos ]);
-          if ($photo->checkSimilarity($photo2)) {
-            #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
-            return true;
-          }
-        }
-*/  
-      }
+#      } else { // not more than one result returned
+#        throw new Exception("photoCheckSimilarity(): returned one-level array!" . " SHOULD NOT HAPPEN!!!");
+#/*  
+#        if ($photos) { // one result returned
+#          $photo2 = new Photo([ "data" => $photos ]);
+#          if ($photo->checkSimilarity($photo2)) {
+#            #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
+#            return true;
+#          }
+#        }
+#*/  
+#      }
     }
     unset($photo2);
     return $retval;

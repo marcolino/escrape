@@ -185,9 +185,6 @@ class GoogleSearch {
       $dom = is_file($imageUrl) ? $this->getLocalImageSearchDom($imageUrl) : $this->getRemoteImageSearchDom($this->searchRemoteImage.$imageUrl);
       $bestGuess = $this->getBestGuess($dom); // get best guess from first page
       $searchResults = $this->getSearchResults($dom); // get search results from first page
-      #$fh = fopen("/var/www/html/escrape/dom.html", "a+");
-      #fwrite($fh, $dom);
-      #fclose($fh);
       $nextPageA = $dom->find("#nav a.pn", 0); // check if we have "next page" link (if we don't - it's the only page)
       $dom->clear();
       for ($i = 1; $i < $numPages && $nextPageA; $i++) { // loop through pages [2 - $numPages]

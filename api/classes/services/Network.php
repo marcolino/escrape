@@ -5,22 +5,26 @@ require_once __DIR__ . "/../../lib/random_user_agent.php";
 define("_COOKIE_FILE", __DIR__ . "/../../logs/curl.cookie");
 define("_LOG_FILE", __DIR__ . "/../../logs/curl.log");
 
-/*
 # DEBUG: testing! ####################################################
-$url_sg = "http://www.sexyguidaitalia.com/public/23836/copertina.jpg?t=635625002387860017";
-$url_te = "http://www.torinoerotica.com/wt_foto!annunci!114646!Anteprime!700x525!mmmmmmmmmmmmm.jpeg";
+/*
+date_default_timezone_set("Europe/Rome");
 
+$url = "http://www.motorcycle.com/images/babes/babes_justene_00.jpg";
 $n = new Network();
-
+$bitmap = $n->getImageFromUrl($url);
+print $bitmap;
+*/
+/*
 $timestamp = $n->getLastModificationTimestampFromUrl($url_sg);
 print "Last modification timestamp from [$url_sg]: [$timestamp]" . "\n";
 
 $timestamp = $n->getLastModificationTimestampFromUrl($url_te);
 print "Last modification timestamp from [$url_te]: [$timestamp]" . "\n";
-
-exit;
-######################################################################
 */
+/*
+exit;
+*/
+######################################################################
 
 class Network {
 
@@ -53,7 +57,7 @@ class Network {
    * @param  array $post            post data array, if needed (otherwise a GET is issued)
    * @param  boolean $header        flag to get only header from url
    * @param  boolean $tor           flag to use TOR proxy
-   * @param  string &$contentType   content type of url content (reference)
+   * @param  string &$contentType   content type of url content (reference);
    * @return string                 returned content
    */
   public function getUrlContents($url, $charset = null, $post = null, $header = false, $tor = true, &$contentType = null) {
@@ -70,7 +74,6 @@ class Network {
       CURLOPT_USERAGENT => random_user_agent(), // use a random user agent
       CURLOPT_COOKIEFILE => self::COOKIE_FILE, // set cookie file
       CURLOPT_COOKIEJAR => self::COOKIE_FILE, // set cookie jar
-      #CURLOPT_STDERR => $this->log, // log session
       CURLOPT_VERBOSE => 1, // produce a verbose log
       CURLINFO_HEADER_OUT => 1, // get info about the transfer
       CURLOPT_RETURNTRANSFER => 1, // return contents
@@ -81,13 +84,11 @@ class Network {
         CURLOPT_HEADER => 0, // do not return header
         CURLOPT_NOBODY => 0, // do return header
       ];
-$this->logWrite("curl to [$url] - HEADER IS FALSE");
     } else {
       $curlOptions = $curlOptions + [
         CURLOPT_HEADER => 1, // return header
         CURLOPT_NOBODY => 1, // do not return header
       ];
-$this->logWrite("curl to [$url] - HEADER IS TRUE");
     }
 
     if ($tor) { // add TOR options
@@ -138,20 +139,7 @@ $this->logWrite("curl to [$url] - HEADER IS TRUE");
         $this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
         throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
       }
-      #if (!is_null($contentType)) {
-        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-
-        preg_match('@([\w/+]+)(;\s+charset=(\S+))?@i', $contentType, $matches);
-        if (isset($matches[1])) {
-          $mimeType = $matches[1];
-        }
-        if (isset($matches[3])) {
-          $charset = $matches[3];
-        }
-$this->logWrite("getUrlContents contentType requested - mime type: " . $mimeType);
-$contentType = $mimeType; # TODO: use mimeType...
-throw new Exception("contentType: " . $contentType);
-      #}
+      $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
       curl_close($ch);
       #$this->logClose();
       return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
@@ -167,18 +155,20 @@ throw new Exception("contentType: " . $contentType);
    * @return string             image contents
    */
   public function getImageFromUrl($url) {
-    $contentType = null;
-    $retval = $this->getUrlContents($url, null, null, true, false, $contentType);
+    $contentType = "?"; // not null, to force it's valorization
+    $retval = $this->getUrlContents($url, null, null, false, false, $contentType);
+    $mimeType = null;
     if (!$retval) {
-      $type = "empty";
-      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $type);
-      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $type);
+      $mimeType = "empty";
+      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
+      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType);
     }
     if (!preg_match("/^image\//s", $contentType)) {
-      $type = $contentType;
-      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $type);
-      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $type);
+      $mimeType = $contentType;
+      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
+      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType);
     }
+    $this->mime = $mimeType; // set object mime with detected mime type
     return $retval;
   }
 
@@ -209,12 +199,14 @@ throw new Exception("contentType: " . $contentType);
     return $timestamp;
   }
 
-  /**
+/*
+  # TODO: THIS FUNCTION SHOULD BE USELESS...
+  / **
    * Get mime type of url content
    *
    * @param  string $url        url to be retrieved
    * @return string             mime type
-   */
+   * /
   public function getMimeFromUrl($url) {
     #$this->logWrite("getMimeFromUrl()");
     $headers = $this->getUrlContents($url, null, null, true, false);
@@ -229,7 +221,8 @@ throw new Exception("contentType: " . $contentType);
     }
     return $mime;
   }
-
+*/
+  
   /**
    * Pings a host:port to check for it's presence
    *
@@ -249,7 +242,7 @@ throw new Exception("contentType: " . $contentType);
       if (null !== self::LOG_FILE) {
         if (($log = @fopen(self::LOG_FILE, "a+")) !== false) { // curl session log file
           $this->log = $log;
-#die($log);
+#die("LOG FILE: " . self::LOG_FILE . " OPENED");
           return true;
         }
       }
@@ -289,6 +282,13 @@ throw new Exception("contentType: " . $contentType);
     if ($this->log) {
       fclose($this->log);
     }
+  }
+
+  /**
+   * Destructor
+   */
+  function __destruct() {
+    $this->logClose();
   }
 
 }

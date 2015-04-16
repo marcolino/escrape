@@ -118,6 +118,11 @@ body {
   margin-left: -7px;
 }
 
+/* smaller glyphicons */
+.glyphicon-smaller {
+  font-size: 11px;
+}
+
 .persons-header {
   padding-bottom: 3px;
 }

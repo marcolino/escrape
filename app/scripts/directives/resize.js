@@ -9,11 +9,23 @@ app.directive('resize', function ($window, $timeout) {
       $timeout(function() { // wait for DOM, then...
         var windowHeight = w.innerHeight();
   
-        var elementBefore = angular.element(document.getElementById(attr.resizeBefore));
-        var spaceBefore = elementBefore.offset().top + elementBefore.height();
+        var spaceBefore;
+        if (attr.resizeBefore == parseInt(attr.resizeBefore)) { // if an integer is given, we use it as a pixels value
+          spaceBefore = parseInt(attr.resizeBefore);
+        } else {
+          var elementBefore = angular.element(document.getElementById(attr.resizeBefore));
+          spaceBefore = elementBefore.offset().top + elementBefore.height();
+        }
+        //console.log('RESIZE spaceBefore:', spaceBefore);
   
-        //var elementAfter = angular.element(document.getElementById(attr.resizeAfter));
-        var spaceAfter = 76; // TODO: a fixed amount for element-after height
+        var spaceAfter;
+        if (attr.resizeAfter == parseInt(attr.resizeAfter)) { // if an integer is given, we use it as space-after (in pixels)
+          spaceAfter = parseInt(attr.resizeAfter);
+        } else {
+          var elementAfter = angular.element(document.getElementById(attr.resizeAfter));
+          spaceAfter = elementAfter.offset().top;
+        }
+        //console.log('RESIZE spaceAfter:', spaceAfter);
 
         var sizeTotal = windowHeight - spaceBefore - spaceAfter;
         element.css('height', sizeTotal + 'px');

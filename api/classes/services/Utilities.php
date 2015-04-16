@@ -45,18 +45,19 @@
     }
     return $timestamp;
   }
-# TODO: merge these 2 functions...
 
- /**
+/* TODO: we don't use this anymore: backup and remove this function
+ / **
   * Checks if an array is multi dimensional
   *
   * @param array $array   the array to be checked
   * @return boolean       true  if the array is multi dimensional
   *                       false otherwise
-  */
+  * /
   function is_array_multi($array) {
     return (count($array, COUNT_RECURSIVE) > count($array));
   }
+*/
 
   /**
    * Returns the sign of a number;

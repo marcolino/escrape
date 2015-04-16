@@ -317,7 +317,7 @@ class Photo {
 # TODO: HANDLE CAPTCHA MESSAGE: "Why do I have to complete a CAPTCHA?" (?) HOWEVER, CHECK bitmap is image!
       if (
         (strpos($this->bitmap, "Why do I have to complete a CAPTCHA?") !== false) OR
-        (strpos($this->bitmap, "The owner of this website (www.sexyguidaitalia.com) has banned your access based on your browser's signature") !== false)
+        (strpos($this->bitmap, "has banned your access based on your browser's signature") !== false)
       ) {
         throw new Exception("error getting image [$this->url]: " . "Site denies access...");
       }
@@ -325,11 +325,13 @@ class Photo {
     #  throw new Exception("error getting image [$this->url] contents: " . $e->getMessage());
     #}
 
+/* TODO: we don't need to call "getMimeFromUrl()" anymore, since we get mime type from "getImageFromUrl()"...
     try {
       $this->mime = $this->network->getMimeFromUrl($this->url);
     } catch(Exception $e) {
       throw new Exception("error getting image [$this->url] mime type: " . $e->getMessage());
     }
+*/
   }
 
   /**

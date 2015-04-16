@@ -38,6 +38,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.Sieves = Sieves;
   $scope.Sieves.load();
   $scope.sieves = Sieves.sieves;
+  $scope.photosOccurrencesWhitelist = [];
 
   // watch for sieves changes
   $scope.$watch('Sieves.getDigest()', function() {
@@ -359,15 +360,23 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       function(response) {
         //console.info('+++ photoGetOccurrences response:', response);
         //console.info('+++ response.length:', response.length);
+        $scope.photosOccurrencesLoading = false;
+        $scope.photosOccurrencesBestGuess = response.bestGuess;
+        //$scope.photosOccurrences = response.searchResults;
         if (response.searchResults.length === 0) {
           console.log('No occurrences found...');
         } else {
           console.info('Occurrences found:', response);
         }
-        $scope.photosOccurrencesLoading = false;
-        $scope.photosOccurrences = response.searchResults;
-        $scope.photosOccurrencesBestGuess = response.bestGuess;
-        console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
+// TEST
+        // filter searchResults with withelist to photosOccurrences
+        angular.forEach(response.searchResults, function(element) {
+          if ($scope.whitelist(element)) {
+            this.push(element);
+          }
+        }, $scope.photosOccurrences);
+// /TEST
+        //console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
       },
       function(errorMessage) {
         console.warn(errorMessage);
@@ -376,8 +385,26 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     );
   };
 
+  $scope.photosOccurrencesAddToWhitelist = function(url) {
+    var domain = url.parseUrl().hostname;
+    console.info('adding to whitelist domain (' + domain + ') ...');
+    if ($scope.photosOccurrencesWhitelist.indexOf(domain) === -1) {
+      $scope.photosOccurrencesWhitelist.push(domain);
+      console.info('added domain [' + domain + '] to whitelist');
+      // TODO: save whitelist to somewhere...
+    }
+  };
+
+  /**
+   * whitelist filter
+   */
+  $scope.whitelist = function(element) {
+    // TODO: load whitelist from somewhere...
+    return ($scope.photosOccurrencesWhitelist.indexOf(element.href.parseUrl().hostname) === -1);
+  };
+
   $scope.photosOccurrencesThruthful = function() {
-    console.log('It is thrutful!');
+    console.log('It is thruthful!');
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
