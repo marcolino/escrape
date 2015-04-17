@@ -48,7 +48,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/testuniqcode", function() { # ============================
+      $this->app->get("/testuniqcode", function() { # ====================
         try {
           $persons = new PersonsController($this);
           $this->success($persons->testuniqcode());
@@ -56,7 +56,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/get", function() { # ==================
+      $this->app->post("/get", function() { # ============================
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
@@ -69,6 +69,15 @@ class Router {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->get($id));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/set", function() { # ============================
+        try {
+          $persons = new PersonsController($this);
+          $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
+          $this->success($persons->set($data["id"], [], $data["person_detail"], $data["user_id"]));
         } catch (Exception $e) {
           $this->error($e);
         }

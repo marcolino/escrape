@@ -32,7 +32,9 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   $scope.cfg = cfg; // make cfg data available to scope
-  $scope.username = $rootScope.username; // TODO: get username from Authentication service...
+  //$scope.username = $rootScope.username;
+  //$scope.username = $rootScope.globals.currentUser.username;
+  $scope.userId = (typeof $rootScope.globals.currentUser !== 'undefined') ? $rootScope.globals.currentUser.id : null;
   $scope.sortCriteria = {};
   $scope.openedId = null;
   $scope.Sieves = Sieves;
@@ -133,10 +135,14 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
          $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
       });
 
-      Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
-        if (!cfg.fake) { console.log('comments for ' + $scope.person.phone + ':', comments); }
-        $scope.person.comments = comments;
-      });
+      if (!$scope.person.phone) { // empty phone, do not load comments
+          $scope.person.comments = [];
+      } else { // active phone, do load comments
+        Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
+          if (!cfg.fake) { console.log('comments for ' + $scope.person.phone + ':', comments); }
+          $scope.person.comments = comments;
+        });
+      }
 
     });
   }
@@ -320,7 +326,49 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     /* jshint camelcase: true */
   };
 
-  $scope.addPerson = function() {
+  $scope.savePerson = function(personId) {
+  console.log('Persons.setPerson(', personId, $scope.persons[personId], $scope.userId, ')');
+    var detailFields = [
+      'name',
+      'sex',
+      'zone',
+      'address',
+      'description',
+      'notes',
+      'phone',
+      'nationality',
+      'age',
+      'vote',
+      'showcase',
+      'thruthful',
+      'new',
+      'uniq_prev',
+      'uniq_next',
+    ];
+    var personDetails = {};
+    angular.forEach($scope.persons[personId], function(value, key) {
+console.log('forEach:', key, value);
+      if (detailFields.indexOf(key) !== -1) {
+console.log('forEach: accepting key:', key);
+        this[key] = value;
+      }
+    }, personDetails);
+console.log('personDetails:', personDetails);
+
+    //Persons.setPerson(personId, $scope.persons[personId], $scope.userId).then(
+    Persons.setPerson(personId, personDetails, $scope.userId).then(
+      function(successMessage) {
+        notify.success('Person saved correctly', successMessage);
+      },
+      function(errorMessage) {
+        console.warn(errorMessage);
+      }
+    );
+    //// reset the form once values have been consumed
+    //$scope.form.name = '';
+  };
+
+  $scope.addPerson = function() { // TODO: "$scope.form.name" ???
     Persons.addPerson($scope.form.name).then(
       loadPersons,
       function(errorMessage) {
@@ -354,7 +402,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.tabSelected = 'photosOccurrences';
     $scope.tabs.photosOccurrences.hidden = false;
     $scope.photosOccurrencesLoading = true;
-    $scope.photosOccurrences = null;
+    $scope.photosOccurrences = [];
     //notify.info('photoGetOccurrences(' + url + ')');
     Persons.photoGetOccurrences(id, url).then(
       function(response) {
@@ -368,14 +416,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
         } else {
           console.info('Occurrences found:', response);
         }
-// TEST
         // filter searchResults with withelist to photosOccurrences
         angular.forEach(response.searchResults, function(element) {
           if ($scope.whitelist(element)) {
             this.push(element);
           }
         }, $scope.photosOccurrences);
-// /TEST
         //console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
       },
       function(errorMessage) {
@@ -391,7 +437,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     if ($scope.photosOccurrencesWhitelist.indexOf(domain) === -1) {
       $scope.photosOccurrencesWhitelist.push(domain);
       console.info('added domain [' + domain + '] to whitelist');
-      // TODO: save whitelist to somewhere...
+      // TODO: save whitelist to somewhere... (add a photos-occurrences-domains-whitelist service...)
     }
   };
 
@@ -399,7 +445,8 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
    * whitelist filter
    */
   $scope.whitelist = function(element) {
-    // TODO: load whitelist from somewhere...
+    // TODO: load whitelist from somewhere... (add a photos-occurrences-domains-whitelist service...)
+    $scope.resizeForce = true;
     return ($scope.photosOccurrencesWhitelist.indexOf(element.href.parseUrl().hostname) === -1);
   };
 

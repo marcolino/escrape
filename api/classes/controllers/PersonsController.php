@@ -501,12 +501,12 @@ class PersonsController {
   }
   
   # TODO: add $userId...
-  public function add($personMaster, $personDetail = null) { # TODO: $userId !!!
+  public function addPerson($personMaster, $personDetail = null) { # TODO: $userId !!!
     return $this->db->addPerson($personMaster, $personDetail);
   }
 
-  public function set($id, $personMaster, $personDetail = null) { # TODO: $userId !!!
-    return $this->db->setPerson($id, $personMaster, $personDetail);
+  public function set($id, $personMaster, $personDetail = null, $userId = null) {
+    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
   }
 
   public function deletePerson($id) { # TODO: $userId !!!

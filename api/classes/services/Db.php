@@ -103,7 +103,7 @@ class DB extends PDO {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           id_person INTEGER,
           id_user INTEGER,
-          id_uniqcode INTEGER,
+          --id_uniqcode INTEGER,
           name TEXT,
           sex TEXT,
           zone TEXT,
@@ -373,13 +373,10 @@ throw new Exception(
           AND
            id_user = :id_user
         ";
-
-/*
 throw new Exception(
   " ### setPerson() - detail sql: [$sql], " .
   "arrayDetail: " . var_export($arrayDetail, true)
 );
-*/
         $statement = $this->db->prepare($sql);
         $statement->bindParam(':id', $id, PDO::PARAM_INT);
         $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);

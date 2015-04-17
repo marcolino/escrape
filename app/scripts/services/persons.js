@@ -46,6 +46,18 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+    setPerson: function (id, person, userId) {
+      return $http({
+        method: 'POST',
+        url: apiUri + 'set',
+        data: {
+          'id': id,
+          'person_detail': person,
+          'user_id': userId,
+        },
+      }).then(handleSuccess, handleError);
+    },
+
 /*
     setProperty: function (id, property) {
       return $http({
@@ -58,7 +70,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
     addPerson: function (name) {
       return $http({
         method: 'POST',
-        url: apiUri + 'add',
+        url: apiUri + 'addPerson',
         data: {
           name: name
         },
