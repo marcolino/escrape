@@ -145,6 +145,8 @@ class DB extends PDO {
           key VARCHAR(32),
           phone VARCHAR(16),
           topic TEXT,
+          timestamp_creation INTEGER,
+          timestamp_last_sync INTEGER,
           timestamp INTEGER,
           author_nick TEXT,
           author_karma VARCHAR(16),

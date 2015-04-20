@@ -9,8 +9,8 @@
 
 # TODO: use Utilities getUrlContents WITH charset !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-require_once "lib/simple_html_dom.php";
-require_once "classes/services/Utilities.php";
+require_once(__DIR__ . "/../../lib/simple_html_dom.php");
+require_once(__DIR__ . "/../../classes/services/Utilities.php");
 
 class CommentsController {
 
@@ -28,54 +28,252 @@ class CommentsController {
    * Sync comments
    */
   public function sync() {
-    $this->router->log("debug", "sync()");
-    $this->load("persons");
-    $this->router->log("debug", "size of persons: " . sizeof($this->db->data["persons"]));
-    $this->syncUrls = [];
-    $n = 0;
+    $this->router->log("debug", "comments -> sync()");
 
-$phones = []; # TODO: temporarily using this array to skip duplicate phones...
-# TODO: "data" is obsolete...
-    foreach ($this->db->data["persons"] as $person) {
-if (array_key_exists($person["phone"], $phones)) {
-  $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "***** skipping");
-  continue; // skip already visited phone
-} else {
-  $phones[$person["phone"]] = 1;
-}
+    $phones = $this->db->getFieldDistinctValues("person_detail", "phone");
 
-if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02") { # DEBUG
-  $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " " . "***** JUST synced...");
-  continue;
-}
-
-      $id = $person["id"];
-      $this->router->log("debug", ++$n . "/" . sizeof($this->db->data["persons"]) . " [$id] " . "*****");
-      $this->router->log("debug", "last sync'ed date: " . ($person["comments_last_synced"] ? date("Y-m-d H:i:s", $person["comments_last_synced"]) : "never"));
-      $commentsCount = $this->searchByPhone($person);
-      #$this->db->data["persons"][$id]["comments_count"] = $commentsCount;
-      $this->db->data["persons"][$id]["comments_count"] = $this->countByPhone($person["phone"]); # there could be some comments before...
-      $this->db->data["persons"][$id]["comments_last_synced"] = time(); // now
-      $this->store("persons"); # REMOVE-ME
-      $this->router->log("debug", $person["phone"] . " has " . $commentsCount . " comments" . "\n");
+    foreach ($phones as $phone) {
+      $commentsCount = $this->searchByPhone($phone);
+      $this->router->log("debug", "person with phone [$phone] has $commentsCount comments");
     }
-    $this->store("persons");
 
     return true;
   }
 
   /**
+   * Search comments by phone
+   *
+   * @param  string $phone     the phone number to be searched
+   * @return integer $count:   number of comments found
+   *         boolean false:    error
+   */
+  public function searchByPhone($phone) {
+    require_once(__DIR__ . "/../../lib/simpletest/browser.php");
+
+    $this->router->log("debug", "searchByPhone($phone) [$phone]");
+    $this->syncUrls = []; # array to store already sync'ed urls
+    $count = 0;
+    foreach ($this->commentsDefinitions as $commentDefinitionId => $cd) {
+      setlocale(LC_ALL, $cd["locale"]);
+      date_default_timezone_set($cd["timezone"]);
+
+/*
+      $post = [
+        $cd["usernameTag"] => $cd["username"],
+        $cd["passwordTag"] => $cd["password"],
+      ];
+      $page = $this->network->getUrlContents($cd["urlLogin"], $cd["charset"], $post, false, true);
+      if ($page === FALSE) {
+        $this->router->log("error", "can't get login page contents on comments definition provider [$commentDefinitionId]");
+        continue;
+      }
+*/
+      $browser = &new SimpleBrowser();
+      $useProxy(Network::TOR_HOST . ":" . Network::TOR_PORT, null, null);
+      $browser->get($cd["url-login"]);
+      $browser->setField($cd["username-field-name"], $cd["username"]);
+      $browser->setField($cd["password-field-name"], $cd["password"]);
+      $page = $browser->click($cd["login-tag"]);
+      
+      if (!preg_match($cd["patterns"]["login-ok"], $page)) {
+        $this->router->log("error", "can't login on comments definition provider [$commentDefinitionId]");
+        return false;
+      }
+      
+      $page = $browser->get($cd["url-search"]);
+      $browser->setField($cd["search-field-name"], $phone);
+      $page = $browser->click($cd["search-tag"]);
+      
+      if (!preg_match($cd["patterns"]["search-ok"], $page)) {
+        $this->router->log("error", "can't get search results on comments definition provider [$commentDefinitionId]");
+        return false;
+      }
+      
+      $searchResultsUrls = [];
+      if (preg_match_all($commentDefinition["patterns"]["comment-link"], $page, $matches)) {
+        $searchResults = $matches[1];
+        foreach ($searchResults as $url) {
+          if (preg_match($commentDefinition["patterns"]["comment-link-tail"], $url, $matches)) {
+            $searchResultsUrls[] = $matches[1];
+          }
+        }
+      }
+      
+      # loop through all comment pages urls returned
+      foreach ($searchResultsUrls as $url) {
+      #foreach ($commentPageUrls as $url) {
+  
+        $this->router->log("info", "url: [$url]");
+
+        /*
+        # TODO: remove this test if domain=$domain works fine...
+        # skip result with different domains
+        if (parse_url($url)["host"] !== $cd["domain"]) {
+          $this->router->log("debug", "skipping url because " . parse_url($url)["host"] . " !== " . $cd["domain"]);
+          continue;
+        }
+        */
+
+        /*
+        # transform possible "next" pages to the "first" one
+        if (preg_match("/^(.*)\/\d+\/?$/s", $url, $matches)) {
+          $url = $matches[1];
+        }
+        */
+  
+        next_comments_page:
+        /*
+        $url = preg_replace("/\/?$/", "", $url); # remove trailing slash
+        $url = preg_replace("/\?PHPSESSID=.*    /", "", $url); # remove SESSION ID
+        */
+        if (isset($this->syncUrls[$url])) { # this url has been visited already, skip it
+          $this->router->log("debug", "skipping already visited url [$url] on comments definition provider [$commentDefinitionId]");
+          continue;
+        }
+
+        $this->syncUrls[$url] = 1; # remember this url, to avoid future possible duplications
+  
+        $url .= "?nowap"; # on wap version we don't get some data (author? date?)
+        #$comment_page = $this->getUrlContents($url);
+        #if ($comment_page === FALSE) {
+        if (($comment_page = $this->getUrlContents($url)) === FALSE) {
+          $this->router->log("error", "can't get url [$url] contents on comments definition provider [$commentDefinitionId]");
+          continue;
+        }
+
+        # parse topic
+        if (preg_match($cd["patterns"]["topic"], $comment_page, $matches)) {
+          $topic = $matches[1];
+        } else {
+          $topic = null;
+          $this->router->log("error", "no topic found on url [$url] on comments definition provider [$commentDefinitionId]");
+          continue;
+        }
+  
+        # all comments blocks
+        if (preg_match_all($cd["patterns"]["block"], $comment_page, $matches)) {
+          $comments_text = $matches[1];
+        } else {
+          $comments_text = null;
+          $this->router->log("error", "not any comment found on url [$url] on comments definition provider [$commentDefinitionId]");
+          return;
+        }
+  
+        $n = 0;
+        $comment_next_page_url = "";
+        foreach ($comments_text as $comment_text) { # loop through each comment
+          $n++;
+
+          # parse author
+          if (preg_match($cd["patterns"]["author"], $comment_text, $matches)) {
+            $author = $this->cleanAuthor($matches[1]);
+          } else {
+            $author = null;
+            $this->router->log("error", "no author found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            continue;
+          }
+      
+          # parse author karma
+          if (preg_match($cd["patterns"]["author-karma"], $comment_text, $matches)) {
+            $author_karma = $matches[1];
+          } else {
+            $author_karma = "?";
+            $this->router->log("error", "no author karma found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+          }
+      
+          # parse author posts
+          if (preg_match($cd["patterns"]["author-posts"], $comment_text, $matches)) {
+            $author_posts = $matches[1];
+          } else {
+            $author_posts = "?";
+            $this->router->log("error", "no author posts found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+          }
+
+          # parse date
+          if (preg_match($cd["patterns"]["date"], $comment_text, $matches)) {
+            $date = $this->cleanDate($matches[1]);
+          } else {
+            $date = null;
+            $this->router->log("error", "no date found for comment [$n] on url [$url]on comments definition provider [$commentDefinitionId]");
+            continue;
+          }
+      
+          # parse content
+          if (preg_match($cd["patterns"]["content"], $comment_text, $matches)) {
+            $content = $this->cleanContent($matches[1], $commentDefinitionId);
+          } else {
+            $content = null;
+            $this->router->log("error", "no content found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            continue;
+          }
+      
+          if ($content) { # empty comments are not useful...
+            $commentData = [];
+            $timestamp = date_to_timestamp($date);
+            $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
+            $key = $timestamp . "-" . md5("topic:[$topic], author:[$author], content:[$content]"); # a sortable, univoque index
+            $commentData["phoneMd5"] = $phoneMd5;
+            $commentData["topic"] = $topic;
+            $commentData["date"] = date("Y-m-d H:i:s", $timestamp);
+            $commentData["timestamp"] = $timestamp;
+            $commentData["timestamp_last_sync"] = $timestampNow;
+            $commentData["author"] = $author;
+            $commentData["author_karma"] = $author_karma;
+            $commentData["author_posts"] = $author_posts;
+            $commentData["content"] = $content;
+            $commentData["content_valutation"] = null; # TODO: handle content valutation...
+            $commentData["url"] = $url;
+          } else {
+            $this->router->log("info", "empty comment found on url [$url] on comments definition provider [$commentDefinitionId]");
+            continue;
+          }
+
+          # check if comment is new or not ####################################################
+          $commentId = null;
+          if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
+            $commentId = $comment[0]["id"];
+            $this->router->log("debug", "comment by key [$key] is old");
+          } else {
+            $this->router->log("debug", "comment by key [$key] is new");
+            $count++;
+          }
+
+          if ($commentId) { # old key, update it
+            $this->db->set("comment", $commentId, $comment);
+          } else { # new key, insert it
+            #$this->router->log("debug", " INSERTING ");
+            $commentData["key"] = $key; // set univoque key only when adding person
+            $commentData["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
+            $commentData["new"] = true; // set new flag to true (TODO: do we need this?)
+            $commentId = $this->db->add("comment", $commentData);
+          }
+        }
+  
+        # match next comments page link
+        preg_match($cd["patterns"]["next-link"], $comment_page, $matches);
+        if ($matches) {
+          $url = $matches[1];
+          goto next_comments_page; # do a supplementary loop with next url
+        }
+       
+      }
+    }
+
+    return $count;
+  }
+
+/*
+  / **
    * Search by phone
    *
    * @param  string $phone
    * @return boolean true: success / false: error
-   */
-  public function searchByPhone($person) {
-    $phone = $person["phone"];
-    $this->router->log("debug", "searchByPhone($phone) [" . $person["name"] . "]");
+   * /
+  public function searchByPhoneOLD($phone) {
+    $this->router->log("debug", "searchByPhone($phone) [$phone]");
     $changed = false;
     $count = 0;
-    foreach ($this->commentsDefinition as $commentDefinitionId => $commentDefinition) {
+    foreach ($this->commentsDefinitions as $commentDefinitionId => $commentDefinition) {
       setlocale(LC_ALL, $commentDefinition["locale"]);
       date_default_timezone_set($commentDefinition["timezone"]);
   
@@ -104,7 +302,7 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
   
         next_comments_page:
         $url = preg_replace("/\/?$/", "", $url); # remove trailing slash
-        $url = preg_replace("/\?PHPSESSID=.*/", "", $url); # remove SESSION ID
+        $url = preg_replace("/\?PHPSESSID=.*     /", "", $url); # remove SESSION ID
         if (isset($this->syncUrls[$url])) { # this url has been visited already, skip it
           $this->router->log("debug", "skipping already visited url [$url]");
           continue;
@@ -233,6 +431,7 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
 
     return $count;
   }
+*/
 
   public function getAll() {
     return $this->db->getAll("comment");
@@ -297,7 +496,7 @@ if (date("Y-m-d H:i:s", $person["comments_last_synced"]) >= "2015-02-15 14:28:02
     }
 
     # strip quotes (TODO!!!)
-    if (preg_match($this->commentsDefinition[$definitionId]["patterns"]["quote-signature"], $content, $matches)) {
+    if (preg_match($this->commentsDefinitions[$definitionId]["patterns"]["quote-signature"], $content, $matches)) {
       $content = $matches[1]; # comment with quotes stripped off
     } else {
       ; # comment without quotes
