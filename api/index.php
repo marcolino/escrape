@@ -188,6 +188,25 @@ class Router {
         }
       });
 */
+      $this->app->get("/getPersonsByCommentId/:commentId", function($commentId) { # ===
+        try {
+          $comments = new CommentsController($this);
+          $comment = $comments->get($commentId);
+          $phone = $comment["phone"];
+$this->log("debug", "INDEX.PHP - getPersonsByCommentId($commentId): [$phone]");
+          $persons = new PersonsController($this);
+          $personsListFull = $persons->getByPhone($phone);
+$this->log("debug", "INDEX.PHP - personsListFull:" . any2string($personsListFull));
+          $personsList = [];
+          foreach ($personsListFull as $person) {
+            $personsList[] = [ "id_person" => $person["id_person"], "name" => $person["name"] ];
+          }
+$this->log("debug", "INDEX.PHP - personsList:" . any2string($personsList));
+          $this->success($personsList);
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
     }); # ===================================================================
 
     # === users group =======================================================
@@ -248,6 +267,7 @@ class Router {
         try {
           $comments = new CommentsController($this);
           $this->success($comments->getByPhone($phone));
+
         } catch (Exception $e) {
           $this->error($e);
         }

@@ -23,10 +23,6 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       'description': 'Comments',
       'hidden': false,
     },
-    'unions': {
-      'description': 'Unions',
-      'hidden': true,
-    }
   };
   $scope.tabSelected = 'main';
   $scope.countries = Countries;
@@ -138,12 +134,19 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       if (!$scope.person.phone) { // empty phone, do not load comments
           $scope.person.comments = [];
       } else { // active phone, do load comments
+        $scope.personsPerComment = [];
         Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
-          if (!cfg.fake) { console.log('comments for ' + $scope.person.phone + ':', comments); }
+          console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
+          var len = $scope.person.comments.length;
+//console.error('$scope.person.comments', $scope.person.comments);
+          for (var i = 0; i < len; i++) {
+            var id = $scope.person.comments[i].id;
+console.error('calling getPersonsByCommentId, id: ', id);
+            $scope.getPersonsByCommentId($scope.person.comments[i].id);
+          }
         });
       }
-
     });
   }
 
@@ -471,9 +474,22 @@ console.log('personDetails:', personDetails);
     $scope.tabs.photosOccurrences.hidden = true;
   };
 
-  $scope.formChangeCountry = function(code) {
-    console.log('formChangeCountry(): ', code);
+  $scope.changeCountry = function(code) {
+    console.log('changeCountry(): ', code);
     $scope.person.nationality = code;
+  };
+
+  $scope.getPersonsByCommentId = function(commentId) {
+console.log('getPersonsNamesByCommentId(): ', commentId);
+    Persons.getPersonsByCommentId(commentId).then(
+      function(persons) {
+console.log('getPersonsNamesByCommentId() - persons: ', persons);
+        $scope.personsPerComment[commentId] = persons;
+      },
+      function(errorMessage) {
+        console.warn(errorMessage);
+      }
+    );
   };
 
   $scope.streetAddressToImageUrl = function(streetAddress) {

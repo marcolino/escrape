@@ -129,6 +129,13 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+    getPersonsByCommentId: function(commentId) {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getPersonsByCommentId' + '/' + commentId,
+      }).then(handleSuccess, handleError);
+    },
+
   };
 
 });

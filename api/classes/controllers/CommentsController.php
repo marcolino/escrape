@@ -30,13 +30,25 @@ class CommentsController {
   public function sync() {
     $this->router->log("debug", "comments -> sync()");
 
+    $persons = $this->db->getPersonList();
+    $timestampStart = date();
+    $phones = [];
+    foreach ($persons as $person) {
+      $phone = $person["phone"];
+      if (in_array($phone, $phones)) { // skip already processed phones
+        continue;
+      }
+      $commentsCount = $this->searchByPhone($phone);
+      $this->router->log("debug", "person with phone [$phone] has $commentsCount comments");
+      $phones[] = $phone;
+    }
+/*
     $phones = $this->db->getFieldDistinctValues("person_detail", "phone");
-
     foreach ($phones as $phone) {
       $commentsCount = $this->searchByPhone($phone);
       $this->router->log("debug", "person with phone [$phone] has $commentsCount comments");
     }
-
+*/
     return true;
   }
 
@@ -221,7 +233,7 @@ class CommentsController {
             $commentData["author_karma"] = $author_karma;
             $commentData["author_posts"] = $author_posts;
             $commentData["content"] = $content;
-            $commentData["content_valutation"] = null; # TODO: handle content valutation...
+            $commentData["content_rating"] = null; # TODO: handle content valutation...
             $commentData["url"] = $url;
           } else {
             $this->router->log("info", "empty comment found on url [$url] on comments definition provider [$commentDefinitionId]");
@@ -231,21 +243,16 @@ class CommentsController {
           # check if comment is new or not ####################################################
           $commentId = null;
           if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
+            $this->router->log("debug", "comment by key [$key] is old, updating");
             $commentId = $comment[0]["id"];
-            $this->router->log("debug", "comment by key [$key] is old");
+            $this->db->set("comment", $commentId, $commentData);
           } else {
-            $this->router->log("debug", "comment by key [$key] is new");
-            $count++;
-          }
-
-          if ($commentId) { # old key, update it
-            $this->db->set("comment", $commentId, $comment);
-          } else { # new key, insert it
-            #$this->router->log("debug", " INSERTING ");
+            $this->router->log("debug", "comment by key [$key] is new, inserting");
             $commentData["key"] = $key; // set univoque key only when adding person
             $commentData["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
             $commentData["new"] = true; // set new flag to true (TODO: do we need this?)
             $commentId = $this->db->add("comment", $commentData);
+            $count++;
           }
         }
   
@@ -396,7 +403,7 @@ class CommentsController {
             $comment["author_karma"] = $author_karma;
             $comment["author_posts"] = $author_posts;
             $comment["content"] = $content;
-            $comment["content_valutation"] = 0; # TODO: handle content valutation...
+            $comment["content_rating"] = 0; # TODO: handle content valutation...
             $comment["url"] = $url;
             $count++;
           } else {
@@ -446,9 +453,11 @@ class CommentsController {
   
   public function getByPhone($phone) {
     if (!$phone) {
+$this->router->log("debug", "getByPhone() - no phone!");
       //throw new Exception("can't get comments by phone: no phone specified");
       return [];
     }
+$this->router->log("debug", "getByPhone() - phone: [$phone]");
     return $this->db->getByField("comment", "phone", $phone);
   }
   
@@ -459,12 +468,48 @@ class CommentsController {
     return $this->db->countByField("comment", "id_person", $personId);
   }
 
+/*
   public function getAverageValutationByPerson($personId) {
     if (!$personId) {
       throw new Exception("can't get comments average valutation by person: no person id specified");
     }
-    return $this->db->getAverageFieldByPersonId("comment", $personId, "content_valutation")["avg"];
+    return $this->db->getAverageFieldByPersonId("comment", $personId, "content_rating");
   }
+*/
+
+  /**
+   * Get comments average rating for a person
+   *
+   * @param object $personId:   person id
+   * @return integer $rating:   comments average rating ([0-9], null if no rating expressed)
+   */
+  public function getAverageRating($personId) {
+    $comments = $this->db->getByField("comment", "id_person", $personId);
+    $rating = null;
+    $ratingSum = 0;
+    $ratingCount = 0;
+    foreach ($comments as $comment) {
+      $comment_content_rating = $comment["content_rating"];
+      if ($comment_content_rating !== null) {
+        $ratingSum += $comment_content_rating;
+        $ratingCount++;
+      }
+    }
+    return ($ratingCount > 0) ? $ratingSum / $ratingCount : null;
+  }
+
+/*
+  / **
+   * Get possible person for a comment
+   *
+   * @param integer $commentId:   comment id
+   * @return array $persons:      possible persons list [id, name] for given comment id
+   * /
+  public function getPersonsByCommentId($commentId) {
+    $comments = $this->db->get("comment", $commentId);
+    # ... TODO ...
+  }
+*/
 
   private function normalizePhone($phone) {
     $result = preg_replace("/[^\d]*/", "", $phone);

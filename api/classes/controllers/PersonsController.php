@@ -500,6 +500,13 @@ class PersonsController {
     return $person;
   }
   
+  public function getByPhone($phone) {
+    if (!$phone) {
+      return [];
+    }
+    return $this->db->getByField("person_detail", "phone", $phone);
+  }
+  
   # TODO: add $userId...
   public function addPerson($personMaster, $personDetail = null) { # TODO: $userId !!!
     return $this->db->addPerson($personMaster, $personDetail);
@@ -586,7 +593,7 @@ $this->router->log("debug", "persons length: " . count($persons));
       //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
       $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
       $result[$personId]["comments_count"] = $comments->countByPerson($personId);
-      $result[$personId]["comments_average_valutation"] = $comments->getAverageValutationByPerson($personId);
+      $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId);
     }
 #$this->router->log("debug", "getList() - result: " . var_export($result, true));
 

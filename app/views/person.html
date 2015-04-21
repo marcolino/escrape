@@ -1,6 +1,6 @@
 <div class="container">
 
-  <pre>person:{{person}}</pre>
+  <!--<pre>person:{{person}}</pre>-->
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
       <li ng-class="{active: tabSelected === 'main', hide: tabs['main'].hidden}">
@@ -15,14 +15,11 @@
       <li ng-class="{active: tabSelected === 'comments', hide: tabs['comments'].hidden}">
         <a href="" ng-click="tabSelected = 'comments'">{{tabs['comments'].description}} <span class="badge">{{person.comments.length}}</a>
       </li>
-      <li ng-class="{active: tabSelected === 'unions', hide: tabs['unions'].hidden}">
-        <a href="" ng-click="tabSelected = 'unions'">{{tabs['unions'].description}}</a>
-      </li>
     </ul>
 
     <!-- main pill -->
     <div class="tab-content" ng-show="tabSelected === 'main' && !tabs['main'].hidden">
-      <form class="form-horizontal" style="margin-top:5px">
+      <comments_average_rating class="form-horizontal" style="margin-top:5px">
         <div class="form-group">
           <div class="col-xs-12">
             <div class="slider-horizontal">
@@ -78,7 +75,7 @@
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
                 <li ng-repeat="(countryCode, countryName) in countries.countries" class="flag-li">
-                  <a ng-click="formChangeCountry('{{countryCode}}')"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{countryName}}</a>
+                  <a ng-click="changeCountry('{{countryCode}}')"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{countryName}}</a>
                 </li>
               </ul>
             </div>
@@ -256,16 +253,94 @@
           <div class="form-group">
             <div class="col-xs-12">
               <div class="input-group">
-                <div class="input-group-addon" style="vertical-align: top; width-max: 55px;" title="Comment">
-                  <div style="font-size: 12px; text-align: left; margin-bottom: 3px; width-max: 55px;"><i>N&deg;:</i> {{1+$index}}</div>
-                  <div style="font-size: 12px; text-align: left; margin-bottom: 3px; width-max: 55px;"><i>Topic:</i> {{comment.topic}}</div>
-                  <div style="font-size: 12px; text-align: left; margin-bottom: 3px; width-max: 55px;"><i>Date:</i> {{comment.date}}</div>
-                  <div style="font-size: 12px; text-align: left; margin-bottom: 3px; width-max: 55px;"><i>Author:</i> {{comment.author}}</div>
-                  <div style="font-size: 12px; text-align: left; margin-bottom: 3px; width-max: 55px;"><i>&nbsp; karma:</i> {{comment.author_karma}}</div>
-                  <div style="font-size: 12px; text-align: left; margin-bottom: 3px; width-max: 55px;"><i>&nbsp; posts:</i> {{comment.author_posts}}</div>
+                <div class="input-group-addon" style="vertical-align: top; width:30%; font-size: 12px;" title="Comment">
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-4">
+                      <div><i>N&deg;:</i></div>
+                    </div>
+                    <div class="col-xs-8">
+                      <div>{{1+$index}}</div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-4">
+                      <div><i>Topic:</i></div>
+                    </div>
+                    <div class="col-xs-8">
+                      <div>{{comment.topic}}</div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-4">
+                      <div><i>Date:</i></div>
+                    </div>
+                    <div class="col-xs-8">
+                      <div>{{comment.timestamp | date:'yyyy-MM-dd HH:mm:ss'}}</div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-4">
+                      <div><i>Author:</i></div>
+                    </div>
+                    <div class="col-xs-8">
+                      <div>{{comment.author_nick}}</div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-4">
+                      <div><i>Author karma:</i></div>
+                    </div>
+                    <div class="col-xs-8">
+                      <div>{{comment.author_karma}}</div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-4">
+                      <div><i>Author posts:</i></div>
+                    </div>
+                    <div class="col-xs-8">
+                      <div>{{comment.author_posts}}</div>
+                    </div>
+                  </div>
+<!--
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-12">
+                      <div class="dropdown">
+                        <div class="input-group" data-toggle="dropdown">
+                          <span class="input-group-addon" title="Person"><i class="glyphicon glyphicon-user"></i></span>
+                          <input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />
+                        </div>
+                        <ul class="dropdown-menu scrollable-menu" role="menu">
+                          <li ng-repeat="(idPersonPerComment, personPerComment) in personsPerComment[comment['id']]" NOclass="flag-li">
+                            <a ng-click="changePersonInComment(idPersonPerComment)"><i NOclass="f16"></i> {{personPerComment.name}}</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row" style="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-12">
+                      <div class="input-group">
+                        <span class="input-group-addon" title="Rating up" ng-click="rating(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
+                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="comment.rating" placeholder="Rating">
+                        <span class="input-group-addon" title="Rating down" ng-click="rating(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
+                      </div>
+                    </div>
+                  </div>
+-->
+                  <div class="row">
+                    <div class="col-xs-4">
+                      <button class="btn btn-danger" ng-click=""><i class="glyphicon glyphicon-thumbs-down">&nbsp;</i>Bad</button>
+                    </div>
+                    <div class="col-xs-4">
+                      <button class="btn btn-primary" ng-click=""><i class="glyphicon glyphicon-hand-right">&nbsp;</i>Mid</button>
+                    </div>
+                    <div class="col-xs-4">
+                      <button class="btn btn-success" ng-click=""><i class="glyphicon glyphicon-thumbs-up">&nbsp;</i>Goo</button>
+                    </div>
+                  </div>
                 </div>
-                <div class="form-control" style="min-height: 128px; overflow-y:auto;" ng-bind-html="comment.content"></div>
-                <!--<textarea class="form-control" rows="3">{{comment.content}}</textarea>-->
+                <div class="form-control" style="min-height: 180px; overflow-y:auto;" ng-bind-html="comment.content"></div>
               </div>
             </div>
           </div>
@@ -273,10 +348,5 @@
       </div>
     </div>
 
-    <!-- unions pill -->
-    <div class="tab-content" ng-show="tabSelected === 'unions' && !tabs['unions'].hidden">
-      unions...
-    </div>
-  
   </div>
 </div>

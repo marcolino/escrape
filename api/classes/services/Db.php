@@ -152,7 +152,7 @@ class DB extends PDO {
           author_karma VARCHAR(16),
           author_posts INTEGER,
           content TEXT,
-          content_valutation INTEGER,
+          content_rating INTEGER,
           url TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON comment (key);
@@ -553,7 +553,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       $statement->bindParam(":" . "id_person", $personId);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
-      return $result;
+      return $result["avg"];
     } catch (PDOException $e) {
       throw new Exception("can't get average field by person from $table: " . $e->getMessage());
     }
@@ -590,9 +590,11 @@ $this->router->log("debug", " NEW UNIQCODE");
         WHERE $fieldName = :$fieldName
       ";
       $statement = $this->db->prepare($sql);
+$this->router->log("debug", " db->getByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->bindParam(":" . $fieldName, $fieldValue);
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
+$this->router->log("debug", " db->getByField($fieldName, $fieldValue) - results:" . any2string($results));
       return $results;
     } catch (PDOException $e) {
       throw new Exception("can't get $table by field: " . $e->getMessage());
