@@ -27,10 +27,15 @@
               <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
               <a href="" ng-click="tabSelect('photos', number)" class="no-text-decoration">
                 <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" ng-class="{'img-fake': photo.thruthful === 'false'}" class="img-rounded img-clip" />
-                <br>
-                <span ng-if="photo.thruthful === 'false'">
+                <div ng-if="photo.thruthful === 'false'">
                   <img src="images/watermarks/fake-label.png" class="label-image" />
-                </span>
+                </div>
+                <div ng-if="photo.thruthful === 'true'">
+                  <img src="images/watermarks/thruthful-label.png" class="label-image" />
+                </div>
+                <div ng-if="photo.thruthful === 'unknown'">
+                  <img src="images/watermarks/unknown-label.png" class="label-image" />
+                </div>
               </a>
               </span>
             </div>
@@ -127,9 +132,11 @@
         </div>
  
         <div class="form-group" style="vertical-align:bottom">
+<!--
           <div class="col-xs-4 col-sm-2 col-lg-1">
-            <button class="btn btn-primary" title="Save changes to this person's data" ng-click="savePerson(person.id)"><i class="glyphicon glyphicon-floppy-disk">&nbsp;</i>Save</button>
+            <button class="btn btn-primary" title="Save changes to this person's data" ng-click="savePerson(person)"><i class="glyphicon glyphicon-floppy-disk">&nbsp;</i>Save</button>
           </div>
+-->
           <span ng-if="person.uniq_prev !== null">
             <div class="col-xs-4 col-sm-2 col-lg-1">
               <button class="btn btn-info" title="Previous source for this person" ng-click="open(person.uniq_prev)"><i class="glyphicon glyphicon-step-backward">&nbsp;</i>Previous</button>
@@ -253,56 +260,56 @@
           <div class="form-group">
             <div class="col-xs-12">
               <div class="input-group">
-                <div class="input-group-addon" style="vertical-align: top; width:30%; font-size: 12px;" title="Comment">
+                <div class="input-group-addon" style="vertical-align: top; min-width:250px; font-size: 12px;" title="Comment">
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
-                    <div class="col-xs-4">
-                      <div><i>N&deg;:</i></div>
+                    <div class="col-xs-4" style="padding-right: 0;">
+                      <div class="pull-right"><i>N&deg;:</i></div>
                     </div>
-                    <div class="col-xs-8">
+                    <div class="col-xs-8" style="padding-left: 5px;">
                       <div>{{1+$index}}</div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
-                    <div class="col-xs-4">
-                      <div><i>Topic:</i></div>
+                    <div class="col-xs-4" style="padding-right: 0;">
+                      <div class="pull-right"><i>Topic:</i></div>
                     </div>
-                    <div class="col-xs-8">
+                    <div class="col-xs-8" style="padding-left: 5px;">
                       <div>{{comment.topic}}</div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
-                    <div class="col-xs-4">
-                      <div><i>Date:</i></div>
+                    <div class="col-xs-4" style="padding-right: 0;">
+                      <div class="pull-right"><i>Date:</i></div>
                     </div>
-                    <div class="col-xs-8">
+                    <div class="col-xs-8" style="padding-left: 5px;">
                       <div>{{comment.timestamp | date:'yyyy-MM-dd HH:mm:ss'}}</div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
-                    <div class="col-xs-4">
-                      <div><i>Author:</i></div>
+                    <div class="col-xs-4" style="padding-right: 0;">
+                      <div class="pull-right"><i>Author:</i></div>
                     </div>
-                    <div class="col-xs-8">
+                    <div class="col-xs-8" style="padding-left: 5px;">
                       <div>{{comment.author_nick}}</div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
-                    <div class="col-xs-4">
-                      <div><i>Author karma:</i></div>
+                    <div class="col-xs-4" style="padding-right: 0;">
+                      <div class="pull-right"><i>Author karma:</i></div>
                     </div>
-                    <div class="col-xs-8">
+                    <div class="col-xs-8" style="padding-left: 5px;">
                       <div>{{comment.author_karma}}</div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
-                    <div class="col-xs-4">
-                      <div><i>Author posts:</i></div>
+                    <div class="col-xs-4" style="padding-right: 0;">
+                      <div class="pull-right"><i>Author posts:</i></div>
                     </div>
-                    <div class="col-xs-8">
+                    <div class="col-xs-8" style="padding-left: 5px;">
                       <div>{{comment.author_posts}}</div>
                     </div>
                   </div>
-<!--
+
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
                     <div class="col-xs-12">
                       <div class="dropdown">
@@ -321,22 +328,10 @@
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
                     <div class="col-xs-12">
                       <div class="input-group">
-                        <span class="input-group-addon" title="Rating up" ng-click="rating(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
-                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="comment.rating" placeholder="Rating">
-                        <span class="input-group-addon" title="Rating down" ng-click="rating(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
+                        <span class="input-group-addon btn btn-success" ng-click="rating(1)"><i class="glyphicon glyphicon-thumbs-up"></i></span>
+                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="person.rating" placeholder="Rating">
+                        <span class="input-group-addon btn btn-danger" ng-click="rating(-1)"><i class="glyphicon glyphicon-thumbs-down"></i></span>
                       </div>
-                    </div>
-                  </div>
--->
-                  <div class="row">
-                    <div class="col-xs-4">
-                      <button class="btn btn-danger" ng-click=""><i class="glyphicon glyphicon-thumbs-down">&nbsp;</i>Bad</button>
-                    </div>
-                    <div class="col-xs-4">
-                      <button class="btn btn-primary" ng-click=""><i class="glyphicon glyphicon-hand-right">&nbsp;</i>Mid</button>
-                    </div>
-                    <div class="col-xs-4">
-                      <button class="btn btn-success" ng-click=""><i class="glyphicon glyphicon-thumbs-up">&nbsp;</i>Goo</button>
                     </div>
                   </div>
                 </div>

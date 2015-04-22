@@ -114,6 +114,7 @@ class DB extends PDO {
           nationality VARCHAR(2),
           age INTEGER,
           vote INTEGER,
+          rating INTEGER,
           showcase INTEGER,
           thruthful INTEGER,
           new INTEGER,
@@ -145,14 +146,13 @@ class DB extends PDO {
           key VARCHAR(32),
           phone VARCHAR(16),
           topic TEXT,
+          timestamp INTEGER,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
-          timestamp INTEGER,
           author_nick TEXT,
           author_karma VARCHAR(16),
           author_posts INTEGER,
           content TEXT,
-          content_rating INTEGER,
           url TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON comment (key);
@@ -316,7 +316,7 @@ class DB extends PDO {
     return $lastMasterInsertId;
   }
 
-  public function setPerson($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function setPerson($personId, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
 #throw new Exception("SET 1, ARRAY_DETAIL: " . var_export($arrayDetail, true));
 
@@ -330,7 +330,7 @@ class DB extends PDO {
         $sql = "
           UPDATE {$tableMaster}
           SET $set
-          WHERE id = :id
+          WHERE id = :id_person
         ";
 
 /*
@@ -340,61 +340,105 @@ throw new Exception(
 );
 */
         $statement = $this->db->prepare($sql);
-        $statement->bindParam(':id', $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_person', $personId, PDO::PARAM_INT);
         foreach ($arrayMaster as $key => &$value) {
           $statement->bindParam(":" . $key, $value);
         }
         $statement->execute();
         $count = $statement->rowCount();
         if ($statement->rowCount() != 1) {
-          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+          throw new Exception("update into table $tableMaster for id [$personId] did update " . $statement->rowCount() . " records");
         }
       } catch (PDOException $e) {
         throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
       }
-#return $id; # !!!!!!!!!!!!!!!!!! SKIP DETAIL ... !!!!!!!!!!!!!!!!!!!!
     }
 
     if (!empty($arrayDetail)) {
-      $tableDetail = $tableMaster . "_" . "detail";
+      $tableDetail = "person_detail";
+
+$this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
 
       $set = "";
+      $ins_fields = $ins_values = "";
       foreach ($arrayDetail as $key => $value) {
         $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+        $ins_fields .= ($ins_fields ? ", " : "") . $key;
+        $ins_values .= ($ins_values ? ", " : "") . ":" . $key;
       }
-#throw new Exception("detail sql: arrayDetail:" . var_export($arrayDetail, true));
-      ###$arrayDetail["id_person"] = $id; // add master person id to this detail record
-      ###$arrayDetail["id_user"] = $userId; // add user id to this detail record
-  
-      try { // add details data
+
+      try { // check if details data should be inserted or updated
         $sql = "
-          UPDATE {$tableDetail}
-          SET $set
+          SELECT count(*) as count FROM {$tableDetail}
           WHERE
-           id_person = :id
+           id_person = :id_person
           AND
            id_user = :id_user
         ";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':id_person', $personId, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+$this->router->log("debug", " setPerson() - check result:" . any2string($result));
+        $mode = null;
+        if ($result["count"] === "0") {
+          $mode = "insert";
+          $this->router->log("debug", " setPerson() - will INSERT record");
+        } else {
+          $mode = "update";
+          $this->router->log("debug", " setPerson() - will UPDATE record");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't check record in table $tableDetail: " . $e->getMessage());
+      }
+
+      try { // add details data
+        if ($mode === "update") { // update
+          $sql = "
+            UPDATE {$tableDetail}
+            SET $set
+            WHERE
+             id_person = :id_person
+            AND
+             id_user = :id_user
+          ";
+        } else { // insert
+          $sql = "
+            INSERT INTO {$tableDetail}
+            (id_person, id_user, $ins_fields)
+            VALUES
+            (:id_person, :id_user, $ins_values)
+          ";
+          #$arrayDetail["id_person"] = $personId;
+          #$arrayDetail["id_user"] = $userId;
+        }
+/*
 throw new Exception(
-  " ### setPerson() - detail sql: [$sql], " .
+  "setPerson() - detail sql: [$sql], " . "\n" .
+  "id: " . $id . "\n" .
+  "id_user: " . $userId . "\n" .
   "arrayDetail: " . var_export($arrayDetail, true)
 );
+*/
         $statement = $this->db->prepare($sql);
-        $statement->bindParam(':id', $id, PDO::PARAM_INT);
-        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        #if ($mode === "update") { // update
+          $statement->bindParam(':id_person', $personId, PDO::PARAM_INT);
+          $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        #}
         foreach ($arrayDetail as $key => &$value) {
           $statement->bindParam(":" . $key, $value);
         }
         $statement->execute();
         $count = $statement->rowCount();
         if ($count != 1) {
-          throw new Exception("can't update record in table $tableDetail (updated $count records)");
+          throw new Exception("can't $mode record in table $tableDetail (updated $count records)");
         }
       } catch (PDOException $e) {
-        throw new Exception("can't update record in table $tableDetail: " . $e->getMessage());
+        throw new Exception("can't $mode record in table $tableDetail: " . $e->getMessage());
       }
     }
-    return $id;
+    return $personId;
   }
 
   public function deletePerson($id) {

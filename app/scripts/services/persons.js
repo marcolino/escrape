@@ -46,13 +46,13 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
-    setPerson: function (id, person, userId) {
+    setPerson: function (id, personDetail, userId) {
       return $http({
         method: 'POST',
         url: apiUri + 'set',
         data: {
           'id': id,
-          'person_detail': person,
+          'person_detail': personDetail,
           'user_id': userId,
         },
       }).then(handleSuccess, handleError);

@@ -141,8 +141,8 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
           var len = $scope.person.comments.length;
 //console.error('$scope.person.comments', $scope.person.comments);
           for (var i = 0; i < len; i++) {
-            var id = $scope.person.comments[i].id;
-console.error('calling getPersonsByCommentId, id: ', id);
+            //var id = $scope.person.comments[i].id;
+//console.error('calling getPersonsByCommentId, id: ', id);
             $scope.getPersonsByCommentId($scope.person.comments[i].id);
           }
         });
@@ -329,8 +329,11 @@ console.error('calling getPersonsByCommentId, id: ', id);
     /* jshint camelcase: true */
   };
 
-  $scope.savePerson = function(personId) {
-  console.log('Persons.setPerson(', personId, $scope.persons[personId], $scope.userId, ')');
+  $scope.savePerson = function(person) {
+    /* jshint camelcase: false */
+    var personId = person.id_person;
+    /* jshint camelcase: true */
+  console.log('$scope.savePerson(', personId, person, $scope.userId, ')');
     var detailFields = [
       'name',
       'sex',
@@ -342,29 +345,28 @@ console.error('calling getPersonsByCommentId, id: ', id);
       'nationality',
       'age',
       'vote',
+      'rating',
       'showcase',
       'thruthful',
       'new',
       'uniq_prev',
       'uniq_next',
     ];
-    var personDetails = {};
-    angular.forEach($scope.persons[personId], function(value, key) {
-console.log('forEach:', key, value);
+    var personDetail = {};
+    angular.forEach(person, function(value, key) {
+//console.log('forEach:', key, value);
       if (detailFields.indexOf(key) !== -1) {
-console.log('forEach: accepting key:', key);
         this[key] = value;
       }
-    }, personDetails);
-console.log('personDetails:', personDetails);
+    }, personDetail);
+console.log('personDetail:', personDetail);
 
-    //Persons.setPerson(personId, $scope.persons[personId], $scope.userId).then(
-    Persons.setPerson(personId, personDetails, $scope.userId).then(
-      function(successMessage) {
-        notify.success('Person saved correctly', successMessage);
+    Persons.setPerson(personId, personDetail, $scope.userId).then(
+      function(/*successMessage*/) {
+        console.info('Person saved correctly');
       },
       function(errorMessage) {
-        console.warn(errorMessage);
+        notify.error(errorMessage);
       }
     );
     //// reset the form once values have been consumed
@@ -501,11 +503,29 @@ console.log('getPersonsNamesByCommentId() - persons: ', persons);
   };
 
   $scope.vote = function(vote) {
-    if (vote > 0) {
-      $scope.person.vote = Math.min(cfg.person.vote.max, $scope.person.vote + vote);
-    } else {
-      $scope.person.vote = Math.max(cfg.person.vote.min, $scope.person.vote + vote);
+    if (vote === 0) { // noop
+      return;
     }
+    if (vote > 0) {
+      $scope.person.vote = Math.min(cfg.person.vote.max, parseInt($scope.person.vote) + parseInt(vote));
+    } else {
+      $scope.person.vote = Math.max(cfg.person.vote.min, parseInt($scope.person.vote) + parseInt(vote));
+    }
+    //$scope.persons[$scope.personId].vote = $scope.person.vote; // TODO: DO WE NEED THIS INSTRUCTION?
+    $scope.savePerson($scope.person);
+  };
+
+  $scope.rating = function(rating) {
+    if (rating === 0) { // noop
+      return;
+    }
+    if (rating > 0) {
+      $scope.person.rating = Math.min(cfg.person.rating.max, parseInt($scope.person.rating) + parseInt(rating));
+    } else {
+      $scope.person.rating = Math.max(cfg.person.rating.min, parseInt($scope.person.rating) + parseInt(rating));
+    }
+    //$scope.persons[$scope.personId].rating = $scope.person.rating; // TODO: DO WE NEED THIS INSTRUCTION?
+    $scope.savePerson($scope.person);
   };
 
   $scope.geocode = function(address, region) {

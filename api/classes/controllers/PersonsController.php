@@ -8,6 +8,8 @@
 
 class PersonsController {
 
+function unused() { ; }
+
   const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
 

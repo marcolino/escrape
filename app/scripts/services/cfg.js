@@ -43,6 +43,10 @@ app.constant('cfg', {
       min: 0,
       max: 9,
     },
+    rating: {
+      min: 0,
+      max: 9,
+    },
     age: {
       min: 18,
       max: 75,
