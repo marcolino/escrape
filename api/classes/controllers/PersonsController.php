@@ -210,7 +210,7 @@ function unused() { ; }
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
           $personDetail["new"] = true; // set new flag to true
-          $personId = $this->add($personMaster, $personDetail);
+          $personId = $this->addPerson($personMaster, $personDetail);
 
 #$this->router->log("debug", " PERSON: " . any2string($personMaster) . any2string($personDetail));
 
