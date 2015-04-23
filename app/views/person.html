@@ -255,8 +255,12 @@
 
     <!-- comments pill -->
     <div class="tab-content" ng-show="tabSelected === 'comments' && !tabs['comments'].hidden">
+<pre>&emsp; person.comments:{{person.comments}}</pre>
+<pre>&emsp; personsPerComment:{{personsPerComment}}</pre>
       <div class="comments">
         <div ng-repeat="(id, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">
+<pre>&emsp; id:{{id}}</pre>
+<pre>&emsp; comment:{{comment}}</pre>
           <div class="form-group">
             <div class="col-xs-12">
               <div class="input-group">
@@ -315,11 +319,12 @@
                       <div class="dropdown">
                         <div class="input-group" data-toggle="dropdown">
                           <span class="input-group-addon" title="Person"><i class="glyphicon glyphicon-user"></i></span>
-                          <input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />
+                      <!--<input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />-->
+                          <input class="form-control" type="text" ng-value="personsPerComment[comment['id']][0].name" />
                         </div>
                         <ul class="dropdown-menu scrollable-menu" role="menu">
                           <li ng-repeat="(idPersonPerComment, personPerComment) in personsPerComment[comment['id']]" NOclass="flag-li">
-                            <a ng-click="changePersonInComment(idPersonPerComment)"><i NOclass="f16"></i> {{personPerComment.name}}</a>
+                            <a Xng-click="changePersonInComment(idPersonPerComment)"><i NOclass="f16"></i> {{personPerComment.name}}</a>
                           </li>
                         </ul>
                       </div>

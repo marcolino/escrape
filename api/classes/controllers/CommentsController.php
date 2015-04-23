@@ -498,19 +498,6 @@ $this->router->log("debug", "getByPhone() - phone: [$phone]");
     return ($ratingCount > 0) ? $ratingSum / $ratingCount : null;
   }
 
-/*
-  / **
-   * Get possible person for a comment
-   *
-   * @param integer $commentId:   comment id
-   * @return array $persons:      possible persons list [id, name] for given comment id
-   * /
-  public function getPersonsByCommentId($commentId) {
-    $comments = $this->db->get("comment", $commentId);
-    # ... TODO ...
-  }
-*/
-
   private function normalizePhone($phone) {
     $result = preg_replace("/[^\d]*/", "", $phone);
     return $result;

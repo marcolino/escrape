@@ -188,12 +188,12 @@ class Router {
         }
       });
 */
-      $this->app->get("/getPersonsByCommentId/:commentId", function($commentId) { # ===
+      $this->app->get("/getPersonsPerComment/:commentId", function($commentId) { # ===
         try {
           $comments = new CommentsController($this);
           $comment = $comments->get($commentId);
           $phone = $comment["phone"];
-$this->log("debug", "INDEX.PHP - getPersonsByCommentId($commentId): [$phone]");
+$this->log("debug", "INDEX.PHP - getPersonsPerComment($commentId): [$phone]");
           $persons = new PersonsController($this);
           $personsListFull = $persons->getByPhone($phone);
 $this->log("debug", "INDEX.PHP - personsListFull:" . any2string($personsListFull));

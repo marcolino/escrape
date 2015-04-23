@@ -193,7 +193,7 @@ class DB extends PDO {
 
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.*
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.id_person
@@ -203,11 +203,17 @@ class DB extends PDO {
       list($sqlSieves, $params) = $this->sieves2Sql($sieves);
       $sql .= $sqlSieves;
 
+      // group by id_person
+      $sql .= " GROUP BY {$tableDetail}.id_person
+      ";
+
       // order to get lower user id first (system is the lowest: 1)
+      /* WE DON'T USE THIS SORT STRATEGY ANYMORE: NOW WE GROUP BY id_person
       $sql .= " ORDER BY " .
         "{$tableDetail}.id_user ASC," .
         "{$tableDetail}.id_person ASC" # TODO: do we need this ordering?
       ;
+      */
 
       $statement = $this->db->prepare($sql);
       foreach ($params as $key => &$value) {
@@ -231,22 +237,48 @@ class DB extends PDO {
     $tableDetail = "person" . "_" . "detail";
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.*
+        SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user) AS id_user_max
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.id_person
         WHERE 1 = 1
       ";
       $sql .= " AND {$tableMaster}.id = :id";
-      $sql .= " AND {$tableDetail}.id_user = :id_user";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.id_person";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":id", $id, PDO::PARAM_INT);
-      $statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
+      #$statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
-      throw new Exception("can't get table $table: " . $e->getMessage());
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+
+  public function getPersonByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "person";
+    $tableDetail = "person" . "_" . "detail";
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.id_person
+        WHERE $fieldName = :$fieldName
+      ";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.id_person";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . $fieldName, $fieldValue);
+#$this->router->log("debug", " db->getPersonByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+$this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . count($result));
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
     }
   }
 

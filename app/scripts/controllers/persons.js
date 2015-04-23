@@ -66,7 +66,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   function sortObjectToList(object, criteria) { // obj is an object of objects
     // order objects by sort criteria
-    //console.log('sortObjectToList():', object, criteria);
+console.log('sortObjectToList():', object, criteria);
     var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
       var len = criteria.length;
       for (var i = 0; i < len; i++) {
@@ -92,8 +92,8 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     for (var i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
         var next;
-        for (var j = searchArrayById(list, list[i].uniq_next); j !== null; j = next) {
-          next = searchArrayById(list, list[j].uniq_next);
+        for (var j = searchArrayByIdPerson(list, list[i].uniq_next); j !== null; j = next) {
+          next = searchArrayByIdPerson(list, list[j].uniq_next);
           var src = j;
           var dst = ++i;
           list.move(src, dst);
@@ -104,9 +104,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     return list;
   }
 
-  function searchArrayById(array, id) {
-    for (var i = 0; i < array.length; i++) {
-      if (array[i].id === id) {
+  function searchArrayByIdPerson(array, personId) {
+    var len = array.length;
+    for (var i = 0; i < len; i++) {
+      /* jshint camelcase: false */
+      if (array[i].id_person === personId) {
+      /* jshint camelcase: true */
         return i;
       }
     }
@@ -134,7 +137,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       if (!$scope.person.phone) { // empty phone, do not load comments
           $scope.person.comments = [];
       } else { // active phone, do load comments
-        $scope.personsPerComment = [];
+        $scope.personsPerComment = {};
         Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
           console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
@@ -142,8 +145,8 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 //console.error('$scope.person.comments', $scope.person.comments);
           for (var i = 0; i < len; i++) {
             //var id = $scope.person.comments[i].id;
-//console.error('calling getPersonsByCommentId, id: ', id);
-            $scope.getPersonsByCommentId($scope.person.comments[i].id);
+//console.error('calling getPersonsPerComment, id: ', id);
+            $scope.getPersonsPerComment($scope.person.comments[i].id);
           }
         });
       }
@@ -481,12 +484,14 @@ console.log('personDetail:', personDetail);
     $scope.person.nationality = code;
   };
 
-  $scope.getPersonsByCommentId = function(commentId) {
-console.log('getPersonsNamesByCommentId(): ', commentId);
-    Persons.getPersonsByCommentId(commentId).then(
+  $scope.getPersonsPerComment = function(commentId) {
+console.log('getPersonsPerComment('+commentId+')');
+    Persons.getPersonsPerComment(commentId).then(
       function(persons) {
-console.log('getPersonsNamesByCommentId() - persons: ', persons);
+console.log(' *** getPersonsPerComment('+commentId+') - persons: ', persons);
+console.log(' *** $scope.personsPerComment before: ', $scope.personsPerComment);
         $scope.personsPerComment[commentId] = persons;
+console.log(' *** $scope.personsPerComment after: ', $scope.personsPerComment);
       },
       function(errorMessage) {
         console.warn(errorMessage);

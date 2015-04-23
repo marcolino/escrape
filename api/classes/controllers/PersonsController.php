@@ -506,7 +506,7 @@ function unused() { ; }
     if (!$phone) {
       return [];
     }
-    return $this->db->getByField("person_detail", "phone", $phone);
+    return $this->db->getPersonByField("phone", $phone);
   }
   
   # TODO: add $userId...
@@ -540,8 +540,8 @@ $this->router->log("debug", "persons length: " . count($persons));
       $personId = $person["id_person"];
       if (!isset($result[$personId])) {
         $result[$personId] = []; // initialize this person array in results
-      } else { # TODO: should never happen...
-        throw new Exception("Assertion failed: getList(): (isset(\$result[\$personId])"); # TODO: JUST TO DEBUG!
+      } else { # TODO: should never happen, we select grouping by id_person...
+        throw new Exception("Assertion failed: getList(): (isset(\$result[\$personId]), personId: $personId, " . any2string($result[$personId])); # TODO: JUST TO DEBUG!
       }
 
 /*
