@@ -153,6 +153,7 @@ class DB extends PDO {
           author_karma VARCHAR(16),
           author_posts INTEGER,
           content TEXT,
+          content_rating INTEGER,
           url TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON comment (key);

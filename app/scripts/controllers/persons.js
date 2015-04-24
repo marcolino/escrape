@@ -135,25 +135,120 @@ console.log('sortObjectToList():', object, criteria);
       });
 
       if (!$scope.person.phone) { // empty phone, do not load comments
-          $scope.person.comments = [];
-      } else { // active phone, do load comments
+        $scope.person.comments = [];
         $scope.personsPerComment = {};
+      } else { // active phone, do load comments
+/*
+ *      $personsPerComment[] = [
+ *        "id_person" => $person["id_person"],
+ *        "name" => $person["name"]
+ *      ];
+ */
+        $scope.personsPerComment = {};
+        //$scope.personsPerComment = [];
+
         Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
           console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
+          /*
+           * $scope.person.comments contains all comments linked to the person's phone;
+           * if they lack "id_person" field, they could be relative to another person
+           * with the same phone.
+           */
           var len = $scope.person.comments.length;
-//console.error('$scope.person.comments', $scope.person.comments);
+          //console.error('$scope.person.comments', $scope.person.comments);
+          /*
           for (var i = 0; i < len; i++) {
-            //var id = $scope.person.comments[i].id;
-//console.error('calling getPersonsPerComment, id: ', id);
             $scope.getPersonsPerComment($scope.person.comments[i].id);
           }
+          */
+          console.log("------------------------------");
+          var len = $scope.person.comments.length;
+//console.log('phone of comment', i, $scope.person.phone);
+          for (var personId in $scope.persons) {
+//console.log(' personId:', personId);
+            if ($scope.person.phone === $scope.persons[personId].phone) {
+              //console.log(personId);
+              var active = false;
+              for (var i = 0; i < len; i++) { // list all comments (possibly) linked to this person (effectively, to her phone)
+                if ($scope.person.comments[i]['id_person']) { // this comment has a specific id_person set: set that person as active
+                  if (personId === $scope.person.comments[i]['id_person']) {
+                    active = true;
+                    break;
+                  }
+                }
+              }
+              // TODO: $scope.personsPerComment should be indexed by commentId, before personId !!! ...
+              $scope.personsPerComment[personId] = { 'name': $scope.persons[personId].name, 'active': active };
+            }
+          }
+          console.log($scope.personsPerComment);
+          console.log("------------------------------");
         });
       }
     });
   }
-
   // public methods
+
+/*
+  $scope.getPersonsPerComment = function(commentId) {
+    Persons.getPersonsPerComment(commentId).then(
+      function(persons) {
+        $scope.personsPerComment[commentId] = persons;
+console.log("=========================");
+console.log($scope.personsPerComment);
+console.log($scope.personsPerComment[2]);
+console.log("=========================");
+      },
+      function(errorMessage) {
+        console.warn('can\'t get persons per comment: ' + errorMessage);
+      }
+    );
+  };
+*/
+
+  $scope.setPersonInCommentActive = function(commentId, active) {
+    if (commentId in $scope.personsPerComment) {
+      $scope.personsPerComment[commentId].active = active;
+    }
+  };
+
+  $scope.getPersonInCommentActive = function(commentId) {
+//console.log('getPersonInCommentActive(), $scope.personsPerComment:', $scope.personsPerComment);
+//console.log('getPersonInCommentActive(), commentId:', commentId);
+    if (commentId in $scope.personsPerComment) {
+//console.log('getPersonInCommentActive(), !!!!!!!!!! $scope.personsPerComment[commentId]:', $scope.personsPerComment[commentId]);
+//console.log('getPersonInCommentActive(), *********** commentId:', commentId);
+      if ($scope.personsPerComment[commentId].active) {
+//console.log('getPersonInCommentActive(), @@@@@@@@@@@ active:', commentId);
+        return $scope.personsPerComment[commentId];
+      }
+    }
+    return null;
+  };
+
+  $scope.isPersonInCommentActive = function(commentId, personId) {
+console.log('isPersonInCommentActive(), commentId:', commentId);
+console.dir($scope.personsPerComment);
+    if (commentId in $scope.personsPerComment) {
+      if ($scope.personsPerComment[commentId].id_person === personId) {
+        return $scope.personsPerComment[commentId].active;
+      }
+    }
+    return false;
+  };
+
+  $scope.isAnyPersonInCommentActive = function(commentId) {
+console.log('isAnyPersonInCommentActive(), $scope.personsPerComment:', $scope.personsPerComment['2']);
+console.log('isAnyPersonInCommentActive(), commentId:', commentId);
+    //var len = $scope.personsPerComment[commentId].length;
+    if (commentId in $scope.personsPerComment) {
+      if ($scope.personsPerComment[commentId].active) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   $scope.open = function(id) {
     $rootScope.openedId = id;
@@ -482,21 +577,6 @@ console.log('personDetail:', personDetail);
   $scope.changeCountry = function(code) {
     console.log('changeCountry(): ', code);
     $scope.person.nationality = code;
-  };
-
-  $scope.getPersonsPerComment = function(commentId) {
-console.log('getPersonsPerComment('+commentId+')');
-    Persons.getPersonsPerComment(commentId).then(
-      function(persons) {
-console.log(' *** getPersonsPerComment('+commentId+') - persons: ', persons);
-console.log(' *** $scope.personsPerComment before: ', $scope.personsPerComment);
-        $scope.personsPerComment[commentId] = persons;
-console.log(' *** $scope.personsPerComment after: ', $scope.personsPerComment);
-      },
-      function(errorMessage) {
-        console.warn(errorMessage);
-      }
-    );
   };
 
   $scope.streetAddressToImageUrl = function(streetAddress) {

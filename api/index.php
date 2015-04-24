@@ -154,7 +154,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/getSourcesCountries", function() { # =======================
+      $this->app->get("/getSourcesCountries", function() { # ==============
         try {
           $persons = new PersonsController($this);
           $this->success($persons->getSourcesCountries());
@@ -188,25 +188,37 @@ class Router {
         }
       });
 */
+/*
       $this->app->get("/getPersonsPerComment/:commentId", function($commentId) { # ===
         try {
           $comments = new CommentsController($this);
           $comment = $comments->get($commentId);
+$this->log("debug", "INDEX.PHP - @@@ commentId: $commentId:" . any2string($comment));
           $phone = $comment["phone"];
 $this->log("debug", "INDEX.PHP - getPersonsPerComment($commentId): [$phone]");
           $persons = new PersonsController($this);
-          $personsListFull = $persons->getByPhone($phone);
-$this->log("debug", "INDEX.PHP - personsListFull:" . any2string($personsListFull));
-          $personsList = [];
-          foreach ($personsListFull as $person) {
-            $personsList[] = [ "id_person" => $person["id_person"], "name" => $person["name"] ];
+          $personsWithSamePhoneAsComment = $persons->getByPhone($phone);
+$this->log("debug", "INDEX.PHP - personsWithSamePhoneAsComment:" . any2string($personsWithSamePhoneAsComment));
+          $personsPerComment = [];
+          foreach ($personsWithSamePhoneAsComment as $person) {
+            $active = false;
+            if ($comment["id_person"]) { // this comment has a specific id_person set: set that person as active
+$this->log("debug", "INDEX.PHP - °°° comment[id_person]: " . intval($comment["id_person"]));
+$this->log("debug", "INDEX.PHP - °°° person[id_person]: " . intval($person["id_person"]));
+              if (intval($comment["id_person"]) === intval($person["id_person"])) {
+$this->log("debug", "INDEX.PHP - UUUUUUUU");
+                $active = true;
+              }
+            }
+            $personsPerComment[] = [ "id_person" => $person["id_person"], "name" => $person["name"], "active" => $active ];
           }
-$this->log("debug", "INDEX.PHP - personsList:" . any2string($personsList));
-          $this->success($personsList);
+$this->log("debug", "INDEX.PHP - personsPerComment:" . any2string($personsPerComment));
+          $this->success($personsPerComment);
         } catch (Exception $e) {
           $this->error($e);
         }
       });
+*/
     }); # ===================================================================
 
     # === users group =======================================================
@@ -267,7 +279,14 @@ $this->log("debug", "INDEX.PHP - personsList:" . any2string($personsList));
         try {
           $comments = new CommentsController($this);
           $this->success($comments->getByPhone($phone));
-
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->get("/countByPhone/:phone", function($phone) { # ========
+        try {
+          $comments = new CommentsController($this);
+          $this->success($comments->countByPhone($phone));
         } catch (Exception $e) {
           $this->error($e);
         }

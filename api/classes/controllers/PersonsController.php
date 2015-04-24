@@ -210,7 +210,7 @@ function unused() { ; }
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
           $personDetail["new"] = true; // set new flag to true
-          $personId = $this->addPerson($personMaster, $personDetail);
+          $personId = $this->add($personMaster, $personDetail);
 
 #$this->router->log("debug", " PERSON: " . any2string($personMaster) . any2string($personDetail));
 
@@ -594,7 +594,7 @@ $this->router->log("debug", "persons length: " . count($persons));
       // fields "calculated"
       //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
       $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
-      $result[$personId]["comments_count"] = $comments->countByPerson($personId);
+      $result[$personId]["comments_count"] = $comments->countByPhone($person["phone"]);
       $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId);
     }
 #$this->router->log("debug", "getList() - result: " . var_export($result, true));

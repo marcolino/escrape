@@ -113,6 +113,12 @@ body {
 }
 */
 
+/* glyphicon-none: empty glyphicon */
+.glyphicon-none:before {
+  content: "\2122";
+  color: transparent !important;
+}
+
 /* glyphicon-chevron left to make it double */
 .glyphicon-chevron-left-2 {
   margin-left: -7px;

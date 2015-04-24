@@ -461,12 +461,21 @@ $this->router->log("debug", "getByPhone() - phone: [$phone]");
     return $this->db->getByField("comment", "phone", $phone);
   }
   
+  public function countByPhone($phone) {
+    if (!$phone) {
+      return 0;
+    }
+    return $this->db->countByField("comment", "phone", $phone);
+  }
+
+/*
   public function countByPerson($personId) {
     if (!$personId) {
       throw new Exception("can't get comments count by person: no person id specified");
     }
     return $this->db->countByField("comment", "id_person", $personId);
   }
+*/
 
 /*
   public function getAverageValutationByPerson($personId) {
@@ -611,6 +620,7 @@ $this->router->log("debug", "getByPhone() - phone: [$phone]");
     return $result;
   }
 
+/* TODO: use Networtk's method...
   private function getUrlContents($url, $ua = "Mozilla") {
     $retry = 0;
     $retryMax = 3;
@@ -641,6 +651,7 @@ $this->router->log("debug", "getByPhone() - phone: [$phone]");
     curl_close($ch);
     return $output;
   }
+*/
 
   /**
    * Destructor
