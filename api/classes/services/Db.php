@@ -34,6 +34,7 @@ class DB extends PDO {
         #, [ PDO::ATTR_PERSISTENT => TRUE ] # TODO: on update this causes a "General error"...
       );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      #$new = true; # FORCE CREATION OF TABLES EVEN IF DB EXISTS (TO BE USED ONCE, IF NEEDED!)
       if ($new) { // db doesn't exist, create TABLEs...
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
@@ -124,25 +125,9 @@ class DB extends PDO {
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "
       );
-/*
-      $this->db->exec(
-        "CREATE TABLE if not exists person_uniqcode (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          id_user INTEGER,
-          id_person_1 INTEGER,
-          id_person_2 INTEGER,
-          same INTEGER
-         );
-         CREATE INDEX IF NOT EXISTS id_person_1_idx ON person_uniqcode (id_person_1);
-         CREATE INDEX IF NOT EXISTS id_person_2_idx ON person_uniqcode (id_person_2);
-        "
-      );
-*/
       $this->db->exec(
         "CREATE TABLE IF NOT EXISTS comment (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          id_user INTEGER, -- to be handled...
-          id_person INTEGER,
           key VARCHAR(32),
           phone VARCHAR(16),
           topic TEXT,
@@ -153,13 +138,22 @@ class DB extends PDO {
           author_karma VARCHAR(16),
           author_posts INTEGER,
           content TEXT,
-          content_rating INTEGER,
           url TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON comment (key);
          CREATE UNIQUE INDEX IF NOT EXISTS phone_idx ON comment (phone);
          CREATE INDEX IF NOT EXISTS timestamp_idx ON comment (timestamp);
          CREATE INDEX IF NOT EXISTS topic_idx ON comment (topic);
+        "
+      );
+      $this->db->exec(
+        "CREATE TABLE IF NOT EXISTS comment_detail (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_comment INTEGER,
+          id_user INTEGER,
+          id_person INTEGER,
+          content_rating INTEGER,
+         );
         "
       );
       $this->db->exec(
@@ -184,9 +178,16 @@ class DB extends PDO {
     }
   }
 
-  public function getPersonList($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+  /*
+   ***********************************************************************************************************************
+   * section: person-specific table functions
+   ***********************************************************************************************************************
+   */
+
+  public function getPersons($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
+    $groupByField = "id_person";
     if ($userId === null) {
       $userId = self::DB_SYSTEM_USER_ID; // handle case where userId is set, but null
     }
@@ -197,22 +198,21 @@ class DB extends PDO {
         SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
         FROM {$tableMaster}
         JOIN {$tableDetail}
-        ON {$tableMaster}.id = {$tableDetail}.id_person
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
         WHERE (id_user = {$this->userIdSystem} OR id_user = {$userId})
       ";
 
       list($sqlSieves, $params) = $this->sieves2Sql($sieves);
       $sql .= $sqlSieves;
 
-      // group by id_person
-      $sql .= " GROUP BY {$tableDetail}.id_person
-      ";
+      // group by $groupByField
+      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
 
       // order to get lower user id first (system is the lowest: 1)
-      /* WE DON'T USE THIS SORT STRATEGY ANYMORE: NOW WE GROUP BY id_person
+      /* WE DON'T USE THIS SORT STRATEGY ANYMORE: NOW WE GROUP BY $groupByField
       $sql .= " ORDER BY " .
         "{$tableDetail}.id_user ASC," .
-        "{$tableDetail}.id_person ASC" # TODO: do we need this ordering?
+        "{$tableDetail}.id_person ASC"
       ;
       */
 
@@ -236,17 +236,18 @@ class DB extends PDO {
   public function getPerson($id, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
+    $groupByField = "id_person";
     try {
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user) AS id_user_max
         FROM {$tableMaster}
         JOIN {$tableDetail}
-        ON {$tableMaster}.id = {$tableDetail}.id_person
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
         WHERE 1 = 1
       ";
       $sql .= " AND {$tableMaster}.id = :id";
       $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
-      $sql .= " GROUP BY {$tableDetail}.id_person";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":id", $id, PDO::PARAM_INT);
       #$statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
@@ -261,16 +262,17 @@ class DB extends PDO {
   public function getPersonByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
+    $groupByField = "id_person";
     try {
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
         FROM {$tableMaster}
         JOIN {$tableDetail}
-        ON {$tableMaster}.id = {$tableDetail}.id_person
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
         WHERE $fieldName = :$fieldName
       ";
       $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
-      $sql .= " GROUP BY {$tableDetail}.id_person";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue);
 #$this->router->log("debug", " db->getPersonByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
@@ -285,6 +287,8 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
 
   public function addPerson($arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
+    $tableDetail = "person" . "_" . "detail";
+    $groupByField = "id_person";
 
     try { // add master data
       $fields = $values = "";
@@ -313,7 +317,6 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
     }
 
     if (!empty($arrayDetail)) {
-      $tableDetail = $tableMaster . "_" . "detail";
 
       $arrayDetail["id_person"] = $lastMasterInsertId; // add master person id to this detail record
       $arrayDetail["id_user"] = $userId; // add user id to this detail record
@@ -349,9 +352,10 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
     return $lastMasterInsertId;
   }
 
-  public function setPerson($personId, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function setPerson($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
-#throw new Exception("SET 1, ARRAY_DETAIL: " . var_export($arrayDetail, true));
+    $tableDetail = "person_detail";
+    $groupByField = "id_person";
 
     if (!empty($arrayMaster)) {
       try {
@@ -363,7 +367,7 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
         $sql = "
           UPDATE {$tableMaster}
           SET $set
-          WHERE id = :id_person
+          WHERE id = :$groupByField
         ";
 
 /*
@@ -373,14 +377,14 @@ throw new Exception(
 );
 */
         $statement = $this->db->prepare($sql);
-        $statement->bindParam(':id_person', $personId, PDO::PARAM_INT);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
         foreach ($arrayMaster as $key => &$value) {
           $statement->bindParam(":" . $key, $value);
         }
         $statement->execute();
         $count = $statement->rowCount();
         if ($statement->rowCount() != 1) {
-          throw new Exception("update into table $tableMaster for id [$personId] did update " . $statement->rowCount() . " records");
+          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
         }
       } catch (PDOException $e) {
         throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
@@ -388,10 +392,7 @@ throw new Exception(
     }
 
     if (!empty($arrayDetail)) {
-      $tableDetail = "person_detail";
-
 $this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
-
       $set = "";
       $ins_fields = $ins_values = "";
       foreach ($arrayDetail as $key => $value) {
@@ -404,12 +405,12 @@ $this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDet
         $sql = "
           SELECT count(*) as count FROM {$tableDetail}
           WHERE
-           id_person = :id_person
+           id_person = :$groupByField
           AND
            id_user = :id_user
         ";
         $statement = $this->db->prepare($sql);
-        $statement->bindParam(':id_person', $personId, PDO::PARAM_INT);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
         $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
         $statement->execute();
         $result = $statement->fetch(PDO::FETCH_ASSOC);
@@ -432,33 +433,21 @@ $this->router->log("debug", " setPerson() - check result:" . any2string($result)
             UPDATE {$tableDetail}
             SET $set
             WHERE
-             id_person = :id_person
+             id_person = :$groupByField
             AND
              id_user = :id_user
           ";
         } else { // insert
           $sql = "
             INSERT INTO {$tableDetail}
-            (id_person, id_user, $ins_fields)
+            ($groupByField, id_user, $ins_fields)
             VALUES
-            (:id_person, :id_user, $ins_values)
+            (:$groupByField, :id_user, $ins_values)
           ";
-          #$arrayDetail["id_person"] = $personId;
-          #$arrayDetail["id_user"] = $userId;
         }
-/*
-throw new Exception(
-  "setPerson() - detail sql: [$sql], " . "\n" .
-  "id: " . $id . "\n" .
-  "id_user: " . $userId . "\n" .
-  "arrayDetail: " . var_export($arrayDetail, true)
-);
-*/
         $statement = $this->db->prepare($sql);
-        #if ($mode === "update") { // update
-          $statement->bindParam(':id_person', $personId, PDO::PARAM_INT);
-          $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
-        #}
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
         foreach ($arrayDetail as $key => &$value) {
           $statement->bindParam(":" . $key, $value);
         }
@@ -471,10 +460,11 @@ throw new Exception(
         throw new Exception("can't $mode record in table $tableDetail: " . $e->getMessage());
       }
     }
-    return $personId;
+    return $id;
   }
 
-  public function deletePerson($id) {
+  public function deletePerson($id, $userId = self::DB_SYSTEM_USER_ID) {
+    # TODO: handle userId
     $table = "person";
     try {
       $sql = "
@@ -619,7 +609,8 @@ $this->router->log("debug", " NEW UNIQCODE");
   }
 */
 
-  public function getAverageFieldByPersonId($table, $personId, $fieldName) {
+/*
+  public function getAverageFieldByPerson($table, $personId, $fieldName) {
     try {
       $sql = "
         SELECT AVG($fieldName) AS avg
@@ -635,12 +626,308 @@ $this->router->log("debug", " NEW UNIQCODE");
       throw new Exception("can't get average field by person from $table: " . $e->getMessage());
     }
   }
+*/
 
+  /*
+   ***********************************************************************************************************************
+   * section: comment-specific table functions
+   ***********************************************************************************************************************
+   */
+
+   public function getComments($userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+    $tableMaster = "comment";
+    $tableDetail = "comment" . "_" . "detail";
+    $groupByField = "id_comment";
+    if ($userId === null) {
+      $userId = self::DB_SYSTEM_USER_ID; // handle case where userId is set, but null
+    }
+    $params = [];
+
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
+        WHERE (id_user = {$this->userIdSystem} OR id_user = {$userId})
+      ";
+
+      // group by id_comment
+      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
+
+      $statement = $this->db->prepare($sql);
+      foreach ($params as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get from $tableMaster, $tableDetail with filters: " . $e->getMessage());
+    }
+  }
+
+  public function getComment($id, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "comment";
+    $tableDetail = "comment" . "_" . "detail";
+    $groupByField = "id_comment";
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user) AS id_user_max
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
+        WHERE 1 = 1
+      ";
+      $sql .= " AND {$tableMaster}.id = :id";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":id", $id, PDO::PARAM_INT);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+
+  public function getCommentByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "comment";
+    $tableDetail = "comment" . "_" . "detail";
+    $groupByField = "id_comment";
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
+        WHERE $fieldName = :$fieldName
+      ";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . $fieldName, $fieldValue);
+#$this->router->log("debug", " db->getCommentByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+#$this->router->log("debug", " db->getCommentByField() - count(result):" . "\n" . count($result));
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+
+  public function addComment($arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "comment";
+    $tableDetail = "comment" . "_" . "detail";
+    $groupByField = "id_comment";
+    try { // add master data
+      $fields = $values = "";
+      foreach ($arrayMaster as $key => $value) {
+        $fields .= ($fields ? ", " : "") . $key;
+        $values .= ($values ? ", " : "") . ":" . $key;
+      }
+      $sql = "
+        INSERT INTO {$tableMaster}
+        ($fields)
+        VALUES
+        ($values)
+      ";
+      $statement = $this->db->prepare($sql);
+      foreach ($arrayMaster as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($count != 1) {
+        throw new Exception("can't add record to table $tableMaster (added $count records)");
+      }
+      $lastMasterInsertId = $this->db->lastInsertId();
+    } catch (PDOException $e) {
+      throw new Exception("can't add record to table $tableMaster: " . $e->getMessage());
+    }
+
+    if (!empty($arrayDetail)) {
+      $arrayDetail[$groupByField] = $lastMasterInsertId; // add master person id to this detail record
+      $arrayDetail["id_user"] = $userId; // add user id to this detail record
+      try { // add details data
+        $fields = $values = "";
+        foreach ($arrayDetail as $key => $value) {
+          $fields .= ($fields ? ", " : "") . $key;
+          $values .= ($values ? ", " : "") . ":" . $key;
+        } 
+        $sql = "
+          INSERT INTO {$tableDetail}
+          ($fields)
+          VALUES
+          ($values)
+        ";
+#throw new Exception("detail sql: [$sql], arrayDetail:" . var_export($arrayDetail, true));
+        $statement = $this->db->prepare($sql);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't add record to table $tableDetail (added $count records)");
+        }
+        $lastDetailInsertId = $this->db->lastInsertId();
+      } catch (PDOException $e) {
+        throw new Exception("can't add record to table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $lastMasterInsertId;
+  }
+
+  public function setComment($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+    $tableMaster = "comment";
+    $tableDetail = "comment_detail";
+    $groupByField = "id_comment";
+
+    if (!empty($arrayMaster)) {
+      try {
+        $set = "";
+        foreach ($arrayMaster as $key => $value) {
+          $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+        }
+        $sql = "
+          UPDATE {$tableMaster}
+          SET $set
+          WHERE id = :$groupByField
+        ";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        foreach ($arrayMaster as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($statement->rowCount() != 1) {
+          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
+      }
+    }
+
+    if (!empty($arrayDetail)) {
+$this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
+      $set = "";
+      $ins_fields = $ins_values = "";
+      foreach ($arrayDetail as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+        $ins_fields .= ($ins_fields ? ", " : "") . $key;
+        $ins_values .= ($ins_values ? ", " : "") . ":" . $key;
+      }
+
+      try { // check if details data should be inserted or updated
+        $sql = "
+          SELECT count(*) as count FROM {$tableDetail}
+          WHERE
+           id_person = :$groupByField
+          AND
+           id_user = :id_user
+        ";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+$this->router->log("debug", " setComment() - check result:" . any2string($result));
+        $mode = null;
+        if ($result["count"] === "0") {
+          $mode = "insert";
+          $this->router->log("debug", " setComment() - will INSERT record");
+        } else {
+          $mode = "update";
+          $this->router->log("debug", " setComment() - will UPDATE record");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't check record in table $tableDetail: " . $e->getMessage());
+      }
+
+      try { // add details data
+        if ($mode === "update") { // update
+          $sql = "
+            UPDATE {$tableDetail}
+            SET $set
+            WHERE
+             id_person = :$groupByField
+            AND
+             id_user = :id_user
+          ";
+        } else { // insert
+          $sql = "
+            INSERT INTO {$tableDetail}
+            ($groupByField, id_user, $ins_fields)
+            VALUES
+            (:$groupByField, :id_user, $ins_values)
+          ";
+        }
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't $mode record in table $tableDetail (updated $count records)");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't $mode record in table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $id;
+  }
+
+  public function deleteComment($id, $userId = self::DB_SYSTEM_USER_ID) {
+    # TODO: handle userId
+    $table = "comment";
+    try {
+      $sql = "
+        DELETE
+        FROM {$table}
+        WHERE id = :id
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);
+      $statement->bindParam(":" . $key, $value);
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($count != 1) {
+        throw new Exception("delete from $table did not delete one record, but $count: " . $e->getMessage());
+      }
+      return true;
+    } catch (PDOException $e) {
+      throw new Exception("can't delete from $table: " . $e->getMessage());
+    }
+  }
 
 
   /*
-   * hereafter generic table functions
+   ***********************************************************************************************************************
+   * section: generic table functions
+   ***********************************************************************************************************************
    */
+
+  public function getAll($table) {
+    try {
+      $sql = "
+        SELECT *
+        FROM {$table}
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->execute();
+      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get all records from table $table: " . $e->getMessage());
+    }
+  }
 
   public function get($table, $id) {
     try {
@@ -732,38 +1019,6 @@ $this->router->log("debug", " db->getByField($fieldName, $fieldValue) - results:
       throw new Exception("can't count $table by field: " . $e->getMessage());
     }
   }
-
-/*
-  / **
-   * get list of 'uniq' persons, starting from a given id
-   * /
-  public function getUniqIds($id) {
-    $table = "person_detail";
-    try {
-      $idNext = $id;
-      $uniqIds = [ $idNext ];
-      do {
-        $sql = "
-          SELECT uniq_next
-          FROM {$table}
-          WHERE id_person = :id
-        ";
-        $statement = $this->db->prepare($sql);
-        $statement->bindParam(":id", $idNext);
-        $statement->execute();
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-        $idNext = $result["uniq_next"];
-        if ($idNext) {
-          $uniqIds[] = $idNext;
-        }
-#throw new Exception("getUniqIds - uniqIds: [" . any2string($uniqIds) . "]");
-      } while ($idNext);
-      return $uniqIds;
-    } catch (PDOException $e) {
-      throw new Exception("can't get uniqIds from $table: " . $e->getMessage());
-    }
-  }
-*/
 
   public function add($table, $array, $userId = self::DB_SYSTEM_USER_ID) {
     try { // add data

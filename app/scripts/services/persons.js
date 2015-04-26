@@ -31,67 +31,64 @@ app.service('Persons', function($http, $q, cfg, notify) {
   // public methods
   return {
 
-    getPersons: function (data) {
+    getPersons: function (sieves, userId) {
       return $http({
         method: 'POST',
         url: apiUri + 'get',
-        data: data,
+        data: {
+          'sieves': sieves,
+          'user_id': userId,
+        },
       }).then(handleSuccess, handleError);
     },
 
-    getPerson: function (id) {
+    getPerson: function (id, userId) {
       return $http({
         method: 'GET',
-        url: apiUri + 'get' + '/' + id,
+        url: apiUri + 'get' + '/' + id + '/' + userId,
       }).then(handleSuccess, handleError);
     },
 
-    setPerson: function (id, personDetail, userId) {
+    setPerson: function (id, personMaster, personDetail, userId) {
       return $http({
         method: 'POST',
         url: apiUri + 'set',
         data: {
           'id': id,
+          'person_master': personMaster,
           'person_detail': personDetail,
           'user_id': userId,
         },
       }).then(handleSuccess, handleError);
     },
 
-/*
-    setProperty: function (id, property) {
-      return $http({
-        method: 'PUT',
-        url: apiUri + 'setproperty' + '/' + id,
-        data: property,
-      }).then(handleSuccess, handleError);
-    },
-*/
-    addPerson: function (name) {
+    addPerson: function (personMaster, personDetail, userId) {
       return $http({
         method: 'POST',
         url: apiUri + 'addPerson',
         data: {
-          name: name
+          person_master: personMaster,
+          person_detail: personDetail,
+          userId: userId,
         },
       }).then(handleSuccess, handleError);
     },
 
-    removePerson: function (id) {
+    removePerson: function (id, userId) {
       return $http({
         method: 'DELETE',
         url: apiUri + 'delete',
         data: {
-          id: id
+          id: id,
+          userId: userId,
         },
       }).then(handleSuccess, handleError);
     },
 
-    photoGetOccurrences: function (id, url) {
-      //console.log('SERVICE photoGetOccurrences - id:', id, ', url:', url);
+    getPhotoOccurrences: function (id, url) {
       return $http({
         method: 'POST',
-        url: apiUri + 'photo' + '/' + 'get' + '/' + 'occurrences',
+        url: apiUri + 'getPhotoOccurrences',
         data: {
           id: id,
           url: url,

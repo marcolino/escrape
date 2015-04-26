@@ -40,49 +40,55 @@ class Router {
   public function run() {
     # === persons group ====================================================
     $this->app->group("/persons", function () {
-      $this->app->get("/test", function() { # ============================
-        try {
-          $persons = new PersonsController($this);
-          $this->success($persons->test());
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->get("/testuniqcode", function() { # ====================
-        try {
-          $persons = new PersonsController($this);
-          $this->success($persons->testuniqcode());
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->post("/get", function() { # ============================
+      $this->app->post("/get", function() {
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($persons->getList($data));
+          $this->success($persons->getAll($data["sieves"], $data["user_id"]));
         } catch (Exception $e) {
           $this->error($e);
         }
       });
-      $this->app->get("/get/:id", function($id) { # ======================
+      $this->app->get("/get/:id/:userId", function($id, $userId) {
         try {
           $persons = new PersonsController($this);
-          $this->success($persons->get($id));
+          $this->success($persons->get($id, $userId));
         } catch (Exception $e) {
           $this->error($e);
         }
       });
-      $this->app->post("/set", function() { # ============================
+      $this->app->post("/add", function() {
+        try {
+          $persons = new PersonsController($this);
+          $data = $this->app->request()->params("data");
+          $this->success($persons->add($data["person_master"], $data["person_detail"], $data["user_id"]));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/set", function() {
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($persons->set($data["id"], [], $data["person_detail"], $data["user_id"]));
+          $this->success($persons->set($data["id"], $data["person_master"], $data["person_detail"], $data["user_id"]));
         } catch (Exception $e) {
           $this->error($e);
         }
       });
-      $this->app->get("/sync", function() { # =============================
+      /*
+      $this->app->put("/set/:id", function($id) {
+        try {
+          $persons = new PersonsController($this);
+          #$data = json_decode($this->app->request()->getBody());
+          $id = $this->app->request()->params("id");
+          $data = $this->app->request()->params("data");
+          $this->success($persons->set($id, [], $data["person_detail"], $data["user_id"]));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      */
+      $this->app->get("/sync", function() {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->sync());
@@ -90,7 +96,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/sync/new", function() { # =========================
+      $this->app->get("/sync/full", function() {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->sync(true));
@@ -98,26 +104,16 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/photo/get/occurrences", function() { # ===========
+      $this->app->post("/getPhotoOccurrences", function() {
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody()); // content-type: application/json
-          #$this->success([ [ "text" => json_encode([$data->id, $data->url]), "imgsrc" => "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQbm5ipONSdcESkgazDxbUhFNWthW5cHzWPvF5Bv2nfRqXZNQvYJwSJ7Q", "href" => "https://www.google.it/url?sa=t&rct=j&q=&esrc=s&source=web&cd=11&cad=rja&uact=8&ved=0CEoQFjAK&url=http%3A%2F%2Fwww.perugiatoday.it%2Fcronaca%2Fstrage-gatti-perugia-orrore.html&ei=Q6j8VPa1I4bnyQPE94GIAQ&usg=AFQjCNHJyixc1C1PiBV1uDNIGUcKeF88Zg&sig2=qrSffEYjNkzlCImtA1W0cA" ] ]);
-          $this->success($persons->photoGetOccurrences($data->id, $data->url));
+          $this->success($persons->getPhotoOccurrences($data->id, $data->url));
         } catch (Exception $e) {
           $this->error($e);
         }
       });
-      $this->app->post("/photo/get/carddeck", function() { # ===========
-        try {
-          $persons = new PersonsController($this);
-          $data = json_decode($this->app->request()->getBody()); // content-type: application/json
-          $this->success($persons->photoGetCardDeck($data->urls));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->get("/search/:query", function($query) { # ==============
+      $this->app->get("/search/:query", function($query) {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->searchByName($query));
@@ -125,27 +121,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->put("/set/:id", function($id) { # =======================
-        try {
-          $persons = new PersonsController($this);
-          $data = json_decode($this->app->request()->getBody());
-          $id = $this->app->request()->params("id");
-          $data = $this->app->request()->params("data");
-          $this->success($persons->set($id, $data));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->post("/insert", function() { # ==========================
-        try {
-          $persons = new PersonsController($this);
-          $data = $this->app->request()->params("data");
-          $this->success($persons->insert($data));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->delete("/delete/:id", function($id) { # =================
+      $this->app->delete("/delete/:id", function($id) {
         try {
           $persons = new PersonsController($this);
           //$data = json_decode($this->app->request()->getBody());
@@ -154,7 +130,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/getSourcesCountries", function() { # ==============
+      $this->app->get("/getSourcesCountries", function() {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->getSourcesCountries());
@@ -162,7 +138,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/getSourcesCities/:countryCode", function($countryCode) { # ==
+      $this->app->get("/getSourcesCities/:countryCode", function($countryCode) {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->getSourcesCities($countryCode));
@@ -170,7 +146,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->get("/getActiveCountries/:userId", function($userId) { # ==========
+      $this->app->get("/getActiveCountries/:userId", function($userId) {
         try {
           $persons = new PersonsController($this);
           $this->success($persons->getActiveCountries($userId));
@@ -178,52 +154,87 @@ class Router {
           $this->error($e);
         }
       });
-/*
-      $this->app->get("/getUniqIds/:id", function($id) { # ==========================
-        try {
-          $persons = new PersonsController($this);
-          $this->success($persons->getUniqIds($id));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-*/
-/*
-      $this->app->get("/getPersonsPerComment/:commentId", function($commentId) { # ===
+    }); # ===================================================================
+
+    # comments group ========================================================
+    $this->app->group("/comments", function () {
+      $this->app->get("/get/:userId", function($userId) {
         try {
           $comments = new CommentsController($this);
-          $comment = $comments->get($commentId);
-$this->log("debug", "INDEX.PHP - @@@ commentId: $commentId:" . any2string($comment));
-          $phone = $comment["phone"];
-$this->log("debug", "INDEX.PHP - getPersonsPerComment($commentId): [$phone]");
-          $persons = new PersonsController($this);
-          $personsWithSamePhoneAsComment = $persons->getByPhone($phone);
-$this->log("debug", "INDEX.PHP - personsWithSamePhoneAsComment:" . any2string($personsWithSamePhoneAsComment));
-          $personsPerComment = [];
-          foreach ($personsWithSamePhoneAsComment as $person) {
-            $active = false;
-            if ($comment["id_person"]) { // this comment has a specific id_person set: set that person as active
-$this->log("debug", "INDEX.PHP - °°° comment[id_person]: " . intval($comment["id_person"]));
-$this->log("debug", "INDEX.PHP - °°° person[id_person]: " . intval($person["id_person"]));
-              if (intval($comment["id_person"]) === intval($person["id_person"])) {
-$this->log("debug", "INDEX.PHP - UUUUUUUU");
-                $active = true;
-              }
-            }
-            $personsPerComment[] = [ "id_person" => $person["id_person"], "name" => $person["name"], "active" => $active ];
-          }
-$this->log("debug", "INDEX.PHP - personsPerComment:" . any2string($personsPerComment));
-          $this->success($personsPerComment);
+          $this->success($comments->getAll($userId));
         } catch (Exception $e) {
           $this->error($e);
         }
       });
-*/
+      $this->app->get("/get/:id/:userId", function($id, $userId) {
+        try {
+          $comments = new CommentsController($this);
+          $this->success($comments->get($id));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/add", function() {
+        try {
+          $comments = new CommentsController($this);
+          $data = $this->app->request()->params("data");
+          $this->success($comments->add($data["comment"], $data["user_id"]));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/set", function() {
+        try {
+          $persons = new CommentsController($this);
+          $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
+          $this->success($comments->set($data["id"], [], $data["comment_detail"], $data["user_id"]));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      /*
+      $this->app->put("/set/:id", function($id) {
+        try {
+          $comments = new CommentsController($this);
+          #$data = json_decode($this->app->request()->getBody());
+          $id = $this->app->request()->params("id");
+          $data = $this->app->request()->params("data");
+          $this->success($comments->set($id, $data));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      */
+      $this->app->get("/getByPhone/:phone", function($phone) {
+        try {
+          $comments = new CommentsController($this);
+          $this->success($comments->getByPhone($phone));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->get("/countByPhone/:phone", function($phone) {
+        try {
+          $comments = new CommentsController($this);
+          $this->success($comments->countByPhone($phone));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/sync", function() {
+        # TODO: why POST???? GET!!!
+        try {
+          $comments = new CommentsController($this);
+          $this->success($comments->sync());
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
     }); # ===================================================================
 
     # === users group =======================================================
     $this->app->group("/users", function () {
-      $this->app->post("/register", function() { # ========================
+      $this->app->post("/register", function() {
         try {
           $users = new UsersController($this);
           $data = json_decode($this->app->request()->getBody());
@@ -235,7 +246,7 @@ $this->log("debug", "INDEX.PHP - personsPerComment:" . any2string($personsPerCom
           $this->error($e);
         }
       });
-      $this->app->post("/login", function() { # ===========================
+      $this->app->post("/login", function() {
         try {
           $users = new UsersController($this);
           $data = json_decode($this->app->request()->getBody());
@@ -247,55 +258,10 @@ $this->log("debug", "INDEX.PHP - personsPerComment:" . any2string($personsPerCom
           $this->error($e);
         }
       });
-      $this->app->delete("/delete/:id", function($id) { # ==================
+      $this->app->delete("/delete/:id", function($id) {
         try {
           $users = new UsersController($this);
           $this->success($users->delete($id));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-    }); # ===================================================================
-
-    # comments group ========================================================
-    $this->app->group("/comments", function () {
-      $this->app->get("/get", function() { # ==============================
-        try {
-          $comments = new CommentsController($this);
-          $this->success($comments->getAll());
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->get("/get/:id", function($id) { # =======================
-        try {
-          $comments = new CommentsController($this);
-          $this->success($comments->get($id));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->get("/getByPhone/:phone", function($phone) { # ==========
-        try {
-          $comments = new CommentsController($this);
-          $this->success($comments->getByPhone($phone));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->get("/countByPhone/:phone", function($phone) { # ========
-        try {
-          $comments = new CommentsController($this);
-          $this->success($comments->countByPhone($phone));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      $this->app->post("/sync", function() { # ============================
-        # TODO: why POST???? GET!!!
-        try {
-          $comments = new CommentsController($this);
-          $this->success($comments->sync());
         } catch (Exception $e) {
           $this->error($e);
         }

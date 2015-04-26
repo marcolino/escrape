@@ -29,17 +29,10 @@ app.service('Comments', function($http, $q, cfg, notify) {
   // public methods
   return({
 
-    getComments: function () {
+    getComments: function (userId) {
       return $http({
         method: 'GET',
-        url: apiUri + 'get',
-      }).then(handleSuccess, handleError);
-    },
-
-    getCommentsByPhone: function (phone) {
-      return $http({
-        method: 'GET',
-        url: apiUri + 'getByPhone' + '/' + phone,
+        url: apiUri + 'get' + '/' + userId,
       }).then(handleSuccess, handleError);
     },
 
@@ -50,22 +43,45 @@ app.service('Comments', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
-    addComment: function (name) {
+    setComment: function (id, commentMaster, commentDetail, userId) {
       return $http({
         method: 'POST',
-        url: apiUri + 'add',
+        url: apiUri + 'set',
         data: {
-          name: name
+          'id': id,
+          'comment_master': commentMaster,
+          'comment_detail': commentDetail,
+          'user_id': userId,
         },
       }).then(handleSuccess, handleError);
     },
 
-    removeComment: function (id) {
+    getCommentsByPhone: function (phone) {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getByPhone' + '/' + phone,
+      }).then(handleSuccess, handleError);
+    },
+
+    addComment: function (commentMaster, commentDetail, userId) {
+      return $http({
+        method: 'POST',
+        url: apiUri + 'add',
+        data: {
+          'comment_master': commentMaster,
+          'comment_detail': commentDetail,
+          'user_id': userId,
+        },
+      }).then(handleSuccess, handleError);
+    },
+
+    removeComment: function (id, userId) {
       return $http({
         method: 'DELETE',
         url: apiUri + 'delete',
         data: {
-          id: id
+          'id': id,
+          'user_id': userId,
         },
       }).then(handleSuccess, handleError);
     }

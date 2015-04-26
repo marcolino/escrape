@@ -1,0 +1,6 @@
+  public function getComments($sieves = null, $userId = self::DB_SYSTEM_USER_ID)
+  public function getComment($id, $userId = self::DB_SYSTEM_USER_ID)
+  public function getCommentByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID)
+  public function addComment($arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID)
+  public function setComment($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID)
+  public function deleteComment($id, $userId = self::DB_SYSTEM_USER_ID)

@@ -46,7 +46,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // private methods
   function applyPersons(persons) {
-    console.log('PERSONS: ', persons);
+    //console.log('PERSONS: ', persons);
     $scope.persons = persons;
     //$scope.sortCriteria.name = true;
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
@@ -59,7 +59,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   function loadPersons() {
     //console.log('loadPersons() - Sieves.sieves:', Sieves.sieves);
     //Persons.getPersons($rootScope.sieves).then(function(persons) {
-    Persons.getPersons(Sieves.sieves).then(function(persons) {
+    Persons.getPersons(Sieves.sieves, $scope.userId).then(function(persons) {
       applyPersons(persons);
     });
   }
@@ -88,7 +88,6 @@ console.log('sortObjectToList():', object, criteria);
 
     // aggregate uniq lists in sorted list
     var len = list.length;
-    /* jshint camelcase: false */
     for (var i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
         var next;
@@ -100,16 +99,13 @@ console.log('sortObjectToList():', object, criteria);
         }
       }
     }
-    /* jshint camelcase: true */
     return list;
   }
 
   function searchArrayByIdPerson(array, personId) {
     var len = array.length;
     for (var i = 0; i < len; i++) {
-      /* jshint camelcase: false */
       if (array[i].id_person === personId) {
-      /* jshint camelcase: true */
         return i;
       }
     }
@@ -117,7 +113,7 @@ console.log('sortObjectToList():', object, criteria);
   }
 
   if ($scope.personId) { // load single person
-    Persons.getPerson($scope.personId).then(function(person) {
+    Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
       if (!!cfg.fake) { console.log('person(', $scope.personId, ')', person); }
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       console.log('Persons.getPerson:', $scope.person);
@@ -134,19 +130,10 @@ console.log('sortObjectToList():', object, criteria);
          $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
       });
 
+      $scope.personsPerComment = [];
       if (!$scope.person.phone) { // empty phone, do not load comments
         $scope.person.comments = [];
-        $scope.personsPerComment = {};
       } else { // active phone, do load comments
-/*
- *      $personsPerComment[] = [
- *        "id_person" => $person["id_person"],
- *        "name" => $person["name"]
- *      ];
- */
-        //$scope.personsPerComment = {};
-        $scope.personsPerComment = [];
-
         Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
           console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
@@ -163,22 +150,24 @@ console.log('sortObjectToList():', object, criteria);
           }
           */
           console.log('------------------------------');
+console.log(' persons:', $scope.persons);
           var len = $scope.person.comments.length;
-//console.log('phone of comment', i, $scope.person.phone);
-          for (var personId in $scope.persons) {
+console.log('length of comments for this person:', len);
+          //for (var personId in $scope.persons) { // 
+          for (var i = 0; i < len; i++) {
+            var comment = $scope.person.comments[i];
 //console.log(' personId:', personId);
-            if ($scope.person.phone === $scope.persons[personId].phone) {
+//          if ($scope.person.phone === $scope.persons[personId].phone) {
+            if ($scope.person.phone === comment.phone) {
               //console.log(personId);
               var active = false;
               for (var i = 0; i < len; i++) { // list all comments (possibly) linked to this person (effectively, to her phone)
-                /* jshint camelcase: false */
                 if ($scope.person.comments[i].id_person) { // this comment has a specific id_person set: set that person as active
-                  if (personId === $scope.person.comments[i].id_person) {
+                  //if (personId === $scope.person.comments[i].id_person) {
                     active = true;
                     break;
-                  }
+                  //}
                 }
-                /* jshint camelcase: true */
               }
               // TODO: $scope.personsPerComment should be indexed by commentId, before personId !!! ...
               $scope.personsPerComment.push({ id: personId, name: $scope.persons[personId].name, active: active });
@@ -210,9 +199,7 @@ console.log('sortObjectToList():', object, criteria);
     len = $scope.person.comments.length;
     for (i = 0; i < len; i++) {
       if ($scope.person.comments[i].id === commentId) {
-        /* jshint camelcase: false */
         $scope.person.comments[i].id_person = personId;
-        /* jshint camelcase: true */
       }
     }
   };
@@ -233,9 +220,7 @@ console.log('sortObjectToList():', object, criteria);
     var len = $scope.person.comments.length;
     for (var i = 0; i < len; i++) {
       if ($scope.person.comments[i].id === commentId) {
-        /* jshint camelcase: false */
-        return $scope.person.comments[i].id_person !== null;
-        /* jshint camelcase: true */
+        return typeof $scope.person.comments[i].id_person !== 'undefined';
       }
     }
     return false;
@@ -260,9 +245,7 @@ console.log('sortObjectToList():', object, criteria);
 
   $scope.firstSeen = function(personId) {
     var MILLISECONDS_PER_DAY = (1000 * 60 * 60 * 24);
-    /* jshint camelcase: false */
     var timestampCreation = $scope.persons[personId].timestamp_creation * 1000;
-    /* jshint camelcase: true */
     var firstSeenAsString;
     var now = new Date();
     var timestampStartOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -353,45 +336,31 @@ console.log('sortObjectToList():', object, criteria);
 
 
   $scope.isUniqPrimary = function(personId) {
-    //console.log('@ isUniqPrimary('+personId+')');
-    /* jshint camelcase: false */
     return (
       ($scope.persons[personId].uniq_prev === null) &&
       ($scope.persons[personId].uniq_next !== null)
     );
-    // TODO: why other camel_case fields do not throw camel_case warning?
-    /* jshint camelcase: true */
   };
 
   $scope.isUniqPrimaryOrSingle = function(personId) {
-    //console.log('@ isUniqPrimary('+personId+')');
-    /* jshint camelcase: false */
     return ($scope.persons[personId].uniq_prev === null);
-    /* jshint camelcase: true */
   };
 
   $scope.isUniqLast = function(personId) {
-    /* jshint camelcase: false */
     return (
       ($scope.persons[personId].uniq_prev !== null) &&
       ($scope.persons[personId].uniq_next === null)
     );
-    /* jshint camelcase: true */
   };
 
   $scope.isUniqPrimaryShown = function(personId) {
-    //console.log('@ isUniqPrimaryShown('+personId+')');
-    /* jshint camelcase: false */
     return (
       $scope.isUniqPrimary(personId) &&
       $scope.persons[personId].uniq_opened
     );
-    /* jshint camelcase: true */
   };
 
   $scope.uniqShow = function(personId) {
-    //console.log('@ uniqPrimaryOpen('+personId+')');
-    /* jshint camelcase: false */
     if ($scope.isUniqPrimary(personId)) {
       var opened = $scope.persons[personId].uniq_opened ? false : true;
       $scope.persons[personId].uniq_opened = opened;
@@ -405,24 +374,18 @@ console.log('sortObjectToList():', object, criteria);
     } else {
       console.error('ASSERT FAILURE: Can\'t uniqShow('+personId+') on a secondary uniq!!!'); // TODO...
     }
-    /* jshint camelcase: true */
   };
 
   $scope.isUniqShown = function(personId) {
-    //console.log('@ isUniqShown('+personId+')');
-    /* jshint camelcase: false */
     return (
       $scope.isUniqPrimaryOrSingle(personId) ||
       ($scope.persons[personId].uniq_opened === true)
     );
-    /* jshint camelcase: true */
   };
 
   $scope.savePerson = function(person) {
-    /* jshint camelcase: false */
     var personId = person.id_person;
-    /* jshint camelcase: true */
-  console.log('$scope.savePerson(', personId, person, $scope.userId, ')');
+    console.log('$scope.savePerson(', personId, person, $scope.userId, ')');
     var detailFields = [
       'name',
       'sex',
@@ -458,23 +421,45 @@ console.log('personDetail:', personDetail);
         notify.error(errorMessage);
       }
     );
-    //// reset the form once values have been consumed
-    //$scope.form.name = '';
   };
 
-  $scope.addPerson = function() { // TODO: "$scope.form.name" ???
-    Persons.addPerson($scope.form.name).then(
+  $scope.savePersonComment = function(commentId, comment) {
+    var detailFields = [
+      'id_comment',
+      'id_user',
+      'id_person',
+      'content_rating',
+    ];
+    var commentDetail = {};
+    angular.forEach(comment, function(value, key) {
+//console.log('forEach:', key, value);
+      if (detailFields.indexOf(key) !== -1) {
+        this[key] = value;
+      }
+    }, commentDetail);
+console.log('commentDetail:', commentDetail);
+
+    Comments.setComment(commentId, [], commentDetail, $scope.userId).then(
+      function(/*successMessage*/) {
+        console.info('Comment saved correctly');
+      },
+      function(errorMessage) {
+        notify.error(errorMessage);
+      }
+    );
+  };
+
+  $scope.addPerson = function() {
+    Persons.addPerson($scope.personMaster, $scope.personDetail, $scope.userId).then(
       loadPersons,
       function(errorMessage) {
         console.warn(errorMessage);
       }
     );
-    //// reset the form once values have been consumed
-    //$scope.form.name = '';
   };
 
-  $scope.removePerson = function(person) {
-    Persons.removePerson(person.id).then(
+  $scope.removePerson = function(personId) {
+    Persons.removePerson(personId, $scope.userId).then(
       loadPersons,
       function(errorMessage) {
         console.warn(errorMessage);
@@ -492,15 +477,15 @@ console.log('personDetail:', personDetail);
     }
   };
 
-  $scope.photoGetOccurrences = function(id, url) {
+  $scope.getPhotoOccurrences = function(id, url) {
     $scope.tabSelected = 'photosOccurrences';
     $scope.tabs.photosOccurrences.hidden = false;
     $scope.photosOccurrencesLoading = true;
     $scope.photosOccurrences = [];
-    //notify.info('photoGetOccurrences(' + url + ')');
-    Persons.photoGetOccurrences(id, url).then(
+    //notify.info('getPhotoOccurrences(' + url + ')');
+    Persons.getPhotoOccurrences(id, url).then(
       function(response) {
-        //console.info('+++ photoGetOccurrences response:', response);
+        //console.info('+++ getPhotoOccurrences response:', response);
         //console.info('+++ response.length:', response.length);
         $scope.photosOccurrencesLoading = false;
         $scope.photosOccurrencesBestGuess = response.bestGuess;
@@ -516,7 +501,7 @@ console.log('personDetail:', personDetail);
             this.push(element);
           }
         }, $scope.photosOccurrences);
-        //console.info('Persons.photoGetOccurrences - typeof response:', typeof response);
+        //console.info('Persons.getPhotoOccurrences - typeof response:', typeof response);
       },
       function(errorMessage) {
         console.warn(errorMessage);
@@ -605,10 +590,13 @@ console.log('personDetail:', personDetail);
       return;
     }
 
-    /* jshint camelcase: false */
     if (ratingDelta === 0) { // noop
       return;
     }
+    var comment = $scope.person.comments[commentNum];
+comment.pippo = 'pluto';
+console.error('TESTING JS ASSIGNMENT:', $scope.person.comments[commentNum].pippo);
+
     if ($scope.person.comments[commentNum].content_rating === null) {
       $scope.person.comments[commentNum].content_rating = 0;
     }
@@ -620,15 +608,11 @@ console.log(' === ratingDelta:', ratingDelta);
       $scope.person.comments[commentNum].content_rating = Math.max(cfg.person.rating.min, parseInt($scope.person.comments[commentNum].content_rating) + parseInt(ratingDelta));
     }
 console.log(' === rating AFTER:', $scope.person.comments[commentNum].content_rating);
-    /* jshint camelcase: true */
 
     // calculate person's rating from all her comments ratings
     $scope.person.rating = $scope.personRatingFromCommentsRatings();
 
-    // TODO: call saveComment() !!!
-    
-    // call savePerson() now to save person's comments
-    $scope.savePerson($scope.person);
+    $scope.saveComment($scope.person.comments[commentNum], $scope.userId);
   };
 
   $scope.personRatingFromCommentsRatings = function() {
@@ -637,12 +621,10 @@ console.log(' === rating AFTER:', $scope.person.comments[commentNum].content_rat
     var count = 0;
     var len = $scope.person.comments.length;
     for (var i = 0; i < len; i++) {
-      /* jshint camelcase: false */
       if (parseInt($scope.person.comments[i].content_rating) > 0) {
         ratings += parseInt($scope.person.comments[i].content_rating);
         count++;
       }
-      /* jshint camelcase: true */
     }
     if (count > 0) {
       return parseInt(ratings / count);

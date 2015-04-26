@@ -26,10 +26,10 @@ function unused() { ; }
   /**
    * Sync persons
    *
-   * @param  boolean $newKeysOnly   if true sync only new persons (default: false)
-   * @return boolean:               true if everything successful, false otherwise
+   * @param  boolean $fullSync   if true sync all persons, do not skip old persons (default: false)
+   * @return boolean:            true if everything successful, false otherwise
    */
-  public function sync($newKeysOnly = false) {
+  public function sync($fullSync = false) {
     $this->router->log("info", "sync() ---------------------");
     $timestampStart = time();
     $error = false; // track errors while sync'ing
@@ -90,7 +90,7 @@ function unused() { ; }
         if (($person = $this->db->getByField("person", "key", $key))) { # old key
           $personId = $person[0]["id"];
           $this->router->log("debug", " old person: $key (id: $personId)");
-          if ($newKeysOnly) { // requested to sync only new keys, skip this old key
+          if (!$fullSync) { // requested to sync only new keys, skip this old key
             continue;
           }
         } else {
@@ -204,13 +204,13 @@ function unused() { ; }
         if ($personId) { # old key, update it
           #$this->router->log("debug", " UPDATING ");        
           # TODO: remember old values someway (how???), before updating (old zone, old phone, ...)?
-          $this->set($personId, $personMaster, $personDetail);
+          $this->set($personId, $personMaster, $personDetail, null);
         } else { # new key, insert it
           #$this->router->log("debug", " INSERTING ");
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
           $personDetail["new"] = true; // set new flag to true
-          $personId = $this->add($personMaster, $personDetail);
+          $personId = $this->add($personMaster, $personDetail, null);
 
 #$this->router->log("debug", " PERSON: " . any2string($personMaster) . any2string($personDetail));
 
@@ -241,7 +241,7 @@ function unused() { ; }
 #break;
     }
 
-    if (!$newKeysOnly) { // full sync was requested
+    if ($fullSync) { // full sync was requested
       # TODO: DO WE NEED THIS GLOBAL VARIABLE, OR WE JUST USE $timestampStart IN FOLLOWING assertPersonsActivity()?
       #// full sync done, set start timestamp to global table field 'last_sync_full'
       #$this->db->setByField("global", "last_sync_full", $timestampStart);
@@ -266,7 +266,7 @@ function unused() { ; }
   private function assertPersonsActivity($timestampStart) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     #$this->router->log("info", " timestamp of last sync start: " . date("c", $timestampStart));
-    foreach ($this->db->getPersonList(/* no sieve, */ /* no user: system user */) as $person) {
+    foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
       #$this->router->log("info", "  person " . $person["key"] . " - active_label: [" . $person["active_label"] . "]");
       if ($person["active_label"] === "0") {
         $active = false;
@@ -286,7 +286,7 @@ function unused() { ; }
    */
   public function assertPersonsUniqueness() {
     $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
-    $persons = $this->db->getPersonList(null);
+    $persons = $this->db->getPersons(null);
 
     # build an array of persons indexed by id, instead then by a progressive counter
     $persons_count = count($persons);
@@ -335,6 +335,125 @@ function unused() { ; }
         }
       }
     }
+  }
+
+  /**
+   * get all persons, filtered with given data sieves
+   *
+   * @param  array $data
+   * @return array
+   */
+  public function getAll($sieves = null, $userId = null) {
+    $result = [];
+    $comments = new CommentsController($this->router);
+
+    $persons = $this->db->getPersons($sieves, $userId);
+    foreach ($persons as $person) {
+      // N.B: here we (could) get multiple records for each person id
+      $personId = $person["id_person"];
+      if (!isset($result[$personId])) {
+        $result[$personId] = []; // initialize this person array in results
+      } else { # TODO: should never happen, we select grouping by id_person...
+        throw new Exception("Assertion failed: getAll(): (isset(\$result[\$personId]), personId: $personId, " . any2string($result[$personId])); # TODO: JUST TO DEBUG!
+      }
+      
+      // store each person by it's person id ("id" field is relative to details table)
+      $result[$personId] = $person;
+
+      // fields "calculated"
+      //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
+      $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
+      $result[$personId]["comments_count"] = $comments->countByPhone($person["phone"]);
+      $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId);
+    }
+    return $result;
+  }
+
+  public function get($id, $userId = null) {
+    $person = $this->db->getPerson($id, $userId);
+    $photos = $this->db->getByField("photo", "id_person", $id, $userId);
+    $person["photos"] = $photos;
+    return $person;
+  }
+  
+  public function getByPhone($phone, $userId = null) {
+    if (!$phone) {
+      return [];
+    }
+    return $this->db->getPersonByField("phone", $phone, $userId);
+  }
+  
+  public function add($personMaster, $personDetail = null, $userId = null) {
+    return $this->db->addPerson($personMaster, $personDetail, $userId = null);
+  }
+
+  public function set($id, $personMaster, $personDetail = null, $userId = null) {
+    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
+  }
+
+  public function delete($id, $userId = null) {
+    return $this->db->deletePerson($id, $userId);
+  }
+  
+  public function getPhotoOccurrences($id, $imageUrl) {
+    $person = $this->db->get("person", $id);
+    $personDomain = $person["url"];
+
+    $googleSearch = new GoogleSearch();
+    $numPages = 3;
+
+    $response = [];
+    $response["bestGuess"] = null;
+    $response["searchResults"] = [];
+
+    if ($results = $googleSearch->searchImage($imageUrl, $numPages)) {
+      if ($results["best_guess"]) {
+        $response["bestGuess"] = $results["best_guess"];
+      }
+      if ($results["search_results"]) {
+        $response["searchResults"] = [];
+        foreach ($results["search_results"] as $result) {
+          if (parse_url($result["href"])["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
+            $response["searchResults"][] = $result;
+          }
+        }
+      } else { // no occurrences found
+      }
+    }
+    unset($googleSearch);
+    return $response;
+  }
+
+  private function cleanName($value) {
+    $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
+    $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
+    $value = preg_replace("/^\s+/", "", $value); // ignore leading blanks
+    $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
+    #$value = strtoupper($value); // all upper case
+    $value = ucfirst(strtolower($value)); // only initials upper case
+    return $value;
+  }
+
+  private function normalizePhone($phone, $sourceKey) {
+    $source = $this->sourcesDefinitions[$sourceKey];
+    if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
+      $phone = "";
+      $activeLabel = "0";
+    } else {
+      if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
+        $phone = "";
+        $activeLabel = "0";
+      } else {
+        $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
+        $activeLabel = "1";
+      }
+    }
+    return [ $phone, $activeLabel ];
+  }
+
+  private function normalizeNationality($nationality) {
+    # TODO: ...
+    return "it";
   }
 
   /**
@@ -437,350 +556,6 @@ function unused() { ; }
   public function getActiveCountries($userId = null) {
     $result = $this->db->getFieldDistinctValues("person_detail", "nationality", $userId);
     return $result;
-  }
-
-/*
-  / **
-   * Get two persons uniqueness value (are they assumed to be the same person)
-   *
-   * @return null/boolean  null  if same value is not set (persons are probably not the same)
-   *                       true  if same value is set (persons are not the same)
-   *                       false if same value is set (persons are the same)
-   * /
-  public function getPersonsUniqueness($personId1, $personId2, $userId = null) {
-    $this->router->log("info", "getPersonsUniqueness()");
-    # TODO: check null in $userId causes default value (DB_SYSTEM_USER_ID) set in $this->db->getPersonsUniqcode()... !!!
-    $result = $this->db->getPersonsUniqcode($personId1, $personId2, $userId);
-    if (!$result) {
-      return null;
-    } else {
-      return $result["same"];
-    }
-  }
-
-  / **
-   * Set persons uniqueness value (they are assumed to be the same person)
-   *
-   * @return boolean  true    if value was set successfully
-   *                  false   if some error occurred
-   * /
-  public function setPersonsUniqueness($personId1, $personId2, $same, $userId = null) {
-    $this->router->log("info", "setPersonsUniqueness($personId1, $personId2)");
-    # TODO: check null in $userId causes default value (DB_SYSTEM_USER_ID) set in $this->db->getPersonsUniqcode()... !!!
-    return $this->db->setPersonsUniqcode($personId1, $personId2, $same, $userId);
-  }
-*/
-
-# TODO: pass $userId to db functions, in user functions (not in system ones...)
-
-  public function get($id) {
-#$this->router->log("info", " +++ get person [$id]: " . var_export($id, true));
-#print "get($id)\n";
-    $person = $this->db->getPerson($id);
-    $photos = $this->db->getByField("photo", "id_person", $id);
-    #$person["photos"] = $photos;
-    ###################################################################################
-/*
-    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
-    $uniqcodes = $this->db->getPersonsUniqcodes($userId);
-    if (is_array($uniqcodes)) {
-      foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
-# TODO: DEBUG.LOG...
-        if ($id == $uniqcode["id_person_1"]) {
-          // append photos fron the other 'uniq' person
-          $result = $photos;
-          $photos = $result + $this->db->get("photo", $uniqcode["id_person_2"]);
-        }
-      }
-    }
-*/
-    ###################################################################################
-    $person["photos"] = $photos;
-
-#print " person: "; var_export($person);
-#$this->router->log("info", " !!! person($id): " . var_export($person, true));
-    return $person;
-  }
-  
-  public function getByPhone($phone) {
-    if (!$phone) {
-      return [];
-    }
-    return $this->db->getPersonByField("phone", $phone);
-  }
-  
-  # TODO: add $userId...
-  public function addPerson($personMaster, $personDetail = null) { # TODO: $userId !!!
-    return $this->db->addPerson($personMaster, $personDetail);
-  }
-
-  public function set($id, $personMaster, $personDetail = null, $userId = null) {
-    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
-  }
-
-  public function deletePerson($id) { # TODO: $userId !!!
-    return $this->db->deletePerson($id);
-  }
-  
-  /**
-   * get all persons list, filtered with given data sieves
-   *
-   * @param  array $data
-   * @return array
-   */
-  public function getList($data) {
-    $result = [];
-    $userId = $data && $data["user"] ? $data["user"]["id"] : null;
-    $comments = new CommentsController($this->router);
-
-    $persons = $this->db->getPersonList($data, $userId);
-$this->router->log("debug", "persons length: " . count($persons));
-    foreach ($persons as $person) {
-      // N.B: here we (could) get multiple records for each person id
-      $personId = $person["id_person"];
-      if (!isset($result[$personId])) {
-        $result[$personId] = []; // initialize this person array in results
-      } else { # TODO: should never happen, we select grouping by id_person...
-        throw new Exception("Assertion failed: getList(): (isset(\$result[\$personId]), personId: $personId, " . any2string($result[$personId])); # TODO: JUST TO DEBUG!
-      }
-
-/*
-      // show a null phone
-      if ($person["phone"] === "0") { # TODO: remove this statement, and store 'null' for empty phones, not '0'...
-        $person["phone"] = null;
-      }
-*/
-      
-      // store each person by it's person id ("id" field is relative to details table)
-      $result[$personId] = $person;
-/*
-      // fields with only "master" table values
-      foreach (
-        [
-          "id_person",
-          "key",
-          "source_key",
-          "new",
-          "timestamp_creation",
-          "timestamp_last_sync",
-        ] as $field
-      ) {
-        $result[$personId][$field] = $person[$field];
-      }
-
-      // fields with only "detail" table values (they can be multiple)
-      foreach (
-        [
-          "name",
-          "phone",
-          "nationality",
-          "vote",
-          "age",
-          "thruthful",
-        ] as $field
-      ) {
-        if (isset($person[$field])) { // merge master and detail fields in result
-          if (!isset($result[$personId][$field])) {
-            $result[$personId][$field] = $person[$field];
-          } else {
-            $result[$personId][$field] .= ", " . $person[$field];
-          }
-          #$this->router->log("debug", "field: <$field> ");
-          #$this->router->log("debug", "field: result[$personId][$field] = " . $person[$field]);
-        }
-      }
-      #$this->router->log("debug", "result: " . var_export($result, true));
-*/
-      // fields "calculated"
-      //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
-      $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
-      $result[$personId]["comments_count"] = $comments->countByPhone($person["phone"]);
-      $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId);
-    }
-#$this->router->log("debug", "getList() - result: " . var_export($result, true));
-
-/*
-    # uniquify persons
-    $this->personsUniquify($result);
-*/
-    return $result;
-  }
-
-/*
-  / **
-   * uniquify all persons
-   *
-   * @param reference to array of array   $persons           the persons array, by reference
-   * @result boolean                      true               success (the two elements have been merged)
-   *                                      exception thrown   some error occurred
-   * /
-  private function personsUniquify(&$persons) {
-    $userId = 2; # TODO: get logged user id (from "authdata"?) ...
-
-    // check uniqcodes table, to possibly merge persons with more than one source
-    $uniqcodes = $this->db->getPersonsUniqcodes($userId);
-      / *
-        $uniqcodes = [
-          [
-            'id' => '1',
-            'id_user' => '1',
-            'id_person_1' => '1',
-            'id_person_2' => '2',
-                'same' => '1',
-          ],
-          [
-            'id' => '2',
-            'id_user' => '1',
-            'id_person_1' => '7',
-            'id_person_2' => '123',
-            'same' => '1',
-          ],
-          ...
-        ]
-      * /
-    if (is_array($uniqcodes)) {
-      foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
-        foreach ($persons as $personId => $person) { // scan all persons in result
-          if ($personId == $uniqcode["id_person_1"]) {
-            #$this->mergeList($persons, $uniqcode["id_person_1"], $uniqcode["id_person_2"]);
-            $persons[$uniqcode["id_person_1"], $uniqcode["id_person_2"]);
-          }
-        }
-      }
-    }
-
-    return true;
-  }
-*/
-
-/*
-  / **
-   * merge two persons
-   *
-   * @param reference to array of array   $persons           the persons array, by reference
-   * @result boolean                      true               success (the two elements have been merged)
-   *                                      exception thrown   some error occurred
-   * /
-  private function mergeList(&$persons, $id1, $id2) {
-    #$sep = "\x01";
-    $sep = ",";
-    $fields = [ "key", "name", "sex", "zone", "address", "description", "notes", "phone", "nationality", "age", "vote", "showcase", "thruthful", "new" ];
-    foreach ($fields as $field) {
-      # TODO: analyze each field, and verify that consumers will always be satisfied, after the merge...
-      switch ($field) {
-        case "key":
-          #$persons[$id1][$field] .= ($sep . $persons[$id2][$field]);
-          break;
-        case "phone":
-          $persons[$id1][$field] .= ($sep . $persons[$id2][$field]);
-          break;
-        default:
-$this->router->log("debug", "PERSON $id1 DATA: " . any2string($persons[$id1]));
-$this->router->log("debug", " * merging keys - field: " . $field);
-          if (isset($persons[$id1][$field])) {
-            if (isset($persons[$id2][$field])) {
-              $persons[$id1][$field] .= ($sep . $persons[$id2][$field]); // both of $id1 and $id2 persons field set
-            } else {
-              ; // only $id1 person field set
-            }
-          } else {
-            if (isset($persons[$id2][$field])) {
-              $persons[$id1][$field] = $persons[$id2][$field]; // only $id2 person field set
-            } else {
-              ; // none of $id1 and $id2 persons field set
-            }            
-          }
-          break;
-      }
-    }
-    unset($persons[$id2]);
-    return true;
-  }
-*/
-
-  public function photoGetOccurrences($id, $imageUrl) {
-    $person = $this->db->get("person", $id);
-    $personDomain = $person["url"];
-
-    $googleSearch = new GoogleSearch();
-    $numPages = 3;
-
-    $response = [];
-    $response["bestGuess"] = null;
-    $response["searchResults"] = [];
-
-    if ($results = $googleSearch->searchImage($imageUrl, $numPages)) {
-      if ($results["best_guess"]) {
-        $response["bestGuess"] = $results["best_guess"];
-      }
-      if ($results["search_results"]) {
-        $response["searchResults"] = [];
-        foreach ($results["search_results"] as $result) {
-          if (parse_url($result["href"])["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
-            $response["searchResults"][] = $result;
-          }
-        }
-      } else { // no occurrences found
-      }
-    }
-    unset($googleSearch);
-    return $response;
-  }
-
-  public function photoGetCardDeck($imageUrls) {
-    $photo = new Photo([ "url" => null ]); # TODO: change classto support null url instantiation...
-    if (($cardDeck = $photo->photoGetCardDeck($imageUrls)) === false) {
-      # TODO: return default card deck, if can't build one
-      $this->router->log("debug", " can't create photo card deck, returning default card deck...");
-      #$cardDeck = file_get_contents("../app/images/referral-sources/card-deck-default.png"); # TODO: ...
-throw new Exception("can't create photo card deck"); # TODO: JUST TO DEBUG!
-    }
-    unset($photo);
-    return $cardDeck;
-  }
-
-/*
-  public function getUniqIds($id) {
-    if (($uniqIds = $this->db->getUniqIds($id))) {
-$this->router->log("debug", "+++ getUniqIds: " . any2String($uniqIds));
-      return $uniqIds;
-    } else {
-$this->router->log("debug", "+++ getUniqIds: EMPTY!!!");
-      return [];
-    }
-  }
-*/
-
-  private function cleanName($value) {
-    $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
-    $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
-    $value = preg_replace("/^\s+/", "", $value); // ignore leading blanks
-    $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
-    #$value = strtoupper($value); // all upper case
-    $value = ucfirst(strtolower($value)); // only initials upper case
-    return $value;
-  }
-
-  private function normalizePhone($phone, $sourceKey) {
-    $source = $this->sourcesDefinitions[$sourceKey];
-    if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
-      $phone = "";
-      $activeLabel = "0";
-    } else {
-      if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
-        $phone = "";
-        $activeLabel = "0";
-      } else {
-        $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
-        $activeLabel = "1";
-      }
-    }
-    return [ $phone, $activeLabel ];
-  }
-
-  private function normalizeNationality($nationality) {
-    # TODO: ...
-    return "it";
   }
 
 /*
@@ -1184,111 +959,6 @@ $this->router->log("debug", "photoGetAll($personId)");
   function __destruct() {
   }
 
-
-
-/*
-  # TODO: REMOVE-ME (can use sync even @OFFICE, now...)
-  # TODO: DEBUG-ONLY
-  public function test() {
-$this->router->log("debug", "test START");
-    $photosUrls[0] = [
-      "/scienzefanpage/wp-content/uploads/2013/12/samantha-cristoforetti-futura.jpg",
-      "/scienzefanpage/wp-content/uploads/2012/07/donna-italiana-spazio1-300x225.jpg",
-    ];
-    $personMaster[0] = [];
-    $personMaster[0]["key"] = "linkedin-123456";
-    $personMaster[0]["source_key"] = "linkedin";
-    $personMaster[0]["url"] = "http://static.fanpage.it";
-    $personMaster[0]["timestamp_last_sync"] = 1424248678;
-    $personMaster[0]["page_sum"] = "0cc175b9c0f1b6a831c399e269772661";
-    $personMaster[0]["active"] = false;
-    $personDetail[0] = [];
-    $personDetail[0]["name"] = "Samantha";
-    $personDetail[0]["sex"] = "F";
-    $personDetail[0]["zone"] = "centro";
-    $personDetail[0]["address"] = "Via Roma, 3, Milano";
-    $personDetail[0]["description"] = "astronauta";
-    $personDetail[0]["phone"] = "3336480981";
-    $personDetail[0]["nationality"] = "it";
-    $personDetail[0]["age"] = 31;
-    $personDetail[0]["vote"] = 8;
-    $personDetail[0]["new"] = true;
-    ########################################################################################
-    $photosUrls[1] = [
-      "/wp-content/gallery/convegno/img_2484.jpg",
-      "/wp-content/gallery/convegno/img_2477.jpg",
-    ];
-    $personMaster[1] = [];
-    $personMaster[1]["key"] = "twitter-789012";
-    $personMaster[1]["source_key"] = "facebook";
-    $personMaster[1]["url"] = "http://www.newshd.net";
-    $personMaster[1]["timestamp_last_sync"] = 1424248678;
-    $personMaster[1]["page_sum"] = "0cc175b9c0f1b6a831c399e269772662";
-    $personMaster[1]["active"] = true;
-    $personDetail[1] = [];
-    $personDetail[1]["name"] = "Elena";
-    $personDetail[1]["sex"] = "F";
-    $personDetail[1]["zone"] = "centro";
-    $personDetail[1]["address"] = "Via Garibaldi 12, Roma";
-    $personDetail[1]["description"] = "scienziata";
-    $personDetail[1]["phone"] = "3336480982";
-    $personDetail[1]["nationality"] = "it";
-    $personDetail[1]["age"] = 42;
-    $personDetail[1]["vote"] = 9;
-    $personDetail[1]["new"] = false;
-    ########################################################################################
-
-    // add person
-    for ($i = 0; $i < sizeof($personMaster); $i++) {
-      $key = $personMaster[$i]["key"];
-      if (($p = $this->db->getByField("person", "key", $key))) { # old key, update it
-        $id = $p[0]["id"];
-        $this->router->log("debug", " °°° updating person: $key °°°");
-        $this->set($id, $personMaster[$i], $personDetail[$i]);
-      } else { # new key, insert it
-        $this->router->log("debug", " ^^^ inserting person: $key ^^^");
-        $person["timestamp_creation"] = 1423000000;
-        $id = $this->add($personMaster[$i], $personDetail[$i]);
-      }
-  
-      // add photos
-      foreach ($photosUrls[$i] as $photoUrl) {
-        $this->photoAdd($id, $personMaster[$i]["url"] . $photoUrl);
-      }
-    }
-
-$this->router->log("debug", "test OK");
-    return true;
-  }
-
-  # TODO: DEBUG-ONLY
-  public function testuniqcode() {
-    $userId = 2; # TODO...
-    $p1 = 1;
-    $p2 = 2;
-
-    $this->router->log("debug", "getPersonsUniqcode($p1, $p2, $userId)");
-    $result = $this->db->getPersonsUniqcode($p1, $p2, $userId);
-    $this->router->log("debug", " Xresult: " . var_export($result, true));
-
-    $this->router->log("debug", "setPersonsUniqcode($p1, $p2, true)");
-    $result = $this->db->setPersonsUniqcode($p1, $p2, true, $userId);
-    $this->router->log("debug", " Xresult: " . var_export($result, true));
-
-    $this->router->log("debug", "getPersonsUniqcode($p1, $p2, $userId)");
-    $result = $this->db->getPersonsUniqcode($p1, $p2, $userId);
-    $this->router->log("debug", " Xresult: " . var_export($result, true));
-
-    $this->router->log("debug", "setPersonsUniqcode($p1, $p2, false)");
-    $result = $this->db->setPersonsUniqcode($p1, $p2, false, $userId);
-    $this->router->log("debug", " Xresult: " . var_export($result, true));
-
-    $this->router->log("debug", "getPersonsUniqcode($p1, $p2, $userId)");
-    $result = $this->db->getPersonsUniqcode($p1, $p2, $userId);
-    $this->router->log("debug", " Xresult: " . var_export($result, true));
-    return true;
-  }
-*/
 }
 
 ?>

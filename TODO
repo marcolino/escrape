@@ -20,12 +20,14 @@ TODO 1.0:
  - before google search, check image has already thruthful flag...
  - test un-thruthful images rendering in views...
  - move style="..." from all views to style.css...
+ - remove camel_case comments (set in .jshintrc)
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
  - a better 'resize' directive strategy to calculate it's height based on previous and following elements heights
  - options: country / city / category should be considered when sync'ing persons
+ - rename all SQL fields from underscore_case to camelCase, and reset camelcase to true in .jshintrc
 
 TODO 2.0:
  - I18n (?) (see:

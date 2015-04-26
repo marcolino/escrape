@@ -195,7 +195,7 @@
             <div class="carousel-toolbar">
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
-                  <button ng-click="photoGetOccurrences(person.id, '{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
+                  <button ng-click="getPhotoOccurrences(person.id, '{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
                 </div>
               </div>
             </div>
@@ -322,7 +322,7 @@
                     <div class="col-xs-12">
                       <div class="dropdown">
                         <div class="input-group" data-toggle="dropdown">
-                          <span class="input-group-addon" ng-attr-title="{{isAnyPersonInCommentActive(comment.id) ? 'This comment is confirmed to be referring to this person' : 'This comment is not confirmed to be referring to this person: select the right person, please'}}"><i class="glyphicon glyphicon-user" ng-class="{'text-success': isAnyPersonInCommentActive(comment.id)}"></i></span>
+                          <span class="input-group-addon" ng-attr-title="{{isAnyPersonInCommentActive(comment.id) ? 'This comment is confirmed to be referring to this person' : 'This comment is not confirmed to be referring to this person:\nselect the right person, please'}}"><i class="glyphicon glyphicon-user" ng-class="{'text-success': isAnyPersonInCommentActive(comment.id)}"></i></span>
                       <!--<input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />-->
 <!--<pre>{{personsPerComment}}</pre>-->
                           <input class="form-control" type="text" ng-value="getPersonInCommentActive().name" />
