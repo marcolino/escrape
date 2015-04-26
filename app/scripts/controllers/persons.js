@@ -144,8 +144,8 @@ console.log('sortObjectToList():', object, criteria);
  *        "name" => $person["name"]
  *      ];
  */
-        $scope.personsPerComment = {};
-        //$scope.personsPerComment = [];
+        //$scope.personsPerComment = {};
+        $scope.personsPerComment = [];
 
         Comments.getCommentsByPhone($scope.person.phone).then(function(comments) {
           console.log('comments for ' + $scope.person.phone + ':', comments);
@@ -155,14 +155,14 @@ console.log('sortObjectToList():', object, criteria);
            * if they lack "id_person" field, they could be relative to another person
            * with the same phone.
            */
+          /*
           var len = $scope.person.comments.length;
           //console.error('$scope.person.comments', $scope.person.comments);
-          /*
           for (var i = 0; i < len; i++) {
             $scope.getPersonsPerComment($scope.person.comments[i].id);
           }
           */
-          console.log("------------------------------");
+          console.log('------------------------------');
           var len = $scope.person.comments.length;
 //console.log('phone of comment', i, $scope.person.phone);
           for (var personId in $scope.persons) {
@@ -171,80 +171,71 @@ console.log('sortObjectToList():', object, criteria);
               //console.log(personId);
               var active = false;
               for (var i = 0; i < len; i++) { // list all comments (possibly) linked to this person (effectively, to her phone)
-                if ($scope.person.comments[i]['id_person']) { // this comment has a specific id_person set: set that person as active
-                  if (personId === $scope.person.comments[i]['id_person']) {
+                /* jshint camelcase: false */
+                if ($scope.person.comments[i].id_person) { // this comment has a specific id_person set: set that person as active
+                  if (personId === $scope.person.comments[i].id_person) {
                     active = true;
                     break;
                   }
                 }
+                /* jshint camelcase: true */
               }
               // TODO: $scope.personsPerComment should be indexed by commentId, before personId !!! ...
-              $scope.personsPerComment[personId] = { 'name': $scope.persons[personId].name, 'active': active };
+              $scope.personsPerComment.push({ id: personId, name: $scope.persons[personId].name, active: active });
             }
           }
           console.log($scope.personsPerComment);
-          console.log("------------------------------");
+          console.log('------------------------------');
         });
       }
     });
   }
+
+
   // public methods
+  $scope.setPersonInCommentActive = function(commentId, personId, active) {
+    var len, i;
 
-/*
-  $scope.getPersonsPerComment = function(commentId) {
-    Persons.getPersonsPerComment(commentId).then(
-      function(persons) {
-        $scope.personsPerComment[commentId] = persons;
-console.log("=========================");
-console.log($scope.personsPerComment);
-console.log($scope.personsPerComment[2]);
-console.log("=========================");
-      },
-      function(errorMessage) {
-        console.warn('can\'t get persons per comment: ' + errorMessage);
-      }
-    );
-  };
-*/
-
-  $scope.setPersonInCommentActive = function(commentId, active) {
-    if (commentId in $scope.personsPerComment) {
-      $scope.personsPerComment[commentId].active = active;
-    }
-  };
-
-  $scope.getPersonInCommentActive = function(commentId) {
-//console.log('getPersonInCommentActive(), $scope.personsPerComment:', $scope.personsPerComment);
-//console.log('getPersonInCommentActive(), commentId:', commentId);
-    if (commentId in $scope.personsPerComment) {
-//console.log('getPersonInCommentActive(), !!!!!!!!!! $scope.personsPerComment[commentId]:', $scope.personsPerComment[commentId]);
-//console.log('getPersonInCommentActive(), *********** commentId:', commentId);
-      if ($scope.personsPerComment[commentId].active) {
-//console.log('getPersonInCommentActive(), @@@@@@@@@@@ active:', commentId);
-        return $scope.personsPerComment[commentId];
+    // list all comments (possibly) linked to this person (effectively, to her phone)
+    len = $scope.personsPerComment.length;
+    for (i = 0; i < len; i++) {
+      var person = $scope.personsPerComment[i];
+      if (person.id === personId) {
+        $scope.personsPerComment[i].active = active;
+        break;
       }
     }
-    return null;
-  };
 
-  $scope.isPersonInCommentActive = function(commentId, personId) {
-console.log('isPersonInCommentActive(), commentId:', commentId);
-console.dir($scope.personsPerComment);
-    if (commentId in $scope.personsPerComment) {
-      if ($scope.personsPerComment[commentId].id_person === personId) {
-        return $scope.personsPerComment[commentId].active;
+    // set given person id to id_person field of this comment
+    len = $scope.person.comments.length;
+    for (i = 0; i < len; i++) {
+      if ($scope.person.comments[i].id === commentId) {
+        /* jshint camelcase: false */
+        $scope.person.comments[i].id_person = personId;
+        /* jshint camelcase: true */
       }
     }
-    return false;
+  };
+
+  $scope.getPersonInCommentActive = function() {
+    var len = $scope.personsPerComment.length;
+    for (var i = 0; i < len; i++) { // list all comments (possibly) linked to this person (effectively, to her phone)
+      var person = $scope.personsPerComment[i];
+      if (person.active) {
+        return person;
+      }
+    }
+    return $scope.personsPerComment[0]; // no active person found, return the first one
   };
 
   $scope.isAnyPersonInCommentActive = function(commentId) {
-console.log('isAnyPersonInCommentActive(), $scope.personsPerComment:', $scope.personsPerComment['2']);
-console.log('isAnyPersonInCommentActive(), commentId:', commentId);
-    //var len = $scope.personsPerComment[commentId].length;
-    if (commentId in $scope.personsPerComment) {
-      if ($scope.personsPerComment[commentId].active) {
-        return true;
+    // search current person for given comment id and check if any active person in comment is present
+    var len = $scope.person.comments.length;
+    for (var i = 0; i < len; i++) {
+      if ($scope.person.comments[i].id === commentId) {
+        /* jshint camelcase: false */
+        return $scope.person.comments[i].id_person !== null;
+        /* jshint camelcase: true */
       }
     }
     return false;
@@ -600,17 +591,64 @@ console.log('personDetail:', personDetail);
     $scope.savePerson($scope.person);
   };
 
-  $scope.rating = function(rating) {
-    if (rating === 0) { // noop
+  $scope.rating = function(commentId, ratingDelta) {
+    var commentNum = null;
+    var len = $scope.personsPerComment.length;
+    for (var i = 0; i < len; i++) { // list all comments (possibly) linked to this person (effectively, to her phone)
+      if ($scope.person.comments[i].id === commentId) {
+        commentNum = i;
+        break;
+      }
+    }
+    if (commentNum === null) { // comment with given id not found on this person, shouldn't happen
+      console.error('can\'t find a comment with id ' + commentId + ' for this person');
       return;
     }
-    if (rating > 0) {
-      $scope.person.rating = Math.min(cfg.person.rating.max, parseInt($scope.person.rating) + parseInt(rating));
-    } else {
-      $scope.person.rating = Math.max(cfg.person.rating.min, parseInt($scope.person.rating) + parseInt(rating));
+
+    /* jshint camelcase: false */
+    if (ratingDelta === 0) { // noop
+      return;
     }
-    //$scope.persons[$scope.personId].rating = $scope.person.rating; // TODO: DO WE NEED THIS INSTRUCTION?
+    if ($scope.person.comments[commentNum].content_rating === null) {
+      $scope.person.comments[commentNum].content_rating = 0;
+    }
+console.log(' === rating:', $scope.person.comments[commentNum].content_rating);
+console.log(' === ratingDelta:', ratingDelta);
+    if (ratingDelta > 0) {
+      $scope.person.comments[commentNum].content_rating = Math.min(cfg.person.rating.max, parseInt($scope.person.comments[commentNum].content_rating) + parseInt(ratingDelta));
+    } else {
+      $scope.person.comments[commentNum].content_rating = Math.max(cfg.person.rating.min, parseInt($scope.person.comments[commentNum].content_rating) + parseInt(ratingDelta));
+    }
+console.log(' === rating AFTER:', $scope.person.comments[commentNum].content_rating);
+    /* jshint camelcase: true */
+
+    // calculate person's rating from all her comments ratings
+    $scope.person.rating = $scope.personRatingFromCommentsRatings();
+
+    // TODO: call saveComment() !!!
+    
+    // call savePerson() now to save person's comments
     $scope.savePerson($scope.person);
+  };
+
+  $scope.personRatingFromCommentsRatings = function() {
+    // TODO: refine method to calculate person's rating from all her comments ratings
+    var ratings = 0;
+    var count = 0;
+    var len = $scope.person.comments.length;
+    for (var i = 0; i < len; i++) {
+      /* jshint camelcase: false */
+      if (parseInt($scope.person.comments[i].content_rating) > 0) {
+        ratings += parseInt($scope.person.comments[i].content_rating);
+        count++;
+      }
+      /* jshint camelcase: true */
+    }
+    if (count > 0) {
+      return parseInt(ratings / count);
+    } else {
+      return null; // no ratings set for any comment for this person
+    }
   };
 
   $scope.geocode = function(address, region) {

@@ -19,7 +19,7 @@
 
     <!-- main pill -->
     <div class="tab-content" ng-show="tabSelected === 'main' && !tabs['main'].hidden">
-      <comments_average_rating class="form-horizontal" style="margin-top:5px">
+      <form class="form-horizontal" style="margin-top:5px">
         <div class="form-group">
           <div class="col-xs-12">
             <div class="slider-horizontal">
@@ -116,7 +116,7 @@
           </div>
           <div class="col-xs-3 col-sm-5 col-md-6 col-lg-6">
             <div class="input-group">
-              <span class="input-group-addon" title="Date of last sync"><span class="glyphicon glyphicon-calendar"></span></a></span>
+              <span class="input-group-addon" title="Date of last sync"><span class="glyphicon glyphicon-calendar"></span></span>
               <input type="text" class="form-control" ng-value="person.timestamp_last_sync * 1000 | date:'yyyy-MM-dd'" " HH:mm:ss'" readonly placeholder="Last time sync'ed">
             </div>
           </div>
@@ -132,19 +132,17 @@
         </div>
  
         <div class="form-group" style="vertical-align:bottom">
-<!--
           <div class="col-xs-4 col-sm-2 col-lg-1">
             <button class="btn btn-primary" title="Save changes to this person's data" ng-click="savePerson(person)"><i class="glyphicon glyphicon-floppy-disk">&nbsp;</i>Save</button>
           </div>
--->
           <span ng-if="person.uniq_prev !== null">
-            <div class="col-xs-4 col-sm-2 col-lg-1">
+            <div class="col-xs-4 col-sm-2 col-lg-1 pull-right">
               <button class="btn btn-info" title="Previous source for this person" ng-click="open(person.uniq_prev)"><i class="glyphicon glyphicon-step-backward">&nbsp;</i>Previous</button>
             </div>
           </span>
           <span ng-if="person.uniq_next !== null">
-            <div class="col-xs-4 col-sm-2 col-lg-1">
-              <button class="btn btn-info" title="Next source for this person" ng-click="open(person.uniq_next)"><i class="glyphicon glyphicon-step-forward">&nbsp;</i>Next</a>
+            <div class="col-xs-4 col-sm-2 col-lg-1 pull-right">
+              <button class="btn btn-info" title="Next source for this person" ng-click="open(person.uniq_next)"><i class="glyphicon glyphicon-step-forward">&nbsp;</i>Next</button>
             </div>
           </span>
         </div>
@@ -266,7 +264,7 @@
 <hr>
       <div class="comments">
         <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">
-<pre>&emsp; comment #: {{n}}, comment: {{comment}}</pre>
+<!--<pre>&emsp; comment #: {{n}}, comment: {{comment}}</pre>-->
           <div class="form-group">
             <div class="col-xs-12">
               <div class="input-group">
@@ -324,14 +322,14 @@
                     <div class="col-xs-12">
                       <div class="dropdown">
                         <div class="input-group" data-toggle="dropdown">
-                          <span class="input-group-addon" title="Person"><i class="glyphicon glyphicon-user" ng-class="{'text-success': isAnyPersonInCommentActive(comment.id)}"></i></span>
+                          <span class="input-group-addon" ng-attr-title="{{isAnyPersonInCommentActive(comment.id) ? 'This comment is confirmed to be referring to this person' : 'This comment is not confirmed to be referring to this person: select the right person, please'}}"><i class="glyphicon glyphicon-user" ng-class="{'text-success': isAnyPersonInCommentActive(comment.id)}"></i></span>
                       <!--<input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />-->
 <!--<pre>{{personsPerComment}}</pre>-->
-                          <input class="form-control" type="text" ng-value="getPersonInCommentActive(comment.id).name" />
+                          <input class="form-control" type="text" ng-value="getPersonInCommentActive().name" />
                         </div>
                         <ul class="dropdown-menu scrollable-menu" role="menu">
-                          <li ng-repeat="(idPersonPerComment, personPerComment) in personsPerComment">
-                            <a ng-click="setPersonInComment(idPersonPerComment)"><i class="glyphicon" ng-class="{'glyphicon-ok text-success': personPerComment.active, 'glyphicon-none': !personPerComment.active}">&nbsp;</i>{{personPerComment.name}}</a>
+                          <li ng-repeat="p in personsPerComment">
+                            <a ng-click="setPersonInCommentActive(comment.id, p.id, true)"><i class="glyphicon" ng-class="{'glyphicon-ok text-success': p.active, 'glyphicon-none': !p.active}">&nbsp;</i>{{p.name}}</a>
                           </li>
                         </ul>
                       </div>
@@ -340,14 +338,16 @@
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
                     <div class="col-xs-12">
                       <div class="input-group">
-                        <span class="input-group-addon btn btn-success" ng-click="rating(1)"><i class="glyphicon glyphicon-thumbs-up"></i></span>
-                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="person.rating" placeholder="Rating">
-                        <span class="input-group-addon btn btn-danger" ng-click="rating(-1)"><i class="glyphicon glyphicon-thumbs-down"></i></span>
+                        <span class="input-group-addon btn btn-success" ng-click="rating(comment.id, 1)" title="increase positivity rating of this comment"><i class="glyphicon glyphicon-thumbs-up"></i></span>
+                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="comment.content_rating" placeholder="Rating">
+                        <span class="input-group-addon btn btn-danger" ng-click="rating(comment.id, -1)" title="decrease positivity rating of this comment"><i class="glyphicon glyphicon-thumbs-down"></i></span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="form-control" style="min-height: 180px; overflow-y:auto;" ng-bind-html="comment.content"></div>
+                <!--<div class="form-control" style="min-height: 180px; overflow-y:auto;" ng-bind-html="comment.content"></div>-->
+                <textarea class="form-control" NOrows="3" ng-model="comment.content" style="min-height: 180px; overflow-y:auto;">
+                </textarea>
               </div>
             </div>
           </div>
