@@ -21,6 +21,7 @@ TODO 1.0:
  - test un-thruthful images rendering in views...
  - move style="..." from all views to style.css...
  - remove camel_case comments (set in .jshintrc)
+ - id_user_max: do we need it?
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens

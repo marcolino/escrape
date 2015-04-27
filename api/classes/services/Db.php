@@ -34,7 +34,7 @@ class DB extends PDO {
         #, [ PDO::ATTR_PERSISTENT => TRUE ] # TODO: on update this causes a "General error"...
       );
       $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      #$new = true; # FORCE CREATION OF TABLES EVEN IF DB EXISTS (TO BE USED ONCE, IF NEEDED!)
+      ###$new = true; # FORCE CREATION OF TABLES EVEN IF DB EXISTS (TO BE USED ONCE, IF NEEDED!)
       if ($new) { // db doesn't exist, create TABLEs...
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
@@ -152,7 +152,7 @@ class DB extends PDO {
           id_comment INTEGER,
           id_user INTEGER,
           id_person INTEGER,
-          content_rating INTEGER,
+          content_rating INTEGER
          );
         "
       );
@@ -228,7 +228,6 @@ class DB extends PDO {
       return $result;
     } catch (PDOException $e) {
       #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
-#throw new Exception("sql: [$sql]");
       throw new Exception("can't get from $tableMaster, $tableDetail with filters: " . $e->getMessage()); # TODO: USE THIS METHOD EVERYWHERE!!!
     }
   }
@@ -571,7 +570,7 @@ $this->router->log("debug", "  SAME VALUE IS *NOT* ALREADY [$same], UPDATING..."
             SET same = :same
             WHERE
              (id = :id) AND
-             (user_id = :id_user)
+             (id_user = :id_user)
           ";
           $statement = $this->db->prepare($sql);
           $statement->bindParam(":same", $same, PDO::PARAM_INT);

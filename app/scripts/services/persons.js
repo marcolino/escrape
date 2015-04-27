@@ -37,7 +37,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
         url: apiUri + 'get',
         data: {
           'sieves': sieves,
-          'user_id': userId,
+          'id_user': userId,
         },
       }).then(handleSuccess, handleError);
     },
@@ -57,7 +57,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
           'id': id,
           'person_master': personMaster,
           'person_detail': personDetail,
-          'user_id': userId,
+          'id_user': userId,
         },
       }).then(handleSuccess, handleError);
     },

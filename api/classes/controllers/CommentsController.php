@@ -273,14 +273,14 @@ class CommentsController {
     return $this->db->get("comment", $id);
   }
   
-  public function getByPhone($phone) {
+  public function getByPhone($phone, $userId) {
     if (!$phone) {
 $this->router->log("debug", "getByPhone() - no phone!");
       //throw new Exception("can't get comments by phone: no phone specified");
       return [];
     }
 $this->router->log("debug", "getByPhone() - phone: [$phone]");
-    return $this->db->getByField("comment", "phone", $phone);
+    return $this->db->getCommentByField("phone", $phone, $userId);
   }
   
   public function countByPhone($phone) {
@@ -317,6 +317,8 @@ $this->router->log("debug", "getByPhone() - phone: [$phone]");
   }
 
   public function set($id, $commentMaster = null, $commentDetail = null, $userId = null) {
+$this->router->log("debug", "CommentsController::set: " . any2string([$id, $commentMaster, $commentDetail, $userId]));
+    # TODO: we have a "id_user" field both in $commentDetail and in $userId... Do we nee both of them? Nuuu...
     return $this->db->setComment($id, $commentMaster, $commentDetail, $userId);
   }
 

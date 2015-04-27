@@ -259,6 +259,7 @@
         </div>
       </div>
 
+<!--<pre>&emsp; persons:{{persons}}</pre>-->
 <pre>&emsp; person.comments:{{person.comments}}</pre>
 <pre>&emsp; personsPerComment:{{personsPerComment}}</pre>
 <hr>
@@ -322,6 +323,7 @@
                     <div class="col-xs-12">
                       <div class="dropdown">
                         <div class="input-group" data-toggle="dropdown">
+                          <!-- TODO: isAnyPersonInCommentActive() should be called dynamically (currently it doesn't refresh when flipPersonInCommentActive() is called...) -->
                           <span class="input-group-addon" ng-attr-title="{{isAnyPersonInCommentActive(comment.id) ? 'This comment is confirmed to be referring to this person' : 'This comment is not confirmed to be referring to this person:\nselect the right person, please'}}"><i class="glyphicon glyphicon-user" ng-class="{'text-success': isAnyPersonInCommentActive(comment.id)}"></i></span>
                       <!--<input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />-->
 <!--<pre>{{personsPerComment}}</pre>-->
@@ -329,7 +331,7 @@
                         </div>
                         <ul class="dropdown-menu scrollable-menu" role="menu">
                           <li ng-repeat="p in personsPerComment">
-                            <a ng-click="setPersonInCommentActive(comment.id, p.id, true)"><i class="glyphicon" ng-class="{'glyphicon-ok text-success': p.active, 'glyphicon-none': !p.active}">&nbsp;</i>{{p.name}}</a>
+                            <a ng-click="flipPersonInCommentActive(comment.id, p.id)"><i class="glyphicon" ng-class="{'glyphicon-ok text-success': p.active, 'glyphicon-none': !p.active}">&nbsp;</i>{{p.name}}</a>
                           </li>
                         </ul>
                       </div>

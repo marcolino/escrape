@@ -51,15 +51,15 @@ app.service('Comments', function($http, $q, cfg, notify) {
           'id': id,
           'comment_master': commentMaster,
           'comment_detail': commentDetail,
-          'user_id': userId,
+          'id_user': userId,
         },
       }).then(handleSuccess, handleError);
     },
 
-    getCommentsByPhone: function (phone) {
+    getCommentsByPhone: function (phone, userId) {
       return $http({
         method: 'GET',
-        url: apiUri + 'getByPhone' + '/' + phone,
+        url: apiUri + 'getByPhone' + '/' + phone + '/' + userId,
       }).then(handleSuccess, handleError);
     },
 
@@ -70,7 +70,7 @@ app.service('Comments', function($http, $q, cfg, notify) {
         data: {
           'comment_master': commentMaster,
           'comment_detail': commentDetail,
-          'user_id': userId,
+          'id_user': userId,
         },
       }).then(handleSuccess, handleError);
     },
@@ -81,7 +81,7 @@ app.service('Comments', function($http, $q, cfg, notify) {
         url: apiUri + 'delete',
         data: {
           'id': id,
-          'user_id': userId,
+          'id_userd': userId,
         },
       }).then(handleSuccess, handleError);
     }

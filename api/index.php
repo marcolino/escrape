@@ -44,7 +44,7 @@ class Router {
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($persons->getAll($data["sieves"], $data["user_id"]));
+          $this->success($persons->getAll($data["sieves"], $data["id_user"]));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -61,7 +61,7 @@ class Router {
         try {
           $persons = new PersonsController($this);
           $data = $this->app->request()->params("data");
-          $this->success($persons->add($data["person_master"], $data["person_detail"], $data["user_id"]));
+          $this->success($persons->add($data["person_master"], $data["person_detail"], $data["id_user"]));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -70,7 +70,7 @@ class Router {
         try {
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($persons->set($data["id"], $data["person_master"], $data["person_detail"], $data["user_id"]));
+          $this->success($persons->set($data["id"], $data["person_master"], $data["person_detail"], $data["id_user"]));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -82,7 +82,7 @@ class Router {
           #$data = json_decode($this->app->request()->getBody());
           $id = $this->app->request()->params("id");
           $data = $this->app->request()->params("data");
-          $this->success($persons->set($id, [], $data["person_detail"], $data["user_id"]));
+          $this->success($persons->set($id, [], $data["person_detail"], $data["id_user"]));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -178,7 +178,7 @@ class Router {
         try {
           $comments = new CommentsController($this);
           $data = $this->app->request()->params("data");
-          $this->success($comments->add($data["comment"], $data["user_id"]));
+          $this->success($comments->add($data["comment"], $data["id_user"]));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -187,7 +187,7 @@ class Router {
         try {
           $persons = new CommentsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
-          $this->success($comments->set($data["id"], [], $data["comment_detail"], $data["user_id"]));
+          $this->success($comments->set($data["id"], [], $data["comment_detail"], $data["id_user"]));
         } catch (Exception $e) {
           $this->error($e);
         }
@@ -205,10 +205,10 @@ class Router {
         }
       });
       */
-      $this->app->get("/getByPhone/:phone", function($phone) {
+      $this->app->get("/getByPhone/:phone/:userId", function($phone, $userId) {
         try {
           $comments = new CommentsController($this);
-          $this->success($comments->getByPhone($phone));
+          $this->success($comments->getByPhone($phone, $userId));
         } catch (Exception $e) {
           $this->error($e);
         }
