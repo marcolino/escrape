@@ -7,8 +7,6 @@
  *
  */
 
-# TODO: use Utilities getUrlContents WITH charset !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 require_once(__DIR__ . "/../../lib/simple_html_dom.php");
 require_once(__DIR__ . "/../../classes/services/Utilities.php");
 
@@ -31,7 +29,7 @@ class CommentsController {
     $this->router->log("debug", "comments -> sync()");
 
     $persons = $this->db->getPersons();
-    $timestampStart = date();
+    $timestampStart = time();
     $phones = [];
     foreach ($persons as $person) {
       $phone = $person["phone"];
@@ -74,7 +72,7 @@ class CommentsController {
       }
 */
       $browser = &new SimpleBrowser();
-      $useProxy(Network::TOR_HOST . ":" . Network::TOR_PORT, null, null);
+      #$browser->useProxy(Network::TOR_HOST . ":" . Network::TOR_PORT, null, null);
       $browser->get($cd["url-login"]);
       $browser->setField($cd["username-field-name"], $cd["username"]);
       $browser->setField($cd["password-field-name"], $cd["password"]);
@@ -95,10 +93,10 @@ class CommentsController {
       }
       
       $searchResultsUrls = [];
-      if (preg_match_all($commentDefinition["patterns"]["comment-link"], $page, $matches)) {
+      if (preg_match_all($cd["patterns"]["comment-link"], $page, $matches)) {
         $searchResults = $matches[1];
         foreach ($searchResults as $url) {
-          if (preg_match($commentDefinition["patterns"]["comment-link-tail"], $url, $matches)) {
+          if (preg_match($cd["patterns"]["comment-link-tail"], $url, $matches)) {
             $searchResultsUrls[] = $matches[1];
           }
         }
@@ -141,7 +139,7 @@ class CommentsController {
         $url .= "?nowap"; # on wap version we don't get some data (author? date?)
         #$comment_page = $this->getUrlContents($url);
         #if ($comment_page === FALSE) {
-        if (($comment_page = $this->getUrlContents($url)) === FALSE) {
+        if (($comment_page = $this->network->getUrlContents($url)) === FALSE) {
           $this->router->log("error", "can't get url [$url] contents on comments definition provider [$commentDefinitionId]");
           continue;
         }
@@ -217,7 +215,7 @@ class CommentsController {
             $timestamp = date_to_timestamp($date);
             $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
             $key = $timestamp . "-" . md5("topic:[$topic], author:[$author], content:[$content]"); # a sortable, univoque index
-            $commentData["phoneMd5"] = $phoneMd5;
+            $commentData["phone"] = $phone;
             $commentData["topic"] = $topic;
             $commentData["date"] = date("Y-m-d H:i:s", $timestamp);
             $commentData["timestamp"] = $timestamp;
