@@ -359,7 +359,6 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
     if (!empty($arrayMaster)) {
       try {
         $set = "";
-#throw new Exception("master sql: arrayMaster:" . var_export($arrayMaster, true));
         foreach ($arrayMaster as $key => $value) {
           $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
         }
@@ -368,13 +367,6 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
           SET $set
           WHERE id = :$groupByField
         ";
-
-/*
-throw new Exception(
-  " ### setPerson() - master sql: [$sql], " .
-  "arrayMaster: " . var_export($arrayMaster, true)
-);
-*/
         $statement = $this->db->prepare($sql);
         $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
         foreach ($arrayMaster as $key => &$value) {
@@ -391,7 +383,7 @@ throw new Exception(
     }
 
     if (!empty($arrayDetail)) {
-$this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
+      #$this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
       $set = "";
       $ins_fields = $ins_values = "";
       foreach ($arrayDetail as $key => $value) {
@@ -404,7 +396,7 @@ $this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDet
         $sql = "
           SELECT count(*) as count FROM {$tableDetail}
           WHERE
-           id_person = :$groupByField
+           $groupByField = :$groupByField
           AND
            id_user = :id_user
         ";
@@ -413,7 +405,6 @@ $this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDet
         $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
         $statement->execute();
         $result = $statement->fetch(PDO::FETCH_ASSOC);
-$this->router->log("debug", " setPerson() - check result:" . any2string($result));
         $mode = null;
         if ($result["count"] === "0") {
           $mode = "insert";
@@ -444,6 +435,7 @@ $this->router->log("debug", " setPerson() - check result:" . any2string($result)
             (:$groupByField, :id_user, $ins_values)
           ";
         }
+        #$this->router->log("debug", " setPerson() - sql:" . $sql);
         $statement = $this->db->prepare($sql);
         $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
         $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
@@ -812,7 +804,7 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
 
     if (!empty($arrayDetail)) {
-$this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
+$this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDetail));
       $set = "";
       $ins_fields = $ins_values = "";
       foreach ($arrayDetail as $key => $value) {
@@ -825,7 +817,7 @@ $this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDet
         $sql = "
           SELECT count(*) as count FROM {$tableDetail}
           WHERE
-           id_person = :$groupByField
+           $groupByField = :$groupByField
           AND
            id_user = :id_user
         ";
@@ -853,7 +845,7 @@ $this->router->log("debug", " setComment() - check result:" . any2string($result
             UPDATE {$tableDetail}
             SET $set
             WHERE
-             id_person = :$groupByField
+             $groupByField = :$groupByField
             AND
              id_user = :id_user
           ";

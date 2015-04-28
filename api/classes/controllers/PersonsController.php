@@ -431,6 +431,7 @@ function unused() { ; }
     $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
     #$value = strtoupper($value); // all upper case
     $value = ucfirst(strtolower($value)); // only initials upper case
+    # TODO: keep only first (one, two,...) words
     return $value;
   }
 

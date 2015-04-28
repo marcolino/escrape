@@ -250,6 +250,16 @@
               </button>
             </div>
           </div>
+<!-- -------------------------- -->
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <div class="person-rating">
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="rating: {{person.rating}}">
+                <span class="label label-as-badge label-danger">{{person.rating || '-'}}</span>
+              </button>
+            </div>
+          </div>
+<!-- -------------------------- -->
+
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <div class="person-is-new">
               <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is {{person.new ? '' : 'not '}}new (first seen {{firstSeen(person.id_person)}})">

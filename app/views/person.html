@@ -259,13 +259,15 @@
         </div>
       </div>
 
-<!--<pre>&emsp; persons:{{persons}}</pre>-->
+<!--
+<pre>&emsp; persons:{{persons}}</pre>
 <pre>&emsp; person.comments:{{person.comments}}</pre>
 <pre>&emsp; personsPerComment:{{personsPerComment}}</pre>
 <hr>
+-->
+
       <div class="comments">
         <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">
-<!--<pre>&emsp; comment #: {{n}}, comment: {{comment}}</pre>-->
           <div class="form-group">
             <div class="col-xs-12">
               <div class="input-group">
@@ -275,7 +277,7 @@
                       <div class="pull-right"><i>N&deg;:</i></div>
                     </div>
                     <div class="col-xs-8" style="padding-left: 5px;">
-                      <div>{{1+$index}}</div>
+                      <div>{{1+$index}} (id:{{comment.id}})</div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
@@ -323,15 +325,13 @@
                     <div class="col-xs-12">
                       <div class="dropdown">
                         <div class="input-group" data-toggle="dropdown">
-                          <!-- TODO: isAnyPersonInCommentActive() should be called dynamically (currently it doesn't refresh when flipPersonInCommentActive() is called...) -->
                           <span class="input-group-addon" ng-attr-title="{{isAnyPersonInCommentActive(comment.id) ? 'This comment is confirmed to be referring to this person' : 'This comment is not confirmed to be referring to this person:\nselect the right person, please'}}"><i class="glyphicon glyphicon-user" ng-class="{'text-success': isAnyPersonInCommentActive(comment.id)}"></i></span>
-                      <!--<input class="form-control" type="text" ng-value="persons.getPersonName(comment.id_person)" />-->
-<!--<pre>{{personsPerComment}}</pre>-->
-                          <input class="form-control" type="text" ng-value="getPersonInCommentActive().name" />
+                          <!--<pre>{{personsPerComment[comment.id]}}</pre>-->
+                          <input class="form-control" type="text" ng-value="getPersonInCommentActive(comment.id).name" />
                         </div>
                         <ul class="dropdown-menu scrollable-menu" role="menu">
-                          <li ng-repeat="p in personsPerComment">
-                            <a ng-click="flipPersonInCommentActive(comment.id, p.id)"><i class="glyphicon" ng-class="{'glyphicon-ok text-success': p.active, 'glyphicon-none': !p.active}">&nbsp;</i>{{p.name}}</a>
+                          <li ng-repeat="(personId, p) in personsPerComment[comment.id]">
+                            <a ng-click="flipPersonInCommentActive(comment.id, personId)"><i class="glyphicon" ng-class="{'glyphicon-ok text-success': p.active, 'glyphicon-none': !p.active}">&nbsp;</i>{{p.name}}</a>
                           </li>
                         </ul>
                       </div>
@@ -348,7 +348,7 @@
                   </div>
                 </div>
                 <!--<div class="form-control" style="min-height: 180px; overflow-y:auto;" ng-bind-html="comment.content"></div>-->
-                <textarea class="form-control" NOrows="3" ng-model="comment.content" style="min-height: 180px; overflow-y:auto;">
+                <textarea class="form-control" ng-model="comment.content" style="min-height: 200px; overflow-y:auto;">
                 </textarea>
               </div>
             </div>

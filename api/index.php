@@ -68,6 +68,7 @@ class Router {
       });
       $this->app->post("/set", function() {
         try {
+          $this->log("info", "index - person - set()");
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
           $this->success($persons->set($data["id"], $data["person_master"], $data["person_detail"], $data["id_user"]));
@@ -75,19 +76,6 @@ class Router {
           $this->error($e);
         }
       });
-      /*
-      $this->app->put("/set/:id", function($id) {
-        try {
-          $persons = new PersonsController($this);
-          #$data = json_decode($this->app->request()->getBody());
-          $id = $this->app->request()->params("id");
-          $data = $this->app->request()->params("data");
-          $this->success($persons->set($id, [], $data["person_detail"], $data["id_user"]));
-        } catch (Exception $e) {
-          $this->error($e);
-        }
-      });
-      */
       $this->app->get("/sync", function() {
         try {
           $persons = new PersonsController($this);
@@ -185,7 +173,7 @@ class Router {
       });
       $this->app->post("/set", function() {
         try {
-          $persons = new CommentsController($this);
+          $comments = new CommentsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
           $this->success($comments->set($data["id"], [], $data["comment_detail"], $data["id_user"]));
         } catch (Exception $e) {
