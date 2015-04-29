@@ -3,7 +3,6 @@
 app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $filter, $window, cfg, notify, Authentication, Countries, Persons, Comments, Sieves) {
   $scope.persons = [];
   $scope.person = {};
-
   $scope.personId = $routeParams.personId;
   $scope.tabs = {
     'main': {
@@ -43,6 +42,20 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
     loadPersons(); // load persons list
   }, false);
+
+  /*
+  if ($scope.personId) {
+    // bind user notification before location change start event if any unsaved change present
+    $scope.$on('$locationChangeStart', function(event) {
+      if ($scope.changes) {
+        var answer = confirm('There are unsaved changes to this person. Do you really want to discard them?')
+        if (!answer) {
+          event.preventDefault();
+        }
+      }
+    });
+  }
+  */
 
   // private methods
   function applyPersons(persons) {
@@ -117,9 +130,7 @@ console.log('sortObjectToList():', object, criteria);
       if (!!cfg.fake) { console.log('person(', $scope.personId, ')', person); }
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       console.log('Persons.getPerson:', $scope.person);
-      //$scope.person = person;
-      $scope.person.nationality = 'it';
-      //$scope.person.nat = $scope.person.nationality; // TODO... ???
+      ///$scope.person.nationality = 'it';
       $scope.person.vote = 5;
       //$scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
       $scope.person.streetAddress = $scope.person.address;
@@ -177,6 +188,7 @@ console.log('     name of person with a matching phone:', $scope.persons[personI
               }
             }
           }
+/*
           console.log($scope.personsPerComment);
           console.log(typeof $scope.personsPerComment);
           console.log(Object.keys($scope.personsPerComment).length);
@@ -185,6 +197,7 @@ console.log('     name of person with a matching phone:', $scope.persons[personI
           console.log(typeof $scope.personsPerComment[commentId]);
           console.log(Object.keys($scope.personsPerComment[commentId]).length);
           console.log('------------------------------');
+*/
         });
       }
     });
@@ -265,6 +278,12 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
       $anchorScroll(personId);
       $location.hash(null);
     });
+  };
+
+  $scope.isNew = function(personId) {
+    var timestampLastSync = $scope.persons[personId].timestamp_last_sync * 1000;
+    var now = new Date();
+    return (now - timestampLastSync) < (cfg.person.NEW_DURATION_DAYS * cfg.MILLISECONDS_PER_DAY);
   };
 
   $scope.firstSeen = function(personId) {
@@ -424,7 +443,6 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
       'rating',
       'showcase',
       'thruthful',
-      'new',
       'uniq_prev',
       'uniq_next',
     ];
@@ -449,7 +467,7 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
   $scope.savePersonComment = function(comment) {
     var detailFields = [
       'id_comment',
-      'id_user',
+      //'id_user',
       'id_person',
       'content_rating',
     ];
@@ -576,6 +594,7 @@ console.log('commentDetail:', commentDetail);
   $scope.changeCountry = function(code) {
     console.log('changeCountry(): ', code);
     $scope.person.nationality = code;
+    $scope.savePerson($scope.person);
   };
 
   $scope.streetAddressToImageUrl = function(streetAddress) {

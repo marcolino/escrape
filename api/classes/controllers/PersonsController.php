@@ -6,10 +6,14 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
+# TODO: ONLY TO DEBUG ###############################################
+# $pc = new PersonsController(null);
+# $description = "una ragazza francesina molto carina";
+# $nationality = $pc->detectNationality($description, "it");
+# die("Nationality [$nationality] was detected for [$description]");
+#####################################################################
+
 class PersonsController {
-
-function unused() { ; }
-
   const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
 
@@ -139,7 +143,7 @@ function unused() { ; }
         }
 
         if (preg_match($source["patterns"]["person-name"], $page_details, $matches) >= 1) {
-          $name = $this->cleanName($matches[1]);
+          $name = $this->normalizeName($matches[1]);
         } else {
           #$this->router->log("warning", "person $n name not found on source [$sourceKey]");
           $name = "";
@@ -170,15 +174,15 @@ function unused() { ; }
           $nationality = $this->normalizeNationality($matches[1]);
         } else {
           #$this->router->log("warning", "person $n nationality not found on source [$sourceKey]");
-          $nationality = "";
+          #$nationality = "";
+          $nationality = $this->detectNationality($description, $this->cfg->sourcesCountryCode);
         }
         
         # TODO: add logic to grab this data from person's (or comments) page
-        $address = "Via Roma, 123, Torino";
-        $age = 28;
-        $vote = 7; # TODO: JUST TO TEST BUTTONS WIDTH
+        $address = "";
+        $age = null;
+        $vote = null;
         $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
-        $new = false;
 
         $personMaster = [];
         #$personMaster["key"] = $key;
@@ -197,7 +201,6 @@ function unused() { ; }
         $personDetail["nationality"] = $nationality;
         $personDetail["age"] = $age;
         $personDetail["vote"] = $vote;
-        $personDetail["new"] = $new;
         $personDetail["uniq_prev"] = null;
         $personDetail["uniq_next"] = null;
 
@@ -209,7 +212,6 @@ function unused() { ; }
           #$this->router->log("debug", " INSERTING ");
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
-          $personDetail["new"] = true; // set new flag to true
           $personId = $this->add($personMaster, $personDetail, null);
 
 #$this->router->log("debug", " PERSON: " . any2string($personMaster) . any2string($personDetail));
@@ -424,14 +426,20 @@ function unused() { ; }
     return $response;
   }
 
-  private function cleanName($value) {
+  private function normalizeName($value) {
+    // if name starts with all upperchars, keep only upperchars
+    if (
+      ctype_upper(substr($value, 0, 1)) &&
+      ctype_upper(substr($value, 1, 1))
+    ) {
+      $value = preg_replace("/^([A-Z0-9'-]*).*/", "$1", $value); // ignore characters after upperchars
+    }
     $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
     $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
     $value = preg_replace("/^\s+/", "", $value); // ignore leading blanks
     $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
-    #$value = strtoupper($value); // all upper case
-    $value = ucfirst(strtolower($value)); // only initials upper case
-    # TODO: keep only first (one, two,...) words
+    //$value = ucfirst(strtolower($value)); // only initial upper case
+    $value = ucwords(strtolower($value)); // only initials upper case
     return $value;
   }
 
@@ -454,7 +462,121 @@ function unused() { ; }
 
   private function normalizeNationality($nationality) {
     # TODO: ...
-    return "it";
+    #return "it";
+    return $nationality;
+  }
+
+  # TODO: PRIVATE @PRODUCTION
+  private function detectNationality($description, $languageCode) {
+    $patterns = [
+      "it" => [
+        "/\balban(ia|ese)\b/si" => "al",
+        "/\bargentina\b/si" => "ar",
+        "/\baustrali(a|ana)\b/si" => "au",
+        "/\bbarbados\b/si" => "bb",
+        "/\bbelg(a|io)\b/si" => "be",
+        "/\bbolivi(a|ana)\b/si" => "bo",
+        "/\bbosni(a|aca)\b/si" => "ba",
+        "/\bbrasil(e|iana)\b/si" => "br",
+        "/\bbulgar(a|ia)\b/si" => "bu",
+        "/\bcanad(a|ese)\b/si" => "ca",
+        "/\bcapo\s*verd(e|iana)\b/si" => "cv",
+        "/\bch?il(e|ena)\b/si" => "cl",
+        "/\bch?in(e|ese)\b/si" => "cn",
+        "/\bcolombi(a|ana)\b/si" => "co",
+        "/\bcosta\s*ric(a|he..)\b/si" => "cr",
+        "/\bcroa([tz]ia|ta)\b/si" => "hr",
+        "/\bcub(a|ana)\b/si" => "cu",
+        "/\bc(zech|eca)\b/si" => "cz",
+        "/\bdan(imarca|ese)\b/si" => "dk",
+        "/\bdominic(a|ana)\b/si" => "do",
+        "/\becuador(e..)?\b/si" => "ec",
+        "/\beston(ia|e)\b/si" => "ee",
+        "/\bfinland(ia|ese)\b/si" => "fi",
+        "/\bfranc(ia|ese|esina)\b/si" => "fr",
+        "/\b(germania|tedesc(a|ina))\b/si" => "de",
+        "/\b(gran bretagna|ing(hilterra|les(e|ina)))\b/si" => "en",
+        "/\bgrec(a|ia)\b/si" => "gr",
+        "/\bgreanad(a|iana)\b/si" => "gd",
+        "/\bguatemal(a|teca)\b/si" => "gt",
+        "/\bhait(i|iana)\b/si" => "ht",
+        "/\bh?ondur(as|e(...)?)\b/si" => "hn",
+        "/\bungher(ia|ese)\b/si" => "hu",
+        "/\bisland(a|ese)\b/si" => "is",
+        "/\bindi(a|ana)\b/si" => "in",
+        "/\bindonesi(a|ana)\b/si" => "id",
+        "/\birland(a|ese)\b/si" => "ie",
+        "/\bisrael(e|iana)\b/si" => "ie",
+        "/\bitalian(a|issima)\b/si" => "it",
+        "/\b(j|gi)amaic(a|ana)\b/si" => "jm",
+        "/\bjappon(e|ese)\b/si" => "jp",
+        "/\bken[iy](a|ana(\b/si" => "ke",
+        "/\bcore(a|ana)\b/si" => "kr",
+        "/\blituan(a|ia)\b/si" => "lt",
+        "/\bliban(o|ese)\b/si" => "lb",
+        "/\bletton(ia|e)\b/si" => "lv",
+        "/\blussemburg(o|hese)\b/si" => "lu",
+        "/\bmacedon(ia|e)\b/si" => "mk",
+        "/\bmalta\b/si" => "mt",
+        "/\bme(x|ss)ic(o|ana)\b/si" => "mx",
+        "/\bmoldov(a|iana)\b/si" => "md",
+        "/\bmonaco\b/si" => "mc",
+        "/\bmongol(ia|a)\b/si" => "mn",
+        "/\bmontenegr(o|ina)\b/si" => "me",
+        "/\bmorocc(o|ina)\b/si" => "ma",
+        "/\boland(a|ese)\b/si" => "nl",
+        "/\b(neo|nuova)[\s-]?zeland(a|ese)\b/si" => "nz",
+        "/\bnicaragu(a|e...)\b/si" => "ni",
+        "/\bniger\b/si" => "ne",
+        "/\bnigeri(a|ana)\b/si" => "ng",
+        "/\bnorveg(ia|ese)\b/si" => "no",
+        "/\bpa(k|ch)istan(a)?\b/si" => "pk",
+        "/\bpanam(a|ense)\b/si" => "pa",
+        "/\bparagua(y|iana)\b/si" => "py",
+        "/\bperu(viana)?\b/si" => "pe",
+        "/\b(ph|f)ilippin(e|a)\b/si" => "ph",
+        "/\bpol(onia|acca)\b/si" => "pl",
+        "/\bportog(allo|hese)\b/si" => "pt",
+        "/\br(omania|(o|u)mena)\b/si" => "ro",
+        "/\bruss(i)?a\b/si" => "ru",
+        "/\bsan[\s-]?marin(o|ese)\b/si" => "sm",
+        "/\barab(i)?a\b/si" => "sa",
+        "/\bsenegal(ese)?\b/si" => "sn",
+        "/\bserb(i)?a\b/si" => "rs",
+        "/\bseychelles\b/si" => "sc",
+        "/\bsierra[\s-]?leone\b/si" => "sl",
+        "/\bsingapore\b/si" => "sg",
+        "/\bslovacch(i)?a\b/si" => "sk",
+        "/\bsloven(i)?a\b/si" => "si",
+        "/\bsomal(i)?a\b/si" => "so",
+        "/\bspagn(a|ola)\b/si" => "es",
+        "/\bsve(zia|dese)\b/si" => "se",
+        "/\bsvizzera\b/si" => "ch",
+        "/\bs[yi]ria(na)?\b/si" => "sy",
+        "/\btaiwan(ese)?\b/si" => "tw",
+        "/\bt(h)?ailand(ia|ese)?\b/si" => "th",
+        "/\btrinidad\b/si" => "tt",
+        "/\btunisi(a|ina)\b/si" => "tn",
+        "/\bturc(hia|a)\b/si" => "tr",
+        "/\bu[kc]raina\b/si" => "ua",
+        "/\burugua([yi]gia)\b/si" => "uy",
+        "/\bamerica(na)?\b/si" => "us",
+        "/\bvenezuela(na)?\b/si" => "ve",
+        "/\bvietnam(ita)?\b/si" => "vn",
+        "/\borient(e|ale)\b/si" => "cn",
+      ],
+    ];
+    
+    if ($description) {
+      if (array_key_exists($languageCode, $patterns)) {
+        foreach ($patterns[$languageCode] as $key => $value) {
+          if (preg_match($key, $description)) {
+            return $patterns[$languageCode][$key];
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -683,7 +805,7 @@ function unused() { ; }
   private function photoCheckLastModified($personId, $photo, $photos) {
     $photoLastModificationTimestamp = $photo->getLastModificationTimestamp();
     if ($photos !== []) {
-      if (is_array_multi($photos)) { // more than one result returned
+      #if (is_array_multi($photos)) { // more than one result returned
         foreach ($photos as $p) {
 ##$this->router->log("debug", "p[url]:" . $p["url"] . ", photo[url]:" . $photo->url());
 ##$this->router->log("debug", "p[t_l_p]: (" . $p["timestamp_last_modification"] . ") =?= (" . $photoLastModificationTimestamp . ")");
@@ -709,10 +831,10 @@ function unused() { ; }
             #$this->router->log("debug", "photoCheckLastModified - photo->url(): " . $photo->url() . ": LastModificationTime not this url...");
           }
         }
-      } else { // not more than one result returned
-        # TODO: check if this is possible...
-        throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
-      }
+      #} else { // not more than one result returned
+      #  # TODO: check if this is possible...
+      #  throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
+      #}
     }
     #$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
     return false;
@@ -857,8 +979,11 @@ $this->router->log("debug", "photoGetAll($personId)");
     foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
       if ($personId == $uniqcode["id_person_1"]) {
         // append photos fron the other 'uniq' person
+        /*
         $result = $photos;
         $photos = $result + $this->db->get("photo", $uniqcode["id_person_2"]);
+        */
+        $photos += $this->db->get("photo", $uniqcode["id_person_2"]);
       }
     }
 #########################################################################################

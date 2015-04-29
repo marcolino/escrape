@@ -1,7 +1,7 @@
 <div class="container-compact">
   <!-- persons-fixed-header -->
   <div id="persons-fixed-header" class="row persons-header right-scrollbar-placeholder">
-    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
+    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
     </div>
 <!--
 <pre>{{sieves.sort}}</pre>
@@ -10,7 +10,7 @@
 
       <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="The name of the person">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('name')">
                 <span ng-click="addSortCriteria('name')">
@@ -32,9 +32,9 @@
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" style="padding-bottom:2px;">
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="The nationality of the person">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('nationality')">
                 <span ng-click="addSortCriteria('nationality')">
@@ -56,7 +56,7 @@
         </div>
 
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="The source site for this person">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('source')">
                 <span ng-click="addSortCriteria('source')">
@@ -77,7 +77,7 @@
           </div>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="The phone number of this person">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('phone')">
                 <span ng-click="addSortCriteria('phone')">
@@ -101,7 +101,7 @@
         <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
 
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="The number of possible comments found for this person">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('comments')">
                 <span ng-click="addSortCriteria('comments')">
@@ -122,7 +122,28 @@
           </div>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="The median rating of comments for this person">
+            <span class="persons-header-label">
+              <span ng-if="!hasSortCriteria('rating')">
+                <span ng-click="addSortCriteria('rating')">
+                  rating
+                </span>
+              </span>
+              <span ng-if="hasSortCriteria('rating')">
+                <span ng-click="delSortCriteria('rating')">
+                  rating
+                </span>
+                &nbsp;
+                <span ng-click="flipSortCriteriaDirection('rating')">
+                  <i class="glyphicon" ng-class="{ 'glyphicon-circle-arrow-up': getSortCriteriaDirection('rating') === 'descending', 'glyphicon-circle-arrow-down': getSortCriteriaDirection('rating') === 'ascending' }">
+                  </i>
+                </span>
+              </span>
+            </span>
+          </div>
+        </div>
+        <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+          <div class="btn btn-default btn-shorter" title="This person vote (given by current user)">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('vote')">
                 <span ng-click="addSortCriteria('vote')">
@@ -142,8 +163,11 @@
             </span>
           </div>
         </div>
+      </div>
+
+      <div class="row" style="padding-bottom:2px;">
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter">
+          <div class="btn btn-default btn-shorter" title="When this person was first seen on source sites (it's \"new\" if )">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('new')">
                 <span ng-click="addSortCriteria('new')">
@@ -164,6 +188,7 @@
           </div>
         </div>
       </div>
+
     </div>
   </div>
   <!-- /persons-fixed-header -->
@@ -181,7 +206,7 @@
         'person-uniq-id-last': isUniqLast('{{person.id_person}}')
       }">
 <!--<pre> person: {{person}} </pre>-->
-      <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="white-space:nowrap;">
+      <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
         <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
           <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
             <i class="fa fa-fw"
@@ -194,7 +219,7 @@
         <div class="showcase-right">
           <div class="img-rounded img-clip-container" ng-attr-title="{{person.name}}">
             <a href="" ng-click="open(person.id_person)" class="no-text-decoration">
-              <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="NOimg-rounded img-clip"
+              <img ng-src="{{cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-clip"
                 ng-class="{
                   'img-thruthful-yes': person.thruthful === 'yes',
                   'img-thruthful-no': person.thruthful === 'no',
@@ -211,13 +236,13 @@
         <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
           <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
             <div class="person-name">
-              <!-- SUPERSCRIPT BADGE NEW: <span ng-show="person.new === '1'" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
+              <!-- SUPERSCRIPT BADGE NEW: <span ng-show="isNew(person.id_person)" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
               <span style="text-align: left;">{{person.name}}</span>
             </div>
           </div>
         </div>
   
-        <div class="row">
+        <div class="row" style="padding-bottom:2px;">
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <button type="button" class="btn btn-default btn-wider" ng-attr-title="nationality: {{person.nationality}}">
               <a ng-href="#/"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></a>
@@ -244,30 +269,31 @@
             </div>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
+            <div class="person-rating">
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="rating: {{person.rating || 'none'}}">
+                <span class="label label-as-badge label-danger">{{person.rating || '-'}}</span>
+              </button>
+            </div>
+          </div>
+          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <div class="person-vote">
               <button class="btn btn-default btn-wider" type="button" ng-attr-title="vote: {{person.vote}}">
                 <!--<i class="glyphicon glyphicon-thumbs-up text-success"></i>&nbsp;--><span class="label label-as-badge label-success">{{person.vote}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
               </button>
             </div>
           </div>
-<!-- -------------------------- -->
-          <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-            <div class="person-rating">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="rating: {{person.rating}}">
-                <span class="label label-as-badge label-danger">{{person.rating || '-'}}</span>
-              </button>
-            </div>
-          </div>
-<!-- -------------------------- -->
+        </div>
 
+        <div class="row" style="padding-bottom:2px;">
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <div class="person-is-new">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is {{person.new ? '' : 'not '}}new (first seen {{firstSeen(person.id_person)}})">
-                <i class="glyphicon glyphicon-star" ng-class="{ 'person-new': person.new, 'person-not-new': !person.new }"></i>
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is {{isNew(person.id_person) ? '' : 'not '}}new (first seen {{firstSeen(person.id_person)}})">
+                <i class="glyphicon glyphicon-star" ng-class="{ 'person-new': isNew(person.id_person), 'person-not-new': isNew(person.id_person) }"></i>
               </button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>

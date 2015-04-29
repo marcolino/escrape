@@ -21,6 +21,7 @@ apiUri = atHome() ? 'http://0.0.0.0' : 'http://192.168.10.30';
 //////////////////////////////////////////////////////////////////
 
 app.constant('cfg', {
+  MILLISECONDS_PER_DAY: (1000 * 60 * 60 * 24),
   site: {
     name: 'eScrape',
     description: 'the ultimate web contacts manager',
@@ -39,6 +40,7 @@ app.constant('cfg', {
     console: true,
   },
   person: {
+    NEW_DURATION_DAYS: 7, // a person is new for one week
     vote: {
       min: 0,
       max: 9,

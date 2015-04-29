@@ -79,8 +79,8 @@
                 <input class="form-control" id="query" name="query" type="text" ng-value="countries.getCountryName(person.nationality)" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
-                <li ng-repeat="(countryCode, countryName) in countries.countries" class="flag-li">
-                  <a ng-click="changeCountry('{{countryCode}}')"><i class="f16"><i ng-class="countries.getCountryClass(countryCode)"></i></i> {{countryName}}</a>
+                <li ng-repeat="country in countries.getCountries()" class="flag-li">
+                  <a ng-click="changeCountry('{{country.code}}')"><i class="f16"><i ng-class="countries.getCountryClass(country.code)"></i></i> {{country.name}}</a>
                 </li>
               </ul>
             </div>
@@ -132,16 +132,18 @@
         </div>
  
         <div class="form-group" style="vertical-align:bottom">
+<!--
           <div class="col-xs-4 col-sm-2 col-lg-1">
             <button class="btn btn-primary" title="Save changes to this person's data" ng-click="savePerson(person)"><i class="glyphicon glyphicon-floppy-disk">&nbsp;</i>Save</button>
           </div>
+-->
           <span ng-if="person.uniq_prev !== null">
-            <div class="col-xs-4 col-sm-2 col-lg-1 pull-right">
+            <div class="col-xs-4 col-sm-2 col-lg-1 NOpull-right">
               <button class="btn btn-info" title="Previous source for this person" ng-click="open(person.uniq_prev)"><i class="glyphicon glyphicon-step-backward">&nbsp;</i>Previous</button>
             </div>
           </span>
           <span ng-if="person.uniq_next !== null">
-            <div class="col-xs-4 col-sm-2 col-lg-1 pull-right">
+            <div class="col-xs-4 col-sm-2 col-lg-1 NOpull-right">
               <button class="btn btn-info" title="Next source for this person" ng-click="open(person.uniq_next)"><i class="glyphicon glyphicon-step-forward">&nbsp;</i>Next</button>
             </div>
           </span>

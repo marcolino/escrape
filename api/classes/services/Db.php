@@ -118,7 +118,6 @@ class DB extends PDO {
           rating INTEGER,
           showcase INTEGER,
           thruthful INTEGER,
-          new INTEGER,
           uniq_prev TEXT,
           uniq_next TEXT
          );
@@ -208,23 +207,15 @@ class DB extends PDO {
       // group by $groupByField
       $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
 
-      // order to get lower user id first (system is the lowest: 1)
-      /* WE DON'T USE THIS SORT STRATEGY ANYMORE: NOW WE GROUP BY $groupByField
-      $sql .= " ORDER BY " .
-        "{$tableDetail}.id_user ASC," .
-        "{$tableDetail}.id_person ASC"
-      ;
-      */
-
       $statement = $this->db->prepare($sql);
       foreach ($params as $key => &$value) {
         $statement->bindParam(":" . $key, $value);
       }
       $statement->execute();
-#throw new Exception("sql: [$sql]");
-#if ($sieves["uniqIds"]) throw new Exception("sql: [$sql]");
+#$this->router->log("debug", " db->getPersons() - sql: $sql");
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#throw new Exception("result length: " . count($result));
+#$this->router->log("debug", "db->getPersons() - result length: " . count($result));
+#$this->router->log("debug", "db->getPersons() - userId: $userId - result:" . any2string($result));
       return $result;
     } catch (PDOException $e) {
       #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 

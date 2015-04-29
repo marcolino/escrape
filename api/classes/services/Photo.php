@@ -8,7 +8,7 @@
 
 class Photo {
   const INTERNAL_TYPE = "jpg"; // internal type of bitmaps
-  const SMALL_HEIGHT = 72; // small photo height (pixels)
+  const SMALL_HEIGHT = 96; // small photo height (pixels)
   const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.1; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
 
@@ -507,9 +507,10 @@ class Photo {
     return $image;
   }
 
-  /**
+/*
+  / **
    * Resizes the surface of an image, preserving transparency
-   */
+   * /
   public function imageSurfaceResize($image, $width, $height) {
     $widthSource = imagesx($image);
     $heightSource = imagesy($image);
@@ -521,6 +522,7 @@ class Photo {
     );
     return $imageNew;
   }
+*/
 
   /**
    * Destructor
