@@ -273,11 +273,11 @@ class CommentsController {
   
   public function getByPhone($phone, $userId) {
     if (!$phone) {
-$this->router->log("debug", "getByPhone() - no phone!");
+#$this->router->log("debug", "getByPhone() - no phone!");
       //throw new Exception("can't get comments by phone: no phone specified");
       return [];
     }
-$this->router->log("debug", "getByPhone() - phone: [$phone]");
+#$this->router->log("debug", "getByPhone() - phone: [$phone]");
     return $this->db->getCommentByField("phone", $phone, $userId);
   }
   

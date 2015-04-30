@@ -242,7 +242,7 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
         return $scope.personsPerComment[commentId][personId];
       }
     }
-    // no person is active, return the first (...) id in object
+    // no person is active, return a dummy object with a blank name
     for (personId in $scope.personsPerComment[commentId]) {
       return { name: '' };
       //return $scope.personsPerComment[commentId][personId];
@@ -261,6 +261,22 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
       }
     }
     return false;
+  };
+
+  $scope.getPersonsInPersonComments = function() {
+    // get the list of all persons related to this person's comments
+    var persons = [];
+    if (typeof $scope.personsPerComment === 'object') {
+      Object.keys($scope.personsPerComment).forEach(function (commentId) {
+        Object.keys($scope.personsPerComment[commentId]).forEach(function (personId) {
+          var name = $scope.personsPerComment[commentId][personId].name;
+          if (persons.indexOf(name) === -1) {
+            persons.push(name);
+          }
+        });
+      });
+    }
+    return persons;
   };
 
   $scope.open = function(id) {
@@ -526,7 +542,7 @@ console.log('commentDetail:', commentDetail);
     //notify.info('getPhotoOccurrences(' + url + ')');
     Persons.getPhotoOccurrences(id, url).then(
       function(response) {
-        //console.info('+++ getPhotoOccurrences response:', response);
+        console.info('+++ getPhotoOccurrences response:', response);
         //console.info('+++ response.length:', response.length);
         $scope.photosOccurrencesLoading = false;
         $scope.photosOccurrencesBestGuess = response.bestGuess;

@@ -1,4 +1,5 @@
 TODO 1.0:
+ - use integerNumber.js directive
  - review user writes...
  - handle guest tentative write warning
  - check if timestamps on DB are * 1000 or not (should be not: correct comment_table...)
@@ -16,6 +17,8 @@ TODO 1.0:
  - test un-thruthful images rendering in views...
  - move style="..." from all views to style.css...
  - id_user_max: do we need it? (no, rename it to "_id_user_max"?)
+ - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
+ - remove resize directive from persons view
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)

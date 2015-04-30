@@ -817,7 +817,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
         $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
         $statement->execute();
         $result = $statement->fetch(PDO::FETCH_ASSOC);
-$this->router->log("debug", " setComment() - check result:" . any2string($result));
+#$this->router->log("debug", " setComment() - check result:" . any2string($result));
         $mode = null;
         if ($result["count"] === "0") {
           $mode = "insert";
@@ -936,11 +936,11 @@ $this->router->log("debug", " setComment() - check result:" . any2string($result
         WHERE $fieldName = :$fieldName
       ";
       $statement = $this->db->prepare($sql);
-$this->router->log("debug", " db->getByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
+#$this->router->log("debug", " db->getByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->bindParam(":" . $fieldName, $fieldValue);
       $statement->execute();
       $results = $statement->fetchAll(PDO::FETCH_ASSOC);
-$this->router->log("debug", " db->getByField($fieldName, $fieldValue) - results:" . any2string($results));
+#$this->router->log("debug", " db->getByField($fieldName, $fieldValue) - results:" . any2string($results));
       return $results;
     } catch (PDOException $e) {
       throw new Exception("can't get $table by field: " . $e->getMessage());

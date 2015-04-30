@@ -176,7 +176,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
         } else {
           #$this->router->log("warning", "person $n nationality not found on source [$sourceKey]");
           #$nationality = "";
-          $nationality = $this->detectNationality($description, $this->router->cfg["sourcesCountryCode"])
+          $nationality = $this->detectNationality($description, $this->router->cfg["sourcesCountryCode"]);
         }
         
         # TODO: add logic to grab this data from person's (or comments) page
@@ -399,8 +399,10 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
   }
   
   public function getPhotoOccurrences($id, $imageUrl) {
-    $person = $this->db->get("person", $id);
+#$this->router->log("debug", "getPhotoOccurrences --- id: $id");
+    $person = $this->db->getPerson($id);
     $personDomain = $person["url"];
+#$this->router->log("debug", "getPhotoOccurrences --- person: " . any2string($person));
 
     $googleSearch = new GoogleSearch();
     $numPages = 3;
@@ -414,7 +416,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
         $response["bestGuess"] = $results["best_guess"];
       }
       if ($results["search_results"]) {
-        $response["searchResults"] = [];
+        #$response["searchResults"] = [];
         foreach ($results["search_results"] as $result) {
           if (parse_url($result["href"])["host"] !== parse_url($personDomain)["host"]) { // consider only images from different domains
             $response["searchResults"][] = $result;
@@ -586,7 +588,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
    * @return array: all countries defined
    */
   public function getSourcesCountries() {
-    $this->router->log("info", "getSourcesCountries() ---");
+    #$this->router->log("info", "getSourcesCountries() ---");
     $countries = [];
 /*
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {

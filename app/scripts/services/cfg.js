@@ -27,10 +27,13 @@ app.constant('cfg', {
     description: 'the ultimate web contacts manager',
     version: latestTag, // sync'ed with latest git tag with a post-commit hook
   },
+/*
   client: {
     OS: navigator.oscpu,
     platform: navigator.platform,
+    browser: navigator.userAgent,
   },
+*/
   apiUri: apiUri + '/escrape/api',
   fake: fake, // DEBUG ONLY
   notify: {

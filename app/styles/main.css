@@ -87,6 +87,11 @@ body {
   min-width: 48px;
 }
 
+/* input-group with some bottom padding space */
+.input-group-bottom-spaced {
+  padding-bottom: 5px;
+}
+
 /* element rotation - 90° clock-wise */
 .rotate90cw {
   -webkit-transform:rotate(90deg);

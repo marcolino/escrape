@@ -41,40 +41,32 @@
             </div>
           </div>
         </div>
-        <div class="form-group">
+        <div class="row">
           <div class="col-xs-12">
-            <div class="input-group">
+            <div class="input-group input-group-bottom-spaced">
               <span class="input-group-addon" title="Name"><span class="glyphicon glyphicon-user"></span></span>
               <input type="text" class="form-control" ng-model="person.name" placeholder="Name">
             </div>
           </div>
-<!--
-          <div class="col-xs-6">
-            <div class="input-group">
-              <span class="input-group-addon" title="Real name"><span class="glyphicon glyphicon-heart"></span></span>
-              <input type="text" class="form-control" ng-model="person.realname" placeholder="Real name">
-            </div>
-          </div>
--->
         </div>
-        <div class="form-group">
-          <div class="col-xs-6">
-            <div class="input-group">
+        <div class="row">
+          <div class="col-xs-12 col-sm-6">
+            <div class="input-group input-group-bottom-spaced">
               <span class="input-group-addon" title="Description"><span class="glyphicon glyphicon-pencil"></span></span>
               <textarea class="form-control" rows="3" ng-model="person.description" placeholder="Description"></textarea>
             </div>
           </div>
-          <div class="col-xs-6">
-            <div class="input-group">
+          <div class="col-xs-12 col-sm-6">
+            <div class="input-group input-group-bottom-spaced">
               <span class="input-group-addon" title="Notes"><span class="glyphicon glyphicon-edit"></span></span>
               <textarea class="form-control" rows="3" ng-model="person.notes" placeholder="Notes"></textarea>
             </div>
           </div>
         </div>
-        <div class="form-group">
-          <div class="col-xs-7 col-sm-6 col-md-6 col-lg-6">
+        <div class="row">
+          <div class="col-xs-12 col-sm-6">
             <div class="dropdown">
-              <div class="input-group" data-toggle="dropdown">
+              <div class="input-group input-group-bottom-spaced" data-toggle="dropdown">
                 <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></i></span>
                 <input class="form-control" id="query" name="query" type="text" ng-value="countries.getCountryName(person.nationality)" />
               </div>
@@ -85,45 +77,51 @@
               </ul>
             </div>
           </div>
-          <div class="col-xs-5 col-sm-6 col-md-6 col-lg-6">
-            <div class="input-group">
-<!--
-              <span class="input-group-addon" title="Referrals sources"><span class="glyphicon glyphicon-cloud-download"></span></span>
-              <div class="form-control">
-                <div class="slider-horizontal">
-                  <span ng-repeat="(id, value) in sources">
-                      <img class="image-referral-source" ng-src="images/referral-sources/{{id}}.png" ng-attr-title="{{value.name}}">
-                  </span>
-                </div>
-              </div>
--->
+          <div class="col-xs-12 col-sm-6">
+            <div class="input-group input-group-bottom-spaced">
+              <span class="input-group-addon" title="Phone"><a ng-href="tel:{{person.phone}}"><span class="glyphicon glyphicon-earphone"></span></a></span>
+              <input type="text" class="form-control" ng-model="person.phone" readonly placeholder="Phone">
             </div>
           </div>
         </div>
-        <div class="form-group">
-          <div class="col-xs-5 col-sm-3 col-md-2 col-lg-2">
-            <div class="input-group">
+
+        <div class="row">
+          <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="input-group input-group-bottom-spaced">
+              <span class="input-group-addon" title="Date of last presence"><span class="glyphicon glyphicon-calendar"></span></span>
+              <input type="text" class="form-control" ng-value="person.timestamp_last_sync * 1000 | date:'yyyy-MM-dd'" " HH:mm:ss'" readonly>
+            </div>
+          </div>
+          <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+            <div class="input-group input-group-bottom-spaced">
               <span class="input-group-addon" title="Vote up" ng-click="vote(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
-              <input type="text" style="min-width: 2.4em" class="form-control" ng-model="person.vote" placeholder="Vote">
+              <input class="form-control" ng-model="person.vote" placeholder="Vote" title="the vote of this person">
               <span class="input-group-addon" title="Vote down" ng-click="vote(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
             </div>
           </div>
-          <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-            <div class="input-group">
-              <span class="input-group-addon" title="Phone"><a ng-href="tel:{{person.phone}}"><span class="glyphicon glyphicon-earphone"></span></a></span>
-              <input type="text" class="form-control" ng-model="person.phone" placeholder="Phone">
+          <div class="col-xs-12 col-sm-4 col-md-2 col-lg-2">
+            <div class="input-group input-group-bottom-spaced">
+              <span class="input-group-addon" title="person's referral source site" ng-click="openInNewTab('{{person.url}}')"><span class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></span></span>
+              <input type="text" class="form-control" ng-model="person.source_key" placeholder="Referral source" title="the referral source site for this person" readonly>
             </div>
           </div>
-          <div class="col-xs-3 col-sm-5 col-md-6 col-lg-6">
-            <div class="input-group">
-              <span class="input-group-addon" title="Date of last sync"><span class="glyphicon glyphicon-calendar"></span></span>
-              <input type="text" class="form-control" ng-value="person.timestamp_last_sync * 1000 | date:'yyyy-MM-dd'" " HH:mm:ss'" readonly placeholder="Last time sync'ed">
+          <div class="col-xs-6 col-sm-4 col-md-2 col-lg-2">
+            <div class="input-group input-group-bottom-spaced">
+              <span class="input-group-addon" title="the number of comments referring to person's phone" ng-click="tabSelected = 'comments'"><span class="label label-as-badge label-info">{{person.comments.length}}</span></span>
+              <input type="text" class="form-control" value="comments" title="the number of comments referring to person's phone" readonly>
+            </div>
+          </div>
+          <div class="col-xs-6 col-sm-4 col-md-2 col-lg-2">
+            <div class="input-group input-group-bottom-spaced">
+              <span class="input-group-addon" title="the median rating of comments referring to this person" ng-click="tabSelected = 'comments'"><span class="label label-as-badge label-danger">{{person.rating}}</span></span>
+              <input type="text" class="form-control" value="rating" title="the median rating of comments referring to this person" readonly>
             </div>
           </div>
         </div>
-        <div class="form-group">
+
+        <div class="row">
           <div class="col-xs-12">
-            <div class="input-group">
+            <div class="input-group input-group-bottom-spaced">
               <span class="input-group-addon" title="Street address photo"><a data-toggle="modal" data-target="#streetAddressModalPopup"><span class="glyphicon glyphicon-home"></span></a></span>
               <input type="text" class="form-control" ng-model="person.streetAddress" placeholder="Street address">
               <span class="input-group-addon" title="Street address indications"><a data-toggle="modal" data-target="#streetAddressIndicationsModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
@@ -131,7 +129,7 @@
           </div>
         </div>
  
-        <div class="form-group" style="vertical-align:bottom">
+        <div class="row" style="vertical-align: bottom">
 <!--
           <div class="col-xs-4 col-sm-2 col-lg-1">
             <button class="btn btn-primary" title="Save changes to this person's data" ng-click="savePerson(person)"><i class="glyphicon glyphicon-floppy-disk">&nbsp;</i>Save</button>
@@ -197,7 +195,7 @@
             <div class="carousel-toolbar">
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
-                  <button ng-click="getPhotoOccurrences(person.id, '{{photo.url}}')" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Check</button>
+                  <button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thrutfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
                 </div>
               </div>
             </div>
@@ -213,10 +211,17 @@
           <span><img src="images/loading.gif" /> &emsp; Searching occurrences of this photo in the whole web...</span>
         </div>
       </div>
+      <div id="photos-occurrences-toolbar" ng-hide="photosOccurrencesLoading">
+        <hr>
+        <button ng-click="photosOccurrencesThruthful()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Truthful</button>
+        <button ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
+        <button ng-click="photosOccurrencesUndecided()" class="btn btn-warning"><i class="glyphicon glyphicon-question-sign"></i> Don't know</button>
+        <hr>
+      </div>
       <div id="photos-occurrences-best-guess" ng-show="!photosOccurrencesLoading && photosOccurrencesBestGuess">
         Best guess for this photo is: <a ng-href="{{photosOccurrencesBestGuess.href}}" target="_blank"><i>{{photosOccurrencesBestGuess.text}}</i></a>
       </div>
-      <div style="overflow-y: auto; overflow-x: hidden;" resize resize-before="photos-occurrences-best-guess" resize-after="150" NOresize-after="photos-occurrences-toolbar">
+      <NOdiv style="overflow-y: auto; overflow-x: hidden;" resize resize-before="photos-occurrences-best-guess" resize-after="150" NOresize-after="photos-occurrences-toolbar">
         <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences | filter:whitelist">
           <a ng-href="{{photosOccurrence.href}}" target="_blank" class="no-text-decoration">
             <div class="col-xs-2 col-sm-2 col-md-2 col-lg-1">
@@ -237,30 +242,23 @@
             </button>
           </div>
         </div>
-      </div>
+      </NOdiv>
       <div ng-show="!photosOccurrencesLoading && photosOccurrences.length === 0">
-        <div class="text-center">
-          <h4>No other occurrences of this photo found in the whole web: it is presumably thruthful.</h4>
-        </div>
-      </div>
-
-      <div id="photos-occurrences-toolbar" Xng-hide="photosOccurrencesLoading">
-        <hr>
-        <button ng-click="photosOccurrencesThruthful()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Truthful</button>
-        <button ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
-        <button ng-click="photosOccurrencesUndecided()" class="btn btn-warning"><i class="glyphicon glyphicon-question-sign"></i> Don't know</button>
-        <!--<button NOng-hide="photosOccurrences === null" ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>-->
+        <h5>
+          No other occurrences of this photo found in the whole web: it is presumably thruthful.
+        </h5>
       </div>
     </div>
 
     <!-- comments pill -->
     <div class="tab-content" ng-show="tabSelected === 'comments' && !tabs['comments'].hidden">
+<!--
       <div class="row" ng-if="person.comments.length === 0">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 persons-warning-text">
-          <span>Sorry, no comments found about {{person.name}} (phone: {{person.phone}})</span>
+          <span>Sorry, no comments found about {{person.name}} (phone is {{person.phone ? person.phone : 'empty'}}).</span>
         </div>
       </div>
-
+-->
 <!--
 <pre>&emsp; persons:{{persons}}</pre>
 <pre>&emsp; person.comments:{{person.comments}}</pre>
@@ -269,6 +267,34 @@
 -->
 
       <div class="comments">
+        <span ng-if="!person.phone">
+          <h5>
+            Empty phone number, no comment.
+          </h5>
+        </span>
+        <span ng-if="person.phone">
+          <h5>
+            Found <span class="label label-as-badge label-warning">{{person.comments.length}}</span> comment<span>{{person.comments.length > 1 ? 's' : ''}}</span> related to phone number <span class="label label-as-badge label-primary">{{person.phone}}</span>.
+          </h5>
+          <h5>
+            <span ng-if="getPersonsInPersonComments().length > 1">
+              The persons related to this phone number are
+              <span ng-repeat="name in getPersonsInPersonComments()">
+                <span class="label label-as-badge label-info">{{name}}</span>{{$last ? '.' : ','}}
+              </span>
+            </span>
+          </h5>
+          <h5>
+            <span ng-if="getPersonsInPersonComments().length === 1">
+              The person related to this phone number is <span class="label label-as-badge label-info">{{getPersonsInPersonComments()[0]}}</span>.
+            </span>
+          </h5>
+          <h5>
+            <span ng-if="1">
+              Median rating of comments for <span class="label label-as-badge label-success">{{person.name}}</span> is <span class="label label-as-badge label-danger">{{person.rating}}</span>.
+            </span>
+          </h5>
+        </span>
         <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">
           <div class="form-group">
             <div class="col-xs-12">
@@ -343,7 +369,7 @@
                     <div class="col-xs-12">
                       <div class="input-group">
                         <span class="input-group-addon btn btn-success" ng-click="rating(comment.id, 1)" title="increase positivity rating of this comment"><i class="glyphicon glyphicon-thumbs-up"></i></span>
-                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="comment.content_rating" placeholder="Rating">
+                        <input type="text" style="min-width: 2.4em" class="form-control" ng-model="comment.content_rating" placeholder="Rating" title="the positivity rating for this comment (0: worst, ... 9: best)">
                         <span class="input-group-addon btn btn-danger" ng-click="rating(comment.id, -1)" title="decrease positivity rating of this comment"><i class="glyphicon glyphicon-thumbs-down"></i></span>
                       </div>
                     </div>

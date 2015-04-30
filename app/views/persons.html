@@ -1,4 +1,5 @@
 <div class="container-compact">
+
   <!-- persons-fixed-header -->
   <div id="persons-fixed-header" class="row persons-header right-scrollbar-placeholder">
     <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
@@ -249,9 +250,9 @@
             </button>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-              <button type="button" class="btn btn-default btn-wider" ng-attr-title="referral source: {{person.source_key}}" ng-click="openInNewTab('{{person.url}}')">
-                <div class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></div>
-              </button>
+            <button type="button" class="btn btn-default btn-wider" ng-attr-title="referral source: {{person.source_key}}" ng-click="openInNewTab('{{person.url}}')">
+              <div class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></div>
+            </button>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone}}" ng-disabled="{{person.phone === '0'}}">
