@@ -39,6 +39,7 @@ class PersonsController {
     $error = false; // track errors while sync'ing
 
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
+if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
       #$useTor = true; // use TOR proxy to sync
       $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
@@ -175,7 +176,7 @@ class PersonsController {
         } else {
           #$this->router->log("warning", "person $n nationality not found on source [$sourceKey]");
           #$nationality = "";
-          $nationality = $this->detectNationality($description, $this->cfg->sourcesCountryCode);
+          $nationality = $this->detectNationality($description, $this->router->cfg["sourcesCountryCode"])
         }
         
         # TODO: add logic to grab this data from person's (or comments) page
@@ -510,7 +511,7 @@ class PersonsController {
         "/\bitalian(a|issima)\b/si" => "it",
         "/\b(j|gi)amaic(a|ana)\b/si" => "jm",
         "/\bjappon(e|ese)\b/si" => "jp",
-        "/\bken[iy](a|ana(\b/si" => "ke",
+        "/\bken[iy](a|ana)\b/si" => "ke",
         "/\bcore(a|ana)\b/si" => "kr",
         "/\blituan(a|ia)\b/si" => "lt",
         "/\bliban(o|ese)\b/si" => "lb",
@@ -554,7 +555,7 @@ class PersonsController {
         "/\bsvizzera\b/si" => "ch",
         "/\bs[yi]ria(na)?\b/si" => "sy",
         "/\btaiwan(ese)?\b/si" => "tw",
-        "/\bt(h)?ailand(ia|ese)?\b/si" => "th",
+        "/\bt(h)?ai(land(ia|ese)?)?\b/si" => "th",
         "/\btrinidad\b/si" => "tt",
         "/\btunisi(a|ina)\b/si" => "tn",
         "/\bturc(hia|a)\b/si" => "tr",

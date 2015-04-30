@@ -312,7 +312,7 @@ class Photo {
       #$this->bitmap = $network->getUrlContents($this->url); #, null, null, false, false); // download photo
       
       #$this->bitmap = $network->getUrlContents($this->url, null, null, false, false); // download photo without TOR
-      $this->bitmap = $this->network->getImageFromUrl($this->url);
+      $this->bitmap = $this->network->getImageFromUrl($this->url, null, null, false, true, $this->mime);
 # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() befor downloading... !!!
 # TODO: HANDLE CAPTCHA MESSAGE: "Why do I have to complete a CAPTCHA?" (?) HOWEVER, CHECK bitmap is image!
       if (

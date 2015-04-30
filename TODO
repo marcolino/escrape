@@ -18,7 +18,7 @@ TODO 1.0:
  - id_user_max: do we need it? (no, rename it to "_id_user_max"?)
 
 TODO 1.1:
- - decide where/how/if to display the name of person in persons view on extra-small screens
+ - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
  - a better 'resize' directive strategy to calculate it's height based on previous and following elements heights
  - options: country / city / category should be considered when sync'ing persons
