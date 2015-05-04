@@ -12,7 +12,8 @@ class Photo {
   const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.1; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
 
-  public function __construct($source, $options = []) {
+  public function __construct($router, $source, $options = []) {
+    $this->router = $router;
     $this->options = $options;
     if (!isset($this->options["internalType"])) {
       $this->options["internalType"] = self::INTERNAL_TYPE;
@@ -96,7 +97,7 @@ class Photo {
     if (isset($this->url)) {
       return $this->url;
     }
-    throw new Exception("Can't get photo url: no url source specified");
+    $this->router->log("error", "Photo::url(): url is not set");
   }
   
   /**
@@ -132,7 +133,8 @@ class Photo {
     try {
       return $this->image = imagecreatefromstring($this->bitmap());
     } catch(Exception $e) {
-      throw new Exception("bitmap is not in image recognized format: [" . $this->bitmap() . "]");
+      $this->router->log("error", "Photo::image(): bitmap is not in image recognized format");
+      return false;
     }
   }
 
@@ -147,7 +149,8 @@ class Photo {
     try {
       return $this->imageFull = imagecreatefromstring($this->bitmapFull());
     } catch(Exception $e) {
-      throw new Exception("bitmap is not in image recognized format: [" . $this->bitmap() . "]");
+      $this->router->log("error", "Photo::imageFull(): bitmap is not in image recognized format");
+      return false;
     }
   }
 
@@ -162,7 +165,8 @@ class Photo {
     try {
       return $this->imageSmall = imagecreatefromstring($this->bitmapSmall());
     } catch(Exception $e) {
-      throw new Exception("bitmap is not in image recognized format: [" . $this->bitmap() . "]");
+      $this->router->log("error", "Photo::imageSmall(): bitmap is not in image recognized format");
+      return false;
     }
   }
 
@@ -302,7 +306,11 @@ class Photo {
       return;
     }
     if (!isset($this->url)) {
-      throw new Exception("Can't load photo: no url source specified");
+      $this->router->log("error", "Photo::load(): can't load photo: no url specified");
+      return;
+    }
+    if (!isset($this->mime)) {
+      $this->mime = null;
     }
 
     #list($this->bitmap, $this->mime) = $this->getUrlContents($this->url); // download photo
@@ -312,15 +320,31 @@ class Photo {
       #$this->bitmap = $network->getUrlContents($this->url); #, null, null, false, false); // download photo
       
       #$this->bitmap = $network->getUrlContents($this->url, null, null, false, false); // download photo without TOR
-      $this->bitmap = $this->network->getImageFromUrl($this->url, null, null, false, true, $this->mime);
+    $retries = 0;
+    retry:
+    try {
+      $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
+#throw new Exception("RETURNED FROM GETIMAGEFROMURL - LEN OF BITMAP: " . strlen($this->bitmap));
 # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() befor downloading... !!!
 # TODO: HANDLE CAPTCHA MESSAGE: "Why do I have to complete a CAPTCHA?" (?) HOWEVER, CHECK bitmap is image!
+    } catch(Exception $e) {
+      $message = $e->getMessage();
       if (
-        (strpos($this->bitmap, "Why do I have to complete a CAPTCHA?") !== false) OR
-        (strpos($this->bitmap, "has banned your access based on your browser's signature") !== false)
+        (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
+        (strpos($message, "has banned your access") !== false)
       ) {
-        throw new Exception("error getting image [$this->url]: " . "Site denies access...");
+        $this->router->log("error", "can't get image [$this->url]: " . "site denies access");
+        # TODO: why sync execution stops here??? (and not true / false is returned?)
+        # TODO: put in Network class...
+        if ($retries < ..MAX)      // sleep a random number of seconds to avoid being banned...
+            sleep(rand(self::TIMEOUT_BETWEEN_DOWNLOADS_MIN, self::TIMEOUT_BETWEEN_DOWNLOADS_MAX));
+        }
+
+      } else {
+        $this->router->log("error", "can't get image [$this->url] contents: " . $message);
       }
+
+    }
     #} catch(Exception $e) {
     #  throw new Exception("error getting image [$this->url] contents: " . $e->getMessage());
     #}

@@ -121,7 +121,6 @@ class Network {
       }
       curl_setopt_array($ch, $curlOptions);
 
-      #$this->logWrite("downloading [$url]...");
       $data = curl_exec($ch); // start curl operation
 
       if (($errno = curl_errno($ch))) { // handle timeouts with some retries
@@ -141,8 +140,10 @@ class Network {
       }
       $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
       curl_close($ch);
-      #$this->logClose();
-      return (!$charset || $charset === "utf-8") ? $data : iconv($charset, "utf-8", $data);
+      if ($charset && $charset !== "utf-8") {
+        $data = iconv($charset, "utf-8", $data);
+      }
+      return $data;
     } catch (Exception $e) {
       throw new Exception("error getting url [$url] with curl: " . $e->getMessage());
     }
@@ -154,7 +155,7 @@ class Network {
    * @param  string $url        url to be retrieved
    * @return string             image contents
    */
-  public function getImageFromUrl($url) {
+  public function getImageFromUrl($url, &$contentType = null) {
     $contentType = "?"; // not null, to force it's valorization
     $retval = $this->getUrlContents($url, null, null, false, false, $contentType);
     $mimeType = null;
@@ -163,10 +164,10 @@ class Network {
       $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
       throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType);
     }
-    if (!preg_match("/^image\//s", $contentType)) {
-      $mimeType = $contentType;
+    $mimeType = $contentType;
+    if (!preg_match("/^image\//s", $mimeType)) {
       $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
-      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType);
+      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType . ", content is: \"$retval\"");
     }
     $this->mime = $mimeType; // set object mime with detected mime type
     return $retval;

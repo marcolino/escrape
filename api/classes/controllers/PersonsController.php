@@ -14,8 +14,10 @@
 #####################################################################
 
 class PersonsController {
-  const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
+  #const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
+  const TIMEOUT_BETWEEN_DOWNLOADS_MIN = 1;
+  const TIMEOUT_BETWEEN_DOWNLOADS_MAX = 3;
 
   /**
    * Constructor
@@ -39,7 +41,7 @@ class PersonsController {
     $error = false; // track errors while sync'ing
 
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
-if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
+#if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
       #$useTor = true; // use TOR proxy to sync
       $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
@@ -94,12 +96,12 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
         $personId = null;
         if (($person = $this->db->getByField("person", "key", $key))) { # old key
           $personId = $person[0]["id"];
-          $this->router->log("debug", " old person: $key (id: $personId)");
+          $this->router->log("debug", "old person: $key (id: $personId)");
           if (!$fullSync) { // requested to sync only new keys, skip this old key
             continue;
           }
         } else {
-          $this->router->log("debug", " new person: $key (id: $id)");
+          $this->router->log("debug", "new person: $key (id: $id)");
         }
 
         if (preg_match($source["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
@@ -176,7 +178,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
         } else {
           #$this->router->log("warning", "person $n nationality not found on source [$sourceKey]");
           #$nationality = "";
-          $nationality = $this->detectNationality($description, $this->router->cfg["sourcesCountryCode"]);
+          $nationality = $this->detectNationality($name, $description, $this->router->cfg["sourcesCountryCode"]);
         }
         
         # TODO: add logic to grab this data from person's (or comments) page
@@ -206,25 +208,24 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
         $personDetail["uniq_next"] = null;
 
         if ($personId) { # old key, update it
-          #$this->router->log("debug", " UPDATING ");        
+          #$this->router->log("debug", "UPDATING ");        
           # TODO: remember old values someway (how???), before updating (old zone, old phone, ...)?
-          $this->set($personId, $personMaster, $personDetail, null);
+          $this->set($personId, $personMaster, $personDetail);
         } else { # new key, insert it
-          #$this->router->log("debug", " INSERTING ");
+          #$this->router->log("debug", "INSERTING ");
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
-          $personId = $this->add($personMaster, $personDetail, null);
-
-#$this->router->log("debug", " PERSON: " . any2string($personMaster) . any2string($personDetail));
+          $personId = $this->add($personMaster, $personDetail);
 
           foreach ($photosUrls as $photoUrl) { // add photos
-            #if (preg_match("/^https?:\/\//", $photoUrl)) { // absolute photo url
             if (is_absolute_url($photoUrl)) { // absolute photo url
-              $this->photoAdd($personId, $photoUrl);
+              $photoUrl = str_replace("../", "", $photoUrl); // 'normalize' relative urls
+#$this->router->log("debug", "PersonsController::sync() - ABSOLUTE PHOTO URL: " . $photoUrl);
             } else { // relative photo url
-#$this->router->log("debug", " RELATIVE PHOTO URL: " . $source["url"] . "@/@" . $photoUrl);
-              $this->photoAdd($personId, $source["url"] . "/" . $photoUrl);
+              $photoUrl = $source["url"] . "/" . $photoUrl;
+#$this->router->log("debug", "PersonsController::sync() - RELATIVE PHOTO URL: " . $photoUrl);
             }
+            $this->photoAdd($personId, $photoUrl);
           }
         }
         # TODO: REALLY DO NOT ADD PHOTOS FOR OLD KEYS/PERSONS ???
@@ -268,17 +269,17 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
    */
   private function assertPersonsActivity($timestampStart) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
-    #$this->router->log("info", " timestamp of last sync start: " . date("c", $timestampStart));
+    #$this->router->log("info", "timestamp of last sync start: " . date("c", $timestampStart));
     foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
-      #$this->router->log("info", "  person " . $person["key"] . " - active_label: [" . $person["active_label"] . "]");
+      #$this->router->log("info", " person " . $person["key"] . " - active_label: [" . $person["active_label"] . "]");
       if ($person["active_label"] === "0") {
         $active = false;
-        #$this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - active_label = false, forcing active status: active: " . ($active ? "1" : "0"));
+        #$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - active_label = false, forcing active status: active: " . ($active ? "1" : "0"));
       } else {
         // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
         $timestampLastSyncPerson = $person["timestamp_last_sync"];
         $active = ($timestampLastSyncPerson >= $timestampStart);
-        #$this->router->log("info", "  person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "1" : "0"));
+        #$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "1" : "0"));
       }
       $this->db->setPerson($person["id"], [ "active" => $active ? 1 : 0 ]);
     }
@@ -299,40 +300,42 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
 
     # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count - 1; $i++) {
-      #$this->router->log("info", " i: [$i]");
+      #$this->router->log("info", "i: [$i]");
       for ($j = $i + 1; $j < $persons_count; $j++) {
-        #$this->router->log("info", " j: [$j]");
+        #$this->router->log("info", "j: [$j]");
         if (
-          //($persons[$i]["name"] === $persons[$j]["name"]) ||
-          (($persons[$i]["phone"] !== "0" && $persons[$j]["phone"]) && ($persons[$i]["phone"] === $persons[$j]["phone"]))
+          personsCheckUniquenessByPhone($persons[$i], $persons[$j]) ||
+          personsCheckUniquenessByPhotos($persons[$i], $persons[$j])
         ) { // these two persons are unique
-          $id1 = $persons[$i]["id"];
-          $id2 = $persons[$j]["id"];
+          $id1 = $persons[$i]["id_person"];
+          $id2 = $persons[$j]["id_person"];
+
           $this->router->log("info", "assertPersonsUniqueness() - found 'uniq' persons: " . $persons[$i]['key'] . " and " . $persons[$j]['key']);
-          #$this->router->log("info", " - phone(id1): " . $persons[$i]["phone"]);
-          #$this->router->log("info", " - phone(id2): " . $persons[$j]["phone"]);
+          #$this->router->log("info", "- phone(id1): " . $persons[$i]["phone"]);
+          #$this->router->log("info", "- phone(id2): " . $persons[$j]["phone"]);
 
           // follow next unique chain, and add the 2nd person id as additional unique (next) person
-          $idNext = $personsById["$id1"]["uniq_next"];
-          while ($idNext && $personsById["$idNext"]["uniq_next"]) {
-            $idNext = $personsById["$idNext"]["uniq_next"]; // TODO: avoid possibly infinite loops...
-            #$this->router->log("info", "  w1 - idNext: [$idNext] - phone: " . $persons["$idNext"]["phone"]);
+          # TODO: do we need double quotes for numeric ndices in arrays?
+          $idNext = $personsById[$id1]["uniq_next"];
+          while ($idNext && $personsById[$idNext]["uniq_next"]) {
+            $idNext = $personsById[$idNext]["uniq_next"]; // TODO: avoid possibly infinite loops...
+            #$this->router->log("info", " w1 - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
           }
           $id = $idNext ? $idNext : $id1;
-          if ($personsById["$id"]["uniq_next"] !== $id2) {
-            $personsById["$id"]["uniq_next"] = $id2;
+          if ($personsById[$id]["uniq_next"] !== $id2) {
+            $personsById[$id]["uniq_next"] = $id2;
             $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
           }
 
           // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
-          $idPrev = $personsById["$id2"]["uniq_prev"];
-          while ($idPrev && $personsById["$idPrev"]["uniq_prev"]) {
-            $idPrev = $personsById["$idPrev"]["uniq_prev"]; // TODO: avoid possibly infinite loops...
-            #$this->router->log("info", "  w2 - idPrev: [$idPrev] - phone: " . $persons["$idPrev"]["phone"]);
+          $idPrev = $personsById[$id2]["uniq_prev"];
+          while ($idPrev && $personsById[$idPrev]["uniq_prev"]) {
+            $idPrev = $personsById[$idPrev]["uniq_prev"]; // TODO: avoid possibly infinite loops...
+            #$this->router->log("info", " w2 - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
           }
           $id = $idPrev ? $idPrev : $id2;
-          if ($personsById["$id"]["uniq_next"] != $id1) {
-            $personsById["$id"]["uniq_prev"] = $id1;
+          if ($personsById[$id]["uniq_next"] != $id1) {
+            $personsById[$id]["uniq_prev"] = $id1;
             $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
           }
         }
@@ -387,11 +390,21 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
   }
   
   public function add($personMaster, $personDetail = null, $userId = null) {
-    return $this->db->addPerson($personMaster, $personDetail, $userId = null);
+    # TODO: how to avoid this stupid test? (i.e.: how not to pass a parameter to a function, to let it use it's default?)
+    if ($userId) {
+      return $this->db->addPerson($personMaster, $personDetail, $userId);
+    } else {
+      return $this->db->addPerson($personMaster, $personDetail);
+    }
   }
 
   public function set($id, $personMaster, $personDetail = null, $userId = null) {
-    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
+    # TODO: how to avoid this stupid test? (i.e.: how not to pass a parameter to a function, to let it use it's default?)
+    if ($userId) {
+      return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
+    } else {
+      return $this->db->setPerson($id, $personMaster, $personDetail);
+    }
   }
 
   public function delete($id, $userId = null) {
@@ -470,115 +483,122 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
   }
 
   # TODO: PRIVATE @PRODUCTION
-  private function detectNationality($description, $languageCode) {
+  private function detectNationality($name, $description, $languageCode) {
     $patterns = [
       "it" => [
-        "/\balban(ia|ese)\b/si" => "al",
-        "/\bargentina\b/si" => "ar",
-        "/\baustrali(a|ana)\b/si" => "au",
-        "/\bbarbados\b/si" => "bb",
-        "/\bbelg(a|io)\b/si" => "be",
-        "/\bbolivi(a|ana)\b/si" => "bo",
-        "/\bbosni(a|aca)\b/si" => "ba",
-        "/\bbrasil(e|iana)\b/si" => "br",
-        "/\bbulgar(a|ia)\b/si" => "bu",
-        "/\bcanad(a|ese)\b/si" => "ca",
-        "/\bcapo\s*verd(e|iana)\b/si" => "cv",
-        "/\bch?il(e|ena)\b/si" => "cl",
-        "/\bch?in(e|ese)\b/si" => "cn",
-        "/\bcolombi(a|ana)\b/si" => "co",
-        "/\bcosta\s*ric(a|he..)\b/si" => "cr",
-        "/\bcroa([tz]ia|ta)\b/si" => "hr",
-        "/\bcub(a|ana)\b/si" => "cu",
-        "/\bc(zech|eca)\b/si" => "cz",
-        "/\bdan(imarca|ese)\b/si" => "dk",
-        "/\bdominic(a|ana)\b/si" => "do",
-        "/\becuador(e..)?\b/si" => "ec",
-        "/\beston(ia|e)\b/si" => "ee",
-        "/\bfinland(ia|ese)\b/si" => "fi",
-        "/\bfranc(ia|ese|esina)\b/si" => "fr",
-        "/\b(germania|tedesc(a|ina))\b/si" => "de",
-        "/\b(gran bretagna|ing(hilterra|les(e|ina)))\b/si" => "en",
-        "/\bgrec(a|ia)\b/si" => "gr",
-        "/\bgreanad(a|iana)\b/si" => "gd",
-        "/\bguatemal(a|teca)\b/si" => "gt",
-        "/\bhait(i|iana)\b/si" => "ht",
-        "/\bh?ondur(as|e(...)?)\b/si" => "hn",
-        "/\bungher(ia|ese)\b/si" => "hu",
-        "/\bisland(a|ese)\b/si" => "is",
-        "/\bindi(a|ana)\b/si" => "in",
-        "/\bindonesi(a|ana)\b/si" => "id",
-        "/\birland(a|ese)\b/si" => "ie",
-        "/\bisrael(e|iana)\b/si" => "ie",
-        "/\bitalian(a|issima)\b/si" => "it",
-        "/\b(j|gi)amaic(a|ana)\b/si" => "jm",
-        "/\bjappon(e|ese)\b/si" => "jp",
-        "/\bken[iy](a|ana)\b/si" => "ke",
-        "/\bcore(a|ana)\b/si" => "kr",
-        "/\blituan(a|ia)\b/si" => "lt",
-        "/\bliban(o|ese)\b/si" => "lb",
-        "/\bletton(ia|e)\b/si" => "lv",
-        "/\blussemburg(o|hese)\b/si" => "lu",
-        "/\bmacedon(ia|e)\b/si" => "mk",
-        "/\bmalta\b/si" => "mt",
-        "/\bme(x|ss)ic(o|ana)\b/si" => "mx",
-        "/\bmoldov(a|iana)\b/si" => "md",
-        "/\bmonaco\b/si" => "mc",
-        "/\bmongol(ia|a)\b/si" => "mn",
-        "/\bmontenegr(o|ina)\b/si" => "me",
-        "/\bmorocc(o|ina)\b/si" => "ma",
-        "/\boland(a|ese)\b/si" => "nl",
-        "/\b(neo|nuova)[\s-]?zeland(a|ese)\b/si" => "nz",
-        "/\bnicaragu(a|e...)\b/si" => "ni",
-        "/\bniger\b/si" => "ne",
-        "/\bnigeri(a|ana)\b/si" => "ng",
-        "/\bnorveg(ia|ese)\b/si" => "no",
-        "/\bpa(k|ch)istan(a)?\b/si" => "pk",
-        "/\bpanam(a|ense)\b/si" => "pa",
-        "/\bparagua(y|iana)\b/si" => "py",
-        "/\bperu(viana)?\b/si" => "pe",
-        "/\b(ph|f)ilippin(e|a)\b/si" => "ph",
-        "/\bpol(onia|acca)\b/si" => "pl",
-        "/\bportog(allo|hese)\b/si" => "pt",
-        "/\br(omania|(o|u)mena)\b/si" => "ro",
-        "/\bruss(i)?a\b/si" => "ru",
-        "/\bsan[\s-]?marin(o|ese)\b/si" => "sm",
-        "/\barab(i)?a\b/si" => "sa",
-        "/\bsenegal(ese)?\b/si" => "sn",
-        "/\bserb(i)?a\b/si" => "rs",
-        "/\bseychelles\b/si" => "sc",
-        "/\bsierra[\s-]?leone\b/si" => "sl",
-        "/\bsingapore\b/si" => "sg",
-        "/\bslovacch(i)?a\b/si" => "sk",
-        "/\bsloven(i)?a\b/si" => "si",
-        "/\bsomal(i)?a\b/si" => "so",
-        "/\bspagn(a|ola)\b/si" => "es",
-        "/\bsve(zia|dese)\b/si" => "se",
-        "/\bsvizzera\b/si" => "ch",
-        "/\bs[yi]ria(na)?\b/si" => "sy",
-        "/\btaiwan(ese)?\b/si" => "tw",
-        "/\bt(h)?ai(land(ia|ese)?)?\b/si" => "th",
-        "/\btrinidad\b/si" => "tt",
-        "/\btunisi(a|ina)\b/si" => "tn",
-        "/\bturc(hia|a)\b/si" => "tr",
-        "/\bu[kc]raina\b/si" => "ua",
-        "/\burugua([yi]gia)\b/si" => "uy",
-        "/\bamerica(na)?\b/si" => "us",
-        "/\bvenezuela(na)?\b/si" => "ve",
-        "/\bvietnam(ita)?\b/si" => "vn",
-        "/\borient(e|ale)\b/si" => "cn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )alban(ia|ese)\b/si" => "al",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )argentina\b/si" => "ar",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )australi(a|ana)\b/si" => "au",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )barbados\b/si" => "bb",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )belg(a|io)\b/si" => "be",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )bolivi(a|ana)\b/si" => "bo",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )bosni(a|aca)\b/si" => "ba",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )brasil(e|iana)\b/si" => "br",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )bulgar(a|ia)\b/si" => "bu",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )canad(a|ese)\b/si" => "ca",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )capo\s*verd(e|iana)\b/si" => "cv",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ch?il(e|ena)\b/si" => "cl",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ch?in(e|ese)\b/si" => "cn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )colombi(a|ana)\b/si" => "co",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )costa\s*ric(a|he..)\b/si" => "cr",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )croa([tz]ia|ta)\b/si" => "hr",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )cub(a|ana)\b/si" => "cu",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )c(zech|eca)\b/si" => "cz",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )dan(imarca|ese)\b/si" => "dk",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )dominic(a|ana)\b/si" => "do",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ecuador(e..)?\b/si" => "ec",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )eston(ia|e)\b/si" => "ee",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )finland(ia|ese)\b/si" => "fi",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )franc(ia|ese|esina)\b/si" => "fr",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(germania|tedesc(a|ina)|(amica)|(alla) )\b/si" => "de",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(gran bretagna|ing(hilterra|les(e|ina)|(amica)|(alla) ))\b/si" => "en",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )grec(a|ia)\b/si" => "gr",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )greanad(a|iana)\b/si" => "gd",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )guatemal(a|teca)\b/si" => "gt",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )hait(i|iana)\b/si" => "ht",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )h?ondur(as|e(...)?)\b/si" => "hn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ungher(ia|ese)\b/si" => "hu",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )island(a|ese)\b/si" => "is",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )indi(a|ana)\b/si" => "in",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )indonesi(a|ana)\b/si" => "id",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )irland(a|ese)\b/si" => "ie",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )israel(e|iana)\b/si" => "ie",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )italian(a|issima)\b/si" => "it",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(j|gi)amaic(a|ana)\b/si" => "jm",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(japan)|(giappon(e|ese))\b/si" => "jp",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ken[iy](a|ana)\b/si" => "ke",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )core(a|ana)\b/si" => "kr",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )lituan(a|ia)\b/si" => "lt",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )liban(o|ese)\b/si" => "lb",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )letton(ia|e)\b/si" => "lv",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )lussemburg(o|hese)\b/si" => "lu",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )macedon(ia|e)\b/si" => "mk",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )malta\b/si" => "mt",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )me(x|ss)ic(o|ana)\b/si" => "mx",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )moldov(a|iana)\b/si" => "md",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )monaco\b/si" => "mc",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )mongol(ia|a)\b/si" => "mn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )montenegr(o|ina)\b/si" => "me",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )morocc(o|ina)\b/si" => "ma",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )oland(a|ese)\b/si" => "nl",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(neo|nuova)[\s-]?zeland(a|ese)\b/si" => "nz",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )nicaragu(a|e...)\b/si" => "ni",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )niger\b/si" => "ne",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )nigeri(a|ana)\b/si" => "ng",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )norveg(ia|ese)\b/si" => "no",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )pa(k|ch)istan(a)?\b/si" => "pk",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )panam(a|ense)\b/si" => "pa",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )paragua(y|iana)\b/si" => "py",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )peru(viana)?\b/si" => "pe",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(ph|f)ilippin(e|a)\b/si" => "ph",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )pol(onia|acca)\b/si" => "pl",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )portog(allo|hese)\b/si" => "pt",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )r(omania|(o|u)mena)\b/si" => "ro",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )russ(i)?a\b/si" => "ru",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )san[\s-]?marin(o|ese)\b/si" => "sm",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )arab(i)?a\b/si" => "sa",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )senegal(ese)?\b/si" => "sn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )serb(i)?a\b/si" => "rs",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )seychelles\b/si" => "sc",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )sierra[\s-]?leone\b/si" => "sl",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )singapore\b/si" => "sg",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )slovacch(i)?a\b/si" => "sk",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )sloven(i)?a\b/si" => "si",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )somal(i)?a\b/si" => "so",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )spagn(a|ola)\b/si" => "es",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )sve(zia|dese)\b/si" => "se",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )svizzera\b/si" => "ch",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )s[yi]ria(na)?\b/si" => "sy",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )taiwan(ese)?\b/si" => "tw",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )t(h)?ai(land(ia|ese)?)?\b/si" => "th",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )trinidad\b/si" => "tt",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )tunisi(a|ina)\b/si" => "tn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )turc(hia|a)\b/si" => "tr",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )u[kc]raina\b/si" => "ua",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )urugua([yi]gia)\b/si" => "uy",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )america(na)?\b/si" => "us",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )venezuela(na)?\b/si" => "ve",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )vietnam(ita)?\b/si" => "vn",
+        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )orient(e|ale)\b/si" => "cn",
       ],
     ];
-    
-    if ($description) {
-      if (array_key_exists($languageCode, $patterns)) {
-        foreach ($patterns[$languageCode] as $key => $value) {
+// TODO: PortoRico...
+
+    if (array_key_exists($languageCode, $patterns)) {
+      foreach ($patterns[$languageCode] as $key => $value) {
+        if ($name) {
+          if (preg_match($key, $name)) {
+            return $patterns[$languageCode][$key];
+          }
+        }
+        if ($description) {
           if (preg_match($key, $description)) {
             return $patterns[$languageCode][$key];
           }
         }
       }
     }
+
     return null;
   }
 
@@ -704,6 +724,51 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
 */
 
   /**
+   * Check two persons uniqueness comparyng their phone numbers
+   *
+   * @param  array $person1    the first person
+   * @param  array $person2    the second person
+   * @return integer: true     the persons are uniq (same phone)
+   *                  false    the persons are not uniq
+   */
+  private function personsCheckUniquenessByPhone($personId1, $personId2) {
+    return (
+      ($person1["phone"] && $person2["phone"]) &&
+      #($person1["phone"] !== "0" && $person2["phone"] !== "0") && # TODO: do we need this check, or do we always get null or a phone number?
+      ($person1["phone"] === $person2["phone"])
+    );
+  }
+
+  /**
+   * Check two persons uniqueness comparyng their photos
+   *
+   * @param  array $person1    the first person
+   * @param  array $person2    the second person
+   * @return integer: true     the persons are uniq (some photo in common)
+   *                  false    the persons are not uniq
+   */
+  public function personsCheckUniquenessByPhotos($person1, $person2) {
+    $id1 = $person1["id_person"];
+    $id2 = $person2["id_person"];
+    $photos1 = $this->db->getByField("photo", "id_person", $id1);
+    $photos2 = $this->db->getByField("photo", "id_person", $id2);
+
+    foreach($photos1 as $photo1) {
+      // check if photo is an exact duplicate
+      if ($this->photoCheckDuplication($photo1, $photos2)) {
+        $this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
+        return true; // duplicate found
+      }
+  
+      if ($this->photoCheckSimilarity($photo1, $photos2)) {
+        $this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
+        return true; // similarity found
+      }
+    }
+    return false;
+  }
+
+  /**
    * Add a photo
    *
    * @param  integer $personId the id of the person's photo
@@ -712,11 +777,20 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
    *                  >= 0     photo added to filesystem and to database
    */
   public function photoAdd($personId, $photoUrl) {
-    // 'normalize' relative urls
-    $photoUrl = str_replace("../", "", $photoUrl);
+#$this->router->log("debug", "PersonsController::photoAdd() - photoUrl = $photoUrl");
+#    if (is_absolute_url($photoUrl)) { // absolute photo url
+#      $photoUrl = $source["url"] . "/" . $photoUrl;
+#   } else { // relative photo url
+#      $photoUrl = str_replace("../", "", $photoUrl); // 'normalize' relative urls
+#    }
 
     // build photo object from url
-    $photo = new Photo([ "url" => $photoUrl ]);
+    try {
+      $photo = new Photo($this->router, [ "url" => $photoUrl ]);
+    } catch (Exception $e) {
+      $this->router->log("error", "can't create new photo from url: " . $e->getMessage());
+      return false;
+    }
 
     $photos = $this->db->getByField("photo", "id_person", $personId);
 
@@ -725,25 +799,25 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
 
     // check if photo url did not change from last download
     if ($this->photoCheckLastModified($personId, $photo, $photos)) {
-      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is not changed, ignoring");
+      $this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is not changed, ignoring");
       return false; // same Last-Modified tag found
     }
 */
 
     // check if photo is an exact duplicate
-    if ($this->photoCheckDuplication($personId, $photo, $photos)) {
-      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is a duplicate, ignoring");
+    if ($this->photoCheckDuplication($photo, $photos)) {
+      $this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a duplicate, ignoring");
       return false; // duplicate found
     }
 
     // check if photo has similarities
     $photo->signature();
 
-    if ($this->photoCheckSimilarity($personId, $photo, $photos)) {
-      $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " is a similarity, ignoring");
+    if ($this->photoCheckSimilarity($photo, $photos)) {
+      $this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a similarity, ignoring");
       return false; // similarity found
     }
-    $this->router->log("debug", " photoAdd [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING...");
+    $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING...");
 
     $showcase = true; # TODO: decide $showcase (flag to denote showcase photo) ...
 
@@ -764,6 +838,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
     // add this photo to database
     $retval = $this->db->add("photo", $this->photo2Data($photo));
     unset($photo);
+
     return $retval;
   }
 
@@ -819,7 +894,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
                 // the last modification timestamp of existing photo is greater or equal to
                 // the last modification timestamp of the photo to be downloaded
                 #$this->router->log("debug", "photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)");
-                #$this->router->log("debug", " - photoCheckLastModified() RETURNING TRUE");
+                #$this->router->log("debug", "- photoCheckLastModified() RETURNING TRUE");
                 return true;
               } else {
                 // the last modification timestamp of existing photo did not change
@@ -839,7 +914,7 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
       #  throw new Exception("photoCheckLastModified(): returned one-level array: ".var_export($photos, true)." (SHOULD NOT BE POSSIBLE!!!)");
       #}
     }
-    #$this->router->log("debug", " - photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
+    #$this->router->log("debug", "- photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!");
     return false;
   }
 */
@@ -847,33 +922,17 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
   /**
    * Check for photo exact duplication
    *
-   * @param  integer $personId:  the id of person to check for photo duplication
    * @param  Photo: $photo       the photo object to check for duplication
    * @return boolean: true       if photo is a duplicate
    *                  false      if photo is not a fuplicate
    */
-  private function photoCheckDuplication($personId, $photo, $photos) {
+  private function photoCheckDuplication($photo, $photos) {
     if ($photos !== []) {
-#      if (is_array_multi($photos)) { // more than one result returned
-        foreach ($photos as $p) {
-          if ($p["sum"] === $photo->sum()) { // the checksum matches
-            #$this->router->log("debug", "photoCheckDuplication(many) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
-            return true;
-          }
+      foreach ($photos as $p) {
+        if ($p["sum"] === $photo->sum()) { // the checksum matches
+          return true;
         }
-#      } else { // not more than one result returned
-#        # TODO: check if this is possible...
-#        throw new Exception("photoCheckDuplication(): returned one-level array:" . var_export($photos, true));
-#/*  
-#        if ($photos) { // exactly one result returned
-#          $p = $photos;
-#          if ($p["sum"] === $photo->sum()) { // the checksum matches
-#            #$this->router->log("debug", "photoCheckDuplication(one) - photo " . $photo->url() . " sum is equal to  " . $p["url"] . ", it's duplicate...");
-#            return true;
-#          }
-#        }
-#*/  
-#      }
+      }
     }
     return false;
   }
@@ -881,35 +940,25 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
   /**
    * Check for photo similarity
    *
-   * @param  integer $personId:  the id of person to check for photo similarity
    * @param  Photo: $photo       the photo object to check for similarity
    * @return boolean: true       if photo is similar to some else photo
    *                  false      if photo is not similar to some else photo
    */
-  private function photoCheckSimilarity($personId, $photo, $photos) {
+  private function photoCheckSimilarity($photo, $photos) {
     $retval = false;
     if ($photos !== []) {
-#      if (is_array_multi($photos)) { // more than one result returned
-        foreach ($photos as $p) {
-          $photo2 = new Photo([ "data" => $p ]);
-          if ($photo->checkSimilarity($photo2)) {
-            #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
-            $retval = true;
-            break;
-          }
+      foreach ($photos as $p) {
+        try {
+          $photo2 = new Photo($this->router, [ "data" => $p ]);
+        } catch (Exception $e) {
+          $this->router->log("error", "can't create new photo from data: " . $e->getMessage());
+          return false;
         }
-#      } else { // not more than one result returned
-#        throw new Exception("photoCheckSimilarity(): returned one-level array!" . " SHOULD NOT HAPPEN!!!");
-#/*  
-#        if ($photos) { // one result returned
-#          $photo2 = new Photo([ "data" => $photos ]);
-#          if ($photo->checkSimilarity($photo2)) {
-#            #$this->router->log("info", "photo signature " . $photo->url() . " is similar to " . $photo2->url() . ", it's probably a duplicate...");
-#            return true;
-#          }
-#        }
-#*/  
-#      }
+        if ($photo->checkSimilarity($photo2)) {
+          $retval = true;
+          break;
+        }
+      }
     }
     unset($photo2);
     return $retval;
@@ -923,8 +972,6 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
    * @return integer: >= 0       the progressive number of the photo
    */
   public function photoStore($personId, $photo) {
-    #$this->router->log("debug", "photoStore - storing photo");
-
     $keyPerson = $this->db->get("person", $personId)["key"];
     $personPhotosCount = $this->photoGetCount($personId);
     $number = $personPhotosCount + 1;
@@ -965,15 +1012,15 @@ if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
     return $number;
   }
 
-  /**
+/*
+  / **
    * Get all photos of person
    *
    * @param  integer $personId the person id of the photo
    * @return array[][]         if photos found
    *         null              if photos not found
-   */
+   * /
   private function photoGetAll($personId) {
-$this->router->log("debug", "photoGetAll($personId)");
     $photos = $this->db->get("photo", $personId);
 
 # DO WE NEED UNIQUENESS MERGE HERE ??? ##################################################
@@ -982,16 +1029,17 @@ $this->router->log("debug", "photoGetAll($personId)");
     foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes
       if ($personId == $uniqcode["id_person_1"]) {
         // append photos fron the other 'uniq' person
-        /*
+        / *
         $result = $photos;
         $photos = $result + $this->db->get("photo", $uniqcode["id_person_2"]);
-        */
+        * /
         $photos += $this->db->get("photo", $uniqcode["id_person_2"]);
       }
     }
 #########################################################################################
     return $photos;
   }
+*/
 
   /**
    * Get a photo of person given it's number

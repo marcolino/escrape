@@ -19,6 +19,14 @@ TODO 1.0:
  - id_user_max: do we need it? (no, rename it to "_id_user_max"?)
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
  - remove resize directive from persons view
+ - add an empty element to person view nationality dropdown elements
+ - add a "back to list view" button in person view
+ - add a "milf" field (/(matura)|(milf)/) in person's table... (or age?)
+ - title of nationality in person view: countryName, not countryCode...
+ - handle race ('oriente' / 'sudamerica') ... (?)
+ - avoid name normalization for sgi ("IN.... RU...")
+ - add total # of persons in footer
+ - test personsCheckUniquenessByPhotos()
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)
@@ -122,3 +130,4 @@ DONE:
  - remove all "is_array_multi()" checks (after db fechtall's...) (are we sure it's unuseful?) TO BE TESTED (@HOME...)
  - try to unify getLastModificationTimestampFromUrl($url), getMimeFromUrl($url) to getUrlContents(...) ...
  - remove camel_case comments (set in .jshintrc)
+ - PersonsController - line 128: sleep a random number of seconds to avoid being banned...

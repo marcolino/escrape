@@ -11,11 +11,13 @@ dirapplogs="/var/www/html/escrape/api/logs"
 dirhttplogs="/var/log/apache2"
 dirappdb="/var/www/html/escrape/api/db"
 
-sudo /bin/rm "$dirapplogs/"*-*-*.log
+#gnome-terminal --title="$dirapplogs/*-*-*.log" --geometry=150x12+190+280 -x sh -c "tail --retry -f $dirapplogs/????-??-??.log"
+
+#sudo /bin/rm "$dirapplogs/"*-*-*.log
 sqlitebrowser "$dirappdb/escrape.sqlite" &
-sleep 1
+#sleep 1
 gnome-terminal --title="$dirhttplogs/error.log" --geometry=150x12+150+500 -x sh -c "less +F $dirhttplogs/error.log"
-( sleep 15; gnome-terminal --title="$dirapplogs/*-*-*.log" --geometry=150x12+190+280 -x sh -c "tail -f $dirapplogs/????-??-??.log" ) &
+gnome-terminal --title="$dirapplogs/*-*-*.log" --geometry=150x12+190+280 -x sh -c "tail --retry -f $dirapplogs/`date +%Y-%m-%d | tr -d '\012'`.log"
 gnome-terminal --title="$dirapplogs/curl.log" --geometry=140x8+230+120 -x sh -c "less +F $dirapplogs/curl.log"
 subl
 killall grunt 2>/dev/null
