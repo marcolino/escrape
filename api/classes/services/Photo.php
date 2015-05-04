@@ -335,18 +335,20 @@ class Photo {
       ) {
         $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
         # TODO: why sync execution stops here??? (and not true / false is returned?)
-        if ($retries < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+        if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
           $retry++;
-          $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " before retrying...");
+          $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
           sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
+          goto retry;
         } else {
           $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
         }
       } else {
         $this->router->log("error", "can't get image [$this->url] contents: " . $message);
       }
-
+$this->router->log("warning", "ENDING TRY CATCH ...");
     }
+$this->router->log("warning", "AFTER TRY CATCH ...");
 
 /* TODO: we don't need to call "getMimeFromUrl()" anymore, since we get mime type from "getImageFromUrl()"...
     try {
