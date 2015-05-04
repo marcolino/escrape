@@ -16,8 +16,6 @@
 class PersonsController {
   #const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
-  const TIMEOUT_BETWEEN_DOWNLOADS_MIN = 1;
-  const TIMEOUT_BETWEEN_DOWNLOADS_MAX = 3;
 
   /**
    * Constructor
@@ -211,6 +209,11 @@ class PersonsController {
           #$this->router->log("debug", "UPDATING ");        
           # TODO: remember old values someway (how???), before updating (old zone, old phone, ...)?
           $this->set($personId, $personMaster, $personDetail);
+
+          if ($fullSync) {
+            // add photos
+            # TODO: add photos for old keys, too, if full sync was requested (see below)
+          }
         } else { # new key, insert it
           #$this->router->log("debug", "INSERTING ");
           $personMaster["key"] = $key; // set univoque key only when adding person
@@ -245,17 +248,14 @@ class PersonsController {
 #break;
     }
 
-    if ($fullSync) { // full sync was requested
-      # TODO: DO WE NEED THIS GLOBAL VARIABLE, OR WE JUST USE $timestampStart IN FOLLOWING assertPersonsActivity()?
-      #// full sync done, set start timestamp to global table field 'last_sync_full'
-      #$this->db->setByField("global", "last_sync_full", $timestampStart);
-
+    # TODO: do if ... (not if ($fullSync)...)
+    #if ($fullSync) { // full sync was requested
       // assert persons activity after full sync completed, if we get no error
       //  (to avoid marking all persons as not-active when a source is not available...)
       if (!$error) {
         $this->assertPersonsActivity($timestampStart);
       }
-    }
+    #}
 
     // assert persons uniqueness after sync completed
     $this->assertPersonsUniqueness();
@@ -304,8 +304,8 @@ class PersonsController {
       for ($j = $i + 1; $j < $persons_count; $j++) {
         #$this->router->log("info", "j: [$j]");
         if (
-          personsCheckUniquenessByPhone($persons[$i], $persons[$j]) ||
-          personsCheckUniquenessByPhotos($persons[$i], $persons[$j])
+          $this->personsCheckUniquenessByPhone($persons[$i], $persons[$j]) ||
+          $this->personsCheckUniquenessByPhotos($persons[$i], $persons[$j])
         ) { // these two persons are unique
           $id1 = $persons[$i]["id_person"];
           $id2 = $persons[$j]["id_person"];
@@ -731,7 +731,7 @@ class PersonsController {
    * @return integer: true     the persons are uniq (same phone)
    *                  false    the persons are not uniq
    */
-  private function personsCheckUniquenessByPhone($personId1, $personId2) {
+  private function personsCheckUniquenessByPhone($person1, $person2) {
     return (
       ($person1["phone"] && $person2["phone"]) &&
       #($person1["phone"] !== "0" && $person2["phone"] !== "0") && # TODO: do we need this check, or do we always get null or a phone number?
@@ -753,17 +753,25 @@ class PersonsController {
     $photos1 = $this->db->getByField("photo", "id_person", $id1);
     $photos2 = $this->db->getByField("photo", "id_person", $id2);
 
-    foreach($photos1 as $photo1) {
+    foreach ($photos1 as $photo1) {
+      try {
+        $photo = new Photo($this->router, [ "data" => $photo1 ]);
+      } catch (Exception $e) {
+        $this->router->log("error", "can't create new photo from data: " . $e->getMessage());
+        return false;
+      }
+
       // check if photo is an exact duplicate
-      if ($this->photoCheckDuplication($photo1, $photos2)) {
+      if ($this->photoCheckDuplication($photo, $photos2)) {
         $this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
         return true; // duplicate found
       }
-  
-      if ($this->photoCheckSimilarity($photo1, $photos2)) {
+      if ($this->photoCheckSimilarity($photo, $photos2)) {
         $this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
         return true; // similarity found
       }
+
+      unset($photo);
     }
     return false;
   }
@@ -941,6 +949,7 @@ class PersonsController {
    * Check for photo similarity
    *
    * @param  Photo: $photo       the photo object to check for similarity
+   * @param  array: $photos      the array of photos to be checkd against
    * @return boolean: true       if photo is similar to some else photo
    *                  false      if photo is not similar to some else photo
    */

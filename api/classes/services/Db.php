@@ -399,10 +399,10 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
         $mode = null;
         if ($result["count"] === "0") {
           $mode = "insert";
-          $this->router->log("debug", " setPerson() - will INSERT record");
+          $this->router->log("debug", "   DB::setPerson() - will INSERT record");
         } else {
           $mode = "update";
-          $this->router->log("debug", " setPerson() - will UPDATE record");
+          $this->router->log("debug", "   DB::setPerson() - will UPDATE record");
         }
       } catch (PDOException $e) {
         throw new Exception("can't check record in table $tableDetail: " . $e->getMessage());

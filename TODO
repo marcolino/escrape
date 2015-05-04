@@ -27,6 +27,9 @@ TODO 1.0:
  - avoid name normalization for sgi ("IN.... RU...")
  - add total # of persons in footer
  - test personsCheckUniquenessByPhotos()
+ - "Median rating of comments..." should not be shown if # of comments is 0
+ - do not search for address if address is empty
+ - put a blank imag e in person's header to avoid header left collapse with some screen sizes...
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)

@@ -11,6 +11,8 @@ class Photo {
   const SMALL_HEIGHT = 96; // small photo height (pixels)
   const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.1; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
+  const TIMEOUT_BETWEEN_DOWNLOADS = 60;
+  const RETRIES_MAX_FOR_DOWNLOADS = 3;
 
   public function __construct($router, $source, $options = []) {
     $this->router = $router;
@@ -320,34 +322,31 @@ class Photo {
       #$this->bitmap = $network->getUrlContents($this->url); #, null, null, false, false); // download photo
       
       #$this->bitmap = $network->getUrlContents($this->url, null, null, false, false); // download photo without TOR
-    $retries = 0;
+    $retry = 0;
     retry:
     try {
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
-#throw new Exception("RETURNED FROM GETIMAGEFROMURL - LEN OF BITMAP: " . strlen($this->bitmap));
-# TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() befor downloading... !!!
-# TODO: HANDLE CAPTCHA MESSAGE: "Why do I have to complete a CAPTCHA?" (?) HOWEVER, CHECK bitmap is image!
+      # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() befor downloading... !!!
     } catch(Exception $e) {
       $message = $e->getMessage();
       if (
         (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
         (strpos($message, "has banned your access") !== false)
       ) {
-        $this->router->log("error", "can't get image [$this->url]: " . "site denies access");
+        $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
         # TODO: why sync execution stops here??? (and not true / false is returned?)
-        # TODO: put in Network class...
-        if ($retries < ..MAX)      // sleep a random number of seconds to avoid being banned...
-            sleep(rand(self::TIMEOUT_BETWEEN_DOWNLOADS_MIN, self::TIMEOUT_BETWEEN_DOWNLOADS_MAX));
+        if ($retries < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+          $retry++;
+          $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " before retrying...");
+          sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
+        } else {
+          $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
         }
-
       } else {
         $this->router->log("error", "can't get image [$this->url] contents: " . $message);
       }
 
     }
-    #} catch(Exception $e) {
-    #  throw new Exception("error getting image [$this->url] contents: " . $e->getMessage());
-    #}
 
 /* TODO: we don't need to call "getMimeFromUrl()" anymore, since we get mime type from "getImageFromUrl()"...
     try {
