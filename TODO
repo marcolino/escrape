@@ -1,5 +1,4 @@
 TODO 1.0:
- - use integerNumber.js directive
  - review user writes...
  - handle guest tentative write warning
  - check if timestamps on DB are * 1000 or not (should be not: correct comment_table...)
@@ -10,6 +9,7 @@ TODO 1.0:
     check if all-string values in DB can be someway harmful...
  - filter all sites defined and all esc* sites from photos 'occurrences' (and add also "http://esc...profil.com/", ...)
  - in google search results page, add small button "add to white list" after url...
+ - in google search results page, add a "white list" handling (list/add(?),remove,...)
  - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
  - think about a way to allow users to add/remove uniquenesses...
  - handle all exceptions at least with notify.error() ...
@@ -22,14 +22,13 @@ TODO 1.0:
  - add an empty element to person view nationality dropdown elements
  - add a "back to list view" button in person view
  - add a "milf" field (/(matura)|(milf)/) in person's table... (or age?)
- - title of nationality in person view: countryName, not countryCode...
- - handle race ('oriente' / 'sudamerica') ... (?)
+ - handle person's race ('oriente' / 'sudamerica') ... (?)
  - avoid name normalization for sgi ("IN.... RU...")
  - add total # of persons in footer
- - test personsCheckUniquenessByPhotos()
- - "Median rating of comments..." should not be shown if # of comments is 0
- - do not search for address if address is empty
- - put a blank imag e in person's header to avoid header left collapse with some screen sizes...
+ - test personsCheckUniquenessByPhotos() (@HOME)
+ - set css cursor as pointer in maps buttons in person view
+ - globally rename streetAddressModalPopup to streetAddressMapModalPopup
+ - globally rename streetAddressIndicationsModalPopup to streetAddressViewModalPopup
 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)
@@ -134,3 +133,8 @@ DONE:
  - try to unify getLastModificationTimestampFromUrl($url), getMimeFromUrl($url) to getUrlContents(...) ...
  - remove camel_case comments (set in .jshintrc)
  - PersonsController - line 128: sleep a random number of seconds to avoid being banned...
+ - use integerNumber.js directive
+ - do not search for address if address is empty
+ - "Median rating of comments..." should not be shown if # of comments is 0
+ - in persons view, put a blank image in person's header to avoid header left collapse with some screen sizes... (NO)
+ - title of nationality in persons view: countryName, not countryCode...

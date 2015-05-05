@@ -214,6 +214,11 @@ app.service('Countries', function() {
        	  0
        	);
       }
+/*
+      var c = countries.sort(compare);
+      c.unshift({ code: 'zz', name: 'EMPTY' }); // add empty element on top
+      return c;
+*/
       return countries.sort(compare);
 	},
 	getCountryName: function(countryCode) {

@@ -237,7 +237,7 @@
         <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
           <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
             <div class="person-name">
-              <!-- SUPERSCRIPT BADGE NEW: <span ng-show="isNew(person.id_person)" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
+              <!-- SUPERSCRIPT BADGE NEW: <span ng-show="isNew(person)" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
               <span style="text-align: left;">{{person.name}}</span>
             </div>
           </div>
@@ -245,7 +245,7 @@
   
         <div class="row" style="padding-bottom:2px;">
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-            <button type="button" class="btn btn-default btn-wider" ng-attr-title="nationality: {{person.nationality}}">
+            <button type="button" class="btn btn-default btn-wider" ng-attr-title="nationality: {{countries.getCountryName(person.nationality)}}">
               <a ng-href="#/"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></a>
             </button>
           </div>
@@ -255,7 +255,7 @@
             </button>
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-            <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone}}" ng-disabled="{{person.phone === '0'}}">
+            <button type="button" class="btn btn-default btn-wider" ng-attr-title="phone: {{person.phone || 'none'}}" ng-disabled="{{person.phone === '0'}}">
               <a ng-href="tel:{{person.phone}}"><i class="glyphicon glyphicon-earphone"></i></a>
             </button>
           </div>
@@ -278,8 +278,8 @@
           </div>
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <div class="person-vote">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="vote: {{person.vote}}">
-                <!--<i class="glyphicon glyphicon-thumbs-up text-success"></i>&nbsp;--><span class="label label-as-badge label-success">{{person.vote}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="vote: {{person.vote || 'none'}}">
+                <!--<i class="glyphicon glyphicon-thumbs-up text-success"></i>&nbsp;--><span class="label label-as-badge label-success">{{person.vote || '-'}}</span><!--&nbsp;<i class="glyphicon glyphicon-thumbs-down"></i>-->
               </button>
             </div>
           </div>
@@ -288,8 +288,8 @@
         <div class="row" style="padding-bottom:2px;">
           <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
             <div class="person-is-new">
-              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is {{isNew(person.id_person) ? '' : 'not '}}new (first seen {{firstSeen(person.id_person)}})">
-                <i class="glyphicon glyphicon-star" ng-class="{ 'person-new': isNew(person.id_person), 'person-not-new': isNew(person.id_person) }"></i>
+              <button class="btn btn-default btn-wider" type="button" ng-attr-title="this person record is {{isNew(person) ? '' : 'not '}}new (first seen {{firstSeen(person)}})">
+                <i class="glyphicon glyphicon-star" ng-class="{ 'person-new': isNew(person), 'person-not-new': !isNew(person) }"></i>
               </button>
             </div>
           </div>

@@ -131,14 +131,13 @@ console.log('sortObjectToList():', object, criteria);
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       console.log('Persons.getPerson:', $scope.person);
       ///$scope.person.nationality = 'it';
-      $scope.person.vote = 5;
-      //$scope.person.streetAddress = 'Torino, Via Carlo Pisacane, 39';
-      $scope.person.streetAddress = $scope.person.address;
-      $scope.person.streetRegion = 'it';
-      $scope.$watch('person.streetAddress', function() {
-         console.log('$watch: Hey, person.streetAddress has changed!');
-         $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.streetAddress);
-         $scope.geocode($scope.person.streetAddress, $scope.person.streetRegion);
+      //$scope.person.vote = 5;
+      //$scope.person.street_address = 'Torino, Via Carlo Pisacane, 39';
+      $scope.person.street_region = 'it'; // TODO: get street_region from setup/cfg ?
+      $scope.$watch('person.street_address', function() {
+         console.log('$watch: Hey, person.street_address has changed!');
+         $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.street_address);
+         $scope.geocode($scope.person.street_address, $scope.person.street_region);
       });
 
       $scope.personsPerComment = {};
@@ -296,15 +295,15 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
     });
   };
 
-  $scope.isNew = function(personId) {
-    var timestampLastSync = $scope.persons[personId].timestamp_last_sync * 1000;
+  $scope.isNew = function(person) {
+    var timestampLastSync = person.timestamp_last_sync * 1000;
     var now = new Date();
     return (now - timestampLastSync) < (cfg.person.NEW_DURATION_DAYS * cfg.MILLISECONDS_PER_DAY);
   };
 
-  $scope.firstSeen = function(personId) {
+  $scope.firstSeen = function(person) {
     var MILLISECONDS_PER_DAY = (1000 * 60 * 60 * 24);
-    var timestampCreation = $scope.persons[personId].timestamp_creation * 1000;
+    var timestampCreation = person.timestamp_creation * 1000;
     var firstSeenAsString;
     var now = new Date();
     var timestampStartOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -449,7 +448,7 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
       'name',
       'sex',
       'zone',
-      'address',
+      'street_address',
       'description',
       'notes',
       'phone',
@@ -675,63 +674,100 @@ console.log('-------------- person.rating => ', $scope.person.rating);
     $scope.savePersonComment(comment); // for new comment
   };
 
+  $scope.streetAddress = function(person) {
+console.log('++++++ saving person for street address changed:', person);
+    $scope.savePerson(person);
+  };
+
   $scope.personRatingFromCommentsRatings = function() {
     // TODO: refine method to calculate person's rating from all her comments ratings
     var ratings = 0;
     var count = 0;
     var len = $scope.person.comments.length;
-console.log(' +++++++++++++ person.id_person => ', $scope.person.id_person);
     for (var i = 0; i < len; i++) {
-console.log(i + ' +++++++++++++ comment => ', $scope.person.comments[i]);
       if (!isNaN(parseInt($scope.person.comments[i].content_rating))) {
         if ($scope.person.comments[i].id_person === $scope.person.id_person) {
-console.log(i + ' +++++++++++++! content_rating => ', parseInt($scope.person.comments[i].content_rating));
           ratings += parseInt($scope.person.comments[i].content_rating);
           count++;
-console.log(i + ' +++++++++++++! count => ', count);
         }
       }
     }
     if (count > 0) {
-console.log(parseInt(count) + ' +++++++++++++ person.rating => ', parseInt(ratings / count));
       return parseInt(ratings / count);
     } else {
-console.log(parseInt(count) + ' +++++++++++++ person.rating => ', null);
       return null; // no ratings set for any comment for this person
     }
   };
 
   $scope.geocode = function(address, region) {
-    var geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ 'address': address, 'region': region }, function(results, status) {
-      if (status === google.maps.GeocoderStatus.OK) {
-        //console.info('Address [' + $scope.person.streetAddress + '] found:', results[0].geometry.location);
-        $scope.person.streetGeometryLocation = results[0].geometry.location;
-        $scope.person.streetLocation = [ $scope.person.streetGeometryLocation.k, $scope.person.streetGeometryLocation.D ];
-        console.log('person.streetLocation is now', $scope.person.streetLocation);
-      } else {
-        if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-          // got OVER_QUERY_LIMIT status code: retry in a moment...
-          setTimeout(function() {
-            $scope.geocode(address);
-          }, 200);
+    if (address) {
+      var geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ 'address': address, 'region': region }, function(results, status) {
+        if (status === google.maps.GeocoderStatus.OK) {
+          //console.info('Address [' + $scope.person.street_address + '] found:', results[0].geometry.location);
+          $scope.person.streetGeometryLocation = results[0].geometry.location;
+console.info('streetGeometryLocation: ' + $scope.person.streetGeometryLocation);
+          $scope.person.streetLocation = [ $scope.person.streetGeometryLocation.k, $scope.person.streetGeometryLocation.D ];
+          $scope.person.streetLocation = $scope.person.streetGeometryLocation; // TODO: use always "streetGeometryLocation" ...
+          console.log('person.streetLocation is now', $scope.person.streetLocation);
         } else {
-          console.error('Unable to find address [' + $scope.person.streetAddress + '], status: ', status); // set center of region is set if no address found
+          if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+            // got OVER_QUERY_LIMIT status code: retry in a moment...
+            setTimeout(function() {
+              $scope.geocode(address);
+            }, 200);
+          } else {
+            console.error('Unable to find address [' + $scope.person.street_address + '], status: ', status); // set center of region is set if no address found
+          }
         }
-      }
-    });
+      });
+    }
   };
 
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {
+/*
     $scope.map = maps[0];
+*/
+//console.log('maps:', maps);
+
+    //$scope.maps = maps;
+
+/*
+    var mapOptions = {
+      zoom: 14,
+      center: new google.maps.LatLng(45.0714124, 7.68522280000002),
+    };
+    var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions);
+    var mapStreetIndications = new google.maps.Map($("#streetindications")[0], mapOptions);
+*/
+
     /* global $:false */
-    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
+    $('#streetAddressModalPopup').on('show.bs.modal', function() {
       $timeout(function() {
-        google.maps.event.trigger($scope.map, 'resize');
-        $scope.map.setCenter($scope.person.streetGeometryLocation);
+        var mapOptions = {
+          zoom: 14,
+          center: new google.maps.LatLng(45.0714124, 7.68522280000002),
+        };
+        var mapStreetIndications = new google.maps.Map($("#streetindications")[0], mapOptions);
+        google.maps.event.trigger(mapStreetIndications, "resize");
       }, 200); // this timeout is needed due to animation delay
     });
+
+/*
+    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
+      $timeout(function() {
+        var mapOptions = {
+          zoom: 14,
+          center: new google.maps.LatLng(45.0714124, 7.6852228),
+        };
+        var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions);
+        google.maps.event.trigger(mapStreetView, "resize");
+// TODO: use map.fitBounds(bounds), not map.setCenter().
+      }, 200); // this timeout is needed due to animation delay
+    });
+*/
+
   });
 
 });

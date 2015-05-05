@@ -71,6 +71,9 @@
                 <input class="form-control" id="query" name="query" type="text" ng-value="countries.getCountryName(person.nationality)" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
+                <li class="flag-li">
+                  <a ng-click="changeCountry('')"><i class="f16"><i ng-class="countries.getCountryClass('')"></i></i> </a>
+                </li>
                 <li ng-repeat="country in countries.getCountries()" class="flag-li">
                   <a ng-click="changeCountry('{{country.code}}')"><i class="f16"><i ng-class="countries.getCountryClass(country.code)"></i></i> {{country.name}}</a>
                 </li>
@@ -80,7 +83,7 @@
           <div class="col-xs-12 col-sm-6">
             <div class="input-group input-group-bottom-spaced">
               <span class="input-group-addon" title="Phone"><a ng-href="tel:{{person.phone}}"><span class="glyphicon glyphicon-earphone"></span></a></span>
-              <input type="text" class="form-control" ng-model="person.phone" readonly placeholder="Phone">
+              <input type="text" class="form-control" ng-model="person.phone" placeholder="Phone">
             </div>
           </div>
         </div>
@@ -88,15 +91,15 @@
         <div class="row">
           <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
             <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Date of last presence"><span class="glyphicon glyphicon-calendar"></span></span>
-              <input type="text" class="form-control" ng-value="person.timestamp_last_sync * 1000 | date:'yyyy-MM-dd'" " HH:mm:ss'" readonly>
+              <span class="input-group-addon" title="Vote up" ng-click="vote(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
+              <input class="form-control" ng-model="person.vote" placeholder="Vote" title="the vote of this person" number-mask min="{{cfg.person.vote.min}}" max="{{cfg.person.vote.max}}">
+              <span class="input-group-addon" title="Vote down" ng-click="vote(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
             </div>
           </div>
           <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
             <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Vote up" ng-click="vote(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
-              <input class="form-control" ng-model="person.vote" placeholder="Vote" title="the vote of this person">
-              <span class="input-group-addon" title="Vote down" ng-click="vote(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
+              <span class="input-group-addon" title="Date of first presence"><span class="glyphicon glyphicon-calendar text-primary"></span></span>
+              <input type="text" class="form-control" ng-value="firstSeen(person)" readonly>
             </div>
           </div>
           <div class="col-xs-12 col-sm-4 col-md-2 col-lg-2">
@@ -113,7 +116,7 @@
           </div>
           <div class="col-xs-6 col-sm-4 col-md-2 col-lg-2">
             <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="the median rating of comments referring to this person" ng-click="tabSelected = 'comments'"><span class="label label-as-badge label-danger">{{person.rating}}</span></span>
+              <span class="input-group-addon" title="the median rating of comments referring to this person" ng-click="tabSelected = 'comments'"><span class="label label-as-badge label-danger">{{person.rating || '-'}}</span></span>
               <input type="text" class="form-control" value="rating" title="the median rating of comments referring to this person" readonly>
             </div>
           </div>
@@ -122,9 +125,9 @@
         <div class="row">
           <div class="col-xs-12">
             <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Street address photo"><a data-toggle="modal" data-target="#streetAddressModalPopup"><span class="glyphicon glyphicon-home"></span></a></span>
-              <input type="text" class="form-control" ng-model="person.streetAddress" placeholder="Street address">
-              <span class="input-group-addon" title="Street address indications"><a data-toggle="modal" data-target="#streetAddressIndicationsModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
+              <span class="input-group-addon" style="cursor: default" title="Street address map"><a data-toggle="modal" data-target="#streetAddressModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
+              <input type="text" class="form-control" ng-model="person.street_address" placeholder="Street address" ng-change="streetAddress(person)">
+              <span class="input-group-addon" style="cursor: default" title="Street address view"><a data-toggle="modal" data-target="#streetAddressIndicationsModalPopup"><span class="glyphicon glyphicon-home"></span></a></span>
             </div>
           </div>
         </div>
@@ -136,31 +139,49 @@
           </div>
 -->
           <span ng-if="person.uniq_prev !== null">
-            <div class="col-xs-4 col-sm-2 col-lg-1 NOpull-right">
+            <div class="col-xs-5 col-sm-2 col-lg-2">
               <button class="btn btn-info" title="Previous source for this person" ng-click="open(person.uniq_prev)"><i class="glyphicon glyphicon-step-backward">&nbsp;</i>Previous</button>
             </div>
           </span>
           <span ng-if="person.uniq_next !== null">
-            <div class="col-xs-4 col-sm-2 col-lg-1 NOpull-right">
+            <div class="col-xs-5 col-sm-2 col-lg-2">
               <button class="btn btn-info" title="Next source for this person" ng-click="open(person.uniq_next)"><i class="glyphicon glyphicon-step-forward">&nbsp;</i>Next</button>
             </div>
           </span>
+          <div class="col-xs-2 col-sm-8 col-lg-8">
+          </div>
         </div>
       </form>
 
       <!-- street address modal popup -->
       <div id="streetAddressModalPopup" class="modal fade" tabindex="-1" role="dialog">
+<!-- ORIGINAL
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <h4 class="modal-title">{{person.streetAddress}}</h4>
+              <h4 class="modal-title">{{person.street_address}}</h4>
             </div>
             <div class="modal-body">
               <img ng-src="{{person.streetAddressImageUrl}}" class="img-responsive">
             </div>
           </div>
         </div>
+-->
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">{{person.street_address}}</h4>
+            </div>
+            <div class="modal-body">
+              <map id="streetindications" style="display: block; height: 32em; width: 100%;" zoom="14" scrollwheel="false" zoom-control-options="{ style: 'small' }" map-type-id="ROADMAP">
+                <marker position="{{person.streetLocation}}" title="{{person.street_address}}" draggable="false" visible="true"></marker>
+              </map>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- street address indications modal popup -->
@@ -169,11 +190,28 @@
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h4 class="modal-title">{{person.streetAddress}}</h4>
+              <h4 class="modal-title">{{person.street_address}}</h4>
             </div>
             <div class="modal-body">
+<!--
               <map style="display: block; height: 32em; width: 100%;" zoom="14" scrollwheel="false" zoom-control-options="{ style: 'small' }" map-type-id="ROADMAP">
-                <marker position="{{person.streetLocation}}" title="{{person.streetAddress}}" draggable="false" visible="true"></marker>
+                <marker position="{{person.streetLocation}}" title="{{person.street_address}}" draggable="false" visible="true"></marker>
+              </map>
+-->
+<!--
+              <map style="display: block; height: 32em; width: 100%;" zoom="14" scrollwheel="false" zoom-control-options="{ style: 'small' }" id="streetview" street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position: {{person.streetLocation}} })">
+              </map>
+-->
+<!--
+              <map center="[40.6892,-74.0444]" zoom="18"
+                   map-type-id="MapTypeId.SATELLITE" tilt="45"
+                   street-view="StreetViewPanorama(document.querySelector('div#sv'), 
+                                {position:new google.maps.LatLng(40.688738,-74.043871)})"
+              />
+              <div id="sv" />
+-->
+              <map id="streetview"
+                street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position:new google.maps.LatLng(45.0714124, 7.68522280000002)})">
               </map>
             </div>
           </div>
@@ -290,7 +328,7 @@
             </span>
           </h5>
           <h5>
-            <span ng-if="1">
+            <span ng-if="person.comments.length > 0">
               Median rating of comments for <span class="label label-as-badge label-success">{{person.name}}</span> is <span class="label label-as-badge label-danger">{{person.rating}}</span>.
             </span>
           </h5>

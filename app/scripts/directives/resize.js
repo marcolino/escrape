@@ -16,7 +16,7 @@ app.directive('resize', function ($window, $timeout) {
           spaceBefore = parseInt(attr.resizeBefore);
         } else {
           var elementBefore = angular.element(document.getElementById(attr.resizeBefore));
-          if ((typeof elementBefore !== 'undefined') && (typeof elementBefore.offset !== 'undefined')) {
+          if ((typeof elementBefore !== 'undefined') && (typeof elementBefore.offset === 'function')) {
             spaceBefore = elementBefore.offset().top + elementBefore.height();
           }
         }

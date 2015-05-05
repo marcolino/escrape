@@ -1,0 +1,25 @@
+<script type='text/javascript' src='lodash.underscore.min.js'></script>
+<script type='text/javascript' src='angular-google-maps.min.js'></script>
+<script type='text/javascript' src='app.js'></script>
+<div ng-controller="MyCtrl">
+<div class="row">
+  <div class="col-sm-6">
+    <ui-gmap-google-map 
+      id="map-canvas"
+      center="map.center"
+      zoom="map.zoom"
+      draggable="true"
+      options="map.options"
+      control="map.control"
+      events="map.events"
+    >
+      <ui-gmap-marker coords="map.marker" idKey="map.marker.id" 
+               options="map.marker.options" isLabel='true'>
+      </ui-gmap-marker>
+    </ui-gmap-google-map>
+  </div>
+  <div class="col-sm-6">
+    <div id="pano" style=" height: 400px;"></div>
+  </div>
+</div>
+</div>

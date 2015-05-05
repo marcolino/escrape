@@ -108,7 +108,7 @@ class DB extends PDO {
           name TEXT,
           sex TEXT,
           zone TEXT,
-          address TEXT,
+          street_address TEXT,
           description TEXT,
           notes TEXT,
           phone VARCHAR(16),
@@ -1118,7 +1118,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
         description LIKE '%' || :searchTerm || '%' OR
         phone LIKE '%' || :searchTerm || '%' OR
         zone LIKE '%' || :searchTerm || '%' OR
-        address LIKE '%' || :searchTerm || '%'
+        street_address LIKE '%' || :searchTerm || '%'
       )";
     }
     if (

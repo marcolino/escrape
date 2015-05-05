@@ -180,7 +180,7 @@ class PersonsController {
         }
         
         # TODO: add logic to grab this data from person's (or comments) page
-        $address = "";
+        $streetAddress = "";
         $age = null;
         $vote = null;
         $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
@@ -196,7 +196,7 @@ class PersonsController {
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
         $personDetail["zone"] = $zone;
-        $personDetail["address"] = $address;
+        $personDetail["street_address"] = $streetAddress;
         $personDetail["description"] = $description;
         if ($phone !== null) { $personDetail["phone"] = $phone; } // if phone is null, do not set it
         $personDetail["nationality"] = $nationality;
