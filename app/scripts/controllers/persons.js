@@ -710,6 +710,9 @@ console.info('streetGeometryLocation: ' + $scope.person.streetGeometryLocation);
           $scope.person.streetLocation = [ $scope.person.streetGeometryLocation.k, $scope.person.streetGeometryLocation.D ];
           $scope.person.streetLocation = $scope.person.streetGeometryLocation; // TODO: use always "streetGeometryLocation" ...
           console.log('person.streetLocation is now', $scope.person.streetLocation);
+
+var gMap = new google.maps.Map(document.getElementById('streetview')); 
+
         } else {
           if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
             // got OVER_QUERY_LIMIT status code: retry in a moment...
@@ -744,29 +747,46 @@ console.info('streetGeometryLocation: ' + $scope.person.streetGeometryLocation);
 
     /* global $:false */
     $('#streetAddressModalPopup').on('show.bs.modal', function() {
-      $timeout(function() {
-        var mapOptions = {
-          zoom: 14,
-          center: new google.maps.LatLng(45.0714124, 7.68522280000002),
-        };
-        var mapStreetIndications = new google.maps.Map($("#streetindications")[0], mapOptions);
-        google.maps.event.trigger(mapStreetIndications, "resize");
-      }, 200); // this timeout is needed due to animation delay
-    });
-
 /*
-    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
       $timeout(function() {
-        var mapOptions = {
+        var mapOptions1 = {
           zoom: 14,
           center: new google.maps.LatLng(45.0714124, 7.6852228),
         };
-        var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions);
+        //var mapStreetIndications = new google.maps.Map($("#streetindications")[0], mapOptions1);
+        //google.maps.event.trigger(mapStreetIndications, "resize");
+      }, 200); // this timeout is needed due to animation delay
+*/
+    });
+
+    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
+/*
+        var mapOptions2 = {
+          zoom: 14,
+          center: new google.maps.LatLng(45.0714124, 7.6852228),
+        };
+        var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions2);
+*/
+console.log('MMMMMMMMMMMMMMMMMMMMMMMMMM');
+/*
+var gMap = new google.maps.Map(document.getElementById('streetview')); 
+gMap.setZoom(14);
+gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
+//gMap.setCenter(new google.maps.LatLng($scope.person.streetLocation));
+google.maps.event.trigger(gMap, 'resize');
+*/
+/*
+      $timeout(function() {
+        var mapOptions2 = {
+          zoom: 14,
+          center: new google.maps.LatLng(45.0714124, 7.6852228),
+        };
+        var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions2);
         google.maps.event.trigger(mapStreetView, "resize");
 // TODO: use map.fitBounds(bounds), not map.setCenter().
       }, 200); // this timeout is needed due to animation delay
-    });
 */
+    });
 
   });
 

@@ -210,8 +210,8 @@
               />
               <div id="sv" />
 -->
-              <map id="streetview"
-                street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position:new google.maps.LatLng(45.0714124, 7.68522280000002)})">
+              <map id="streetview" style="display: block; height: 32em; width: 100%;"
+                street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position:new google.maps.LatLng(45.0714124, 7.6852228)})">
               </map>
             </div>
           </div>
@@ -259,7 +259,7 @@
       <div id="photos-occurrences-best-guess" ng-show="!photosOccurrencesLoading && photosOccurrencesBestGuess">
         Best guess for this photo is: <a ng-href="{{photosOccurrencesBestGuess.href}}" target="_blank"><i>{{photosOccurrencesBestGuess.text}}</i></a>
       </div>
-      <NOdiv style="overflow-y: auto; overflow-x: hidden;" resize resize-before="photos-occurrences-best-guess" resize-after="150" NOresize-after="photos-occurrences-toolbar">
+      <NOdiv style="overflow-y: auto; overflow-x: hidden;" NOresize resize-before="photos-occurrences-best-guess" resize-after="150" NOresize-after="photos-occurrences-toolbar">
         <div class="row row-gap" ng-repeat="photosOccurrence in photosOccurrences | filter:whitelist">
           <a ng-href="{{photosOccurrence.href}}" target="_blank" class="no-text-decoration">
             <div class="col-xs-2 col-sm-2 col-md-2 col-lg-1">
