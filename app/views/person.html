@@ -193,25 +193,8 @@
               <h4 class="modal-title">{{person.street_address}}</h4>
             </div>
             <div class="modal-body">
-<!--
-              <map style="display: block; height: 32em; width: 100%;" zoom="14" scrollwheel="false" zoom-control-options="{ style: 'small' }" map-type-id="ROADMAP">
-                <marker position="{{person.streetLocation}}" title="{{person.street_address}}" draggable="false" visible="true"></marker>
-              </map>
--->
-<!--
-              <map style="display: block; height: 32em; width: 100%;" zoom="14" scrollwheel="false" zoom-control-options="{ style: 'small' }" id="streetview" street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position: {{person.streetLocation}} })">
-              </map>
--->
-<!--
-              <map center="[40.6892,-74.0444]" zoom="18"
-                   map-type-id="MapTypeId.SATELLITE" tilt="45"
-                   street-view="StreetViewPanorama(document.querySelector('div#sv'), 
-                                {position:new google.maps.LatLng(40.688738,-74.043871)})"
-              />
-              <div id="sv" />
--->
               <map id="streetview" style="display: block; height: 32em; width: 100%;"
-                street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position:new google.maps.LatLng(45.0714124, 7.6852228)})">
+                street-view="StreetViewPanorama(document.querySelector('map#streetview'), {position: {{center}}})">
               </map>
             </div>
           </div>

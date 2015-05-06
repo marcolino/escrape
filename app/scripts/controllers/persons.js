@@ -750,16 +750,20 @@ google.maps.event.addDomListener(window, 'resize', function() {
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {
     /* global $:false */
-    var map = maps[0];
+    //$scope.map = maps.streetview;
+console.info(' ------------ mapsInitialized:', event, maps);
+    $scope.center = new google.maps.LatLng(45.0714124, 7.6852228);
     var mapOptions = {
       zoom: 14,
       center: new google.maps.LatLng(45.0714124, 7.6852228),
     };
-    var map = new google.maps.Map($("#streetview")[0], mapOptions);
-    //var map = new google.maps.Map($("#streetview")[0]);
-    jQuery('#streetAddressIndicationsModalPopup').on('shown.bs.modal', function() {
+    var map = new google.maps.Map($('#streetview')[0]);
+    //var map = new google.maps.Map($('#streetview')[0], mapOptions);
+    $('#streetAddressIndicationsModalPopup').on('shown.bs.modal', function() {
+console.log('#######streetAddressIndicationsModalPopup).on(shown.bs.modal', map);
+      //google.maps.event.trigger(map, 'resize', {});
+      map.setCenter($scope.center);
       google.maps.event.trigger(map, 'resize', {});
-      map.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
     });
 
 /*
@@ -792,28 +796,29 @@ google.maps.event.addDomListener(window, 'resize', function() {
 */
     });
 
-    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
 /*
+    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
+/ *
 console.log('SV:', document.getElementById('streetview'));
 var gMap = new google.maps.Map(document.getElementById('streetview')); 
 google.maps.event.trigger(gMap, 'resize');
-*/
-/*
+* /
+/ *
         var mapOptions2 = {
           zoom: 14,
           center: new google.maps.LatLng(45.0714124, 7.6852228),
         };
         var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions2);
-*/
+* /
 console.log('MMMMMMMMMMMMMMMMMMMMMMMMMM');
-/*
+/ *
 var gMap = new google.maps.Map(document.getElementById('streetview')); 
 gMap.setZoom(14);
 gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
 //gMap.setCenter(new google.maps.LatLng($scope.person.streetLocation));
 google.maps.event.trigger(gMap, 'resize');
-*/
-/*
+* /
+/ *
       $timeout(function() {
         var mapOptions2 = {
           zoom: 14,
@@ -823,9 +828,9 @@ google.maps.event.trigger(gMap, 'resize');
         google.maps.event.trigger(mapStreetView, "resize");
 // TODO: use map.fitBounds(bounds), not map.setCenter().
       }, 200); // this timeout is needed due to animation delay
-*/
+* /
     });
-
+*/
   });
 
 });

@@ -36,6 +36,7 @@ TODO 1.1:
  - a better 'resize' directive strategy to calculate it's height based on previous and following elements heights
  - options: country / city / category should be considered when sync'ing persons
  - rename all SQL fields from underscore_case to camelCase, and reset camelcase to true in .jshintrc
+ - when clicking log-in / sign-up, remember referral url, to redirect user there, after login / sign-up ...
 
 TODO 2.0:
  - I18n (?) (see:
