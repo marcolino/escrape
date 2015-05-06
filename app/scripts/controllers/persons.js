@@ -711,7 +711,27 @@ console.info('streetGeometryLocation: ' + $scope.person.streetGeometryLocation);
           $scope.person.streetLocation = $scope.person.streetGeometryLocation; // TODO: use always "streetGeometryLocation" ...
           console.log('person.streetLocation is now', $scope.person.streetLocation);
 
+/*
 var gMap = new google.maps.Map(document.getElementById('streetview')); 
+gMap.setZoom(14);
+gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
+*/
+/*
+var mapOptions = {
+  zoom: 14,
+  center: new google.maps.LatLng(45.0714124, 7.6852228)
+};
+//var gMap = new google.maps.Map($("#streetview")[0], mapOptions);
+var gMap = new google.maps.Map(document.getElementById('streetview')); 
+google.maps.event.addDomListener(window, 'resize', function() {
+  //gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
+  x = gMap.getZoom();
+  c = gMap.getCenter();
+  google.maps.event.trigger(gMap, 'resize');
+  gMap.setZoom(x);
+  gMap.setCenter(c);
+});
+*/
 
         } else {
           if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
@@ -729,6 +749,19 @@ var gMap = new google.maps.Map(document.getElementById('streetview'));
 
   // google maps initialization
   $rootScope.$on('mapsInitialized', function(event, maps) {
+    /* global $:false */
+    var map = maps[0];
+    var mapOptions = {
+      zoom: 14,
+      center: new google.maps.LatLng(45.0714124, 7.6852228),
+    };
+    var map = new google.maps.Map($("#streetview")[0], mapOptions);
+    //var map = new google.maps.Map($("#streetview")[0]);
+    jQuery('#streetAddressIndicationsModalPopup').on('shown.bs.modal', function() {
+      google.maps.event.trigger(map, 'resize', {});
+      map.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
+    });
+
 /*
     $scope.map = maps[0];
 */
@@ -760,6 +793,11 @@ var gMap = new google.maps.Map(document.getElementById('streetview'));
     });
 
     $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
+/*
+console.log('SV:', document.getElementById('streetview'));
+var gMap = new google.maps.Map(document.getElementById('streetview')); 
+google.maps.event.trigger(gMap, 'resize');
+*/
 /*
         var mapOptions2 = {
           zoom: 14,
