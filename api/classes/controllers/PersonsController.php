@@ -92,7 +92,8 @@ class PersonsController {
 
         # check if key is new or not ####################################################
         $personId = null;
-        if (($person = $this->db->getByField("person", "key", $key))) { # old key
+       #if (($person = $this->db->getByField("person", "key", $key))) { # old key
+        if (($person = $this->db->getPersonByField("key", $key))) { # old key
           $personId = $person[0]["id"];
           $this->router->log("debug", "old person: $key (id: $personId)");
           if (!$fullSync) { // requested to sync only new keys, skip this old key

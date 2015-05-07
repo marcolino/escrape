@@ -1,5 +1,4 @@
 TODO 1.0:
- - check if timestamps on DB are * 1000 or not (should be not: correct comment_table...)
  - person detail view: add active/inactive flag visualization
  - test photosCardDeckMerge() in real life... (We don't use it anymore, backup this code and remove from codebase...)
  - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR):
@@ -15,7 +14,7 @@ TODO 1.0:
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
  - add an empty element to person view nationality dropdown elements
  - add a "back to list view" button in person view
- - add a "milf" field (/(matura)|(milf)/) in person's table... (or age?)
+ - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?)
  - handle person's race ('oriente' / 'sudamerica') ... (?)
  - avoid name normalization for sgi ("IN.... RU...")
  - add total # of persons in footer
@@ -23,10 +22,11 @@ TODO 1.0:
  - set css cursor as pointer in maps buttons in person view
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - remove resize directive from persons view
- - after removing resize directive from person view, we should left-right re-align header with rows...
+ - since we removed resize directive from person view, we should left-right re-align header with rows...
+ - remove "$userId" from PersonsController.php and CommentsController.php classes
  
 TODO 1.1:
- - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)
+ - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own)
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
  - a better 'resize' directive strategy to calculate it's height based on previous and following elements heights
  - options: country / city / category should be considered when sync'ing persons
@@ -141,3 +141,4 @@ DONE:
  - in google search results page, add small button "add to white list" after url...
  - review user writes...
  - handle guest tentative write warning
+ - check if timestamps on DB are * 1000 or not (should be not: correct comment_table...)

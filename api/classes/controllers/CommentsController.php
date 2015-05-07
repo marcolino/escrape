@@ -211,21 +211,22 @@ class CommentsController {
           }
       
           if ($content) { # empty comments are not useful...
-            $commentData = [];
+            $commentMaster = [];
             $timestamp = date_to_timestamp($date);
             $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
             $key = $timestamp . "-" . md5("topic:[$topic], author:[$author], content:[$content]"); # a sortable, univoque index
-            $commentData["phone"] = $phone;
-            $commentData["topic"] = $topic;
-            $commentData["date"] = date("Y-m-d H:i:s", $timestamp);
-            $commentData["timestamp"] = $timestamp;
-            $commentData["timestamp_last_sync"] = $timestampNow;
-            $commentData["author"] = $author;
-            $commentData["author_karma"] = $author_karma;
-            $commentData["author_posts"] = $author_posts;
-            $commentData["content"] = $content;
-            $commentData["content_rating"] = null; # TODO: handle content valutation...
-            $commentData["url"] = $url;
+            $commentMaster["phone"] = $phone;
+            $commentMaster["topic"] = $topic;
+            $commentMaster["date"] = date("Y-m-d H:i:s", $timestamp);
+            $commentMaster["timestamp"] = $timestamp;
+            $commentMaster["timestamp_last_sync"] = $timestampNow;
+            $commentMaster["author"] = $author;
+            $commentMaster["author_karma"] = $author_karma;
+            $commentMaster["author_posts"] = $author_posts;
+            $commentMaster["content"] = $content;
+            $commentMaster["url"] = $url;
+            $commentDetail = [];
+            $commentDetail["content_rating"] = null;
           } else {
             $this->router->log("info", "empty comment found on url [$url] on comments definition provider [$commentDefinitionId]");
             continue;
@@ -233,16 +234,17 @@ class CommentsController {
 
           # check if comment is new or not ####################################################
           $commentId = null;
-          if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
+         #if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
+          if (($comment = $this->db->getCommentByField("key", $key))) { # old key
             $this->router->log("debug", "comment by key [$key] is old, updating");
             $commentId = $comment[0]["id"];
-            $this->db->set($commentId, $commentData, null);
+            $this->set($commentId, $commentMaster, $commentDetail, null);
           } else {
             $this->router->log("debug", "comment by key [$key] is new, inserting");
-            $commentData["key"] = $key; // set univoque key only when adding person
-            $commentData["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
-            $commentData["new"] = true; // set new flag to true (TODO: do we need this?)
-            $commentId = $this->db->add($commentData, null);
+            $commentMaster["key"] = $key; // set univoque key only when adding person
+            $commentMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
+            $commentMaster["new"] = true; // set new flag to true (TODO: do we need this?)
+            $commentId = $this->add($commentMaster, $commentDetail, null);
             $count++;
           }
         }

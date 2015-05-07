@@ -705,6 +705,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
        $('#streetAddressIndicationsModalPopup').on('shown.bs.modal', function() {
          //console.log('on #streetAddressIndicationsModalPopup shown.bs.modal');
          google.maps.event.trigger($scope.map, 'resize');
+         $scope.map.setCenter($scope.addLatLng);
        });
      
        $('#streetAddressPanoramaModalPopup').on('shown.bs.modal', function() {
