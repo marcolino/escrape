@@ -50,7 +50,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
     },
 
     setPerson: function (id, personMaster, personDetail, userId) {
-      console.log('service persons - setPerson() !!!!!!!!!!');
+      //console.log('service persons - setPerson() !!!!!!!!!!');
       return $http({
         method: 'POST',
         url: apiUri + 'set',

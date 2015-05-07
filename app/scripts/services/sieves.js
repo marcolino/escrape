@@ -44,9 +44,9 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     var key = cfg.site.name;
     if (Authentication.signedIn()) { // add authdata to key, if user is signed in
       key += '-' + $rootScope.globals.currentUser.authdata;
-      console.log('loading sieves for user', $rootScope.globals.currentUser.username);
+      //console.log('loading sieves for user', $rootScope.globals.currentUser.username);
     } else {
-      console.log('loading sieves for guest');
+      //console.log('loading sieves for guest');
     }
     service.sieves = $cookieStore.get(key);
 
@@ -60,7 +60,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     //$rootScope.sieves = service.sieves;
 
     angular.copy(service.sieves, service.original); // save loaded sieves as sievesOriginal, to be able to check for modifications
-    console.log('Sieves.original:', service.original);
+    //console.log('Sieves.original:', service.original);
 
     if (force === true) {
       service.setDigest(null); // reset sieves digest (this forces a persons reload)
@@ -78,8 +78,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
       key += '-' + $rootScope.globals.currentUser.authdata;
     }
     $cookieStore.put(key, service.sieves);
-    console.log('stored sieves:', service.sieves);
-    //$rootScope.sieves = $scope.sieves; // TODO: IS THIS OKKKKKK ????????? (SEARCH IN FILES "$rootScope.sieves" ...)
+    //console.log('stored sieves:', service.sieves);
   };
 
   service.reset = function (section) {
@@ -109,8 +108,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
         break;
     }
     $cookieStore.put(key, service.sieves);
-    console.log('reset sieves to defaults for section ' + section + ':', service.sieves);
-    //$rootScope.sieves = $scope.sieves; // TODO: IS THIS OKKKKKK ????????? (SEARCH IN FILES "$rootScope.sieves" ...)
+    //console.log('reset sieves to defaults for section ' + section + ':', service.sieves);
   };
 
   service.getDigest = function () {
@@ -140,8 +138,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     } else { // a null value sets a random digest (which will force a reload)
       service.digest = Math.random();
     }
-    console.log('service.digest:', service.digest);
-    //Authentication.setSievesDigest(digest);
+    //console.log('service.digest:', service.digest);
     service.store();
   };
 

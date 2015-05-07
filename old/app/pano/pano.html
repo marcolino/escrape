@@ -43,12 +43,20 @@
     // Check if GPS has been locally cached.        
     var geocoder = new google.maps.Geocoder();
     //console.log("new geocoder for address", address);
+    if (!address) {
+      alert("please specify an address...");
+      return;
+    }
     geocoder.geocode( { 'address': address }, function(results, status) {
       if (status == google.maps.GeocoderStatus.OK) {
         var gps = results[0].geometry.location;              
         create_map_and_streetview(gps.lat(), gps.lng(), 'map_canvas', 'pano');
       } else {
-        alert("can't find address" + address + " (geocoder status is " + status + ")");
+        if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+          alert("can't find address " + address);
+        } else { // other error
+          alert("can't find address " + address + " (geocoder status is " + status + ")");
+        }
       }
     });
   }
@@ -70,11 +78,13 @@
       keyboardShortcuts: false
     }
     var map = new google.maps.Map(document.getElementById(map_id), myOptions);
+/*
     var marker = new google.maps.Marker({
       map: map,
       animation: google.maps.Animation.DROP,
       position: addLatLng
     });
+*/
   }
 
   function showPanoData(panoData, status) {

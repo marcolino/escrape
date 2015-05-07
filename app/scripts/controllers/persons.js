@@ -39,7 +39,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // watch for sieves changes
   $scope.$watch('Sieves.getDigest()', function() {
-    console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
+    //console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
     loadPersons(); // load persons list
   }, false);
 
@@ -59,12 +59,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // private methods
   function applyPersons(persons) {
-    console.log('PERSONS: ', persons);
+    console.log('PERSONS:', persons);
     $scope.persons = persons;
     //$scope.sortCriteria.name = true;
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     if ($rootScope.openedId) { // scroll to remembered row id
-      console.info('scope.openedId:', $rootScope.openedId);
+      //console.info('scope.openedId:', $rootScope.openedId);
       $scope.scrollTo($rootScope.openedId);
     }
   }
@@ -79,7 +79,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   function sortObjectToList(object, criteria) { // obj is an object of objects
     // order objects by sort criteria
-console.log('sortObjectToList():', object, criteria);
+    //console.log('sortObjectToList():', object, criteria);
     var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
       var len = criteria.length;
       for (var i = 0; i < len; i++) {
@@ -127,76 +127,51 @@ console.log('sortObjectToList():', object, criteria);
 
   if ($scope.personId) { // load single person
     Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
-      if (!!cfg.fake) { console.log('person(', $scope.personId, ')', person); }
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
-      console.log('Persons.getPerson:', $scope.person);
-      ///$scope.person.nationality = 'it';
-      //$scope.person.vote = 5;
-      //$scope.person.street_address = 'Torino, Via Carlo Pisacane, 39';
-      $scope.person.street_region = 'it'; // TODO: get street_region from setup/cfg ?
+
+      console.log('PERSON:', $scope.person);
+
+      //$scope.person.street_region = 'it'; // TODO: get street_region from setup/cfg ?
+      // watch for person street address changes
       $scope.$watch('person.street_address', function() {
-         console.log('$watch: Hey, person.street_address has changed!');
-         $scope.person.streetAddressImageUrl = $scope.streetAddressToImageUrl($scope.person.street_address);
-         $scope.geocode($scope.person.street_address, $scope.person.street_region);
+        $scope.mapError = $scope.panoError = null;
+        //console.log('$watch: person.street_address changed to', person.street_address);
+        $scope.loadMapAndPano($scope.person.street_address);
       });
 
       $scope.personsPerComment = {};
-      //$scope.personsPerCommentAnyActive = false; // TODO: ...
       if (!$scope.person.phone) { // empty phone, do not load comments
         $scope.person.comments = [];
-      } else { // active phone, do load comments
+      } else { // phone is present, do load comments
         Comments.getCommentsByPhone($scope.person.phone, $scope.userId).then(function(comments) {
-          console.log('comments for ' + $scope.person.phone + ':', comments);
+          //console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
           /*
            * $scope.person.comments contains all comments linked to the person's phone;
            * if they lack "id_person" field, they could be relative to another person
            * with the same phone.
            */
-          /*
+          //console.log('------------------------------ persons:', $scope.persons);
           var len = $scope.person.comments.length;
-          //console.error('$scope.person.comments', $scope.person.comments);
-          for (var i = 0; i < len; i++) {
-            $scope.getPersonsPerComment($scope.person.comments[i].id);
-          }
-          */
-          console.log('------------------------------');
-console.log(' persons:', $scope.persons);
-
-          var len = $scope.person.comments.length;
-console.log('length of comments for this person:', len);
+          //console.log('length of comments for this person:', len);
           var commentId;
           for (var i = 0; i < len; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
             commentId = $scope.person.comments[i].id_comment;
             $scope.personsPerComment[commentId] = {};
-console.log('id of current ('+i+') comment:', commentId);
+            //console.log('id of current ('+i+') comment:', commentId);
             for (var personId in $scope.persons) { // loop through all persons
-//console.log('id of current person:', personId);
-//console.log('$scope.persons[personId].phone:', $scope.persons[personId].phone);
               if ($scope.person.phone === $scope.persons[personId].phone) { // phone matches
-console.log(' +++ id of person with a matching phone:', personId);
-console.log('     name of person with a matching phone:', $scope.persons[personId].name);
+                //console.log(' +++ id of person with a matching phone:', personId);
+                //console.log('     name of person with a matching phone:', $scope.persons[personId].name);
                 var active = false;
                 if ($scope.person.comments[i].id_person === personId) { // this comment has a specific id_person set: set that person as active
-                  //if ($scope.person.comments[i].id_person) { // this comment has a specific id_person set: set that person as active
                   active = true;
-                  //}
                 }
-              //$scope.personsPerComment.push({ id: personId, name: $scope.persons[personId].name, active: active });
                 $scope.personsPerComment[commentId][personId] = { name: $scope.persons[personId].name, active: active };
               }
             }
           }
-/*
-          console.log($scope.personsPerComment);
-          console.log(typeof $scope.personsPerComment);
-          console.log(Object.keys($scope.personsPerComment).length);
-          console.log('------------------------------');
-          console.log($scope.personsPerComment[commentId]);
-          console.log(typeof $scope.personsPerComment[commentId]);
-          console.log(Object.keys($scope.personsPerComment[commentId]).length);
-          console.log('------------------------------');
-*/
+          //console.log('------------------------------');
         });
       }
     });
@@ -206,7 +181,6 @@ console.log('     name of person with a matching phone:', $scope.persons[personI
   // public methods
   $scope.flipPersonInCommentActive = function(commentId, personId) {
     var len, i; //, active, person;
-console.log('flipPersonInCommentActive() - commentId:', commentId);
     var active = false;
     for (var pId in $scope.personsPerComment[commentId]) {
       if (pId === personId) {
@@ -230,7 +204,6 @@ console.log('flipPersonInCommentActive() - commentId:', commentId);
         }
       }
     }
-console.log('flipPersonInCommentActive() - comment before save:', comment);
     $scope.savePersonComment(comment);
   };
 
@@ -255,7 +228,6 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
     var len = $scope.person.comments.length;
     for (var i = 0; i < len; i++) {
       if ($scope.person.comments[i].id_comment === commentId) {
-        //console.info('isAnyPersonInCommentActive - $scope.person.comments[i].id_person :', i, $scope.person.comments[i].id_person);
         return !isNaN(parseInt($scope.person.comments[i].id_person));
       }
     }
@@ -392,7 +364,6 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
     }
   };
 
-
   $scope.isUniqPrimary = function(personId) {
     return (
       ($scope.persons[personId].uniq_prev === null) &&
@@ -442,8 +413,14 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
   };
 
   $scope.savePerson = function(person) {
+    if (!$scope.userId) {
+      // reload person to restore previous data (TODO: use a better strategy: save person after loading, and restore it now...)
+      Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
+        angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
+      });
+      return;
+    }
     var personId = person.id_person;
-    console.log('$scope.savePerson(', personId, person, $scope.userId, ')');
     var detailFields = [
       'name',
       'sex',
@@ -467,11 +444,10 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
         this[key] = value;
       }
     }, personDetail);
-//console.log('personDetail:', personDetail);
 
     Persons.setPerson(personId, [], personDetail, $scope.userId).then(
       function(/*successMessage*/) {
-        console.info('Person saved correctly');
+        console.info('PERSON SAVED');
       },
       function(errorMessage) {
         notify.error(errorMessage);
@@ -482,18 +458,16 @@ console.log('flipPersonInCommentActive() - comment before save:', comment);
   $scope.savePersonComment = function(comment) {
     var detailFields = [
       'id_comment',
-      //'id_user',
       'id_person',
       'content_rating',
     ];
     var commentDetail = {};
     angular.forEach(comment, function(value, key) {
-//console.log('forEach:', key, value);
       if (detailFields.indexOf(key) !== -1) {
         this[key] = value;
       }
     }, commentDetail);
-console.log('commentDetail:', commentDetail);
+    //console.log('commentDetail:', commentDetail);
 
     Comments.setComment(comment.id, [], commentDetail, $scope.userId).then(
       function(/*successMessage*/) {
@@ -522,7 +496,7 @@ console.log('commentDetail:', commentDetail);
       }
     );
   };
-      
+
   $scope.tabSelect = function (tabName, data) {
     //console.log('Selecting tab ' + tabName);
     $scope.tabSelected = tabName;
@@ -541,8 +515,7 @@ console.log('commentDetail:', commentDetail);
     //notify.info('getPhotoOccurrences(' + url + ')');
     Persons.getPhotoOccurrences(id, url).then(
       function(response) {
-        console.info('+++ getPhotoOccurrences response:', response);
-        //console.info('+++ response.length:', response.length);
+        //console.info('+++ getPhotoOccurrences response:', response);
         $scope.photosOccurrencesLoading = false;
         $scope.photosOccurrencesBestGuess = response.bestGuess;
         //$scope.photosOccurrences = response.searchResults;
@@ -586,43 +559,60 @@ console.log('commentDetail:', commentDetail);
   };
 
   $scope.photosOccurrencesThruthful = function() {
-    console.log('It is thruthful!');
+    //console.log('It is thruthful!');
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
   };
 
   $scope.photosOccurrencesFake = function() {
-    console.log('It is fake!');
+    //console.log('It is fake!');
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
   };
 
   $scope.photosOccurrencesUndecided = function() {
-    console.log('Don\'t know...');
+    //console.log('Don\'t know...');
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
   };
 
-  $scope.changeCountry = function(code) {
-    console.log('changeCountry(): ', code);
+  $scope.nameChange = function() {
+    //console.log('name change: ', $scope.person.name);
+    $scope.savePerson($scope.person);
+  };
+
+  $scope.descriptionChange = function() {
+    //console.log('description change: ', $scope.person.description);
+    $scope.savePerson($scope.person);
+  };
+
+  $scope.notesChange = function() {
+    //console.log('notes change: ', $scope.person.notes);
+    $scope.savePerson($scope.person);
+  };
+
+  $scope.countryChange = function(code) {
+    //console.log('countryChange(): ', code);
     $scope.person.nationality = code;
     $scope.savePerson($scope.person);
   };
 
-  $scope.streetAddressToImageUrl = function(streetAddress) {
-    return(
-      'https://maps.googleapis.com/maps/api/streetview' + '?' + 
-      'location=' + encodeURIComponent(streetAddress) + '&' +
-      'size=' + '800x600'
-    );
+  $scope.phoneChange = function() {
+    // TODO: reload comments and reassert persons uniqueness (???), based on this new phone, eventually after a timeout...! (or put a new watch in controller...)
+    //console.log('phone change: ', $scope.person.phone);
+    $scope.savePerson($scope.person);
   };
 
-  $scope.vote = function(vote) {
+  $scope.voteChange = function(vote) {
     if (vote === 0) { // noop
       return;
+    }
+//if (!$scope.person.vote) { console.info('$scope.person.vote:', $scope.person.vote); }
+    if (!$scope.person.vote) {
+      $scope.person.vote = 0;
     }
     if (vote > 0) {
       $scope.person.vote = Math.min(cfg.person.vote.max, parseInt($scope.person.vote) + parseInt(vote));
@@ -633,7 +623,7 @@ console.log('commentDetail:', commentDetail);
     $scope.savePerson($scope.person);
   };
 
-  $scope.rating = function(commentId, ratingDelta) {
+  $scope.ratingChange = function(commentId, ratingDelta) {
     if (!(commentId in $scope.personsPerComment)) { // comment with given id not found on this person, shouldn't happen
       console.error('can\'t find a comment with id ' + commentId + ' for this person');
       return;
@@ -669,13 +659,13 @@ console.log('commentDetail:', commentDetail);
     // calculate person's rating from all her comments ratings
     $scope.person.rating = $scope.personRatingFromCommentsRatings();
 
-console.log('-------------- person.rating => ', $scope.person.rating);
+    //console.log('--- person.rating => ', $scope.person.rating);
     $scope.savePerson($scope.person); // for new rating only
     $scope.savePersonComment(comment); // for new comment
   };
 
-  $scope.streetAddress = function(person) {
-console.log('++++++ saving person for street address changed:', person);
+  $scope.streetAddressChange = function(person) {
+    //console.log('+++ saving person for street address changed:', person);
     $scope.savePerson(person);
   };
 
@@ -699,138 +689,122 @@ console.log('++++++ saving person for street address changed:', person);
     }
   };
 
-  $scope.geocode = function(address, region) {
-    if (address) {
-      var geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ 'address': address, 'region': region }, function(results, status) {
-        if (status === google.maps.GeocoderStatus.OK) {
-          //console.info('Address [' + $scope.person.street_address + '] found:', results[0].geometry.location);
-          $scope.person.streetGeometryLocation = results[0].geometry.location;
-console.info('streetGeometryLocation: ' + $scope.person.streetGeometryLocation);
-          $scope.person.streetLocation = [ $scope.person.streetGeometryLocation.k, $scope.person.streetGeometryLocation.D ];
-          $scope.person.streetLocation = $scope.person.streetGeometryLocation; // TODO: use always "streetGeometryLocation" ...
-          console.log('person.streetLocation is now', $scope.person.streetLocation);
+  $scope.loadMapAndPano = function(address) {
+    // check if GPS has been locally cached
+    var geocoder = new google.maps.Geocoder();
+    if (!address) {
+      $scope.mapError = $scope.panoError = 'No address given';
+      console.error('please specify an address...');
+      return;
+    }
+    geocoder.geocode({ 'address': address }, function(results, status) {
+      if (status === google.maps.GeocoderStatus.OK) {
+        var gps = results[0].geometry.location;
+        $scope.createMapAndPano(gps.lat(), gps.lng(), 'map-canvas', 'panorama-canvas');
 
-/*
-var gMap = new google.maps.Map(document.getElementById('streetview')); 
-gMap.setZoom(14);
-gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
-*/
-/*
-var mapOptions = {
-  zoom: 14,
-  center: new google.maps.LatLng(45.0714124, 7.6852228)
-};
-//var gMap = new google.maps.Map($("#streetview")[0], mapOptions);
-var gMap = new google.maps.Map(document.getElementById('streetview')); 
-google.maps.event.addDomListener(window, 'resize', function() {
-  //gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
-  x = gMap.getZoom();
-  c = gMap.getCenter();
-  google.maps.event.trigger(gMap, 'resize');
-  gMap.setZoom(x);
-  gMap.setCenter(c);
-});
-*/
+       $('#streetAddressIndicationsModalPopup').on('shown.bs.modal', function() {
+         //console.log('on #streetAddressIndicationsModalPopup shown.bs.modal');
+         google.maps.event.trigger($scope.map, 'resize');
+       });
+     
+       $('#streetAddressPanoramaModalPopup').on('shown.bs.modal', function() {
+         //console.log('on #streetAddressPanoramaModalPopup shown.bs.modal');
+         google.maps.event.trigger($scope.panorama, 'resize');
+       });
 
+      } else {
+        if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
+          $scope.mapError = $scope.panoError = 'Address "' + address + '" not found';
+          console.error('can\'t find address ' + address);
         } else {
-          if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-            // got OVER_QUERY_LIMIT status code: retry in a moment...
+          if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) { // over query limit,VER_QUERY_LIMIT status code: retry in a moment...          
+            $scope.mapError = $scope.panoError = 'Please wait for address geo-codification...';
             setTimeout(function() {
-              $scope.geocode(address);
-            }, 200);
-          } else {
-            console.error('Unable to find address [' + $scope.person.street_address + '], status: ', status); // set center of region is set if no address found
+              console.warn('retrying loadMapAndPano() ...');
+              $scope.mapError = $scope.panoError = null;
+              $scope.loadMapAndPano(address);
+            }, 1000);
+          } else { // other error
+            $scope.mapError = $scope.panoError = 'Address "' + address + '" not found (status is: ' + status + ')';
+            console.error('can\'t find address ' + address + ' (geocoder status is ' + status + ')');
           }
         }
-      });
-    }
+      }
+    });
   };
 
-  // google maps initialization
-  $rootScope.$on('mapsInitialized', function(event, maps) {
-    /* global $:false */
-    //$scope.map = maps.streetview;
-console.info(' ------------ mapsInitialized:', event, maps);
-    $scope.center = new google.maps.LatLng(45.0714124, 7.6852228);
-    var mapOptions = {
-      zoom: 14,
-      center: new google.maps.LatLng(45.0714124, 7.6852228),
+  $scope.createMapAndPano = function(lat, lng, mapId, panoramaId) {
+    $scope.panorama = new google.maps.StreetViewPanorama(document.getElementById(panoramaId));
+    $scope.addLatLng = new google.maps.LatLng(lat, lng);
+    var service = new google.maps.StreetViewService();
+    var radiusMeters = 50;
+    var zoom = 14;
+    service.getPanoramaByLocation($scope.addLatLng, radiusMeters, $scope.showPanoData);
+
+    var options = {
+      zoom: zoom,
+      center: $scope.addLatLng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      backgroundColor: 'transparent',
+      streetViewControl: false,
+      keyboardShortcuts: false
     };
-    var map = new google.maps.Map($('#streetview')[0]);
-    //var map = new google.maps.Map($('#streetview')[0], mapOptions);
-    $('#streetAddressIndicationsModalPopup').on('shown.bs.modal', function() {
-console.log('#######streetAddressIndicationsModalPopup).on(shown.bs.modal', map);
-      //google.maps.event.trigger(map, 'resize', {});
-      map.setCenter($scope.center);
-      google.maps.event.trigger(map, 'resize', {});
+    $scope.map = new google.maps.Map(document.getElementById(mapId), options);
+    new google.maps.Marker({
+      map: $scope.map,
+      animation: google.maps.Animation.DROP,
+      position: $scope.addLatLng
     });
+  };
 
-/*
-    $scope.map = maps[0];
-*/
-//console.log('maps:', maps);
-
-    //$scope.maps = maps;
-
-/*
-    var mapOptions = {
-      zoom: 14,
-      center: new google.maps.LatLng(45.0714124, 7.68522280000002),
+  $scope.showPanoData = function(panoData, status) {
+    if (status !== google.maps.StreetViewStatus.OK) {
+      $scope.panoError = 'No StreetView available';
+      return;
+    }
+    var angle = $scope.computeAngle(panoData.location.latLng, $scope.addLatLng);
+    var panoOptions = {
+      position: $scope.addLatLng,
+      addressControl: false,
+      linksControl: false,
+      panControl: true,
+      zoomControlOptions: {
+        style: google.maps.ZoomControlStyle.SMALL
+      },
+      pov: {
+        heading: angle,
+        pitch: 10,
+        zoom: 1
+      },
+      enableCloseButton: false,
+      visible: true,
     };
-    var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions);
-    var mapStreetIndications = new google.maps.Map($("#streetindications")[0], mapOptions);
-*/
+    $scope.panorama.setOptions(panoOptions);
+  };
 
-    /* global $:false */
-    $('#streetAddressModalPopup').on('show.bs.modal', function() {
-/*
-      $timeout(function() {
-        var mapOptions1 = {
-          zoom: 14,
-          center: new google.maps.LatLng(45.0714124, 7.6852228),
-        };
-        //var mapStreetIndications = new google.maps.Map($("#streetindications")[0], mapOptions1);
-        //google.maps.event.trigger(mapStreetIndications, "resize");
-      }, 200); // this timeout is needed due to animation delay
-*/
-    });
+  $scope.computeAngle = function(startLatLng, endLatLng) {
+    var DEGREE_PER_RADIAN = 57.2957795;
+    var RADIAN_PER_DEGREE = 0.017453;
 
-/*
-    $('#streetAddressIndicationsModalPopup').on('show.bs.modal', function() {
-/ *
-console.log('SV:', document.getElementById('streetview'));
-var gMap = new google.maps.Map(document.getElementById('streetview')); 
-google.maps.event.trigger(gMap, 'resize');
-* /
-/ *
-        var mapOptions2 = {
-          zoom: 14,
-          center: new google.maps.LatLng(45.0714124, 7.6852228),
-        };
-        var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions2);
-* /
-console.log('MMMMMMMMMMMMMMMMMMMMMMMMMM');
-/ *
-var gMap = new google.maps.Map(document.getElementById('streetview')); 
-gMap.setZoom(14);
-gMap.setCenter(new google.maps.LatLng(45.0714124, 7.6852228));
-//gMap.setCenter(new google.maps.LatLng($scope.person.streetLocation));
-google.maps.event.trigger(gMap, 'resize');
-* /
-/ *
-      $timeout(function() {
-        var mapOptions2 = {
-          zoom: 14,
-          center: new google.maps.LatLng(45.0714124, 7.6852228),
-        };
-        var mapStreetView = new google.maps.Map($("#streetview")[0], mapOptions2);
-        google.maps.event.trigger(mapStreetView, "resize");
-// TODO: use map.fitBounds(bounds), not map.setCenter().
-      }, 200); // this timeout is needed due to animation delay
-* /
-    });
-*/
-  });
+    var dlat = endLatLng.lat() - startLatLng.lat();
+    var dlng = endLatLng.lng() - startLatLng.lng();
+    /*
+     * we multiply dlng with cos(endLat), since the two points are very closeby,
+     * so we assume their cos values are approximately equal
+     */
+    var yaw = Math.atan2(dlng * Math.cos(endLatLng.lat() * RADIAN_PER_DEGREE), dlat) * DEGREE_PER_RADIAN;
+    return $scope.wrapAngle(yaw);
+  };
+
+  $scope.wrapAngle = function(angle) {
+    if (angle >= 360) {
+      angle -= 360;
+    } else {
+      if (angle < 0) {
+        angle += 360;
+      }
+    }
+    return angle;
+  };
 
 });

@@ -454,11 +454,23 @@ p.menu-item-separator {
 }
 
 /* Google maps */
-#map-canvas { /* TODO: do we need this? */
-  margin: 0;
-  padding: 0;
+.map-container, .panorama-container {
+  height: 24em;
+  width: 100%;
+}
+#map-error, #panorama-error {
+  font-size: 2.0em;
+  padding-top: 2.0em;
+  text-align: center;
+  font-style: italic;
+  color: darkred;
+}
+#map-canvas, #panorama-canvas {
+  width: 100%;
+  height: 100%;
 }
 
+/* tab content */
 .tab-content {
   padding: 10px;
 }

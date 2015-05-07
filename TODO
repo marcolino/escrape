@@ -1,14 +1,9 @@
 TODO 1.0:
- - review user writes...
- - handle guest tentative write warning
  - check if timestamps on DB are * 1000 or not (should be not: correct comment_table...)
  - person detail view: add active/inactive flag visualization
- - person detail view: replace static google street + google street indications with dynamic google street view:+indications (see: <http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7>)
  - test photosCardDeckMerge() in real life... (We don't use it anymore, backup this code and remove from codebase...)
  - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR):
     check if all-string values in DB can be someway harmful...
- - filter all sites defined and all esc* sites from photos 'occurrences' (and add also "http://esc...profil.com/", ...)
- - in google search results page, add small button "add to white list" after url...
  - in google search results page, add a "white list" handling (list/add(?),remove,...)
  - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
  - think about a way to allow users to add/remove uniquenesses...
@@ -16,9 +11,8 @@ TODO 1.0:
  - before google search, check image has already thruthful flag...
  - test un-thruthful images rendering in views...
  - move style="..." from all views to style.css...
- - id_user_max: do we need it? (no, rename it to "_id_user_max"?)
+ - id_user_max: do we need it? (only temporarily, rename it to "_id_user_max"?)
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
- - remove resize directive from persons view
  - add an empty element to person view nationality dropdown elements
  - add a "back to list view" button in person view
  - add a "milf" field (/(matura)|(milf)/) in person's table... (or age?)
@@ -27,9 +21,10 @@ TODO 1.0:
  - add total # of persons in footer
  - test personsCheckUniquenessByPhotos() (@HOME)
  - set css cursor as pointer in maps buttons in person view
- - globally rename streetAddressModalPopup to streetAddressMapModalPopup
- - globally rename streetAddressIndicationsModalPopup to streetAddressViewModalPopup
-
+ - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
+ - remove resize directive from persons view
+ - after removing resize directive from person view, we should left-right re-align header with rows...
+ 
 TODO 1.1:
  - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own?)
  - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
@@ -139,3 +134,10 @@ DONE:
  - "Median rating of comments..." should not be shown if # of comments is 0
  - in persons view, put a blank image in person's header to avoid header left collapse with some screen sizes... (NO)
  - title of nationality in persons view: countryName, not countryCode...
+ - globally rename streetAddressModalPopup to streetAddressMapModalPopup
+ - globally rename streetAddressIndicationsModalPopup to streetAddressViewModalPopup
+ - person detail view: replace static google street + google street indications with dynamic google street view:+indications (see: <http://www.honobono-life.info/wpeng/google-maps-for-angularjs-directly-accessing-street-view-datav2-0-7>)
+ - filter all sites defined and all esc* sites from photos 'occurrences' (and add also "http://esc...profil.com/", ...)
+ - in google search results page, add small button "add to white list" after url...
+ - review user writes...
+ - handle guest tentative write warning

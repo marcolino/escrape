@@ -2,12 +2,12 @@
 
   <!-- persons-fixed-header -->
   <div id="persons-fixed-header" class="row persons-header right-scrollbar-placeholder">
-    <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
+    <div class="col-xs-4 col-sm-3 col-md-3 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
     </div>
 <!--
 <pre>{{sieves.sort}}</pre>
 -->
-    <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
+    <div class="col-xs-8 col-sm-9 col-md-9 col-lg-10">
 
       <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
@@ -194,7 +194,7 @@
   </div>
   <!-- /persons-fixed-header -->
 
-  <div style="overflow-y: auto; overflow-x: hidden;" resize resize-before="persons-fixed-header" resize-after="76" NOresize-after="footer">
+  <div style="overflow-y: auto; overflow-x: hidden;" NOresize resize-before="persons-fixed-header" resize-after="76" NOresize-after="footer">
     <div class="row" ng-if="personsList.length === 0">
       <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 persons-warning-text">
         <span>Sorry, no person matching these criteria</span>
@@ -207,7 +207,7 @@
         'person-uniq-id-last': isUniqLast('{{person.id_person}}')
       }">
 <!--<pre> person: {{person}} </pre>-->
-      <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
+      <div class="col-xs-4 col-sm-3 col-md-3 col-lg-2" style="min-width: 164px; padding-bottom:2px; white-space:nowrap;">
         <div class="showcase-left" ng-attr-title="{{'this person has some duplicate from different sources'}}">
           <a href="" ng-click="uniqShow('{{person.id_person}}')" class="no-text-decoration">
             <i class="fa fa-fw"
@@ -232,7 +232,7 @@
         </div>
       </div>
   
-      <div class="col-xs-8 col-sm-9 col-md-10 col-lg-10">
+      <div class="col-xs-8 col-sm-9 col-md-9 col-lg-10">
   
         <div class="row visible-sm visible-md visible-lg" style="padding-bottom:2px;">
           <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">

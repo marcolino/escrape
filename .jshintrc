@@ -22,6 +22,7 @@
     "angular": false,
     "app": true,
     "toastr": false,
-    "google": false
+    "google": false,
+    "$": false
   }
 }
