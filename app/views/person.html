@@ -1,8 +1,11 @@
 <div class="container">
 
-<!--<pre>person:{{person}}</pre>-->
+  <!--<pre>person:{{person}}</pre>-->
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
+      <li ng-class="{active: tabSelected === 'list', hide: tabs['list'].hidden}">
+        <a href="" ng-click="back()"><span class="glyphicon glyphicon-chevron-left"></span>{{tabs['list'].description}}</a>
+      </li>
       <li ng-class="{active: tabSelected === 'main', hide: tabs['main'].hidden}">
         <a href="" ng-click="tabSelected = 'main'">{{tabs['main'].description}}</a>
       </li>
@@ -19,55 +22,56 @@
 
     <!-- main pill -->
     <div class="tab-content" ng-show="tabSelected === 'main' && !tabs['main'].hidden">
-      <form class="form-horizontal" style="margin-top:5px">
-        <div class="form-group">
+      <form class="form-horizontal" Xstyle="margin-top:5px">
+        <div class="row">
           <div class="col-xs-12">
             <div class="slider-horizontal">
               <span ng-repeat="(number, photo) in person.photos" class="slider-image">
-              <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
-              <a href="" ng-click="tabSelect('photos', number)" class="no-text-decoration">
-                <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" ng-class="{'img-fake': photo.thruthful === 'false'}" class="img-rounded img-clip" />
-                <div ng-if="photo.thruthful === 'false'">
-                  <img src="images/watermarks/fake-label.png" class="label-image" />
-                </div>
-                <div ng-if="photo.thruthful === 'true'">
-                  <img src="images/watermarks/thruthful-label.png" class="label-image" />
-                </div>
-                <div ng-if="photo.thruthful === 'unknown'">
-                  <img src="images/watermarks/unknown-label.png" class="label-image" />
-                </div>
-              </a>
+                <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
+                <a href="" ng-click="tabSelect('photos', number)" class="no-text-decoration">
+                  <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" ng-class="{'img-fake': photo.thruthful === 'false'}" />
+                  <div ng-if="photo.thruthful === 'false'">
+                    <img src="images/watermarks/fake-label.png" class="label-image" />
+                  </div>
+                  <div ng-if="photo.thruthful === 'true'">
+                    <img src="images/watermarks/thruthful-label.png" class="label-image" />
+                  </div>
+                  <div ng-if="photo.thruthful === 'unknown'">
+                    <img src="images/watermarks/unknown-label.png" class="label-image" />
+                  </div>
+                </a>
               </span>
             </div>
           </div>
         </div>
+
         <div class="row">
           <div class="col-xs-12">
-            <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Name"><span class="glyphicon glyphicon-user"></span></span>
+            <div class="input-group input-group-bottom-spaced" title="The name of this person">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
               <input type="text" class="form-control" ng-model="person.name" ng-change="nameChange()" placeholder="Name">
             </div>
           </div>
         </div>
         <div class="row">
           <div class="col-xs-12 col-sm-6">
-            <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Description"><span class="glyphicon glyphicon-pencil"></span></span>
+            <div class="input-group input-group-bottom-spaced" title="The description of this person">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-pencil"></span></span>
               <textarea class="form-control" rows="3" ng-model="person.description" ng-change="descriptionChange()" placeholder="Description"></textarea>
             </div>
           </div>
           <div class="col-xs-12 col-sm-6">
-            <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Notes"><span class="glyphicon glyphicon-edit"></span></span>
+            <div class="input-group input-group-bottom-spaced" title="The notes for this person">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-edit"></span></span>
               <textarea class="form-control" rows="3" ng-model="person.notes" ng-change="notesChange()" placeholder="Notes"></textarea>
             </div>
           </div>
         </div>
         <div class="row">
           <div class="col-xs-12 col-sm-6">
-            <div class="dropdown">
+            <div class="dropdown" title="Nationality">
               <div class="input-group input-group-bottom-spaced" data-toggle="dropdown">
-                <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></i></span>
+                <span class="input-group-addon"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></i></span>
                 <input class="form-control" id="query" name="query" type="text" ng-value="countries.getCountryName(person.nationality)" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
@@ -81,8 +85,8 @@
             </div>
           </div>
           <div class="col-xs-12 col-sm-6">
-            <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Phone"><a ng-href="tel:{{person.phone}}"><span class="glyphicon glyphicon-earphone"></span></a></span>
+            <div class="input-group input-group-bottom-spaced" title="The phone number of this person">
+              <span class="input-group-addon"><a ng-href="tel:{{person.phone}}"><span class="glyphicon glyphicon-earphone"></span></a></span>
               <input type="text" class="form-control" ng-model="person.phone" ng-change="phoneChange()" placeholder="Phone">
             </div>
           </div>
@@ -90,44 +94,50 @@
 
         <div class="row">
           <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-            <div class="input-group input-group-bottom-spaced">
+            <div class="input-group input-group-bottom-spaced" title="The vote for this person">
               <span class="input-group-addon" title="Vote up" ng-click="voteChange(+1)"><a href=""><span class="glyphicon glyphicon-thumbs-up"></span></a></span>
               <input class="form-control" ng-model="person.vote" placeholder="Vote" title="the vote of this person" number-mask min="{{cfg.person.vote.min}}" max="{{cfg.person.vote.max}}">
               <span class="input-group-addon" title="Vote down" ng-click="voteChange(-1)"><a href=""><span class="glyphicon glyphicon-thumbs-down"></span></a></span>
             </div>
           </div>
           <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-            <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" title="Date of first presence"><span class="glyphicon glyphicon-calendar"></span></span>
+            <div class="input-group input-group-bottom-spaced" ng-attr-title="Date of first presence is {{firstSeen(person)}}">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
               <input type="text" class="form-control" ng-value="firstSeen(person)" readonly>
             </div>
           </div>
           <div class="col-xs-12 col-sm-4 col-md-2 col-lg-2">
-            <div class="input-group input-group-bottom-spaced" ng-click="openInNewTab('{{person.url}}')">
-              <span class="input-group-addon" title="person's referral source site"><span class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></span></span>
-              <input type="text" class="form-control" ng-model="person.source_key" placeholder="Referral source" title="the referral source site for this person" readonly>
+            <div class="input-group input-group-bottom-spaced" ng-click="openInNewTab('{{person.url}}')" title="the referral source site for this person">
+              <span class="input-group-addon"><span class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></span></span>
+              <input type="text" class="form-control" ng-model="person.source_key" placeholder="Referral source" readonly>
             </div>
           </div>
           <div class="col-xs-6 col-sm-4 col-md-2 col-lg-2">
-            <div class="input-group input-group-bottom-spaced" ng-click="tabSelected = 'comments'">
-              <span class="input-group-addon" title="the number of comments referring to person's phone"><span class="label label-as-badge label-info">{{person.comments.length}}</span></span>
-              <input type="text" class="form-control" value="comments" title="the number of comments referring to person's phone" readonly>
+            <div class="input-group input-group-bottom-spaced" ng-click="tabSelected = 'comments'" title="the number of comments referring to person's phone">
+              <span class="input-group-addon"><span class="label label-as-badge label-info">{{person.comments.length}}</span></span>
+              <input type="text" class="form-control" value="comments" readonly>
             </div>
           </div>
           <div class="col-xs-6 col-sm-4 col-md-2 col-lg-2">
-            <div class="input-group input-group-bottom-spaced" ng-click="tabSelected = 'comments'">
-              <span class="input-group-addon" title="the median rating of comments referring to this person"><span class="label label-as-badge label-danger">{{person.rating || '-'}}</span></span>
-              <input type="text" class="form-control" value="rating" title="the median rating of comments referring to this person" readonly>
+            <div class="input-group input-group-bottom-spaced" ng-click="tabSelected = 'comments'" title="the median rating of comments referring to this person">
+              <span class="input-group-addon"><span class="label label-as-badge label-danger">{{person.rating || '-'}}</span></span>
+              <input type="text" class="form-control" value="rating" readonly>
             </div>
           </div>
         </div>
 
         <div class="row">
-          <div class="col-xs-12">
-            <div class="input-group input-group-bottom-spaced">
-              <span class="input-group-addon" style="cursor: default" title="Street address map"><a data-toggle="modal" data-target="#streetAddressIndicationsModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
+          <div class="col-xs-6 col-sm-9 col-md-10 col-lg-10">
+            <div class="input-group input-group-bottom-spaced" title="Street address map">
+              <span class="input-group-addon" Xstyle="cursor: pointer"><a href="" data-toggle="modal" data-target="#streetAddressIndicationsModalPopup"><span class="glyphicon glyphicon-road"></span></a></span>
               <input type="text" class="form-control" ng-model="person.street_address" placeholder="Street address" ng-change="streetAddressChange(person)">
-              <span class="input-group-addon" style="cursor: default" title="Street address view"><a data-toggle="modal" data-target="#streetAddressPanoramaModalPopup"><span class="glyphicon glyphicon-home"></span></a></span>
+              <span class="input-group-addon" Xstyle="cursor: default"><a href="" data-toggle="modal" data-target="#streetAddressPanoramaModalPopup"><span class="glyphicon glyphicon-home"></span></a></span>
+            </div>
+          </div>
+          <div class="col-xs-6 col-sm-3 col-md-2 col-lg-2">
+            <div class="input-group input-group-bottom-spaced" title="The current activity status of this person">
+              <span class="input-group-addon"><span class="glyphicon" ng-class="{'text-success': person.active === '1', 'glyphicon-ok': person.active === '1', 'glyphicon-remove': person.active === '0'}"></span></span>
+              <input type="text" class="form-control" ng-value="(person.active === '1') ? 'active' : 'not active'" readonly>
             </div>
           </div>
         </div>

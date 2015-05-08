@@ -199,26 +199,21 @@ app.service('Countries', function() {
 	{ code: 'zm', name: 'Zambia' },
 	{ code: 'zw', name: 'Zimbabwe' },
   ];
-  var firstCountry = 'Italy';
 
-  return {
+  var Countries = {
 	countries: countries,
+    firstCountryName: 'Italy',
 	getCountries: function() { // return countries as array sorted on country name
       function compare(a, b) {
        	// '<' / '>' compare method is faster than localeCompare but sorts only ASCII names
        	return (
-       	  a.name === firstCountry ? -1 :
-       	  b.name === firstCountry ? 1 :
+       	  a.name === Countries.firstCountryName ? -1 :
+       	  b.name === Countries.firstCountryName ? 1 :
        	  a.name < b.name ? -1 :
        	  a.name > b.name ? 1 :
        	  0
        	);
       }
-/*
-      var c = countries.sort(compare);
-      c.unshift({ code: 'zz', name: 'EMPTY' }); // add empty element on top
-      return c;
-*/
       return countries.sort(compare);
 	},
 	getCountryName: function(countryCode) {
@@ -230,11 +225,12 @@ app.service('Countries', function() {
       return null;
 	},
 	getCountryClass: function(countryCode) {
-  	  return (countryCode === '') ?
-  	    'glyphicon glyphicon-globe' :
-  	    'flag' + ' ' + countryCode
+  	  return countryCode ?
+  	    'flag' + ' ' + countryCode :
+  	    'glyphicon glyphicon-globe'
   	  ;
   	},
   };
 
+  return Countries;
 });

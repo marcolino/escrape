@@ -1,8 +1,4 @@
 TODO 1.0:
- - person detail view: add active/inactive flag visualization
- - test photosCardDeckMerge() in real life... (We don't use it anymore, backup this code and remove from codebase...)
- - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR):
-    check if all-string values in DB can be someway harmful...
  - in google search results page, add a "white list" handling (list/add(?),remove,...)
  - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
  - think about a way to allow users to add/remove uniquenesses...
@@ -13,25 +9,20 @@ TODO 1.0:
  - id_user_max: do we need it? (only temporarily, rename it to "_id_user_max"?)
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
  - add an empty element to person view nationality dropdown elements
- - add a "back to list view" button in person view
- - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?)
- - handle person's race ('oriente' / 'sudamerica') ... (?)
- - avoid name normalization for sgi ("IN.... RU...")
- - add total # of persons in footer
+ - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?) (@HOME)
+ - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
+ - avoid name normalization for sgi ("IN.... RU...") (test @HOME)
  - test personsCheckUniquenessByPhotos() (@HOME)
- - set css cursor as pointer in maps buttons in person view
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
- - remove resize directive from persons view
- - since we removed resize directive from person view, we should left-right re-align header with rows...
  - remove "$userId" from PersonsController.php and CommentsController.php classes
  
 TODO 1.1:
- - decide where/how/if to display the name of person in persons view on extra-small screens (one row on its own)
- - synopsys for all methods in api and app (starting from api/classes/services/DB.php)
- - a better 'resize' directive strategy to calculate it's height based on previous and following elements heights
+ - synopsys for all methods in api and app
+ - a perfect 'resize' directive strategy to calculate it's height based on previous and following elements heights
  - options: country / city / category should be considered when sync'ing persons
- - rename all SQL fields from underscore_case to camelCase, and reset camelcase to true in .jshintrc
+ - resolve conflicting cases in SQL and Angular (underscore_case / camelCase), and reset camelcase to true in .jshintrc...
  - when clicking log-in / sign-up, remember referral url, to redirect user there, after login / sign-up ...
+ - if sieves filter out a 'primary' person and not a secondary (, ...) person, then should show secondary (, ...) person (currently all the group is hidden) ...
 
 TODO 2.0:
  - I18n (?) (see:
@@ -40,19 +31,17 @@ TODO 2.0:
      - <https://github.com/angular/bower-angular-i18n>
      - <https://github.com/lgalfaso/angular-dynamic-i18n>
      - <http://stackoverflow.com/questions/13007430/angularjs-and-locale>:
-You can load the locale you want into localStorage, then refresh the page. Have the script below load the i18n file you need. Changing the locale on the fly isn't supported yet.
-
-  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.3/angular.min.js"></script>
-  <script>
-    var locale = JSON.parse(localStorage.getItem('locale'));
-    if (locale) {
-      document.write('<script src="scripts/i18n/angular-locale_'+locale+'.js"><\/script>');
-    }
-  </script>
-
+   You can load the locale you want into localStorage, then refresh the page. Have the script below load the i18n file you need. Changing the locale on the fly isn't supported yet.
+   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.3/angular.min.js"></script>
+   <script>
+     var locale = JSON.parse(localStorage.getItem('locale'));
+     if (locale) {
+       document.write('<script src="scripts/i18n/angular-locale_'+locale+'.js"><\/script>');
+     }
+   </script>
  - move to https (see: <https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps>)
- - better generalize for easier customization of sources
  - in list view show only one page of results (20?, 30?); then, when user is close to scroll to the end of page, load next page
+ - enable "Google Analytics" in index.html
 
 DONE:
  - search() should issue a persons reload...
@@ -142,3 +131,13 @@ DONE:
  - review user writes...
  - handle guest tentative write warning
  - check if timestamps on DB are * 1000 or not (should be not: correct comment_table...)
+ - person detail view: add active/inactive flag visualization
+ - we don't use photosCardDeckMerge() anymore, backup this code (in "old/api/cards.php")
+ - add total # of persons in footer
+ - add a "back to list view" button in person view
+ - since we removed resize directive from person view, we should left-right re-align header with rows...
+ - set css cursor as pointer in maps buttons in person view
+ - remove resize directive from persons view
+ - for total # of persons in footer, don't use bare count, but ignore from the sum the secondary persons
+ - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR): check if all-string values in DB can be someway harmful... (No, auto-conversion is done, see http://stackoverflow.com/questions/833510/php-pdobindparam-data-types-how-does-it-work)
+ - show the name of person in persons view on extra-small screens in it's own row (no-wrap text...)

@@ -26,6 +26,7 @@ app.constant('cfg', {
     name: 'eScrape',
     description: 'the ultimate web contacts manager',
     version: latestTag, // sync'ed with latest git tag with a post-commit hook
+    copy: '© 2015, by the eScrape team',
   },
 /*
   client: {

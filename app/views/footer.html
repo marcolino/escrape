@@ -1,5 +1,14 @@
-<footer id="footer" class="footer" ng-controller="PersonsController">
-  <p>
-  	{{personsList.length}} persons listed by the escrape team <span class="glyphicon glyphicon-heart"></span>
-  </p>
+<footer id="footer" class="footer" ng-controller="FooterController">
+  <div class="row">
+    <div class="col-xs-6">
+      <div class="pull-left">
+        <span>{{personsCount}} person{{personsCount !== 1 ? 's' : ''}} listed</span>
+      </div>
+    </div>
+    <div class="col-xs-6">
+      <div class="pull-right">
+        <span>{{cfg.site.copy}} <span class="glyphicon glyphicon-heart"></span></span>
+      </div>
+    </div>
+  </div>
 </footer>

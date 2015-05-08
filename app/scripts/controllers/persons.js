@@ -13,7 +13,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       'description': 'Photos',
       'hidden': false,
     },
-    'photosOccurrences': { // TODO: think of a better name, please...
+    'photosOccurrences': { // TODO: think of a better name...
       'description': 'Photos occurrences',
       'hidden': true,
       'loading': false,
@@ -22,26 +22,33 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       'description': 'Comments',
       'hidden': false,
     },
+    'list': {
+      'description': 'List',
+      'hidden': false,
+    },
   };
-  $scope.tabSelected = 'main';
+  $scope.tabSelected = $rootScope.tabSelected || 'main';
   $scope.countries = Countries;
   $scope.person.streetLocation = '[0, 0]'; // to avoid geolocation prompts...
   $scope.cfg = cfg; // make cfg data available to scope
-  //$scope.username = $rootScope.username;
-  //$scope.username = $rootScope.globals.currentUser.username;
   $scope.userId = (typeof $rootScope.globals.currentUser !== 'undefined') ? $rootScope.globals.currentUser.id : null;
   $scope.sortCriteria = {};
-  $scope.openedId = null;
+  $scope.openedId = $rootScope.openedId;
   $scope.Sieves = Sieves;
   $scope.Sieves.load();
   $scope.sieves = Sieves.sieves;
   $scope.photosOccurrencesWhitelist = [];
 
   // watch for sieves changes
-  $scope.$watch('Sieves.getDigest()', function() {
-    //console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
+  //$scope.$watch('Sieves.getDigest()', function() {
+  //  console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
+/*
+  $scope.$watch('Sieves.digest', function() {
+    console.log('Sieves.digest CHANGED, RELOADING SIEVES...');
     loadPersons(); // load persons list
   }, false);
+*/
+  // AT BOTTOM: loadPersons(); // load persons list
 
   /*
   if ($scope.personId) {
@@ -59,19 +66,19 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // private methods
   function applyPersons(persons) {
-    console.log('PERSONS:', persons);
+    console.log('APPLY PERSONS:', persons);
     $scope.persons = persons;
-    //$scope.sortCriteria.name = true;
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
+    $scope.personsCount = $scope.countPersons(); // for footer controller
+    $rootScope.$emit('someEvent', $scope.personsCount);
+console.log('PERSONS - someEvent emitted');
     if ($rootScope.openedId) { // scroll to remembered row id
-      //console.info('scope.openedId:', $rootScope.openedId);
       $scope.scrollTo($rootScope.openedId);
     }
   }
 
   function loadPersons() {
-    //console.log('loadPersons() - Sieves.sieves:', Sieves.sieves);
-    //Persons.getPersons($rootScope.sieves).then(function(persons) {
+    console.log('LOAD PERSONS');
     Persons.getPersons(Sieves.sieves, $scope.userId).then(function(persons) {
       applyPersons(persons);
     });
@@ -134,7 +141,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       //$scope.person.street_region = 'it'; // TODO: get street_region from setup/cfg ?
       // watch for person street address changes
       $scope.$watch('person.street_address', function() {
-        $scope.mapError = $scope.panoError = null;
+        $scope.mapError = $scope.panoramaError = null;
         //console.log('$watch: person.street_address changed to', person.street_address);
         $scope.loadMapAndPano($scope.person.street_address);
       });
@@ -178,7 +185,10 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   }
 
 
+// TODO: check which currently "public" methods could be set as "private"...
+
   // public methods
+
   $scope.flipPersonInCommentActive = function(commentId, personId) {
     var len, i; //, active, person;
     var active = false;
@@ -250,8 +260,23 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     return persons;
   };
 
-  $scope.open = function(id) {
+  $scope.countPersons = function() {
+    var count = 0;
+    Object.keys($scope.persons).forEach(function (id) { // scan all persons in persons
+      if ($scope.isUniqPrimaryOrSingle(id)) {
+        count++;
+      }
+    });
+    return count;
+  };
+
+  $scope.back = function() {
+    $location.path('/');
+  };
+
+  $scope.open = function(id, tab) {
     $rootScope.openedId = id;
+    $rootScope.tabSelected = tab;
     $location.path('/details/' + id);
   };
 
@@ -693,8 +718,8 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     // check if GPS has been locally cached
     var geocoder = new google.maps.Geocoder();
     if (!address) {
-      $scope.mapError = $scope.panoError = 'No address given';
-      console.error('please specify an address...');
+      $scope.mapError = $scope.panoramaError = 'No address given';
+      console.warn('please specify an address...');
       return;
     }
     geocoder.geocode({ 'address': address }, function(results, status) {
@@ -715,18 +740,18 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
       } else {
         if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
-          $scope.mapError = $scope.panoError = 'Address "' + address + '" not found';
-          console.error('can\'t find address ' + address);
+          $scope.mapError = $scope.panoramaError = 'Address "' + address + '" not found';
+          console.warn('can\'t find address ' + address);
         } else {
           if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) { // over query limit,VER_QUERY_LIMIT status code: retry in a moment...          
-            $scope.mapError = $scope.panoError = 'Please wait for address geo-codification...';
+            $scope.mapError = $scope.panoramaError = 'Please wait for address geo-codification...';
             setTimeout(function() {
               console.warn('retrying loadMapAndPano() ...');
-              $scope.mapError = $scope.panoError = null;
+              $scope.mapError = $scope.panoramaError = null;
               $scope.loadMapAndPano(address);
             }, 1000);
           } else { // other error
-            $scope.mapError = $scope.panoError = 'Address "' + address + '" not found (status is: ' + status + ')';
+            $scope.mapError = $scope.panoramaError = 'Address "' + address + '" not found (status is: ' + status + ')';
             console.error('can\'t find address ' + address + ' (geocoder status is ' + status + ')');
           }
         }
@@ -760,7 +785,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   $scope.showPanoData = function(panoData, status) {
     if (status !== google.maps.StreetViewStatus.OK) {
-      $scope.panoError = 'No StreetView available';
+      $scope.panoramaError = 'No StreetView available';
       return;
     }
     var angle = $scope.computeAngle(panoData.location.latLng, $scope.addLatLng);
@@ -807,5 +832,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     }
     return angle;
   };
+
+  loadPersons(); // load persons list
 
 });

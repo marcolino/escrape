@@ -140,6 +140,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     }
     //console.log('service.digest:', service.digest);
     service.store();
+    Persons.loadPersons(); // force a reload of persons... it's cheaper here than issuing a $watch in persons controller...
   };
 
   service.setFilterVoteMin = function (n) {

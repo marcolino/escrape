@@ -3,13 +3,9 @@ html * {
   outline: none !important;
 }
 
-/* Space out content a bit */
+/* space out content a bit */
 body {
   padding: 10px 10px 10px 10px;
-/*
-  padding-top: 10px;
-  padding-bottom: 10px;
-*/
 }
 
 .navbar-compact {
@@ -20,38 +16,16 @@ body {
   padding: 10px 10px 10px 10px;
 }
 
-/*
-.container {
-  padding: 10px 10px 10px 10px;
-}
-*/
-/*
-.table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td {
-  padding: 2px 5px 2px 5px;
-  line-height: 1.0; /*1.42857;* /
-  vertical-align: middle;
-  border-top: 1px solid #f0f0f0;
-  white-space: wrap;
-  font-size: 1.2em;
-  font-weight: 400;
-}
-.table {
-  margin-left: 5px;
-  margin-bottom: 5px;
-}
-*/
 
-/* Everything but the jumbotron gets side spacing for mobile first views */
+/* everything but the jumbotron gets side spacing for mobile first views */
 .header,
 .footer {
   padding-left: 15px;
   padding-right: 15px;
 }
 
-/* Custom page header */
+/* custom page header */
 .header {
-  NOborder-bottom: 1px solid red; /*#e5e5e5;*/
-  NOmargin-bottom: 2.0em;
 }
 
 .navbar-brand {
@@ -61,7 +35,7 @@ body {
   padding-left: 0; /* save mobile header space ... */
 }
 
-/* Custom page footer */
+/* custom page footer */
 .footer {
   margin-top: 10px;
   padding-top: 5px;
@@ -70,11 +44,6 @@ body {
   font-size: .88em;
 }
 
-/*
-.btn-admin {
-  background-color: lightgreen;
-}
-*/
 .btn-spaced {
   margin-left: 5px;
 }
@@ -156,10 +125,6 @@ body {
 /* header labels in persons view */
 .persons-header-label {
   font-size: 0.9em;
-  NOfont-style: italic;
-  NOtext-align: left;
-  NObackground: #efefef;
-  NOcolor: white;
   color: #222;
 }
 
@@ -174,9 +139,6 @@ body {
 
 .person-uniq-id-last {
   border-bottom: 2px solid #111;
-  NOborder-right: 1px solid #444;
-  NOborder-left: 1px solid #444;
-  NObackground: #ccc;
 }
 
 /* a clearfix, with a minimum height */
@@ -186,7 +148,6 @@ body {
 
 /* use labels as badges (to better control colors) */
 .label-as-badge {
-  NOfont-family: 'Droid Sans', sans-serif;
   font-size: 0.9em;
   font-style: normal;
   font-weight: bold;
@@ -233,7 +194,7 @@ body {
 .img-clip-container {
   /* TODO: set this width value in controller, using ng-style (see https://docs.angularjs.org/api/ng/directive/ngStyle) */
   width: 136px; /* img-clip max width (+1+5+1+5), should be set dynamically */
-  background: #111;
+  background-color: #111;
   text-align: center;
 }
 .img-clip {
@@ -262,6 +223,7 @@ body {
   width: auto;
   max-height: 18px;
 }
+/*
 .img-thruthful-yes { 
           box-shadow: 1px 1px 3px 0px #143a04;
   -webkit-box-shadow: 1px 1px 3px 0px #143a04;
@@ -277,92 +239,46 @@ body {
   -webkit-box-shadow: 1px 1px 3px 0px #888888;
      -moz-box-shadow: 1px 1px 3px 0px #888888;
 }
+*/
+/*
 .btn-vote {
   color: #fff;
-  background: lightred; /* TODO: => #... */
+  background-color: red;
   text-shadow: 1px 1px 1px #222;
 }
 .btn-vote-9 {
-  background: #00ff00;
+  background-color: #00ff00;
 }
 .btn-vote-8 {
-  background: #18d800;
+  background-color: #18d800;
 }
 .btn-vote-7 {
-  background: #30b000;
+  background-color: #30b000;
 }
 .btn-vote-6 {
-  background: #489800;
+  background-color: #489800;
 }
 .btn-vote-5 {
-  background: #608000;
+  background-color: #608000;
 }
 .btn-vote-4 {
-  background: #786800;
+  background-color: #786800;
 }
 .btn-vote-3 {
-  background: #905000;
+  background-color: #905000;
 }
 .btn-vote-2 {
-  background: #a83800;
+  background-color: #a83800;
 }
 .btn-vote-1 {
-  background: #c02000;
+  background-color: #c02000;
 }
 .btn-vote-0 {
-  background: #e80800;
-}
-
-/* Photos preview */
-/*
-.img-container {
-  width: 72px;
-  height: 96px;
-  display: block;
-  text-align: center;
-  vertical-align: top;
-  border: 1px solid #ccc;
-  NOmargin-top: -3px;
-}
-.img-container img {
-  max-width: 100%;
-}
-**/
-
-/* Supporting custom content */
-.light, .light a {
-  color: #eee;
-}
-
-/*
-/* Customize container * /
-@media (min-width: 768px) {
-  .container {
-    max-width: 730px;
-  }
-}
-.container-narrow > hr {
-  margin: 30px 0;
+  background-color: #e80800;
 }
 */
 
-/*
-/* Responsive: Portrait tablets and up * /
-@media screen and (min-width: 768px) {
-  /* Remove the padding we set earlier * /
-  .header,
-  .footer {
-    padding-left: 0;
-    padding-right: 0;
-  }
-  /* Space out the masthead * /
-  .header {
-    margin-bottom: 30px;
-  }
-}
-*/
-
-/* avoid opten spurious selections */
+/* avoid spurious selections */
 .noselect {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -377,14 +293,9 @@ input[readonly].default-cursor {
   cursor: default;
 }
 
-/* TODO: use no-text-decoration... */
 /* avoid text decoration on accordion elements */
-.accordion-toggle {
-  text-decoration: none !important;
-}
 .no-text-decoration {
   text-decoration: none !important;
-  DOESNTWORK-outline: none;
 }
 
 /* persons warning text */
@@ -453,7 +364,7 @@ p.menu-item-separator {
 .carousel-toolbar {
 }
 
-/* Google maps */
+/* google maps */
 .map-container, .panorama-container {
   height: 24em;
   width: 100%;
@@ -524,7 +435,8 @@ p.menu-item-separator {
   overflow-y: auto;
 }
 
-/* vertical media queries for comments container - TODO: use more blocks, to make it more responsive */
+/* vertical media queries for comments container */
+/* TODO: use more blocks, to make it more responsive */
 @media(max-height: 239px) {
   .comments {
     height: 80px;
