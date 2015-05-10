@@ -50,6 +50,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 */
   // AT BOTTOM: loadPersons(); // load persons list
 
+  // watch for sieves changes
+  $rootScope.$on('sievesChanged', function(/*event, args*/) {
+    console.log('SIEVES - sievesChanged');
+    loadPersons(); // load persons list
+  });
+
   /*
   if ($scope.personId) {
     // bind user notification before location change start event if any unsaved change present
@@ -66,12 +72,11 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // private methods
   function applyPersons(persons) {
-    console.log('APPLY PERSONS:', persons);
+    console.log('APPLY PERSONS');
     $scope.persons = persons;
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     $scope.personsCount = $scope.countPersons(); // for footer controller
-    $rootScope.$emit('someEvent', $scope.personsCount);
-console.log('PERSONS - someEvent emitted');
+    $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
     if ($rootScope.openedId) { // scroll to remembered row id
       $scope.scrollTo($rootScope.openedId);
     }
@@ -132,6 +137,7 @@ console.log('PERSONS - someEvent emitted');
     return null;
   }
 
+// TODO: put this in a local function, then call it on top... (with loadPersons() currently at bottom...)
   if ($scope.personId) { // load single person
     Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
@@ -388,6 +394,14 @@ console.log('PERSONS - someEvent emitted');
       }
     }
   };
+
+  $scope.shorten = function(name) {
+    var maxlen = 20;
+    if (name.length > maxlen) {
+      name = name.substr(0, maxlen - 1) + '…';
+    }
+    return name;
+  }
 
   $scope.isUniqPrimary = function(personId) {
     return (
@@ -833,6 +847,8 @@ console.log('PERSONS - someEvent emitted');
     return angle;
   };
 
-  loadPersons(); // load persons list
+  if ($scope.persons.length === 0) {
+    loadPersons(); // load persons list
+  }
 
 });

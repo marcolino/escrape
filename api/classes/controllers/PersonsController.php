@@ -44,7 +44,7 @@ class PersonsController {
       $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
       $url = $source["url"] . "/" . $source["path"];
-      $this->router->log("debug", "source: " . $sourceKey);
+      #$this->router->log("debug", "source: " . $sourceKey);
 
       getUrlContents:
       $this->router->log("info", "getUrlContents($url) (TOR: " . ($useTor ? "true" : "false") . ")");
@@ -259,7 +259,7 @@ class PersonsController {
     #}
 
     // assert persons uniqueness after sync completed
-    $this->assertPersonsUniqueness();
+#DEBUG ASSERT PERSON ACTIVITY#    $this->assertPersonsUniqueness();
 
     return !$error;
   }
@@ -280,10 +280,12 @@ class PersonsController {
         // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
         $timestampLastSyncPerson = $person["timestamp_last_sync"];
         $active = ($timestampLastSyncPerson >= $timestampStart);
-        #$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson - active: " . ($active ? "1" : "0"));
+$this->router->log("debug", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
       }
-      $this->db->setPerson($person["id"], [ "active" => $active ? 1 : 0 ]);
+$active = 1; #DEBUG#
+      $this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
     }
+$this->router->log("debug", "asserting persons activity finished");
   }
 
   /**
@@ -342,6 +344,7 @@ class PersonsController {
         }
       }
     }
+$this->router->log("debug", "asserting persons uniqueness finished");
   }
 
   /**
@@ -444,13 +447,16 @@ class PersonsController {
   }
 
   private function normalizeName($value) {
+    /*
     // if name starts with all upperchars, keep only upperchars
     if (
       ctype_upper(substr($value, 0, 1)) &&
       ctype_upper(substr($value, 1, 1))
     ) {
-      $value = preg_replace("/^([A-Z0-9'-]*).*/", "$1", $value); // ignore characters after upperchars
+      $value = preg_replace("/^([A-Z0-9'-]*).*   /", "$1", $value); // ignore characters after upperchars
     }
+    */
+    $value = preg_replace("/[,.;!].*$/", "", $value); // ignore anything after a punctuation character and after
     $value = preg_replace("/[()]/", "", $value); // ignore not meaningful characters
     $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
     $value = preg_replace("/^\s+/", "", $value); // ignore leading blanks
@@ -756,6 +762,7 @@ class PersonsController {
 
     foreach ($photos1 as $photo1) {
       try {
+        #$this->router->log("debug", "personsCheckUniquenessByPhotos - new Photo: is there a 'url' field in \$photo1 ? " . any2string($photo1));
         $photo = new Photo($this->router, [ "data" => $photo1 ]);
       } catch (Exception $e) {
         $this->router->log("error", "can't create new photo from data: " . $e->getMessage());
@@ -764,13 +771,15 @@ class PersonsController {
 
       // check if photo is an exact duplicate
       if ($this->photoCheckDuplication($photo, $photos2)) {
-        $this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
+        #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
         return true; // duplicate found
       }
+      #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckDuplication()");
       if ($this->photoCheckSimilarity($photo, $photos2)) {
-        $this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
+        #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
         return true; // similarity found
       }
+      #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckSimilarity()");
 
       unset($photo);
     }
@@ -815,7 +824,7 @@ class PersonsController {
 
     // check if photo is an exact duplicate
     if ($this->photoCheckDuplication($photo, $photos)) {
-      $this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a duplicate, ignoring");
+      #$this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a duplicate, ignoring");
       return false; // duplicate found
     }
 
@@ -823,7 +832,7 @@ class PersonsController {
     $photo->signature();
 
     if ($this->photoCheckSimilarity($photo, $photos)) {
-      $this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a similarity, ignoring");
+      #$this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a similarity, ignoring");
       return false; // similarity found
     }
     $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING...");

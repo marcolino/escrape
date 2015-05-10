@@ -6,6 +6,19 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
+######################################################################################################################
+#require "Network.php";
+#$source = [];
+#$source["url"] = "http://biografieonline.it/img/bio/Raffaella_Fico_1.jpg";
+#$p = new Photo(null, $source, null);
+#$text = "Image does not exist";
+#$mime = "image/jpeg";
+#$img = $p->createImageFromText($text, $mime);
+#header("Content-Type: " . $mime);
+#print $img;
+#exit;
+######################################################################################################################
+
 class Photo {
   const INTERNAL_TYPE = "jpg"; // internal type of bitmaps
   const SMALL_HEIGHT = 96; // small photo height (pixels)
@@ -286,6 +299,31 @@ class Photo {
     foreach ($data as $property => $value) {
       $this->$property = $value;
     }
+    if (!array_key_exists("bitmap", $data)) {
+      $this->bitmap = ""; // we don't need the url field, set a fake value
+    }
+    if (!array_key_exists("mime", $data)) {
+      $this->mime = ""; // we don't need the mime field, set a fake value
+    }
+/*    
+    if (!array_key_exists("bitmap", $data)) {
+      // no bitmap: load it from db photos cache
+      if (!array_key_exists("path_full", $data)) {
+        $this->router->log("error", "Can't create photo from data: no 'path_full' specified");
+        throw new Exception("Can't create photo from data: no 'path_full' specified");
+      }
+      try {
+        $url = "../api/" . $this->path_full;
+        $this->bitmap = file_get_contents($url);
+        $this->mime = "image/jpeg"; // internal mime type (TODO: should be a class constant...)
+        $this->bitmapFull = $this->bitmapFull();
+        $this->bitmapSmall = $this->bitmapSmall();
+      } catch(Exception $e) {
+        $this->router->log("error", "can't get image [$url] contents: " . $e->getMessage());
+        throw new Exception("can't get image [$url] contents: " . $e->getMessage());
+      }
+    }
+*/
   }
 
   /**
@@ -295,6 +333,9 @@ class Photo {
     if (!$photo) {
       return false;
     }
+    #$this->router->log("debug", "Photo::checkSimilarity - \$this->bitmap length: " . strlen($this->bitmap));
+    #$this->router->log("debug", "Photo::checkSimilarity - \$this->url: " . any2string($this->url));
+
     $this->load();
     $distance = $this->compareSignatures($this->signature(), $photo->signature());
     if ($distance <= $this->options["signatureDuplicationMinDistance"]) { // duplicate found
@@ -315,48 +356,99 @@ class Photo {
       $this->mime = null;
     }
 
-    #list($this->bitmap, $this->mime) = $this->getUrlContents($this->url); // download photo
-
-    #try {
-      // get photo contents
-      #$this->bitmap = $network->getUrlContents($this->url); #, null, null, false, false); // download photo
-      
-      #$this->bitmap = $network->getUrlContents($this->url, null, null, false, false); // download photo without TOR
     $retry = 0;
     retry:
     try {
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
-      # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() befor downloading... !!!
+      # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() before downloading... !!!
     } catch(Exception $e) {
       $message = $e->getMessage();
       if (
-        (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
-        (strpos($message, "has banned your access") !== false)
+        (strpos($message, "La pagina che hai tentato di visualizzare non esiste") !== false)
       ) {
-        $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
-        # TODO: why sync execution stops here??? (and not true / false is returned?)
-        if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
-          $retry++;
-          $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
-          sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
-          goto retry;
-        } else {
-          $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
-        }
+        $this->router->log("warning", "can't get image [$this->url]: " . "does not exist");
+        $this->bitmap = $this->createImageFromText("Image does not exist"); // return an error image to avoid returning here forever...
       } else {
-        $this->router->log("error", "can't get image [$this->url] contents: " . $message);
+        if (
+          (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
+          (strpos($message, "has banned your access") !== false)
+        ) {
+          $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
+          # TODO: why sync execution stops here??? (and not true / false is returned?)
+          if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+            $retry++;
+            $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
+            sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
+            goto retry;
+          } else {
+            $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+          }
+        } else {
+          $this->router->log("error", "can't get image [$this->url] contents: " . $message);
+        }
       }
-$this->router->log("warning", "ENDING TRY CATCH ...");
     }
-$this->router->log("warning", "AFTER TRY CATCH ...");
+  }
 
-/* TODO: we don't need to call "getMimeFromUrl()" anymore, since we get mime type from "getImageFromUrl()"...
-    try {
-      $this->mime = $this->network->getMimeFromUrl($this->url);
-    } catch(Exception $e) {
-      throw new Exception("error getting image [$this->url] mime type: " . $e->getMessage());
+  /**
+   * Creates an image from text
+   */
+  public function createImageFromText($text, $mime) {
+    $font = "../../../api/fonts/OpenSans-Bold.ttf"; // the font path
+    $fontSize = 24; // the font size
+    $fontAngle = 0; // the font rotatioon angle
+    $leftOffset = 10; // the text left offset
+    $topOffset = 30; // the text left offset
+    $width = 400; // the image width (TODO: auto-calculate from text and font?)
+    $height = 50; // the image height (TODO: auto-calculate from text and font?)
+
+    // turn on output buffering
+    ob_start();
+
+    // set the content-type
+    #header("Content-Type: image/png");
+    header("Content-Type: " . $mime);
+    
+    // create the image
+    $im = imagecreatetruecolor($width, $height);
+    
+    // create some colors
+    $white = imagecolorallocate($im, 255, 255, 255);
+    $grey = imagecolorallocate($im, 200, 200, 200);
+    $black = imagecolorallocate($im, 0, 0, 0);
+    imagefilledrectangle($im, 0, 0, $width - 1, $height - 1, $white);
+    
+    // add the text shadow
+    imagettftext($im, $fontSize, $fontAngle, $leftOffset + 1, $topOffset + 1, $grey, $font, $text);
+    
+    // add the text
+    imagettftext($im, $fontSize, $fontAngle, $leftOffset, $topOffset, $black, $font, $text);
+    
+    // create the image
+    switch ($mime) {
+      case 'image/gif':
+        imagegif($im);
+        break;
+      case 'image/jpeg':
+        imagejpeg($im);
+        break;
+      case 'image/png':        
+        imagepng($im);
+        break;
+      default:
+        break;
     }
-*/
+    
+    // save image contents
+    $image = ob_get_contents();
+    
+    // destroy the image
+    imagedestroy($im);
+    
+    // turn off output buffering
+    ob_end_clean();
+
+    return $image;
   }
 
   /**

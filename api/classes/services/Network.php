@@ -165,10 +165,11 @@ class Network {
       throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType);
     }
     $mimeType = $contentType;
-    if (!preg_match("/^image\//s", $mimeType)) {
-      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
-      throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType . ", content is: \"$retval\"");
-    }
+    # TODO: remove mime type checking from here, and keep in the caller... (to check for 404 errors, for example...)
+    #if (!preg_match("/^image\//s", $mimeType)) {
+    #  $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
+    #  throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType . ", content is: \"$retval\"");
+    #}
     $this->mime = $mimeType; // set object mime with detected mime type
     return $retval;
   }

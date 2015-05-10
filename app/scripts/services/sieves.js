@@ -37,7 +37,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
       },
     ],
   };
-  service.digest = null;
+  //service.digest = null;
 
   service.load = function (force) {
     service.sieves = {};
@@ -63,7 +63,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     //console.log('Sieves.original:', service.original);
 
     if (force === true) {
-      service.setDigest(null); // reset sieves digest (this forces a persons reload)
+      service.finalize(null); // reset sieves digest (this forces a persons reload)
     }
 
     Persons.getSourcesCountries().then(function(response) {
@@ -111,36 +111,18 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     //console.log('reset sieves to defaults for section ' + section + ':', service.sieves);
   };
 
+/*
   service.getDigest = function () {
     return service.digest;
   };
-
-  service.setDigest = function (sieves) {
-    if (sieves) {
-      // TODO: can we write just: "service.digest = sieves.join('\0')" ???
-      service.digest =
-        JSON.stringify(sieves)
-/*
-        sieves.search.term + '\0' +
-        sieves.filters.active + '\0' +
-        sieves.filters.voteMin + '\0' +
-        sieves.filters.commentsCountMin + '\0' +
-        sieves.filters.age.min + '\0' +
-        sieves.filters.age.max + '\0' +
-        sieves.filters.nationality.countryCode + '\0' +
-        sieves.options.countryCode + '\0' +
-        sieves.options.cityCode + '\0' +
-        sieves.options.categoryCode + '\0' +
-        sieves.user.id + '\0' +
-        JSON.stringify(sieves.sort)
 */
-      ;
-    } else { // a null value sets a random digest (which will force a reload)
-      service.digest = Math.random();
-    }
-    //console.log('service.digest:', service.digest);
-    service.store();
-    Persons.loadPersons(); // force a reload of persons... it's cheaper here than issuing a $watch in persons controller...
+
+  /**
+   * store sieves (to local storage), and emit 'sievesChanged' event
+   */
+  service.finalize = function () {
+    service.store();   
+    $rootScope.$emit('sievesChanged', null);
   };
 
   service.setFilterVoteMin = function (n) {

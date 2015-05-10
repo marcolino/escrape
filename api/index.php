@@ -68,7 +68,7 @@ class Router {
       });
       $this->app->post("/set", function() {
         try {
-          $this->log("info", "index - person - set()");
+          #$this->log("info", "index - person - set()");
           $persons = new PersonsController($this);
           $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
           $this->success($persons->set($data["id"], $data["person_master"], $data["person_detail"], $data["id_user"]));

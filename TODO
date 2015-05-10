@@ -15,7 +15,14 @@ TODO 1.0:
  - test personsCheckUniquenessByPhotos() (@HOME)
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - remove "$userId" from PersonsController.php and CommentsController.php classes
- 
+ - check why active field in person table is 0 for alla persons if sync breaks... and clearify both active / active_label fields necessity (rename one with a leading '_' ?)
+ - going from person view to persons view, sort ordering is lost
+ - going from person view to persons view, try to avoid reloading persons...
+ - if an active flag is 0, it's not set to 1 even if person is back...
+ - why assertPersonsUniqueness() is so slow? Can we fasten it?
+ - add a "loading" image while loadPersons()...
+ - remove empty items in sieves nationality dropdown...
+
 TODO 1.1:
  - synopsys for all methods in api and app
  - a perfect 'resize' directive strategy to calculate it's height based on previous and following elements heights

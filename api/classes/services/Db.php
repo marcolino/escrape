@@ -268,7 +268,7 @@ class DB extends PDO {
 #$this->router->log("debug", " db->getPersonByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->execute();
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-$this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . count($result));
+#$this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . count($result));
       return $result;
     } catch (PDOException $e) {
       throw new Exception("can't get person data: " . $e->getMessage());
@@ -399,10 +399,10 @@ $this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . 
         $mode = null;
         if ($result["count"] === "0") {
           $mode = "insert";
-          $this->router->log("debug", "   DB::setPerson() - will INSERT record");
+          #$this->router->log("debug", "   DB::setPerson() - will INSERT record");
         } else {
           $mode = "update";
-          $this->router->log("debug", "   DB::setPerson() - will UPDATE record");
+          #$this->router->log("debug", "   DB::setPerson() - will UPDATE record");
         }
       } catch (PDOException $e) {
         throw new Exception("can't check record in table $tableDetail: " . $e->getMessage());

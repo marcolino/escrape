@@ -23,16 +23,15 @@ app.controller('AuthenticationController',
             if (e) {
               e.stopPropagation();
             }
-            // set new sieves digest in service
-            //console.error($scope.sieves);
-            Sieves.setDigest(Sieves.sieves);
+            // apply sieves
+            Sieves.finalize();
           };
         }
       }).result.then(
         function () { // aside modal closed
         },
         function () { // aside modal dismissed (backdrop): force a reload
-          Sieves.setDigest(null);
+          Sieves.finalize(null);
         }
       );
     };
@@ -46,7 +45,7 @@ app.controller('AuthenticationController',
       $scope.dataLoading = true;
       Authentication.clearCredentials();
       Authentication.register($scope.username, $scope.password, function(response) {
-        console.log('register():', response);
+        //console.log('register():', response);
         $scope.dataLoading = false;
         if (response.success) {
           setCredentials(response);
@@ -61,7 +60,7 @@ app.controller('AuthenticationController',
       $scope.dataLoading = true;
       Authentication.clearCredentials();
       Authentication.login($scope.username, $scope.password, function(response) {
-        console.log('login():', response);
+        //console.log('login():', response);
         $scope.dataLoading = false;
         if (response.success) {
           setCredentials(response);
@@ -74,7 +73,7 @@ app.controller('AuthenticationController',
     };
 
     $scope.logout = function () {
-      console.log('logout()');
+      //console.log('logout()');
       Authentication.clearCredentials();
       Sieves.load(true); // reload sieves, (forcing the reloading)
     };
