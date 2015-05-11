@@ -163,7 +163,7 @@ class PersonsController {
         }
         
         if (preg_match($source["patterns"]["person-description"], $page_details, $matches) >= 1) {
-          $description = $matches[1];
+          $description = normalizeDesctiption($matches[1]);
         } else {
           #$this->router->log("warning", "person $n description not found on source [$sourceKey]");
           $description = "";
@@ -263,7 +263,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
       // assert persons activity after full sync completed, if we get no error
       //  (to avoid marking all persons as not-active when a source is not available...)
       if (!$error) {
-        $this->assertPersonsActivity($timestampStart);
+        $this->assertPersonsActivity($timestampStart, $sourceKey);
       }
     #}
 
@@ -277,7 +277,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
    * Assert persons activity: compare person's last sync'd timestamp with a given timestamp
    *  ("timestampStart" parameter), the timestamp last (or this) sync started.
    */
-  private function assertPersonsActivity($timestampStart) {
+  private function assertPersonsActivity($timestampStart, $sourceKey) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     #$this->router->log("info", "timestamp of last sync start: " . date("c", $timestampStart));
     foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
@@ -290,6 +290,7 @@ $this->router->log("info", " person " . $person["key"] . "(" . $person["name"] .
       } else {
         // set activity flag based on the time of last sync for this person, compared to the time of this full sync
         $timestampLastSyncPerson = $person["timestamp_last_sync"];
+        # TODO: CHANGE THIS: two consecutive syncs set all to not active, as olds are skipped(WHY, THEY ARE NOT! ???) !!!!!!!!!!
         $active = ($timestampLastSyncPerson >= $timestampStart);
 $this->router->log("debug", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
       }
@@ -324,12 +325,13 @@ $this->router->log("debug", "asserting persons activity finished");
           $id1 = $persons[$i]["id_person"];
           $id2 = $persons[$j]["id_person"];
 
+# TODO: THIS SOMETIMES INFINITE LOOPS!!!
           $this->router->log("info", "assertPersonsUniqueness() - found 'uniq' persons: " . $persons[$i]['key'] . " and " . $persons[$j]['key']);
           #$this->router->log("info", "- phone(id1): " . $persons[$i]["phone"]);
           #$this->router->log("info", "- phone(id2): " . $persons[$j]["phone"]);
 
           // follow next unique chain, and add the 2nd person id as additional unique (next) person
-          # TODO: do we need double quotes for numeric ndices in arrays?
+          # TODO: do we need double quotes for numeric indices in arrays?
           $idNext = $personsById[$id1]["uniq_next"];
           while ($idNext && $personsById[$idNext]["uniq_next"]) {
             $idNext = $personsById[$idNext]["uniq_next"]; // TODO: avoid possibly infinite loops...
@@ -474,6 +476,11 @@ $this->router->log("debug", "asserting persons uniqueness finished");
     $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
     //$value = ucfirst(strtolower($value)); // only initial upper case
     $value = ucwords(strtolower($value)); // only initials upper case
+    return $value;
+  }
+
+  private function normalizeDescription($value) {
+    $value = preg_replace("/<br \/>/g", "\n", $value); // convert <br>'s to newlines
     return $value;
   }
 

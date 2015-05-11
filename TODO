@@ -12,7 +12,10 @@ TODO 1.0:
  - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - remove "$userId" from PersonsController.php and CommentsController.php classes
- - going from person view (after a person change) to persons view, try to avoid reloading persons...
+ - going from person view (after a person change) to persons view, try to avoid reloading persons... (it's not the slowlines main cause...)
+ - avoid scrolling to saved person position when changing sort order...
+ - revise check for activity ...
+ - "watermarks/unknown-label.png" ???
 
  - db: remove active_label field (and test activeFromSource implementation) (@HOME)
  - add photos if md5 sum of details page changes... (DONE, TO BE TESTED @HOME...)
@@ -22,7 +25,7 @@ TODO 1.0:
  - remove empty items in sieves nationality dropdown... (DONE, TO BE TESTED @HOME...)
  - test personsCheckUniquenessByPhotos() (DONE (?), TO BE TESTED @HOME)
  - avoid name normalization for sgi ("IN.... RU...") (DONE, TO BE TESTED @HOME...)
- 
+
 TODO 1.1:
  - solve (and clean out) all TODO's in source...
  - a synopsys for all methods in api and app

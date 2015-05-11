@@ -443,11 +443,14 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       var opened = $scope.persons[personId].uniq_opened ? false : true;
       $scope.persons[personId].uniq_opened = opened;
       var id = personId;
+var n = 0;
+      // TODO: infinite loop!!!!!!!!!!!!!!!!!!!!!!!
       do {
         id = $scope.persons[id].uniq_next;
         if (id) {
           $scope.persons[id].uniq_opened = opened;
         }
+if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TODO...
       } while (id);
     } else {
       console.error('ASSERT FAILURE: Can\'t uniqShow('+personId+') on a secondary uniq!!!'); // TODO...

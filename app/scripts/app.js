@@ -27,7 +27,7 @@ var app = angular.module('escrapeApp', [
     'ngMap',
     'ngAside',
     'ui.bootstrap',
-    'ui-rangeSliderInline',
+    //'ui-rangeSliderInline',
     'toastr',
   ]);
 
