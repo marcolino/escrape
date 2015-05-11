@@ -93,8 +93,7 @@ class DB extends PDO {
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
           page_sum TEXT,
-          active INTEGER,
-          active_label INTEGER
+          active INTEGER
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
         "
@@ -180,7 +179,7 @@ class DB extends PDO {
   /*
    ***********************************************************************************************************************
    * section: person-specific table functions
-   ***********************************************************************************************************************
+   *************************************f**********************************************************************************
    */
 
   public function getPersons($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
@@ -194,7 +193,7 @@ class DB extends PDO {
 
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
@@ -229,7 +228,7 @@ class DB extends PDO {
     $groupByField = "id_person";
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user) AS id_user_max
+        SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
@@ -249,13 +248,13 @@ class DB extends PDO {
     }
   }
 
-  public function getPersonByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getPersonsByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
     $groupByField = "id_person";
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
@@ -265,10 +264,10 @@ class DB extends PDO {
       $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue);
-#$this->router->log("debug", " db->getPersonByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
+#$this->router->log("debug", " db->getPersonsByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->execute();
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#$this->router->log("debug", " db->getPersonByField() - count(result):" . "\n" . count($result));
+#$this->router->log("debug", " db->getPersonsByField() - count(result):" . "\n" . count($result));
       return $result;
     } catch (PDOException $e) {
       throw new Exception("can't get person data: " . $e->getMessage());
@@ -627,7 +626,7 @@ $this->router->log("debug", " NEW UNIQCODE");
 
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
@@ -655,7 +654,7 @@ $this->router->log("debug", " NEW UNIQCODE");
     $groupByField = "id_comment";
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user) AS id_user_max
+        SELECT {$tableMaster}.*, {$tableDetail}.* --, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
@@ -680,7 +679,7 @@ $this->router->log("debug", " NEW UNIQCODE");
     $groupByField = "id_comment";
     try {
       $sql = "
-        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user) AS id_user_max
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
         ON {$tableMaster}.id = {$tableDetail}.{$groupByField}

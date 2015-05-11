@@ -205,6 +205,13 @@
       <span>Sorry, no person matching these criteria</span>
     </div>
   </div>
+
+  <div class="jumbotron" ng-show="personsLoading">
+    <div class="text-center">
+      <span><img src="images/loading.gif" /> &emsp; Loading persons...</span>
+    </div>
+  </div>
+
   <div class="row row-gap" ng-repeat="person in personsList"
     ng-attr-id="{{person.id_person}}" ng-show="isUniqShown('{{person.id_person}}')"
     ng-class="{

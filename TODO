@@ -1,30 +1,31 @@
 TODO 1.0:
- - in google search results page, add a "white list" handling (list/add(?),remove,...)
+ - in google search results page, add a "white list" handling (list/add(?), remove, ...)
  - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
  - think about a way to allow users to add/remove uniquenesses...
  - handle all exceptions at least with notify.error() ...
  - before google search, check image has already thruthful flag...
  - test un-thruthful images rendering in views...
+ - handle thruthful/un-thruthful flag storing
  - move style="..." from all views to style.css...
- - id_user_max: do we need it? (only temporarily, rename it to "_id_user_max"?)
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
- - add an empty element to person view nationality dropdown elements
  - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?) (@HOME)
  - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
- - avoid name normalization for sgi ("IN.... RU...") (test @HOME)
- - test personsCheckUniquenessByPhotos() (@HOME)
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - remove "$userId" from PersonsController.php and CommentsController.php classes
- - check why active field in person table is 0 for alla persons if sync breaks... and clearify both active / active_label fields necessity (rename one with a leading '_' ?)
- - going from person view to persons view, sort ordering is lost
- - going from person view to persons view, try to avoid reloading persons...
- - if an active flag is 0, it's not set to 1 even if person is back...
- - why assertPersonsUniqueness() is so slow? Can we fasten it?
- - add a "loading" image while loadPersons()...
- - remove empty items in sieves nationality dropdown...
+ - going from person view (after a person change) to persons view, try to avoid reloading persons...
 
+ - db: remove active_label field (and test activeFromSource implementation) (@HOME)
+ - add photos if md5 sum of details page changes... (DONE, TO BE TESTED @HOME...)
+ - why assertPersonsUniqueness() is so slow? Can we fasten it? (added a log.info on load() (otherwise use XDEBUG), DEBUG @HOME...)
+ - add a "loading" image while loadPersons()... (DONE, TO BE TESTED @HOME...)
+ - if an active flag is 0, it's not set to 1 even if person is back... (DONE, TO BE TESTED @HOME...)
+ - remove empty items in sieves nationality dropdown... (DONE, TO BE TESTED @HOME...)
+ - test personsCheckUniquenessByPhotos() (DONE (?), TO BE TESTED @HOME)
+ - avoid name normalization for sgi ("IN.... RU...") (DONE, TO BE TESTED @HOME...)
+ 
 TODO 1.1:
- - synopsys for all methods in api and app
+ - solve (and clean out) all TODO's in source...
+ - a synopsys for all methods in api and app
  - a perfect 'resize' directive strategy to calculate it's height based on previous and following elements heights
  - options: country / city / category should be considered when sync'ing persons
  - resolve conflicting cases in SQL and Angular (underscore_case / camelCase), and reset camelcase to true in .jshintrc...
@@ -148,3 +149,9 @@ DONE:
  - for total # of persons in footer, don't use bare count, but ignore from the sum the secondary persons
  - PDO::bind_param(... $data_type) we currently don't set type (it defaults to PARAM_STR): check if all-string values in DB can be someway harmful... (No, auto-conversion is done, see http://stackoverflow.com/questions/833510/php-pdobindparam-data-types-how-does-it-work)
  - show the name of person in persons view on extra-small screens in it's own row (no-wrap text...)
+ - add an empty element to person view nationality dropdown elements
+ - going from person view to persons view, sort ordering is lost
+ - id_user_max: do we need it? (No)
+ - going from person view to persons view, try to avoid reloading persons...
+ - check why active field in person table is 0 for alla persons if sync breaks... and clearify both active / active_label fields necessity (rename one with a leading '_' ?)
+ - does "active_from_source" field should live on DB? No! Split normalizePhone() to normalizePhone() + isPhoneValid() and call it in assertPersonsActivity() ...

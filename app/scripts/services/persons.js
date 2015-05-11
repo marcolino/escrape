@@ -30,9 +30,14 @@ app.service('Persons', function($http, $q, cfg, notify) {
 
   // public methods
   return {
-
     getPersons: function (sieves, userId) {
-      return $http({
+      if (this.persons) {
+        //console.log('PERSONS IS CACHED!');
+        return this.persons;
+      } else {
+        //console.log('PERSONS IS UNDEFINED, LOAD FROM SERVER...');
+      }
+      this.persons = $http({
         method: 'POST',
         url: apiUri + 'get',
         data: {
@@ -40,6 +45,7 @@ app.service('Persons', function($http, $q, cfg, notify) {
           'id_user': userId,
         },
       }).then(handleSuccess, handleError);
+      return this.persons;
     },
 
     getPerson: function (id, userId) {
@@ -50,7 +56,9 @@ app.service('Persons', function($http, $q, cfg, notify) {
     },
 
     setPerson: function (id, personMaster, personDetail, userId) {
-      //console.log('service persons - setPerson() !!!!!!!!!!');
+      // by the moment, we just invalidate persons memory cached in this service (it will be reloaded from server next time...)
+      // TODO: we should set also persons[id] with new person' data...
+      this.persons = null;
       return $http({
         method: 'POST',
         url: apiUri + 'set',
@@ -135,5 +143,4 @@ app.service('Persons', function($http, $q, cfg, notify) {
     },
 
   };
-
 });

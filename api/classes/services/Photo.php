@@ -9,6 +9,17 @@
 ######################################################################################################################
 #require "Network.php";
 #$source = [];
+#$source["url"] = "http://192.168.10.30/escrape/tobetested/001-sgi.jpg";
+#$p1 = new Photo(null, $source, null);
+#$source["url"] = "http://192.168.10.30/escrape/tobetested/003-toe.jpg"; # similar
+##$source["url"] = "http://192.168.10.30/escrape/tobetested/user-0.jpg"; # different
+#$p2 = new Photo(null, $source, null);
+#$similar = $p1->checkSimilarity($p2);
+#print "the images are " . ($similar ? "similar" : "different") . "\n";
+#exit;
+######################################################################################################################
+#require "Network.php";
+#$source = [];
 #$source["url"] = "http://biografieonline.it/img/bio/Raffaella_Fico_1.jpg";
 #$p = new Photo(null, $source, null);
 #$text = "Image does not exist";
@@ -22,7 +33,7 @@
 class Photo {
   const INTERNAL_TYPE = "jpg"; // internal type of bitmaps
   const SMALL_HEIGHT = 96; // small photo height (pixels)
-  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.1; // minimum % distance for similarity duplication # TODO: tune-me
+  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.12; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
   const TIMEOUT_BETWEEN_DOWNLOADS = 60;
   const RETRIES_MAX_FOR_DOWNLOADS = 3;
@@ -338,6 +349,10 @@ class Photo {
 
     $this->load();
     $distance = $this->compareSignatures($this->signature(), $photo->signature());
+#print "this  signature is: " . $this->signature() . "\n";
+#print "photo signature is: " . $photo->signature() . "\n";
+#print "min distance is " . $this->options["signatureDuplicationMinDistance"] . "\n";
+#print "distance is $distance\n";
     if ($distance <= $this->options["signatureDuplicationMinDistance"]) { // duplicate found
       return true;
     }
@@ -355,6 +370,8 @@ class Photo {
     if (!isset($this->mime)) {
       $this->mime = null;
     }
+
+    $this->router->log("info", "Photo::load(): loading photo from network °°°°°°");
 
     $retry = 0;
     retry:
@@ -565,7 +582,8 @@ class Photo {
         $hammingDistance++;
       }
     }
-    return ($pixels - $hammingDistance) / $pixels; # returned value is in the range 0 -> 1
+    #return ($pixels - $hammingDistance) / $pixels; # returned value is in the range 0 -> 1
+    return $hammingDistance / $pixels; # returned value is in the range 0 -> 1
   }
 
   /**

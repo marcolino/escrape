@@ -171,7 +171,10 @@ app.controller('AuthenticationController',
         // transform array of countryCodes to array of objects { countryCode: countryName }
         $scope.activeCountries = {};
         angular.forEach(countries, function(value) {
-          this[value] = $scope.getCountryName(value);
+          var name = $scope.getCountryName(value);
+          if (name) { // skip empty country names
+            this[value] = name;
+          }
         }, $scope.activeCountries);
       });
     };

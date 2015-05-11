@@ -39,7 +39,6 @@ class PersonsController {
     $error = false; // track errors while sync'ing
 
     foreach ($this->sourcesDefinitions as $sourceKey => $source) {
-#if ($sourceKey === "sexyguidaitalia") continue; # currently almost offline
       #$useTor = true; // use TOR proxy to sync
       $useTor = $source["accepts-tor"]; // use TOR proxy to sync
       # TODO: handle country / city / category (instead of a fixed path)
@@ -82,8 +81,6 @@ class PersonsController {
         if (preg_match($source["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
           $key = $sourceKey . "-" . $id;
-#if ($id !== "adv2945") {$this->router->log("info", "[$id] !== adv2945"); continue; } #################
-#if ($id === "adv2945") {$this->router->log("info", "[$id] === adv2945, FOUND !!!"); } #############
         } else {
           $this->router->log("error", "person $n ($key) id not found on source [$sourceKey], giving up with this person");
           $error = true;
@@ -92,9 +89,9 @@ class PersonsController {
 
         # check if key is new or not ####################################################
         $personId = null;
-       #if (($person = $this->db->getByField("person", "key", $key))) { # old key
-        if (($person = $this->db->getPersonByField("key", $key))) { # old key
-          $personId = $person[0]["id"];
+        if (($persons = $this->db->getPersonsByField("key", $key))) { # old key
+          $person = $persons[0];
+          $personId = $person["id"];
           $this->router->log("debug", "old person: $key (id: $personId)");
           if (!$fullSync) { // requested to sync only new keys, skip this old key
             continue;
@@ -129,7 +126,7 @@ class PersonsController {
         $pageSum = md5($page_details);
 
         if (preg_match($source["patterns"]["person-phone"], $page_details, $matches) >= 1) {
-          list($phone, $activeLabel) = $this->normalizePhone($matches[1], $sourceKey);
+          $phone = $this->normalizePhone($matches[1], $sourceKey);
         } else {
           $this->router->log("error", "person $n ($key) phone not found, giving up with this person");
           $error = true;
@@ -192,7 +189,6 @@ class PersonsController {
         $personMaster["url"] = $detailsUrl;
         $personMaster["timestamp_last_sync"] = $timestampNow;
         $personMaster["page_sum"] = $pageSum;
-        if ($activeLabel !== null) { $personMaster["active_label"] = $activeLabel; } // if active flag is null, do not set it
         $personDetail = [];
         $personDetail["name"] = $name;
         $personDetail["sex"] = $sex;
@@ -221,6 +217,7 @@ class PersonsController {
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
           $personId = $this->add($personMaster, $personDetail);
 
+/*
           foreach ($photosUrls as $photoUrl) { // add photos
             if (is_absolute_url($photoUrl)) { // absolute photo url
               $photoUrl = str_replace("../", "", $photoUrl); // 'normalize' relative urls
@@ -231,18 +228,30 @@ class PersonsController {
             }
             $this->photoAdd($personId, $photoUrl);
           }
+*/
         }
+
         # TODO: REALLY DO NOT ADD PHOTOS FOR OLD KEYS/PERSONS ???
-        #       ADDING PHOTOS ONLY FOR NEW KEYS/PERSONSWE IS WAY FASTER,
-        #       BUT WE COULD MISS SOME NEW / CHANGED / REMOVED PHOTO...
-        #       (NO, REMOVED PHOTOS ARE HOWEVER (CORRECTLY) KEPT IN DATABASE).
+        #       ADDING PHOTOS ONLY FOR NEW KEYS/PERSONS IS WAY FASTER,
+        #       BUT WE COULD MISS SOME NEW / CHANGED PHOTO...
         # IDEA: WE COULD CHECK DETAILS PAGE MD5: IF NOT CHANGED, *PROBABLY*
         #       PHOTOS DIDN'T CHANGE (FOR SURE NO PHOTO WAS ADDED, BUT IT REMOTELY
         #       COULD BE CHANGED...).
-        #// add photos
-        #foreach ($photosUrls as $photoUrl) {
-        #  $this->photoAdd($id, $source["url"] . "/" . $photoUrl);
-        #}
+        #
+if ($personMaster["page_sum"] !== $person["page_sum"]) {
+  $this->router->log("debug", "PersonsController::sync() - NEW DETAILS PAGE (".$personMaster["page_sum"].") SUM DID CHANGE WITH RESPECT TO PREVIOUS SUM (".$person["page_sum"]."): RELOADING PHOTOS...");
+}
+        if (!$personId or $fullSync or ($personMaster["page_sum"] !== $person["page_sum"])) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
+          foreach ($photosUrls as $photoUrl) { // add photos
+            if (is_absolute_url($photoUrl)) { // absolute photo url
+              $photoUrl = str_replace("../", "", $photoUrl); // 'normalize' relative urls
+            } else { // relative photo url
+              $photoUrl = $source["url"] . "/" . $photoUrl;
+            }
+            $this->photoAdd($personId, $photoUrl);
+          }
+        }
+
         $this->router->log("debug", "---");
 #break;
       }
@@ -259,7 +268,7 @@ class PersonsController {
     #}
 
     // assert persons uniqueness after sync completed
-#DEBUG ASSERT PERSON ACTIVITY#    $this->assertPersonsUniqueness();
+    $this->assertPersonsUniqueness();
 
     return !$error;
   }
@@ -272,18 +281,20 @@ class PersonsController {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     #$this->router->log("info", "timestamp of last sync start: " . date("c", $timestampStart));
     foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
-      #$this->router->log("info", " person " . $person["key"] . " - active_label: [" . $person["active_label"] . "]");
-      if ($person["active_label"] === "0") {
+      $activeFromSource = $this->isPhoneActive($person["phone"], $sourceKey);
+      #$this->router->log("info", " person " . $person["key"] . " - activeFromSource: [" . $activeFromSource"] . "]");
+      if (!$activeFromSource) {
+        // this person was found as explicitly "inactive" from source page
         $active = false;
-        #$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - active_label = false, forcing active status: active: " . ($active ? "1" : "0"));
+$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - activeFromSource = false, forcing active status: active: " . ($active ? "1" : "0"));
       } else {
-        // set activity flag based on the time of last sync for this person, compared to the time of last full sync (just done)
+        // set activity flag based on the time of last sync for this person, compared to the time of this full sync
         $timestampLastSyncPerson = $person["timestamp_last_sync"];
         $active = ($timestampLastSyncPerson >= $timestampStart);
 $this->router->log("debug", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
       }
-$active = 1; #DEBUG#
-      $this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
+     #$this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
+      $this->db->setPerson($person["id_person"], [ "active" => $active ], []);
     }
 $this->router->log("debug", "asserting persons activity finished");
   }
@@ -390,7 +401,7 @@ $this->router->log("debug", "asserting persons uniqueness finished");
     if (!$phone) {
       return [];
     }
-    return $this->db->getPersonByField("phone", $phone, $userId);
+    return $this->db->getPersonsByField("phone", $phone, $userId);
   }
   
   public function add($personMaster, $personDetail = null, $userId = null) {
@@ -470,17 +481,28 @@ $this->router->log("debug", "asserting persons uniqueness finished");
     $source = $this->sourcesDefinitions[$sourceKey];
     if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
       $phone = "";
-      $activeLabel = "0";
     } else {
       if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
         $phone = "";
-        $activeLabel = "0";
       } else {
         $phone = preg_replace("/[^\d]*/", "", $phone); // ignore not number characters
-        $activeLabel = "1";
       }
     }
-    return [ $phone, $activeLabel ];
+    return $phone;
+  }
+
+  private function isPhoneActive($phone, $sourceKey) {
+    $source = $this->sourcesDefinitions[$sourceKey];
+    if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
+      $active = false;
+    } else {
+      if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
+        $active = false;
+      } else {
+        $active = true;
+      }
+    }
+    return $active;
   }
 
   private function normalizeNationality($nationality) {

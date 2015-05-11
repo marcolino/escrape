@@ -73,6 +73,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   // private methods
   function applyPersons(persons) {
     console.log('APPLY PERSONS');
+    $scope.personsLoading = false;
     $scope.persons = persons;
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     $scope.personsCount = $scope.countPersons(); // for footer controller
@@ -84,6 +85,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   function loadPersons() {
     console.log('LOAD PERSONS');
+    $scope.personsLoading = true;
     Persons.getPersons(Sieves.sieves, $scope.userId).then(function(persons) {
       applyPersons(persons);
     });
@@ -346,12 +348,17 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       $scope.sieves.sort[len] = { 'name': criterium, 'direction': 'ascending' };
       //console.info('sievs sort: ', $scope.sieves.sort);
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+    Sieves.finalize();
     }
   };
 
   $scope.delSortCriteria = function(criterium) {
-    if ($scope.sieves.sort.removeByName(criterium)) {
-      $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+    var index = $scope.sieves.sort.hasName(criterium);
+    if (index >= 0) {
+      if ($scope.sieves.sort.removeByName(criterium)) {
+        $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+      }
+      Sieves.finalize();
     }
   };
 
@@ -359,11 +366,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     return ($scope.sieves.sort.hasName(criterium) >= 0);
   };
 
+  /*
   $scope.resetSortCriteria = function() {
     $scope.sieves.sort = Sieves.defaults.sort; // TODO: writing $scope.sieves, does update Sieves.sieves ???
     $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
   };
-
+  */
   $scope.getSortCriteriaDirection = function(criterium) {
     var index = $scope.sieves.sort.hasName(criterium);
     if (index >= 0) {
@@ -382,6 +390,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
         $scope.sieves.sort[index].direction = 'ascending';
       }
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
+      Sieves.finalize();
     }
   };
 
@@ -392,6 +401,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
         $scope.sieves.sort[index].direction = direction;
         $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
       }
+      Sieves.finalize();
     }
   };
 
@@ -401,7 +411,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       name = name.substr(0, maxlen - 1) + '…';
     }
     return name;
-  }
+  };
 
   $scope.isUniqPrimary = function(personId) {
     return (
