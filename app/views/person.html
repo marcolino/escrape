@@ -4,7 +4,7 @@
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
       <li ng-class="{active: tabSelected === 'list', hide: tabs['list'].hidden}">
-        <a href="" ng-click="back()"><span class="glyphicon glyphicon-chevron-left"></span>{{tabs['list'].description}}</a>
+        <a href="" ng-click="back(person.id_person)"><span class="glyphicon glyphicon-chevron-left"></span>{{tabs['list'].description}}</a>
       </li>
       <li ng-class="{active: tabSelected === 'main', hide: tabs['main'].hidden}">
         <a href="" ng-click="tabSelected = 'main'">{{tabs['main'].description}}</a>

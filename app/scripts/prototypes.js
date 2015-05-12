@@ -23,14 +23,11 @@ String.prototype.parseUrl = function () {
   return a;
 };
 
+/*
 // not used but nice...
 String.prototype.htmlToPlaintext = function() {
   return this.replace(/<[^>]+>/gm, '');
-}
-/*
-function htmlToPlaintext(text) {
-  return String(text).replace(/<[^>]+>/gm, '');
-}
+};
 */
 
 Array.prototype.move = function (fromIndex, toIndex) {

@@ -4,6 +4,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.persons = [];
   $scope.person = {};
   $scope.personId = $routeParams.personId;
+//console.info('$routeParams:', $routeParams);
   $scope.tabs = {
     'main': {
       'description': 'Main',
@@ -77,11 +78,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     $scope.personsCount = $scope.countPersons(); // for footer controller
     $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
-    if ($rootScope.openedId) { // scroll to remembered row id
-      $scope.scrollToOpenedId();
-    $timeout(function() {
-//$rootScope.openedId = null; // avoid re-scrolling when not necessary
-   });
+    //$scope.scrollToOpenedId(); // scroll to remembered row id
+    if ($routeParams.scrollTo) {
+console.log('SCROLLTO:', $routeParams.scrollTo);
+      $location.hash($routeParams.scrollTo);
+      $anchorScroll();
+      $location.hash(null);
     }
   }
 
@@ -280,8 +282,9 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     return count;
   };
 
-  $scope.back = function() {
-    $location.path('/');
+  $scope.back = function(idPerson) {
+console.info('Going back with search hash of ', idPerson);
+    $location.path('/').search({scrollTo: idPerson});
   };
 
   $scope.open = function(id, tab) {
@@ -297,12 +300,19 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.scrollToOpenedId = function() {
     $timeout(function() {
       if ($rootScope.openedId) {
+console.info(' òòò seting anchor scroll to ', $rootScope.openedId);
         $location.hash($rootScope.openedId);
         $anchorScroll();
         $location.hash(null);
+        /*
+        $anchorScroll($rootScope.openedId); // only valid since angular-1.4-rc-0
+        */
+      } else { // reset anchor scroll
+console.info(' òòò reseting anchor scroll...');
+        $location.hash(null);
+        $anchorScroll();
       }
     });
-//$rootScope.openedId = null; // avoid re-scrolling when not necessary
   };
 
   $scope.isNew = function(person) {
