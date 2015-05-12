@@ -327,10 +327,10 @@ class Router {
         "code" => $error->getCode(),
         "file" => $error->getFile(),
         "line" => $error->getLine(),
-        "trace" => $error->getTrace(), #AsString(),
-        //"html" => $this->exception2HTML($error), // TODO: use it?
+        #"trace" => $error->getTrace(), #AsString(),
+        #"html" => $this->exception2HTML($error), # TODO: use it or remove it?
       ],
-      "log" => $this->logs,
+      "log" => $this->logs, # TODO: use it or remove it?
     ]));
   }
 

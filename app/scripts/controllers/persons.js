@@ -33,7 +33,6 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.cfg = cfg; // make cfg data available to scope
   $scope.userId = (typeof $rootScope.globals.currentUser !== 'undefined') ? $rootScope.globals.currentUser.id : null;
   $scope.sortCriteria = {};
-  $scope.openedId = $rootScope.openedId;
   $scope.Sieves = Sieves;
   $scope.Sieves.load();
   $scope.sieves = Sieves.sieves;
@@ -79,7 +78,10 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.personsCount = $scope.countPersons(); // for footer controller
     $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
     if ($rootScope.openedId) { // scroll to remembered row id
-      $scope.scrollTo($rootScope.openedId);
+      $scope.scrollToOpenedId();
+    $timeout(function() {
+//$rootScope.openedId = null; // avoid re-scrolling when not necessary
+   });
     }
   }
 
@@ -292,12 +294,15 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $window.open(url, '_blank');
   };
 
-  $scope.scrollTo = function(personId) {
+  $scope.scrollToOpenedId = function() {
     $timeout(function() {
-      $location.hash(personId);
-      $anchorScroll(personId);
-      $location.hash(null);
+      if ($rootScope.openedId) {
+        $location.hash($rootScope.openedId);
+        $anchorScroll();
+        $location.hash(null);
+      }
     });
+//$rootScope.openedId = null; // avoid re-scrolling when not necessary
   };
 
   $scope.isNew = function(person) {

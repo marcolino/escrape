@@ -73,6 +73,7 @@ class PersonsController {
         continue;
       }
       
+      $persons = $person = [];
       $n = 0;
       foreach ($person_cells as $person_cell) {
         $n++;
@@ -163,7 +164,7 @@ class PersonsController {
         }
         
         if (preg_match($source["patterns"]["person-description"], $page_details, $matches) >= 1) {
-          $description = normalizeDesctiption($matches[1]);
+          $description = $this->normalizeDescription($matches[1]);
         } else {
           #$this->router->log("warning", "person $n description not found on source [$sourceKey]");
           $description = "";
@@ -238,10 +239,16 @@ class PersonsController {
         #       PHOTOS DIDN'T CHANGE (FOR SURE NO PHOTO WAS ADDED, BUT IT REMOTELY
         #       COULD BE CHANGED...).
         #
-if ($personMaster["page_sum"] !== $person["page_sum"]) {
-  $this->router->log("debug", "PersonsController::sync() - NEW DETAILS PAGE (".$personMaster["page_sum"].") SUM DID CHANGE WITH RESPECT TO PREVIOUS SUM (".$person["page_sum"]."): RELOADING PHOTOS...");
+        if (
+          !array_key_exists("id_person", $person) or // person is new
+          $fullSync or // a full sync was requested
+          ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
+        ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
+if (array_key_exists("id_person", $person)) {
+  if ($personMaster["page_sum"] !== $person["page_sum"]) {
+    $this->router->log("debug", "PersonsController::sync() - NEW DETAILS PAGE (".$personMaster["page_sum"].") SUM DID CHANGE WITH RESPECT TO PREVIOUS SUM (".$person["page_sum"]."): RELOADING PHOTOS...");
+  }
 }
-        if (!$personId or $fullSync or ($personMaster["page_sum"] !== $person["page_sum"])) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
           foreach ($photosUrls as $photoUrl) { // add photos
             if (is_absolute_url($photoUrl)) { // absolute photo url
               $photoUrl = str_replace("../", "", $photoUrl); // 'normalize' relative urls
@@ -480,7 +487,8 @@ $this->router->log("debug", "asserting persons uniqueness finished");
   }
 
   private function normalizeDescription($value) {
-    $value = preg_replace("/<br \/>/g", "\n", $value); // convert <br>'s to newlines
+    $value = preg_replace("/<br(?: \/)?>/", "\n", $value); // convert <br>'s to newlines
+    $value = strip_tags($value); // strip all other html tags from source
     return $value;
   }
 

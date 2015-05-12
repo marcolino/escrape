@@ -399,9 +399,11 @@ class Photo {
             goto retry;
           } else {
             $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+            throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
           }
         } else {
           $this->router->log("error", "can't get image [$this->url] contents: " . $message);
+          throw new Exception("can't get image [$this->url] contents: " . $message);
         }
       }
     }

@@ -15,7 +15,7 @@ TODO 1.0:
  - going from person view (after a person change) to persons view, try to avoid reloading persons... (it's not the slowlines main cause...)
  - avoid scrolling to saved person position when changing sort order...
  - revise check for activity ...
- - "watermarks/unknown-label.png" ???
+ - "watermarks/unknown-label.png" ??? (chmod 644 ?)
 
  - db: remove active_label field (and test activeFromSource implementation) (@HOME)
  - add photos if md5 sum of details page changes... (DONE, TO BE TESTED @HOME...)
@@ -34,6 +34,7 @@ TODO 1.1:
  - resolve conflicting cases in SQL and Angular (underscore_case / camelCase), and reset camelcase to true in .jshintrc...
  - when clicking log-in / sign-up, remember referral url, to redirect user there, after login / sign-up ...
  - if sieves filter out a 'primary' person and not a secondary (, ...) person, then should show secondary (, ...) person (currently all the group is hidden) ...
+ - use the same capitalizing convention for all exceptions (all lowercase? / First uppercase?)
 
 TODO 2.0:
  - I18n (?) (see:
