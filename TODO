@@ -15,7 +15,14 @@ TODO 1.0:
  - going from person view (after a person change) to persons view, try to avoid reloading persons... (it's not the slowlines main cause...)
  - avoid scrolling to saved person position when changing sort order...
  - revise check for activity ...
- - "watermarks/unknown-label.png" ??? (chmod 644 ?)
+ - "watermarks/unknown-label.png" ??? (chmod 644 ?) (TO BE TESTED...)
+ - chech DB::get(), DB::set(): really use 'id' field? not id_person / id_comment / id_photo ???
+ - does nationalityDetect reads the name?
+ - does nationalityDetect sets the right countryCode ? (blank flags...)
+ - does nationalityDetect excludes "ALLA FRA....."?
+ - normalizeName: \n+ => \n
+ - scrollTo: doesn't work...
+ - check assertUniqueness loop...
 
  - db: remove active_label field (and test activeFromSource implementation) (@HOME)
  - add photos if md5 sum of details page changes... (DONE, TO BE TESTED @HOME...)

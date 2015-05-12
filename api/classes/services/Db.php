@@ -355,7 +355,7 @@ class DB extends PDO {
         $sql = "
           UPDATE {$tableMaster}
           SET $set
-          WHERE id = :$groupByField
+          WHERE $groupByField = :$groupByField
         ";
         $statement = $this->db->prepare($sql);
         $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
@@ -365,7 +365,7 @@ class DB extends PDO {
         $statement->execute();
         $count = $statement->rowCount();
         if ($statement->rowCount() != 1) {
-          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records (sql: $sql, id: $id");
         }
       } catch (PDOException $e) {
         throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
@@ -413,7 +413,7 @@ class DB extends PDO {
             UPDATE {$tableDetail}
             SET $set
             WHERE
-             id_person = :$groupByField
+             $groupByField = :$groupByField
             AND
              id_user = :id_user
           ";
@@ -444,17 +444,17 @@ class DB extends PDO {
     return $id;
   }
 
-  public function deletePerson($id, $userId = self::DB_SYSTEM_USER_ID) {
+  public function deletePerson($personId, $userId = self::DB_SYSTEM_USER_ID) {
     # TODO: handle userId
     $table = "person";
     try {
       $sql = "
         DELETE
         FROM {$table}
-        WHERE id = :id
+        WHERE person_id = :person_id
       ";
       $statement = $this->db->prepare($sql);
-      $statement->bindParam(':id', $id, PDO::PARAM_INT);
+      $statement->bindParam(':person_id', $personId, PDO::PARAM_INT);
       $statement->bindParam(":" . $key, $value);
       $statement->execute();
       $count = $statement->rowCount();
@@ -776,7 +776,7 @@ $this->router->log("debug", " NEW UNIQCODE");
         $sql = "
           UPDATE {$tableMaster}
           SET $set
-          WHERE id = :$groupByField
+          WHERE $groupByField = :$groupByField
         ";
         $statement = $this->db->prepare($sql);
         $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
@@ -865,17 +865,17 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     return $id;
   }
 
-  public function deleteComment($id, $userId = self::DB_SYSTEM_USER_ID) {
+  public function deleteComment($commentId, $userId = self::DB_SYSTEM_USER_ID) {
     # TODO: handle userId
     $table = "comment";
     try {
       $sql = "
         DELETE
         FROM {$table}
-        WHERE id = :id
+        WHERE id_comment = :id_comment
       ";
       $statement = $this->db->prepare($sql);
-      $statement->bindParam(':id', $id, PDO::PARAM_INT);
+      $statement->bindParam(':id_comment', $commentId, PDO::PARAM_INT);
       $statement->bindParam(":" . $key, $value);
       $statement->execute();
       $count = $statement->rowCount();
@@ -1039,7 +1039,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       $sql = "
         UPDATE {$table}
         SET $set
-        WHERE id = :id
+        f id = :id
       ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);

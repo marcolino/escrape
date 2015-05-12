@@ -2,12 +2,33 @@
 #
 # Erase dababase (DB + photos) and re-sync it
 
-clean=${1}
+usage() { echo "Usage: $0 [ -c (clean db) ] | [ -f (full sync) ]" 1>&2; exit 1; }
+
+while getopts ":cf" o; do
+  case "${o}" in
+    c)
+      clean=1
+      ;;
+    f)
+      #f=${OPTARG}
+      full=1
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+shift $((OPTIND-1))
 
 clear
-if [ "$clean" = "clean" ]; then
+if [ -n "$clean" ]; then
   echo "erasing database..."
   sudo rm -rf /var/www/html/escrape/api/db/*
 fi
-echo "re-syncing persons..."
-time curl -X GET -i localhost/escrape/api/persons/sync && echo
+if [ -n "$full" ]; then
+  echo "re-syncing persons (full mode)..."
+  time curl -X GET -i localhost/escrape/api/persons/sync/full && echo
+else
+  echo "re-syncing persons (standard mode)..."
+  time curl -X GET -i localhost/escrape/api/persons/sync && echo
+fi

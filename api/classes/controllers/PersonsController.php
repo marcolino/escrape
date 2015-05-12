@@ -239,14 +239,17 @@ class PersonsController {
         #       PHOTOS DIDN'T CHANGE (FOR SURE NO PHOTO WAS ADDED, BUT IT REMOTELY
         #       COULD BE CHANGED...).
         #
+
         if (
           !array_key_exists("id_person", $person) or // person is new
           $fullSync or // a full sync was requested
           ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
-if (array_key_exists("id_person", $person)) {
+if (array_key_exists("id_person", $person) && !$fullSync) {
   if ($personMaster["page_sum"] !== $person["page_sum"]) {
     $this->router->log("debug", "PersonsController::sync() - NEW DETAILS PAGE (".$personMaster["page_sum"].") SUM DID CHANGE WITH RESPECT TO PREVIOUS SUM (".$person["page_sum"]."): RELOADING PHOTOS...");
+  } else {
+    $this->router->log("debug", "PersonsController::sync() - OLD DETAILS PAGE (".$personMaster["page_sum"].") SUM DID NOT CHANGE WITH RESPECT TO PREVIOUS SUM: NOT RELOADING PHOTOS...");
   }
 }
           foreach ($photosUrls as $photoUrl) { // add photos

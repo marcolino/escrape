@@ -123,7 +123,7 @@ class Photo {
     if (isset($this->url)) {
       return $this->url;
     }
-    $this->router->log("error", "Photo::url(): url is not set");
+    $this->router->log("error", "url is not set");
   }
   
   /**
@@ -159,8 +159,8 @@ class Photo {
     try {
       return $this->image = imagecreatefromstring($this->bitmap());
     } catch(Exception $e) {
-      $this->router->log("error", "Photo::image(): bitmap is not in image recognized format");
-      return false;
+      $this->router->log("error", "bitmap is not in image recognized format (" . any2string($this->bitmap) . ")");
+      throw new Exception("bitmap is not in image recognized format");
     }
   }
 
@@ -175,8 +175,8 @@ class Photo {
     try {
       return $this->imageFull = imagecreatefromstring($this->bitmapFull());
     } catch(Exception $e) {
-      $this->router->log("error", "Photo::imageFull(): bitmap is not in image recognized format");
-      return false;
+      $this->router->log("error", "bitmap full is not in image recognized format");
+      throw new Exception("bitmap full is not in image recognized format");
     }
   }
 
@@ -191,7 +191,8 @@ class Photo {
     try {
       return $this->imageSmall = imagecreatefromstring($this->bitmapSmall());
     } catch(Exception $e) {
-      $this->router->log("error", "Photo::imageSmall(): bitmap is not in image recognized format");
+      $this->router->log("error", "bitmap is not in image recognized format");
+      throw new Exception("bitmap small is not in image recognized format");
       return false;
     }
   }
@@ -344,15 +345,11 @@ class Photo {
     if (!$photo) {
       return false;
     }
-    #$this->router->log("debug", "Photo::checkSimilarity - \$this->bitmap length: " . strlen($this->bitmap));
-    #$this->router->log("debug", "Photo::checkSimilarity - \$this->url: " . any2string($this->url));
+    #$this->router->log("debug", "\$this->bitmap length: " . strlen($this->bitmap));
+    #$this->router->log("debug", "\$this->url: " . any2string($this->url));
 
     $this->load();
     $distance = $this->compareSignatures($this->signature(), $photo->signature());
-#print "this  signature is: " . $this->signature() . "\n";
-#print "photo signature is: " . $photo->signature() . "\n";
-#print "min distance is " . $this->options["signatureDuplicationMinDistance"] . "\n";
-#print "distance is $distance\n";
     if ($distance <= $this->options["signatureDuplicationMinDistance"]) { // duplicate found
       return true;
     }
@@ -364,20 +361,21 @@ class Photo {
       return;
     }
     if (!isset($this->url)) {
-      $this->router->log("error", "Photo::load(): can't load photo: no url specified");
+      $this->router->log("error", "can't load photo: no url specified");
       return;
     }
     if (!isset($this->mime)) {
       $this->mime = null;
     }
 
-    $this->router->log("info", "Photo::load(): loading photo from network °°°°°°");
+    $this->router->log("info", "loading photo from network °°°°°°");
 
     $retry = 0;
     retry:
     try {
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
       # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() before downloading... !!!
+$this->router->log("debug", "bitmap loaded successbully from " . $this->url);
     } catch(Exception $e) {
       $message = $e->getMessage();
       if (
@@ -403,6 +401,7 @@ class Photo {
           }
         } else {
           $this->router->log("error", "can't get image [$this->url] contents: " . $message);
+          # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
           throw new Exception("can't get image [$this->url] contents: " . $message);
         }
       }
