@@ -78,15 +78,16 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     $scope.personsCount = $scope.countPersons(); // for footer controller
     $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
-    //$scope.scrollToOpenedId(); // scroll to remembered row id
-    if ($routeParams.scrollTo) {
-console.log('SCROLLTO:', $routeParams.scrollTo);
-      $location.hash($routeParams.scrollTo);
+    $scope.scrollToOpenedId(); // scroll to remembered row id
+/*
+    if ($routeParams.st) {
+console.log('SCROLLTO:', $routeParams.st);
+      $location.hash($routeParams.st);
       $anchorScroll();
       $location.hash(null);
     }
+*/
   }
-
   function loadPersons() {
     console.log('LOAD PERSONS');
     $scope.personsLoading = true;
@@ -96,6 +97,9 @@ console.log('SCROLLTO:', $routeParams.scrollTo);
   }
 
   function sortObjectToList(object, criteria) { // obj is an object of objects
+// TODO: test @HOME: check if slowness is generated hereafter...
+//return Object.keys(object).map(function(key) { return object[key]; });
+
     // order objects by sort criteria
     //console.log('sortObjectToList():', object, criteria);
     var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
@@ -119,6 +123,34 @@ console.log('SCROLLTO:', $routeParams.scrollTo);
 
     // aggregate uniq lists in sorted list
     var len = list.length;
+
+    var id2index = {}; // id's to list indexes mapping
+    for (var i = 0; i < len; i++) {
+      var id = list[i].id_person;
+if (id in id2index) { console.error('person id ' + id + ' already present in id2index (a duplicate?!?)'); } // TODO: DEBUG-ONLY
+      id2index[id] = i;
+    }
+
+console.info('list: ', list);
+console.info('id2index: ', id2index);
+console.info('scanning list to unify uniq items...');
+    for (var i = 0; i < len; i++) {
+console.info(' i: ', i);
+      if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
+console.info('  list['+i+'] ('+list[i].name+') is a uniq primary');
+        for (var next, j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
+          var src = j;
+          var dst = ++i;
+console.info('  moving list['+src+'] to position '+dst+'...');
+          list.move(src, dst);
+          next = id2index[list[j].uniq_next];
+console.info('  next uniq is '+next+'...');
+        }
+      }
+    }
+console.info('done scanning list to unify uniq items.');
+    return list;
+/* OLD IMPLEMENTATION
     for (var i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
         var next;
@@ -131,6 +163,7 @@ console.log('SCROLLTO:', $routeParams.scrollTo);
       }
     }
     return list;
+*/
   }
 
   function searchArrayByIdPerson(array, personId) {
@@ -283,8 +316,8 @@ console.log('SCROLLTO:', $routeParams.scrollTo);
   };
 
   $scope.back = function(idPerson) {
-console.info('Going back with search hash of ', idPerson);
-    $location.path('/').search({scrollTo: idPerson});
+//console.info('Going back with search hash of ', idPerson);
+    $location.path('/'); //.search({st: idPerson});
   };
 
   $scope.open = function(id, tab) {
@@ -300,7 +333,8 @@ console.info('Going back with search hash of ', idPerson);
   $scope.scrollToOpenedId = function() {
     $timeout(function() {
       if ($rootScope.openedId) {
-console.info(' òòò seting anchor scroll to ', $rootScope.openedId);
+console.info(' £££ setting anchor scroll to ', $rootScope.openedId);
+        // TODO: how to clear this $location.hash after scroll is finished, to avoid rescrolling
         $location.hash($rootScope.openedId);
         $anchorScroll();
         $location.hash(null);
@@ -308,7 +342,7 @@ console.info(' òòò seting anchor scroll to ', $rootScope.openedId);
         $anchorScroll($rootScope.openedId); // only valid since angular-1.4-rc-0
         */
       } else { // reset anchor scroll
-console.info(' òòò reseting anchor scroll...');
+console.info(' £££ resetting anchor scroll...');
         $location.hash(null);
         $anchorScroll();
       }

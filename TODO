@@ -32,6 +32,7 @@ TODO 1.0:
  - remove empty items in sieves nationality dropdown... (DONE, TO BE TESTED @HOME...)
  - test personsCheckUniquenessByPhotos() (DONE (?), TO BE TESTED @HOME)
  - avoid name normalization for sgi ("IN.... RU...") (DONE, TO BE TESTED @HOME...)
+ - solve all these TODO's
 
 TODO 1.1:
  - solve (and clean out) all TODO's in source...
