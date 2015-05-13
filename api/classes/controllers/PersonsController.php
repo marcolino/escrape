@@ -343,9 +343,11 @@ $this->router->log("debug", "asserting persons activity finished");
           // follow next unique chain, and add the 2nd person id as additional unique (next) person
           # TODO: do we need double quotes for numeric indices in arrays?
           $idNext = $personsById[$id1]["uniq_next"];
+$n = 0;
           while ($idNext && $personsById[$idNext]["uniq_next"]) {
-            $idNext = $personsById[$idNext]["uniq_next"]; // TODO: avoid possibly infinite loops...
+            $idNext = $personsById[$idNext]["uniq_next"]; # TODO: avoid possibly infinite loops...
             #$this->router->log("info", " w1 - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
+if (++$n >= 10) { $this->router->log("info", "LOOP DETECTED ($idNext) IN NEXT SECTION FOR id1: $id1, id2: $id2"); return; }
           }
           $id = $idNext ? $idNext : $id1;
           if ($personsById[$id]["uniq_next"] !== $id2) {
@@ -355,9 +357,11 @@ $this->router->log("debug", "asserting persons activity finished");
 
           // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
           $idPrev = $personsById[$id2]["uniq_prev"];
+$n = 0;
           while ($idPrev && $personsById[$idPrev]["uniq_prev"]) {
-            $idPrev = $personsById[$idPrev]["uniq_prev"]; // TODO: avoid possibly infinite loops...
+            $idPrev = $personsById[$idPrev]["uniq_prev"]; # TODO: avoid possibly infinite loops...
             #$this->router->log("info", " w2 - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
+if (++$n >= 10) { $this->router->log("info", "LOOP DETECTED ($idPrev) IN PREV SECTION FOR id1: $id1, id2: $id2"); return; }
           }
           $id = $idPrev ? $idPrev : $id2;
           if ($personsById[$id]["uniq_next"] != $id1) {
@@ -779,6 +783,11 @@ $this->router->log("debug", "asserting persons uniqueness finished");
    *                  false    the persons are not uniq
    */
   private function personsCheckUniquenessByPhone($person1, $person2) {
+if (
+      ($person1["phone"] && $person2["phone"]) &&
+      #($person1["phone"] !== "0" && $person2["phone"] !== "0") && # TODO: do we need this check, or do we always get null or a phone number?
+      ($person1["phone"] === $person2["phone"])
+) { $this->router->log("debug", "personsCheckUniquenessByPhone: TRUE"); }
     return (
       ($person1["phone"] && $person2["phone"]) &&
       #($person1["phone"] !== "0" && $person2["phone"] !== "0") && # TODO: do we need this check, or do we always get null or a phone number?
@@ -812,11 +821,13 @@ $this->router->log("debug", "asserting persons uniqueness finished");
       // check if photo is an exact duplicate
       if ($this->photoCheckDuplication($photo, $photos2)) {
         #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
+$this->router->log("debug", "personsCheckUniquenessByPhotos (duplication): TRUE");
         return true; // duplicate found
       }
       #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckDuplication()");
       if ($this->photoCheckSimilarity($photo, $photos2)) {
         #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
+$this->router->log("debug", "personsCheckUniquenessByPhotos (similarity): TRUE");
         return true; // similarity found
       }
       #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckSimilarity()");

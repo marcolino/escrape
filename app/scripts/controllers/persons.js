@@ -98,10 +98,9 @@ console.log('SCROLLTO:', $routeParams.st);
 
   function sortObjectToList(object, criteria) { // obj is an object of objects
 // TODO: test @HOME: check if slowness is generated hereafter...
-//return Object.keys(object).map(function(key) { return object[key]; });
+//return Object.keys(object).map(function(key) { return object[key]; }); // NO GREAT ADVANTAGE...
 
     // order objects by sort criteria
-    //console.log('sortObjectToList():', object, criteria);
     var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
       var len = criteria.length;
       for (var i = 0; i < len; i++) {
@@ -109,11 +108,11 @@ console.log('SCROLLTO:', $routeParams.st);
         var dir = criteria[i].direction;
         if (crit) {
           if (dir === 'ascending') {
-            if (object[a][crit] > object[b][crit]) { /*console.log(criteria[i].name, 'asc', '>');*/ return 1; }
-            if (object[a][crit] < object[b][crit]) { /*console.log(criteria[i].name, 'asc', '<');*/ return -1; }
+            if (object[a][crit] > object[b][crit]) { return 1; }
+            if (object[a][crit] < object[b][crit]) { return -1; }
           } else {
-            if (object[a][crit] > object[b][crit]) { /*console.log(criteria[i].name, 'desc', '>');*/ return -1; }
-            if (object[a][crit] < object[b][crit]) { /*console.log(criteria[i].name, 'desc', '<');*/ return 1; }
+            if (object[a][crit] > object[b][crit]) { return -1; }
+            if (object[a][crit] < object[b][crit]) { return 1; }
           }
         }
         // objects are equal, according to this criterium: proceed with next criterium
@@ -125,7 +124,8 @@ console.log('SCROLLTO:', $routeParams.st);
     var len = list.length;
 
     var id2index = {}; // id's to list indexes mapping
-    for (var i = 0; i < len; i++) {
+    var i;
+    for (i = 0; i < len; i++) {
       var id = list[i].id_person;
 if (id in id2index) { console.error('person id ' + id + ' already present in id2index (a duplicate?!?)'); } // TODO: DEBUG-ONLY
       id2index[id] = i;
@@ -134,7 +134,7 @@ if (id in id2index) { console.error('person id ' + id + ' already present in id2
 console.info('list: ', list);
 console.info('id2index: ', id2index);
 console.info('scanning list to unify uniq items...');
-    for (var i = 0; i < len; i++) {
+    for (i = 0; i < len; i++) {
 console.info(' i: ', i);
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
 console.info('  list['+i+'] ('+list[i].name+') is a uniq primary');
@@ -166,6 +166,7 @@ console.info('done scanning list to unify uniq items.');
 */
   }
 
+/*
   function searchArrayByIdPerson(array, personId) {
     var len = array.length;
     for (var i = 0; i < len; i++) {
@@ -175,6 +176,7 @@ console.info('done scanning list to unify uniq items.');
     }
     return null;
   }
+*/
 
 // TODO: put this in a local function, then call it on top... (with loadPersons() currently at bottom...)
   if ($scope.personId) { // load single person
@@ -315,7 +317,7 @@ console.info('done scanning list to unify uniq items.');
     return count;
   };
 
-  $scope.back = function(idPerson) {
+  $scope.back = function(/*idPerson*/) {
 //console.info('Going back with search hash of ', idPerson);
     $location.path('/'); //.search({st: idPerson});
   };

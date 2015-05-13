@@ -375,7 +375,10 @@ class Photo {
     try {
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
       # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() before downloading... !!!
-$this->router->log("debug", "bitmap loaded successbully from " . $this->url);
+
+# TODOOOOOOOOOO: "has banned your access" arrives HERE!!!!!!!!!!!!!!1
+
+$this->router->log("debug", "bitmap loaded successfully from " . $this->url);
     } catch(Exception $e) {
       $message = $e->getMessage();
       if (

@@ -344,7 +344,7 @@ class DB extends PDO {
   public function setPerson($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "person";
     $tableDetail = "person_detail";
-    $groupByField = "id_person";
+    $groupByField = "id";
 
     if (!empty($arrayMaster)) {
       try {
@@ -372,6 +372,7 @@ class DB extends PDO {
       }
     }
 
+    $groupByField = "id_person";
     if (!empty($arrayDetail)) {
       #$this->router->log("debug", " setPerson() - arrayDetail:" . any2string($arrayDetail));
       $set = "";
@@ -765,7 +766,7 @@ $this->router->log("debug", " NEW UNIQCODE");
   public function setComment($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
     $tableMaster = "comment";
     $tableDetail = "comment_detail";
-    $groupByField = "id_comment";
+    $groupByField = "id";
 
     if (!empty($arrayMaster)) {
       try {
@@ -793,6 +794,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       }
     }
 
+    $groupByField = "id_comment";
     if (!empty($arrayDetail)) {
 $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDetail));
       $set = "";
