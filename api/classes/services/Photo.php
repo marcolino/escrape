@@ -376,38 +376,45 @@ class Photo {
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
       # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() before downloading... !!!
 
-# TODOOOOOOOOOO: "has banned your access" arrives HERE!!!!!!!!!!!!!!1
-
-$this->router->log("debug", "bitmap loaded successfully from " . $this->url);
+      if (!preg_match("/^image\//s", $this->mime)) {
+        $this->logWrite("warning: curl, while getting image url [$url], returned mime type " . $mimeType);
+        if (
+          (strpos($message, "La pagina che hai tentato di visualizzare non esiste") !== false)
+        ) {
+          $this->router->log("warning", "can't get image [$this->url]: " . "does not exist");
+          $this->bitmap = $this->createImageFromText("Image does not exist"); // return an error image to avoid returning here forever...
+        } else {
+          if (
+            (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
+            (strpos($message, "has banned your access") !== false)
+          ) {
+            $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
+            # TODO: why sync execution stops here??? (and not true / false is returned?)
+            if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+              $retry++;
+              $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
+              sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
+              goto retry;
+            } else {
+              $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+              throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+            }
+          } else {
+            $this->router->log("warning", "can't get image [$this->url] contents: " . $message);
+            # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
+            #throw new Exception("can't get image [$this->url] contents: " . $message);
+            $this->bitmap = $this->createImageFromText("Image is wrong"); // return an error image to avoid returning here forever...
+          }
+        }
+      } else { // mime type contains "image"
+        $this->router->log("debug", "bitmap loaded successfully from " . $this->url);
+      }
     } catch(Exception $e) {
       $message = $e->getMessage();
-      if (
-        (strpos($message, "La pagina che hai tentato di visualizzare non esiste") !== false)
-      ) {
-        $this->router->log("warning", "can't get image [$this->url]: " . "does not exist");
-        $this->bitmap = $this->createImageFromText("Image does not exist"); // return an error image to avoid returning here forever...
-      } else {
-        if (
-          (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
-          (strpos($message, "has banned your access") !== false)
-        ) {
-          $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
-          # TODO: why sync execution stops here??? (and not true / false is returned?)
-          if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
-            $retry++;
-            $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
-            sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
-            goto retry;
-          } else {
-            $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
-            throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
-          }
-        } else {
-          $this->router->log("error", "can't get image [$this->url] contents: " . $message);
-          # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
-          throw new Exception("can't get image [$this->url] contents: " . $message);
-        }
-      }
+      $this->router->log("warning", "can't get image [$this->url] contents: " . $message);
+      # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
+      #throw new Exception("can't get image [$this->url] contents: " . $message);
+      $this->bitmap = $this->createImageFromText("Image could not be loaded"); // return an error image to avoid returning here forever...
     }
   }
 

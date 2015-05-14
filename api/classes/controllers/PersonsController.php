@@ -7,10 +7,13 @@
  */
 
 # TODO: ONLY TO DEBUG ###############################################
-# $pc = new PersonsController(null);
-# $description = "una ragazza francesina molto carina";
-# $nationality = $pc->detectNationality($description, "it");
-# die("Nationality [$nationality] was detected for [$description]");
+#require "classes/services/Network.php";
+#$pc = new PersonsController(null);
+#$name = "Amina russa";
+#$description = "xyz...";
+#$nationality = $pc->detectNationality($name, $description, "it");
+#print("Nationality [$nationality] was detected for [$name], [$description]\n");
+#exit;
 #####################################################################
 
 class PersonsController {
@@ -304,7 +307,7 @@ $this->router->log("info", " person " . $person["key"] . "(" . $person["name"] .
         $active = ($timestampLastSyncPerson >= $timestampStart);
 $this->router->log("debug", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
       }
-     #$this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
+      #$this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
       $this->db->setPerson($person["id_person"], [ "active" => $active ], []);
     }
 $this->router->log("debug", "asserting persons activity finished");
@@ -325,9 +328,7 @@ $this->router->log("debug", "asserting persons activity finished");
 
     # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count - 1; $i++) {
-      #$this->router->log("info", "i: [$i]");
       for ($j = $i + 1; $j < $persons_count; $j++) {
-        #$this->router->log("info", "j: [$j]");
         if (
           $this->personsCheckUniquenessByPhone($persons[$i], $persons[$j]) ||
           $this->personsCheckUniquenessByPhotos($persons[$i], $persons[$j])
@@ -340,37 +341,51 @@ $this->router->log("debug", "asserting persons activity finished");
           #$this->router->log("info", "- phone(id1): " . $persons[$i]["phone"]);
           #$this->router->log("info", "- phone(id2): " . $persons[$j]["phone"]);
 
+          # TODO: avoid possibly infinite loops...
           // follow next unique chain, and add the 2nd person id as additional unique (next) person
-          # TODO: do we need double quotes for numeric indices in arrays?
           $idNext = $personsById[$id1]["uniq_next"];
+# TODO: DEBUG ONLY
 $n = 0;
           while ($idNext && $personsById[$idNext]["uniq_next"]) {
-            $idNext = $personsById[$idNext]["uniq_next"]; # TODO: avoid possibly infinite loops...
-            #$this->router->log("info", " w1 - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
-if (++$n >= 10) { $this->router->log("info", "LOOP DETECTED ($idNext) IN NEXT SECTION FOR id1: $id1, id2: $id2"); return; }
+            if (!($next = $personsById[$idNext]["uniq_next"])) break;
+            $idNext = $next;
+# TODO: DEBUG ONLY
+if (++$n >= 10) {
+ $this->router->log("debug", " w1 - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
+ $this->router->log("info", "LOOP DETECTED ($idNext) IN NEXT SECTION FOR id1: $id1, id2: $id2");
+ return;
+}
           }
-          $id = $idNext ? $idNext : $id1;
-          if ($personsById[$id]["uniq_next"] !== $id2) {
-            $personsById[$id]["uniq_next"] = $id2;
-            $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
+          $idNext = $idNext || $id1;
+          if ($personsById[$idNext]["uniq_next"] !== $id2) {
+            $personsById[$idNext]["uniq_next"] = $id2;
+            $this->db->setPerson($idNext, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
           }
 
+          # TODO: avoid possibly infinite loops...
           // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
           $idPrev = $personsById[$id2]["uniq_prev"];
+# TODO: DEBUG ONLY
 $n = 0;
           while ($idPrev && $personsById[$idPrev]["uniq_prev"]) {
-            $idPrev = $personsById[$idPrev]["uniq_prev"]; # TODO: avoid possibly infinite loops...
-            #$this->router->log("info", " w2 - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
-if (++$n >= 10) { $this->router->log("info", "LOOP DETECTED ($idPrev) IN PREV SECTION FOR id1: $id1, id2: $id2"); return; }
+            if (!($prev = $personsById[$idPrev]["uniq_prev"])) break;
+            $idPrev = $prev;
+# TODO: DEBUG ONLY
+if (++$n >= 10) {
+ $this->router->log("info", "LOOP DETECTED ($idPrev) IN PREV SECTION FOR id1: $id1, id2: $id2");
+ $this->router->log("debug", " w2 - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
+ return;
+}
           }
-          $id = $idPrev ? $idPrev : $id2;
-          if ($personsById[$id]["uniq_next"] != $id1) {
-            $personsById[$id]["uniq_prev"] = $id1;
-            $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
+          $idPrev = $idPrev || $id2;
+          if ($personsById[$idPrev]["uniq_next"] != $id1) {
+            $personsById[$idPrev]["uniq_prev"] = $id1;
+            $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
           }
         }
       }
     }
+# TODO: DEBUG ONLY
 $this->router->log("debug", "asserting persons uniqueness finished");
   }
 
@@ -488,6 +503,7 @@ $this->router->log("debug", "asserting persons uniqueness finished");
     $value = preg_replace("/\s+/", " ", $value); // squeeze blanks to one space
     $value = preg_replace("/^\s+/", "", $value); // ignore leading blanks
     $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
+    $value = preg_replace("/\n+/", "\n", $value); // remove empty lines
     //$value = ucfirst(strtolower($value)); // only initial upper case
     $value = ucwords(strtolower($value)); // only initials upper case
     return $value;
@@ -514,17 +530,10 @@ $this->router->log("debug", "asserting persons uniqueness finished");
   }
 
   private function isPhoneActive($phone, $sourceKey) {
-    $source = $this->sourcesDefinitions[$sourceKey];
-    if (preg_match($source["patterns"]["person-phone-vacation"], $phone)) {
-      $active = false;
-    } else {
-      if (preg_match($source["patterns"]["person-phone-unavailable"], $phone)) {
-        $active = false;
-      } else {
-        $active = true;
-      }
-    }
-    return $active;
+    #$source = $this->sourcesDefinitions[$sourceKey];
+$this->router->log("debug", " [ PPP ] [" . ($phone ? "true" : "false") . "]");
+
+    return $phone ? true : false;
   }
 
   private function normalizeNationality($nationality) {
@@ -533,118 +542,199 @@ $this->router->log("debug", "asserting persons uniqueness finished");
     return $nationality;
   }
 
-  # TODO: PRIVATE @PRODUCTION
   private function detectNationality($name, $description, $languageCode) {
     $patterns = [
       "it" => [
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )alban(ia|ese)\b/si" => "al",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )argentina\b/si" => "ar",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )australi(a|ana)\b/si" => "au",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )barbados\b/si" => "bb",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )belg(a|io)\b/si" => "be",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )bolivi(a|ana)\b/si" => "bo",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )bosni(a|aca)\b/si" => "ba",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )brasil(e|iana)\b/si" => "br",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )bulgar(a|ia)\b/si" => "bu",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )canad(a|ese)\b/si" => "ca",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )capo\s*verd(e|iana)\b/si" => "cv",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ch?il(e|ena)\b/si" => "cl",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ch?in(e|ese)\b/si" => "cn",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )colombi(a|ana)\b/si" => "co",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )costa\s*ric(a|he..)\b/si" => "cr",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )croa([tz]ia|ta)\b/si" => "hr",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )cub(a|ana)\b/si" => "cu",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )c(zech|eca)\b/si" => "cz",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )dan(imarca|ese)\b/si" => "dk",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )dominic(a|ana)\b/si" => "do",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ecuador(e..)?\b/si" => "ec",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )eston(ia|e)\b/si" => "ee",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )finland(ia|ese)\b/si" => "fi",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )franc(ia|ese|esina)\b/si" => "fr",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(germania|tedesc(a|ina)|(amica)|(alla) )\b/si" => "de",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(gran bretagna|ing(hilterra|les(e|ina)|(amica)|(alla) ))\b/si" => "en",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )grec(a|ia)\b/si" => "gr",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )greanad(a|iana)\b/si" => "gd",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )guatemal(a|teca)\b/si" => "gt",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )hait(i|iana)\b/si" => "ht",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )h?ondur(as|e(...)?)\b/si" => "hn",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ungher(ia|ese)\b/si" => "hu",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )island(a|ese)\b/si" => "is",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )indi(a|ana)\b/si" => "in",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )indonesi(a|ana)\b/si" => "id",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )irland(a|ese)\b/si" => "ie",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )israel(e|iana)\b/si" => "ie",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )italian(a|issima)\b/si" => "it",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(j|gi)amaic(a|ana)\b/si" => "jm",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(japan)|(giappon(e|ese))\b/si" => "jp",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )ken[iy](a|ana)\b/si" => "ke",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )core(a|ana)\b/si" => "kr",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )lituan(a|ia)\b/si" => "lt",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )liban(o|ese)\b/si" => "lb",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )letton(ia|e)\b/si" => "lv",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )lussemburg(o|hese)\b/si" => "lu",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )macedon(ia|e)\b/si" => "mk",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )malta\b/si" => "mt",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )me(x|ss)ic(o|ana)\b/si" => "mx",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )moldov(a|iana)\b/si" => "md",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )monaco\b/si" => "mc",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )mongol(ia|a)\b/si" => "mn",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )montenegr(o|ina)\b/si" => "me",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )morocc(o|ina)\b/si" => "ma",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )oland(a|ese)\b/si" => "nl",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(neo|nuova)[\s-]?zeland(a|ese)\b/si" => "nz",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )nicaragu(a|e...)\b/si" => "ni",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )niger\b/si" => "ne",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )nigeri(a|ana)\b/si" => "ng",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )norveg(ia|ese)\b/si" => "no",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )pa(k|ch)istan(a)?\b/si" => "pk",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )panam(a|ense)\b/si" => "pa",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )paragua(y|iana)\b/si" => "py",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )peru(viana)?\b/si" => "pe",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )(ph|f)ilippin(e|a)\b/si" => "ph",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )pol(onia|acca)\b/si" => "pl",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )portog(allo|hese)\b/si" => "pt",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )r(omania|(o|u)mena)\b/si" => "ro",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )russ(i)?a\b/si" => "ru",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )san[\s-]?marin(o|ese)\b/si" => "sm",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )arab(i)?a\b/si" => "sa",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )senegal(ese)?\b/si" => "sn",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )serb(i)?a\b/si" => "rs",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )seychelles\b/si" => "sc",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )sierra[\s-]?leone\b/si" => "sl",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )singapore\b/si" => "sg",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )slovacch(i)?a\b/si" => "sk",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )sloven(i)?a\b/si" => "si",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )somal(i)?a\b/si" => "so",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )spagn(a|ola)\b/si" => "es",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )sve(zia|dese)\b/si" => "se",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )svizzera\b/si" => "ch",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )s[yi]ria(na)?\b/si" => "sy",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )taiwan(ese)?\b/si" => "tw",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )t(h)?ai(land(ia|ese)?)?\b/si" => "th",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )trinidad\b/si" => "tt",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )tunisi(a|ina)\b/si" => "tn",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )turc(hia|a)\b/si" => "tr",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )u[kc]raina\b/si" => "ua",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )urugua([yi]gia)\b/si" => "uy",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )america(na)?\b/si" => "us",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )venezuela(na)?\b/si" => "ve",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )vietnam(ita)?\b/si" => "vn",
-        "/\b(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza)|(amica)|(alla) )orient(e|ale)\b/si" => "cn",
+        "countries-female-nationalities" => [
+          "alban(ia|ese)" => "al",
+          "argentina" => "ar",
+          "australi(a|ana)" => "au",
+          "barbados" => "bb",
+          "belg(a|io)" => "be",
+          "bolivi(a|ana)" => "bo",
+          "bosni(a|aca)" => "ba",
+          "brasil(e|iana)" => "br",
+          "caraibi(ca)?" => "bs",
+          "bulgar(a|ia)" => "bu",
+          "canad(a|ese)" => "ca",
+          "capo\s*verd(e|iana)" => "cv",
+          "ch?il(e|ena)" => "cl",
+          "ch?in(a|ese)" => "cn",
+          "orient(e|ale)" => "cn",
+          "colombi(a|ana)" => "co",
+          "costa\s*ric(a|he..)" => "cr",
+          "croa([tz]ia|ta)" => "hr",
+          "cub(a|ana)" => "cu",
+          "c(zech|eca)" => "cz",
+          "dan(imarca|ese)" => "dk",
+          "dominic(a|ana)" => "do",
+          "ecuador(e..)?" => "ec",
+          "eston(ia|e)" => "ee",
+          "finland(ia|ese)" => "fi",
+          "franc(ia|ese|esina)" => "fr",
+          "(germania|tedesc(a|ina))" => "de",
+          "(gran bretagna|ing(hilterra|les(e|ina)))" => "en",
+          "grec(a|ia)" => "gr",
+          "greanad(a|iana)" => "gd",
+          "guatemal(a|teca)" => "gt",
+          "hait(i|iana)" => "ht",
+          "h?ondur(as|e(...)?)" => "hn",
+          "ungher(ia|ese)" => "hu",
+          "island(a|ese)" => "is",
+          "indi(a|ana)" => "in",
+          "indonesi(a|ana)" => "id",
+          "irland(a|ese)" => "ie",
+          "israel(e|iana)" => "ie",
+          "italian(a|issima)" => "it",
+          "(j|gi)amaic(a|ana)" => "jm",
+          "(japan)|(giappon(e|ese))" => "jp",
+          "ken[iy](a|ana)" => "ke",
+          "core(a|ana)" => "kr",
+          "lituan(a|ia)" => "lt",
+          "liban(o|ese)" => "lb",
+          "letton(ia|e)" => "lv",
+          "lussemburg(o|hese)" => "lu",
+          "macedon(ia|e)" => "mk",
+          "malta" => "mt",
+          "me(x|ss)ic(o|ana)" => "mx",
+          "moldov(a|iana)" => "md",
+          "monaco" => "mc",
+          "mongol(ia|a)" => "mn",
+          "montenegr(o|ina)" => "me",
+          "m([ao]rocco)|(arocchina)" => "ma",
+          "oland(a|ese)" => "nl",
+          "(neo|nuova)[\s-]?zeland(a|ese)" => "nz",
+          "nicaragu(a|e...)" => "ni",
+          "niger" => "ne",
+          "nigeri(a|ana)" => "ng",
+          "norveg(ia|ese)" => "no",
+          "pa(k|ch)istan(a)?" => "pk",
+          "panam(a|ense)" => "pa",
+          "paragua(y|iana)" => "py",
+          "peru(viana)?" => "pe",
+          "(ph|f)ilippin(e|a)" => "ph",
+          "pol(onia|acca)" => "pl",
+          "portoric(o|ana)" => "pr",
+          "portog(allo|hese)" => "pt",
+          "r(omania|(o|u)mena)" => "ro",
+          "d[ae]ll[\s']est" => "ro",
+          "russ(i)?a" => "ru",
+          "san[\s-]?marin(o|ese)" => "sm",
+          "arab(i)?a" => "sa",
+          "senegal(ese)?" => "sn",
+          "serb(i)?a" => "rs",
+          "se[yi]chelles" => "sc",
+          "sierra[\s-]?leone" => "sl",
+          "singapore" => "sg",
+          "slovacch(i)?a" => "sk",
+          "sloven(i)?a" => "si",
+          "somal(i)?a" => "so",
+          "spagn(a|ola)" => "es",
+          "sve(zia|dese)" => "se",
+          "svizzera" => "ch",
+          "s[yi]ria(na)?" => "sy",
+          "taiwan(ese)?" => "tw",
+          "t(h)?ai(land(ia|ese)?)?" => "th",
+          "trinidad" => "tt",
+          "tunisi(a|ina)" => "tn",
+          "turc(hia|a)" => "tr",
+          "u[kc]raina" => "ua",
+          "urugua([yi])|(gia)|([yi]ana)" => "uy",
+          "america(na)?" => "us",
+          "venezuela(na)?" => "ve",
+          "vietnam(ita)?" => "vn",
+        ],
+        "negative-lookbehind" => [
+          "alla",
+          "amica",
+          "autostrada",
+          "area",
+          "belvedere",
+          "borgata",
+          "borgo",
+          "calata",
+          "campo",
+          "carraia",
+          "cascina",
+          "circonvallazione",
+          "circumvallazione",
+          "contrada",
+          "c\.so",
+          "corso",
+          "cso",
+          "diramazione",
+          "frazione",
+          "isola",
+          "largo",
+          "lido",
+          "litoranea",
+          "loc\.",
+          "località",
+          "lungo",
+          "masseria",
+          "molo",
+          "parallela",
+          "parco",
+          "passaggio",
+          "passo",
+          "p\.za",
+          "p\.zza",
+          "piazza",
+          "piazzale",
+          "piazzetta",
+          "ponte",
+          "quartiere",
+          "regione",
+          "rione",
+          "rio",
+          "riva",
+          "riviera",
+          "rondò",
+          "rotonda",
+          "salita",
+          "scalinata",
+          "sentiero",
+          "sopraelevata",
+          "sottopassaggio",
+          "sottopasso",
+          "spiazzo",
+          "strada",
+          "stradone",
+          "stretto",
+          "svincolo",
+          "superstrada",
+          "tangenziale",
+          "traforo",
+          "traversa",
+          "v\.",
+          "via",
+          "viale",
+          "vicolo",
+          "viottolo",
+          "zona",
+        ],
       ],
     ];
-// TODO: PortoRico...
 
     if (array_key_exists($languageCode, $patterns)) {
-      foreach ($patterns[$languageCode] as $key => $value) {
-        if ($name) {
-          if (preg_match($key, $name)) {
-            return $patterns[$languageCode][$key];
-          }
-        }
-        if ($description) {
-          if (preg_match($key, $description)) {
-            return $patterns[$languageCode][$key];
+      foreach ([ null, $name, $description ] as $field) {
+        if ($field) {
+          foreach ($patterns[$languageCode]["countries-female-nationalities"] as $countryPattern => $countryCode) {
+            $pattern = "/\b" . $countryPattern . "\b/si";
+            if (preg_match($pattern, $field)) { // country pattern matched
+              $falsePositive = false;
+              // check it doesn't match with negative lookbehind
+              foreach ($patterns[$languageCode]["negative-lookbehind" ] as $negativeLookbehind) {
+                $pattern = "/\b" . $negativeLookbehind . "" . "\s+" . $countryPattern . "\b/si";
+                if (preg_match($pattern, $field)) { // country pattern matched with a negative lookbehind
+                  $falsePositive = true;
+                  break;
+                }
+              }
+              if (!$falsePositive) {
+                return $countryCode; // no negative lookbehind matched for this country pattern and for this field
+              }
+            }
           }
         }
       }
@@ -755,25 +845,6 @@ $this->router->log("debug", "asserting persons uniqueness finished");
     return $result;
   }
 
-/*
-  # TODO: ....
-  private function ret($action, $success = true, $response = "") {
-    echo json_encode([
-      'action' => $action,
-      'success' => $success,
-      'response' => $response,
-    ]);
-    #exit;
-  }
-*/
-
-/*
-  private function log($level, $value) {
-    $this->router->logs[$level][] = $value;
-    print "[$level]: " . $value . "<br>\n"; # TODO: remove this line...
-  }
-*/
-
   /**
    * Check two persons uniqueness comparyng their phone numbers
    *
@@ -783,14 +854,13 @@ $this->router->log("debug", "asserting persons uniqueness finished");
    *                  false    the persons are not uniq
    */
   private function personsCheckUniquenessByPhone($person1, $person2) {
+# TODO: DEBUG-ONLY
 if (
       ($person1["phone"] && $person2["phone"]) &&
-      #($person1["phone"] !== "0" && $person2["phone"] !== "0") && # TODO: do we need this check, or do we always get null or a phone number?
       ($person1["phone"] === $person2["phone"])
 ) { $this->router->log("debug", "personsCheckUniquenessByPhone: TRUE"); }
     return (
       ($person1["phone"] && $person2["phone"]) &&
-      #($person1["phone"] !== "0" && $person2["phone"] !== "0") && # TODO: do we need this check, or do we always get null or a phone number?
       ($person1["phone"] === $person2["phone"])
     );
   }
@@ -804,6 +874,9 @@ if (
    *                  false    the persons are not uniq
    */
   public function personsCheckUniquenessByPhotos($person1, $person2) {
+# TODO: DEBUG-ONLY
+$startTime = microtime(true); 
+
     $id1 = $person1["id_person"];
     $id2 = $person2["id_person"];
     $photos1 = $this->db->getByField("photo", "id_person", $id1);
@@ -821,12 +894,14 @@ if (
       // check if photo is an exact duplicate
       if ($this->photoCheckDuplication($photo, $photos2)) {
         #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
+# TODO: DEBUG-ONLY
 $this->router->log("debug", "personsCheckUniquenessByPhotos (duplication): TRUE");
         return true; // duplicate found
       }
       #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckDuplication()");
       if ($this->photoCheckSimilarity($photo, $photos2)) {
         #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
+# TODO: DEBUG-ONLY
 $this->router->log("debug", "personsCheckUniquenessByPhotos (similarity): TRUE");
         return true; // similarity found
       }
@@ -834,6 +909,11 @@ $this->router->log("debug", "personsCheckUniquenessByPhotos (similarity): TRUE")
 
       unset($photo);
     }
+
+# TODO: DEBUG-ONLY
+$endTime = microtime(true);
+$elapsedTime = $endTime - $startTime;
+$this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (microseconds): " . $elapsedTime);
     return false;
   }
 

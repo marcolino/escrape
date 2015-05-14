@@ -31,12 +31,18 @@ app.service('Persons', function($http, $q, cfg, notify) {
   // public methods
   return {
     getPersons: function (sieves, userId) {
+/*
+  TODO: REMOVE THIS CODE: WRNG APPROACH: WHEN FORCING A RELOAD
+        FOR A FILTER CHANGED, THE PERSONS LIST DOES NOT CHANGE...
+        COULD AVOID RELOADING FROM SERVER IF FILTERS NOT CHANGED...
+
       if (this.persons) {
         //console.log('PERSONS IS CACHED!');
         return this.persons;
       } else {
         //console.log('PERSONS IS UNDEFINED, LOAD FROM SERVER...');
       }
+*/
       this.persons = $http({
         method: 'POST',
         url: apiUri + 'get',

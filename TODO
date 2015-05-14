@@ -10,20 +10,18 @@ TODO 1.0:
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
  - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?) (@HOME)
  - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
- - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - remove "$userId" from PersonsController.php and CommentsController.php classes
  - going from person view (after a person change) to persons view, try to avoid reloading persons... (it's not the slowlines main cause...)
  - avoid scrolling to saved person position when changing sort order...
- - revise check for activity ...
+ - revise check for activity... (DONE, TO BE TESTED...)
  - "watermarks/unknown-label.png" ??? (chmod 644 ?) (TO BE TESTED...)
- - chech DB::get(), DB::set(): really use 'id' field? not id_person / id_comment / id_photo ???
- - does nationalityDetect reads the name?
- - does nationalityDetect sets the right countryCode ? (blank flags...)
- - does nationalityDetect excludes "ALLA FRA....."?
- - normalizeName: \n+ => \n
- - scrollTo: doesn't work...
- - check assertUniqueness loop...
-
+ - does nationalityDetect reads the name? (DONE, TO BE CHECKED)
+ - does nationalityDetect sets the right countryCode ? (DONE, TO BE CHECKED)
+ - does nationalityDetect excludes "ALLA FRA....."? (DONE, TO BE CHECKED)
+ - normalizeName: \n+ => \n (DONE, TO BE CHECKED)
+ - scrollTo: doesn't work (only @HOME..., TO BE RE-TESTED)
+ - check assertUniqueness loop... (DONE, TO BE CHECKED)
+ 
  - db: remove active_label field (and test activeFromSource implementation) (@HOME)
  - add photos if md5 sum of details page changes... (DONE, TO BE TESTED @HOME...)
  - why assertPersonsUniqueness() is so slow? Can we fasten it? (added a log.info on load() (otherwise use XDEBUG), DEBUG @HOME...)
@@ -32,6 +30,7 @@ TODO 1.0:
  - remove empty items in sieves nationality dropdown... (DONE, TO BE TESTED @HOME...)
  - test personsCheckUniquenessByPhotos() (DONE (?), TO BE TESTED @HOME)
  - avoid name normalization for sgi ("IN.... RU...") (DONE, TO BE TESTED @HOME...)
+ - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - solve all these TODO's
 
 TODO 1.1:
@@ -167,3 +166,6 @@ DONE:
  - going from person view to persons view, try to avoid reloading persons...
  - check why active field in person table is 0 for alla persons if sync breaks... and clearify both active / active_label fields necessity (rename one with a leading '_' ?)
  - does "active_from_source" field should live on DB? No! Split normalizePhone() to normalizePhone() + isPhoneValid() and call it in assertPersonsActivity() ...
+ - sieves apply does not force a person reload anymore... (see if persons optimization is the cause... YES)
+ - check DB::get(), DB::set(): really use 'id' field? not id_person / id_comment / id_photo ??? (YES; NOW THEY SHOULD)
+ 

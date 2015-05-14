@@ -88,6 +88,7 @@ console.log('SCROLLTO:', $routeParams.st);
     }
 */
   }
+  
   function loadPersons() {
     console.log('LOAD PERSONS');
     $scope.personsLoading = true;

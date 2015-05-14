@@ -1,6 +1,16 @@
 <div class="container">
 
-  <!--<pre>person:{{person}}</pre>-->
+  <!--<pre>person:{{::person}}</pre>-->
+
+<!--
+
+  TODO's TO OPTIMIZE PERFORMANCES:
+   - change {{ to {{:: (and test it...)
+   - put ng- show/hide conditions in a scope variable
+   - if possible, move filters ({{ filter_expression | filter : expression : comparator }}) from DOM
+     to controller ($filter('filter')(array, expression, comparator);)
+  -
+-->
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
       <li ng-class="{active: tabSelected === 'list', hide: tabs['list'].hidden}">

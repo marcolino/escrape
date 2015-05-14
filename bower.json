@@ -19,7 +19,6 @@
     "angular-aside": "~1.1.2",
     "angular-toastr": "~1.0.2",
     "world-flags-sprite": "*",
-    "angular-rangeslider": "~0.0.13",
     "angular-rangeslider-inline": "~0.0.14",
     "fontawesome": "~4.3.0"
   },

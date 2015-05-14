@@ -121,7 +121,8 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
    * store sieves (to local storage), and emit 'sievesChanged' event
    */
   service.finalize = function () {
-    service.store();   
+    service.store();
+    // TODO: check if sieves are really changed, before emitting event...
     $rootScope.$emit('sievesChanged', null);
   };
 

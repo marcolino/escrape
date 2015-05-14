@@ -144,6 +144,7 @@ app.service('Countries', function() {
 	{ code: 'ph', name: 'Philippines' },
 	{ code: 'pl', name: 'Poland' },
 	{ code: 'pt', name: 'Portugal' },
+	{ code: 'pr', name: 'Porto Rico' },
 	{ code: 'qa', name: 'Qatar' },
 	{ code: 'ro', name: 'Romania' },
 	{ code: 'ru', name: 'Russia' },
