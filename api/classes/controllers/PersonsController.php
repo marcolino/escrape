@@ -436,21 +436,11 @@ $this->router->log("debug", "asserting persons uniqueness finished");
   }
   
   public function add($personMaster, $personDetail = null, $userId = null) {
-    # TODO: how to avoid this stupid test? (i.e.: how not to pass a parameter to a function, to let it use it's default?)
-    if ($userId) {
-      return $this->db->addPerson($personMaster, $personDetail, $userId);
-    } else {
-      return $this->db->addPerson($personMaster, $personDetail);
-    }
+    return $this->db->addPerson($personMaster, $personDetail, $userId);
   }
 
   public function set($id, $personMaster, $personDetail = null, $userId = null) {
-    # TODO: how to avoid this stupid test? (i.e.: how not to pass a parameter to a function, to let it use it's default?)
-    if ($userId) {
-      return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
-    } else {
-      return $this->db->setPerson($id, $personMaster, $personDetail);
-    }
+    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
   }
 
   public function delete($id, $userId = null) {

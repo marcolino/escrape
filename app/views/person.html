@@ -32,7 +32,7 @@
 
     <!-- main pill -->
     <div class="tab-content" ng-show="tabSelected === 'main' && !tabs['main'].hidden">
-      <form class="form-horizontal" Xstyle="margin-top:5px">
+      <form class="form-horizontal">
         <div class="row">
           <div class="col-xs-12">
             <div class="slider-horizontal">
@@ -224,7 +224,7 @@
     <!--<pre> person: {{person}} </pre>-->
     <div class="tab-content" ng-show="tabSelected === 'photos' && !tabs['photos'].hidden">
       <div class="slides-control">
-        <carousel disable-animation="true">
+        <carousel disable-animation="false">
           <slide ng-repeat="photo in person.photos" active="photo.active">
             <img class="slide" ng-src="{{cfg.apiUri + '/' + photo.path_full}}" />
             <div class="carousel-caption">
@@ -233,6 +233,7 @@
             <div class="carousel-toolbar">
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
+            <br>
                   <button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thrutfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
                 </div>
               </div>

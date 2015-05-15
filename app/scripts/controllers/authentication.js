@@ -24,14 +24,14 @@ app.controller('AuthenticationController',
               e.stopPropagation();
             }
             // apply sieves
-            Sieves.finalize();
+            Sieves.finalize(Sieves.changed()); // set force flag if sieves did change
           };
         }
       }).result.then(
         function () { // aside modal closed
         },
         function () { // aside modal dismissed (backdrop): force a reload
-          Sieves.finalize(null);
+          Sieves.finalize(Sieves.changed()); // set force flag if sieves did change
         }
       );
     };

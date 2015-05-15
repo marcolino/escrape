@@ -36,9 +36,9 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.sortCriteria = {};
   $scope.Sieves = Sieves;
   $scope.Sieves.load();
-  $scope.sieves = Sieves.sieves;
+  $scope.sieves = Sieves.sieves; // TODO: 'Sieves.sieves' => 'Sieves.all' in sieves.js service... And use 'Sieves.all' instead of 'sieves' in controllers and views, deleting this row...
   $scope.photosOccurrencesWhitelist = [];
-
+  $scope.personsEmpty = false; // not yet loaded
   // watch for sieves changes
   //$scope.$watch('Sieves.getDigest()', function() {
   //  console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
@@ -51,9 +51,13 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   // AT BOTTOM: loadPersons(); // load persons list
 
   // watch for sieves changes
-  $rootScope.$on('sievesChanged', function(/*event, args*/) {
-    console.log('SIEVES - sievesChanged');
-    loadPersons(); // load persons list
+  $rootScope.$on('sievesChangedHard', function(/*event, args*/) {
+    console.log('SIEVES - sievesChanged HARD');
+    loadPersons(); // re-load persons list
+  });
+  $rootScope.$on('sievesChangedSoft', function(/*event, args*/) {
+    console.log('SIEVES - sievesChanged SOFT');
+    applyPersons($scope.persons); // re-apply persons list
   });
 
   /*
@@ -77,110 +81,24 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.persons = persons;
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
     $scope.personsCount = $scope.countPersons(); // for footer controller
+    $scope.personsEmpty = $scope.personsCount === 0;
     $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
     $scope.scrollToOpenedId(); // scroll to remembered row id
-/*
-    if ($routeParams.st) {
-console.log('SCROLLTO:', $routeParams.st);
-      $location.hash($routeParams.st);
-      $anchorScroll();
-      $location.hash(null);
-    }
-*/
   }
   
   function loadPersons() {
     console.log('LOAD PERSONS');
+$scope.isList = true;
     $scope.personsLoading = true;
     Persons.getPersons(Sieves.sieves, $scope.userId).then(function(persons) {
       applyPersons(persons);
     });
   }
 
-  function sortObjectToList(object, criteria) { // obj is an object of objects
-// TODO: test @HOME: check if slowness is generated hereafter...
-//return Object.keys(object).map(function(key) { return object[key]; }); // NO GREAT ADVANTAGE...
-
-    // order objects by sort criteria
-    var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
-      var len = criteria.length;
-      for (var i = 0; i < len; i++) {
-        var crit = criteria[i].name;
-        var dir = criteria[i].direction;
-        if (crit) {
-          if (dir === 'ascending') {
-            if (object[a][crit] > object[b][crit]) { return 1; }
-            if (object[a][crit] < object[b][crit]) { return -1; }
-          } else {
-            if (object[a][crit] > object[b][crit]) { return -1; }
-            if (object[a][crit] < object[b][crit]) { return 1; }
-          }
-        }
-        // objects are equal, according to this criterium: proceed with next criterium
-      }
-      return 0; // no sort criteria can find an ordering
-    }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
-
-    // aggregate uniq lists in sorted list
-    var len = list.length;
-
-    var id2index = {}; // id's to list indexes mapping
-    var i;
-    for (i = 0; i < len; i++) {
-      var id = list[i].id_person;
-if (id in id2index) { console.error('person id ' + id + ' already present in id2index (a duplicate?!?)'); } // TODO: DEBUG-ONLY
-      id2index[id] = i;
-    }
-
-console.info('list: ', list);
-console.info('id2index: ', id2index);
-console.info('scanning list to unify uniq items...');
-    for (i = 0; i < len; i++) {
-console.info(' i: ', i);
-      if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
-console.info('  list['+i+'] ('+list[i].name+') is a uniq primary');
-        for (var next, j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
-          var src = j;
-          var dst = ++i;
-console.info('  moving list['+src+'] to position '+dst+'...');
-          list.move(src, dst);
-          next = id2index[list[j].uniq_next];
-console.info('  next uniq is '+next+'...');
-        }
-      }
-    }
-console.info('done scanning list to unify uniq items.');
-    return list;
-/* OLD IMPLEMENTATION
-    for (var i = 0; i < len; i++) {
-      if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
-        var next;
-        for (var j = searchArrayByIdPerson(list, list[i].uniq_next); j !== null; j = next) {
-          next = searchArrayByIdPerson(list, list[j].uniq_next);
-          var src = j;
-          var dst = ++i;
-          list.move(src, dst);
-        }
-      }
-    }
-    return list;
-*/
-  }
-
-/*
-  function searchArrayByIdPerson(array, personId) {
-    var len = array.length;
-    for (var i = 0; i < len; i++) {
-      if (array[i].id_person === personId) {
-        return i;
-      }
-    }
-    return null;
-  }
-*/
-
-// TODO: put this in a local function, then call it on top... (with loadPersons() currently at bottom...)
-  if ($scope.personId) { // load single person
+  function loadPerson() { // load single person
+$scope.isList = false;
+    $rootScope.openedId = $scope.personId;
+console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
     Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
       angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
 
@@ -232,9 +150,62 @@ console.info('done scanning list to unify uniq items.');
     });
   }
 
+  function sortObjectToList(object, criteria) { // obj is an object of objects
+    // order objects by sort criteria
+    var list = Object.keys(object).sort(function(a, b) { // sort object of objects according to criteria returning keys
+      var len = criteria.length;
+      for (var i = 0; i < len; i++) {
+        var crit = criteria[i].name;
+        var dir = criteria[i].direction;
+        if (crit) {
+          if (dir === 'ascending') {
+            if (object[a][crit] > object[b][crit]) { return 1; }
+            if (object[a][crit] < object[b][crit]) { return -1; }
+          } else {
+            if (object[a][crit] > object[b][crit]) { return -1; }
+            if (object[a][crit] < object[b][crit]) { return 1; }
+          }
+        }
+        // objects are equal, according to this criterium: proceed with next criterium
+      }
+      return 0; // no sort criteria can find an ordering
+    }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
+
+    // aggregate uniq lists in sorted list
+    var len = list.length;
+
+    var id2index = {}; // id's to list indexes mapping
+    var i;
+    for (i = 0; i < len; i++) {
+      var id = list[i].id_person;
+if (id in id2index) { console.error('person id ' + id + ' already present in id2index (a duplicate?!?)'); } // TODO: DEBUG-ONLY
+      id2index[id] = i;
+    }
+
+console.info('list: ', list);
+console.info('id2index: ', id2index);
+console.info('scanning list to unify uniq items...');
+    for (i = 0; i < len; i++) {
+console.info(' i: ', i);
+      if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
+console.info('  list['+i+'] ('+list[i].name+') is a uniq primary');
+        for (var next, j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
+          var src = j;
+          var dst = ++i;
+console.info('  moving list['+src+'] to position '+dst+'...');
+          list.move(src, dst);
+          next = id2index[list[j].uniq_next];
+console.info('  next uniq is '+next+'...');
+        }
+      }
+    }
+console.info('done scanning list to unify uniq items.');
+    return list;
+  }
+
+
 
 // TODO: check which currently "public" methods could be set as "private"...
-
   // public methods
 
   $scope.flipPersonInCommentActive = function(commentId, personId) {
@@ -324,7 +295,7 @@ console.info('done scanning list to unify uniq items.');
   };
 
   $scope.open = function(id, tab) {
-    $rootScope.openedId = id;
+    //$rootScope.openedId = id;
     $rootScope.tabSelected = tab;
     $location.path('/details/' + id);
   };
@@ -336,18 +307,20 @@ console.info('done scanning list to unify uniq items.');
   $scope.scrollToOpenedId = function() {
     $timeout(function() {
       if ($rootScope.openedId) {
-console.info(' £££ setting anchor scroll to ', $rootScope.openedId);
-        // TODO: how to clear this $location.hash after scroll is finished, to avoid rescrolling
-        $location.hash($rootScope.openedId);
+//console.info(' £££ setting anchor scroll to ', $rootScope.openedId);
+        var hash = $rootScope.openedId;
+//console.info(' £££ setting anchor scroll to hash ', hash);
+        $location.hash(hash);
         $anchorScroll();
         $location.hash(null);
-        /*
-        $anchorScroll($rootScope.openedId); // only valid since angular-1.4-rc-0
-        */
-      } else { // reset anchor scroll
-console.info(' £££ resetting anchor scroll...');
-        $location.hash(null);
-        $anchorScroll();
+        /* $anchorScroll($rootScope.openedId); // only valid since angular-1.4-rc-0... */
+        $rootScope.openedId = null;
+//console.info(' $rootScope.openedId after null: ', $rootScope.openedId);
+//console.info(' hash after null: ', hash);
+      //} else { // reset anchor scroll
+//console.info(' £££ resetting anchor scroll...');
+        //$location.hash(null);
+        //$anchorScroll();
       }
     });
   };
@@ -400,7 +373,7 @@ console.info(' £££ resetting anchor scroll...');
       $scope.sieves.sort[len] = { 'name': criterium, 'direction': 'ascending' };
       //console.info('sievs sort: ', $scope.sieves.sort);
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
-    Sieves.finalize();
+      Sieves.finalize(false);
     }
   };
 
@@ -410,7 +383,7 @@ console.info(' £££ resetting anchor scroll...');
       if ($scope.sieves.sort.removeByName(criterium)) {
         $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
       }
-      Sieves.finalize();
+      Sieves.finalize(false);
     }
   };
 
@@ -442,7 +415,7 @@ console.info(' £££ resetting anchor scroll...');
         $scope.sieves.sort[index].direction = 'ascending';
       }
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
-      Sieves.finalize();
+      Sieves.finalize(false);
     }
   };
 
@@ -453,7 +426,7 @@ console.info(' £££ resetting anchor scroll...');
         $scope.sieves.sort[index].direction = direction;
         $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
       }
-      Sieves.finalize();
+      Sieves.finalize(false);
     }
   };
 
@@ -603,12 +576,13 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
 
   $scope.tabSelect = function (tabName, data) {
     //console.log('Selecting tab ' + tabName);
-    $scope.tabSelected = tabName;
     if (tabName === 'photos') {
       var number = data;
       $scope.person.photos[0].active = false;
       $scope.person.photos[number].active = true;
     }
+    // TODO: try to avoid carousel sliding on carousel loading...
+    $scope.tabSelected = tabName;
   };
 
   $scope.getPhotoOccurrences = function(id, url) {
@@ -912,8 +886,15 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     return angle;
   };
 
-  if ($scope.persons.length === 0) {
-    loadPersons(); // load persons list
+
+
+  if (!$scope.personId) { // load persons list
+    if ($scope.persons.length === 0) { // TODO: DO WE NEED THIS TEST??? NOOO
+    loadPersons();
+    }
+    else { console.info('§§§§§§§§§§§§§ PERSONS NOT LOADED §§§§§§§§§§§§ $scope.persons.length:', $scope.persons.length);}
+  } else { // load single person
+    loadPerson();
   }
 
 });

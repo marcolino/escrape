@@ -262,7 +262,7 @@ class CommentsController {
     return $count;
   }
 
-  public function getAll($userId) {
+  public function getAll($userId = null) {
     return $this->db->getComments($userId);
   }
 
@@ -273,7 +273,7 @@ class CommentsController {
     return $this->db->get("comment", $id);
   }
   
-  public function getByPhone($phone, $userId) {
+  public function getByPhone($phone, $userId = null) {
     if (!$phone) {
 #$this->router->log("debug", "getByPhone() - no phone!");
       //throw new Exception("can't get comments by phone: no phone specified");

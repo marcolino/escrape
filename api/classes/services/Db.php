@@ -39,7 +39,7 @@ class DB extends PDO {
         $this->db->query("PRAGMA encoding='" . self::DB_CHARSET . "'"); // enforce charset
         $this->createTables();
       }
-      $this->userIdSystem = intval(self::DB_SYSTEM_USER_ID); # TODO: use this variable... (?)
+      $this->userIdSystem = intval(self::DB_SYSTEM_USER_ID);
     } catch (Exception $e) {
       throw new Exception("__construct() error:" . $e);
     }
@@ -182,13 +182,11 @@ class DB extends PDO {
    *************************************f**********************************************************************************
    */
 
-  public function getPersons($sieves = null, $userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+  public function getPersons($sieves = null, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
     $groupByField = "id_person";
-    if ($userId === null) {
-      $userId = self::DB_SYSTEM_USER_ID; // handle case where userId is set, but null
-    }
     $params = [];
 
     try {
@@ -222,7 +220,8 @@ class DB extends PDO {
     }
   }
 
-  public function getPerson($id, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getPerson($id, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
     $groupByField = "id_person";
@@ -248,7 +247,8 @@ class DB extends PDO {
     }
   }
 
-  public function getPersonsByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getPersonsByField($fieldName, $fieldValue, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
     $groupByField = "id_person";
@@ -274,7 +274,8 @@ class DB extends PDO {
     }
   }
 
-  public function addPerson($arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function addPerson($arrayMaster, $arrayDetail = null, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "person";
     $tableDetail = "person" . "_" . "detail";
     $groupByField = "id_person";
@@ -341,7 +342,8 @@ class DB extends PDO {
     return $lastMasterInsertId;
   }
 
-  public function setPerson($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function setPerson($id, $arrayMaster = null, $arrayDetail = null, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "person";
     $tableDetail = "person_detail";
     $groupByField = "id";
@@ -445,8 +447,8 @@ class DB extends PDO {
     return $id;
   }
 
-  public function deletePerson($personId, $userId = self::DB_SYSTEM_USER_ID) {
-    # TODO: handle userId
+  public function deletePerson($personId, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $table = "person";
     try {
       $sql = "
@@ -472,7 +474,8 @@ class DB extends PDO {
   / **
    * get all persons uniqueness codes
    * /
-  public function getPersonsUniqcodes($userId = self::DB_SYSTEM_USER_ID) {
+  public function getPersonsUniqcodes($userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $table = "person_uniqcode";
     try {
       $sql = "
@@ -498,9 +501,9 @@ $this->router->log("debug", " getPersonsUniqcodes() - result: [".any2string($res
     }
   }
 
-  public function getPersonsUniqcode($id_person_1, $id_person_2, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getPersonsUniqcode($id_person_1, $id_person_2, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $table = "person_uniqcode";
-    if ($userId === null) $userId = intval(self::DB_SYSTEM_USER_ID); # TODO: BLAHHHHH
     try {
       $sql = "
         SELECT id, id_user, same
@@ -533,9 +536,9 @@ $this->router->log("debug", " getPersonsUniqcode() - sql: [$sql], userId: " . an
     }
   }
 
-  public function setPersonsUniqcode($id_person_1, $id_person_2, $same, $userId = self::DB_SYSTEM_USER_ID) {
+  public function setPersonsUniqcode($id_person_1, $id_person_2, $same, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $table = "person_uniqcode";
-    if ($userId === null) $userId = intval(self::DB_SYSTEM_USER_ID); # TODO: BLAHHHHH
     try {
       $result = $this->getPersonsUniqcode($id_person_1, $id_person_2, $userId);
 $this->router->log("debug", " getPersonsUniqcode($id_person_1, $id_person_2) => " . var_export($result, true));
@@ -616,13 +619,11 @@ $this->router->log("debug", " NEW UNIQCODE");
    ***********************************************************************************************************************
    */
 
-   public function getComments($userId = self::DB_SYSTEM_USER_ID) { # TODO: select SYSTEM and USER fields...???!!!
+   public function getComments($userId = null) { # TODO: select SYSTEM and USER fields...???!!!
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment" . "_" . "detail";
     $groupByField = "id_comment";
-    if ($userId === null) {
-      $userId = self::DB_SYSTEM_USER_ID; // handle case where userId is set, but null
-    }
     $params = [];
 
     try {
@@ -649,7 +650,8 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
   }
 
-  public function getComment($id, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getComment($id, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment" . "_" . "detail";
     $groupByField = "id_comment";
@@ -674,7 +676,8 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
   }
 
-  public function getCommentByField($fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getCommentByField($fieldName, $fieldValue, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment" . "_" . "detail";
     $groupByField = "id_comment";
@@ -700,7 +703,8 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
   }
 
-  public function addComment($arrayMaster, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function addComment($arrayMaster, $arrayDetail = null, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment" . "_" . "detail";
     $groupByField = "id_comment";
@@ -763,7 +767,8 @@ $this->router->log("debug", " NEW UNIQCODE");
     return $lastMasterInsertId;
   }
 
-  public function setComment($id, $arrayMaster = null, $arrayDetail = null, $userId = self::DB_SYSTEM_USER_ID) {
+  public function setComment($id, $arrayMaster = null, $arrayDetail = null, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment_detail";
     $groupByField = "id";
@@ -867,8 +872,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     return $id;
   }
 
-  public function deleteComment($commentId, $userId = self::DB_SYSTEM_USER_ID) {
-    # TODO: handle userId
+  public function deleteComment($commentId, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $table = "comment";
     try {
       $sql = "
@@ -929,7 +934,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     }
   }
 
-  public function getByField($table, $fieldName, $fieldValue, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getByField($table, $fieldName, $fieldValue, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     try {
       $sql = "
         SELECT *
@@ -948,7 +954,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     }
   }
 
-  public function getFieldDistinctValues($table, $fieldName, $userId = self::DB_SYSTEM_USER_ID) {
+  public function getFieldDistinctValues($table, $fieldName, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     try {
       $sql = "
         SELECT DISTINCT {$fieldName}
@@ -1003,7 +1010,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     }
   }
 
-  public function add($table, $array, $userId = self::DB_SYSTEM_USER_ID) {
+  public function add($table, $array, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     try { // add data
       $fields = $values = "";
       foreach ($array as $key => $value) {
@@ -1032,7 +1040,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     return $lastInsertId;
   }
 
-  public function set($table, $id, $array, $userId = self::DB_SYSTEM_USER_ID) {
+  public function set($table, $id, $array, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     try {
       $set = "";
       foreach ($array as $key => $value) {

@@ -32,9 +32,10 @@ app.service('Persons', function($http, $q, cfg, notify) {
   return {
     getPersons: function (sieves, userId) {
 /*
-  TODO: REMOVE THIS CODE: WRNG APPROACH: WHEN FORCING A RELOAD
+  TODO: REMOVE THIS CODE: WRONG APPROACH: WHEN FORCING A RELOAD
         FOR A FILTER CHANGED, THE PERSONS LIST DOES NOT CHANGE...
-        COULD AVOID RELOADING FROM SERVER IF FILTERS NOT CHANGED...
+        COULD AVOID RELOADING FROM SERVER IF FILTERS DID NOT CHANGE:
+        RE-SETUP A DIGEST SYSTEM...
 
       if (this.persons) {
         //console.log('PERSONS IS CACHED!');

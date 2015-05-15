@@ -10,9 +10,9 @@ TODO 1.0:
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
  - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?) (@HOME)
  - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
- - remove "$userId" from PersonsController.php and CommentsController.php classes
- - going from person view (after a person change) to persons view, try to avoid reloading persons... (it's not the slowlines main cause...)
- - avoid scrolling to saved person position when changing sort order...
+ - when forcing reload of person view, no persons number in footer is shown...
+ 
+ - avoid scrolling to saved person position when changing sort order... (DONE, TO BE CHECKED)
  - revise check for activity... (DONE, TO BE TESTED...)
  - "watermarks/unknown-label.png" ??? (chmod 644 ?) (TO BE TESTED...)
  - does nationalityDetect reads the name? (DONE, TO BE CHECKED)
@@ -42,6 +42,7 @@ TODO 1.1:
  - when clicking log-in / sign-up, remember referral url, to redirect user there, after login / sign-up ...
  - if sieves filter out a 'primary' person and not a secondary (, ...) person, then should show secondary (, ...) person (currently all the group is hidden) ...
  - use the same capitalizing convention for all exceptions (all lowercase? / First uppercase?)
+ - use $userId in *all* methods in Db class
 
 TODO 2.0:
  - I18n (?) (see:
@@ -168,4 +169,5 @@ DONE:
  - does "active_from_source" field should live on DB? No! Split normalizePhone() to normalizePhone() + isPhoneValid() and call it in assertPersonsActivity() ...
  - sieves apply does not force a person reload anymore... (see if persons optimization is the cause... YES)
  - check DB::get(), DB::set(): really use 'id' field? not id_person / id_comment / id_photo ??? (YES; NOW THEY SHOULD)
- 
+ - remove "$userId" from PersonsController.php and CommentsController.php classes (NO, CHANGED DEFAULTS HANDLING IN DB CLASS)
+ - going from person view (after a person change) to persons view, try to avoid reloading persons... (it's not the slowlines main cause...)

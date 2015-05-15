@@ -356,10 +356,10 @@ p.menu-item-separator {
   text-shadow: 1px 1px 0 #fff;
 }
 .carousel-indicators li {
-  opacity: 0.4;
+  background-color: #ddd;
 }
 .carousel-indicators .active {
-  opacity: 0.5;
+  background-color: #ada;
 }
 .carousel-toolbar {
 }

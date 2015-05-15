@@ -37,7 +37,6 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
       },
     ],
   };
-  //service.digest = null;
 
   service.load = function (force) {
     service.sieves = {};
@@ -62,9 +61,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     angular.copy(service.sieves, service.original); // save loaded sieves as sievesOriginal, to be able to check for modifications
     //console.log('Sieves.original:', service.original);
 
-    if (force === true) {
-      service.finalize(null); // reset sieves digest (this forces a persons reload)
-    }
+    service.finalize(force);
 
     Persons.getSourcesCountries().then(function(response) {
       service.sourcesCountries = response;
@@ -111,19 +108,16 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     //console.log('reset sieves to defaults for section ' + section + ':', service.sieves);
   };
 
-/*
-  service.getDigest = function () {
-    return service.digest;
-  };
-*/
-
   /**
-   * store sieves (to local storage), and emit 'sievesChanged' event
+   * store sieves (to local storage), and emit 'sievesChangedHard' or 'sievesChangedSoft' event
    */
-  service.finalize = function () {
+  service.finalize = function (hard) {
     service.store();
-    // TODO: check if sieves are really changed, before emitting event...
-    $rootScope.$emit('sievesChanged', null);
+    $rootScope.$emit(hard ? 'sievesChangedHard' : 'sievesChangedSoft', null);
+  };
+
+  service.changed = function () {
+    return JSON.stringify(service.sieves) !== JSON.stringify(service.original);
   };
 
   service.setFilterVoteMin = function (n) {
