@@ -6,34 +6,10 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
-######################################################################################################################
-#require "Network.php";
-#$source = [];
-#$source["url"] = "http://192.168.10.30/escrape/tobetested/001-sgi.jpg";
-#$p1 = new Photo(null, $source, null);
-#$source["url"] = "http://192.168.10.30/escrape/tobetested/003-toe.jpg"; # similar
-##$source["url"] = "http://192.168.10.30/escrape/tobetested/user-0.jpg"; # different
-#$p2 = new Photo(null, $source, null);
-#$similar = $p1->checkSimilarity($p2);
-#print "the images are " . ($similar ? "similar" : "different") . "\n";
-#exit;
-######################################################################################################################
-#require "Network.php";
-#$source = [];
-#$source["url"] = "http://biografieonline.it/img/bio/Raffaella_Fico_1.jpg";
-#$p = new Photo(null, $source, null);
-#$text = "Image does not exist";
-#$mime = "image/jpeg";
-#$img = $p->createImageFromText($text, $mime);
-#header("Content-Type: " . $mime);
-#print $img;
-#exit;
-######################################################################################################################
-
 class Photo {
-  const INTERNAL_TYPE = "jpg"; // internal type of bitmaps
+  const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
   const SMALL_HEIGHT = 96; // small photo height (pixels)
-  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.12; // minimum % distance for similarity duplication # TODO: tune-me
+  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.06; // minimum % distance for similarity duplication # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
   const TIMEOUT_BETWEEN_DOWNLOADS = 60;
   const RETRIES_MAX_FOR_DOWNLOADS = 3;
@@ -69,12 +45,33 @@ class Photo {
   }
 
   /**
-  * Create a photo from URL
-  *
-  * @param  string: photo URL
-  * @return object: new photo if url is a valid photo
-  *                 false     if url is not a valid photo
-  */
+   * Get an option by name
+   *
+   * @param  string: option name
+   * @return mixed:  option value
+   */
+  public function getOption($optionName) {
+    if (isset($this->options[$optionName])) {
+      return $this->options[$optionName];
+    }
+  }
+
+
+#public function test($text) {
+#  try {
+#    return $this->createImageFromText($text, $this->options["internalType"]);
+#  } catch(Exception $e) {
+#    throw new Exception("can't create image from text '$text'");
+#  }
+#}
+
+  /**
+   * Create a photo from URL
+   *
+   * @param  string: photo URL
+   * @return object: new photo if url is a valid photo
+   *                 false     if url is not a valid photo
+   */
   public function fromUrl($url) {
     $this->url = $url;
   }
@@ -107,11 +104,15 @@ class Photo {
    * Get the bitmap of the internal image, small size
    */
   public function bitmapSmall() {
+#$this->router->log("debug", "bitmapSmall() - smallHeight: " . $this->options["smallHeight"]);
     if (isset($this->bitmapSmall)) {
       return $this->bitmapSmall;
     }
+#$this->router->log("debug", "bitmapSmall() - 2");
     $this->load();
+#$this->router->log("debug", "bitmapSmall() - 3");
     $bitmapSmall = $this->photoScaleByHeight($this->bitmap, $this->options["smallHeight"]);
+#$this->router->log("debug", "bitmapSmall() - 4");
     $this->bitmapSmall = $this->convertBitmapToInternalType($bitmapSmall);
     return $this->bitmapSmall;
   }
@@ -351,6 +352,15 @@ class Photo {
     $this->load();
     $distance = $this->compareSignatures($this->signature(), $photo->signature());
     if ($distance <= $this->options["signatureDuplicationMinDistance"]) { // duplicate found
+/*
+# DEBUG ONLY!
+$sim = "";
+$sim .= "id person: " .$this->id_person . ":<br><img src='" . $this->url . "' width='320'><br>\n";
+$sim .= "id person: " .$photo->id_person . ":<br><img src='" . $photo->url . "' width='320'><br>\n";
+$sim .= "distance ($distance) <= signatureDuplicationMinDistance (" . $this->options["signatureDuplicationMinDistance"] . ")\n";
+$sim .= "<hr>\n";
+file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
+*/
       return true;
     }
     return false;
@@ -368,29 +378,30 @@ class Photo {
       $this->mime = null;
     }
 
-    $this->router->log("info", "loading photo from network °°°°°°");
+    #$this->router->log("info", "loading photo from network °°°°°°");
 
     $retry = 0;
     retry:
     try {
+      // images seem not to have a "last-modified" field in the header... So it's of no use to call "getLastModifiedTimestampFromUrl()" before downloading
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
-      # TODO: IMAGES HAVE LAST MODIFIED FIELD: DO A getLastModifiedTimestampFromUrl() before downloading... !!!
-
-      if (!preg_match("/^image\//s", $this->mime)) {
-        $this->logWrite("warning: curl, while getting image url [$url], returned mime type " . $mimeType);
+      if (preg_match("/^image\//s", $this->mime)) { // mime type contains "image"
+        #$this->router->log("debug", "bitmap loaded successfully from " . $this->url);
+      } else { // mime type does not contain "image"
+        $this->router->log("warning", "curl, while getting image url returned mime type " . $this->mime);
         if (
-          (strpos($message, "La pagina che hai tentato di visualizzare non esiste") !== false)
+          (strpos($this->bitmap, "La pagina che hai tentato di visualizzare non esiste") !== false)
         ) {
           $this->router->log("warning", "can't get image [$this->url]: " . "does not exist");
-          $this->bitmap = $this->createImageFromText("Image does not exist"); // return an error image to avoid returning here forever...
+          $this->bitmap = $this->createImageFromText("Image does not exist", "image/" . $this->options["internalType"]); // return an error image to avoid returning here forever...
         } else {
+# TODO: unify this check with the one in PersonsController::sync()... (?)
           if (
-            (strpos($message, "Why do I have to complete a CAPTCHA?") !== false) OR
-            (strpos($message, "has banned your access") !== false)
+            (strpos($this->bitmap, "Why do I have to complete a CAPTCHA?") !== false) OR
+            (strpos($this->bitmap, "has banned your access") !== false)
           ) {
             $this->router->log("warning", "can't get image [$this->url]: " . "site denies access");
-            # TODO: why sync execution stops here??? (and not true / false is returned?)
-            if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+            if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
               $retry++;
               $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
               sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
@@ -400,21 +411,19 @@ class Photo {
               throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
             }
           } else {
-            $this->router->log("warning", "can't get image [$this->url] contents: " . $message);
+            $this->router->log("warning", "can't get image [$this->url] contents: " . $this->bitmap);
             # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
-            #throw new Exception("can't get image [$this->url] contents: " . $message);
-            $this->bitmap = $this->createImageFromText("Image is wrong"); // return an error image to avoid returning here forever...
+            #throw new Exception("can't get image [$this->url] contents: " . $this->bitmap);
+            $this->bitmap = $this->createImageFromText("Image is wrong", "image/" . $this->options["internalType"]); // return an error image to avoid returning here forever...
           }
         }
-      } else { // mime type contains "image"
-        $this->router->log("debug", "bitmap loaded successfully from " . $this->url);
       }
     } catch(Exception $e) {
       $message = $e->getMessage();
       $this->router->log("warning", "can't get image [$this->url] contents: " . $message);
       # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
       #throw new Exception("can't get image [$this->url] contents: " . $message);
-      $this->bitmap = $this->createImageFromText("Image could not be loaded"); // return an error image to avoid returning here forever...
+      $this->bitmap = $this->createImageFromText("Image could not be loaded", "image/" . $this->options["internalType"]); // return an error image to avoid returning here forever...
     }
   }
 
@@ -422,13 +431,13 @@ class Photo {
    * Creates an image from text
    */
   public function createImageFromText($text, $mime) {
-    $font = "../../../api/fonts/OpenSans-Bold.ttf"; // the font path
-    $fontSize = 24; // the font size
-    $fontAngle = 0; // the font rotatioon angle
-    $leftOffset = 10; // the text left offset
-    $topOffset = 30; // the text left offset
-    $width = 400; // the image width (TODO: auto-calculate from text and font?)
-    $height = 50; // the image height (TODO: auto-calculate from text and font?)
+    $font = "../../fonts/OpenSans-Bold.ttf"; // the font path (TODO: make both font path (?) and name parametrical)
+    $fontSize = 32; // the font size
+    $fontAngle = 0; // the font rotation angle
+    $leftOffset = 120; // the text left offset (TODO: auto-center...)
+    $topOffset = 160; // the text top offset (TODO: auto-center...)
+    $width = 640; // the image width
+    $height = 480; // the image height
 
     // turn on output buffering
     ob_start();
@@ -500,6 +509,8 @@ class Photo {
       // the bitmap is already of the requested type
       return $bitmap;
     }
+#$this->router->log("debug", "convertBitmapToInternalType() - bitmap: " . ($bitmap === null) ? "EMPTY" : "NOT EMPTY");
+
     $image = imagecreatefromstring($bitmap);
 
     // produce the new bitmap
@@ -529,6 +540,21 @@ class Photo {
   }
 
   /**
+   * Returns the hammering distance of two photos signatures
+   */
+  public function compareSignatures($signature1, $signature2) {
+    $hammingDistance = 0;
+    $pixels = $this->options["signaturePixelsPerSide"] * $this->options["signaturePixelsPerSide"];
+    for ($p = 0; $p < $pixels; $p++) {
+      if (substr($signature1, $p, 1) != substr($signature2, $p, 1)) {
+        $hammingDistance++;
+      }
+    }
+    #return ($pixels - $hammingDistance) / $pixels; # returned value is in the range 0 -> 1
+    return $hammingDistance / $pixels; # returned value is in the range 0 -> 1
+  }
+
+  /**
    * Returns a scaled version of a bitmap, given an height
    */
   private function photoScaleByHeight($bitmap, $height) {
@@ -553,7 +579,7 @@ class Photo {
           return false;
         }
         break;
-      case "jpg":
+      case "jpeg":
         if (!imagejpeg($imageScaled, NULL, 100)) { // 100% quality
           return false;
         }
@@ -580,21 +606,6 @@ class Photo {
     imagefilter($imageResized, IMG_FILTER_GRAYSCALE);
     $colorMean = $this->colorMeanValue($imageResized);
     return $this->bits($colorMean);
-  }
-
-  /**
-   * Returns the hammering distance of two photos signatures
-   */
-  private function compareSignatures($signature1, $signature2) {
-    $hammingDistance = 0;
-    $pixels = $this->options["signaturePixelsPerSide"] * $this->options["signaturePixelsPerSide"];
-    for ($p = 0; $p < $pixels; $p++) {
-      if (substr($signature1, $p, 1) != substr($signature2, $p, 1)) {
-        $hammingDistance++;
-      }
-    }
-    #return ($pixels - $hammingDistance) / $pixels; # returned value is in the range 0 -> 1
-    return $hammingDistance / $pixels; # returned value is in the range 0 -> 1
   }
 
   /**
@@ -677,3 +688,38 @@ class Photo {
   }
 
 }
+
+
+#require "Network.php";
+#$source = [];
+#$source["url"] = "http://www.sexyguidaitalia.com/public/25090/3.jpg?t=635672905093169843";
+#$p = new Photo(null, $source, null);
+#$text = "Image does not exist";
+#$img = $p->test($text);
+#$mime = "image/jpeg";
+#header("Content-Type: " . $mime);
+#print $img;
+#exit;
+######################################################################################################################
+#require "Network.php";
+#$source = [];
+#$source["url"] = "http://192.168.10.30/escrape/tobetested/001-sgi.jpg";
+#$p1 = new Photo(null, $source, null);
+#$source["url"] = "http://192.168.10.30/escrape/tobetested/003-toe.jpg"; # similar
+##$source["url"] = "http://192.168.10.30/escrape/tobetested/user-0.jpg"; # different
+#$p2 = new Photo(null, $source, null);
+#$similar = $p1->checkSimilarity($p2);
+#print "the images are " . ($similar ? "similar" : "different") . "\n";
+#exit;
+######################################################################################################################
+#require "Network.php";
+#$source = [];
+#$source["url"] = "http://biografieonline.it/img/bio/Raffaella_Fico_1.jpg";
+#$p = new Photo(null, $source, null);
+#$text = "Image does not exist";
+#$mime = "image/jpeg";
+#$img = $p->createImageFromText($text, $mime);
+#header("Content-Type: " . $mime);
+#print $img;
+#exit;
+######################################################################################################################

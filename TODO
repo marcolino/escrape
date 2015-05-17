@@ -19,8 +19,10 @@ TODO 1.0:
  - does nationalityDetect sets the right countryCode ? (DONE, TO BE CHECKED)
  - does nationalityDetect excludes "ALLA FRA....."? (DONE, TO BE CHECKED)
  - normalizeName: \n+ => \n (DONE, TO BE CHECKED)
- - scrollTo: doesn't work (only @HOME..., TO BE RE-TESTED)
+ - scrollTo: doesn't work (only @HOME..., TO BE RE-TESTED) NOOOOOOOOOOOOOOO
  - check assertUniqueness loop... (DONE, TO BE CHECKED)
+ - does nationalityDetect recognizes sud[\s-]+america(na)?
+ - does nationalityDetect recognizes Orientale in the name?
  
  - db: remove active_label field (and test activeFromSource implementation) (@HOME)
  - add photos if md5 sum of details page changes... (DONE, TO BE TESTED @HOME...)
@@ -33,6 +35,10 @@ TODO 1.0:
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - solve all these TODO's
 
+ - WHY SO MANY PHOTOS UNDEFINED?
+ - normalizeNationality(): remove <i class='icon-info'></i>, and handle it in view...
+ - nationality combo: accept input keys to scroll items...
+
 TODO 1.1:
  - solve (and clean out) all TODO's in source...
  - a synopsys for all methods in api and app
@@ -43,6 +49,7 @@ TODO 1.1:
  - if sieves filter out a 'primary' person and not a secondary (, ...) person, then should show secondary (, ...) person (currently all the group is hidden) ...
  - use the same capitalizing convention for all exceptions (all lowercase? / First uppercase?)
  - use $userId in *all* methods in Db class
+ - disable htmp stack trace for SLim errors
 
 TODO 2.0:
  - I18n (?) (see:

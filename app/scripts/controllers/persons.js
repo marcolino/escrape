@@ -171,35 +171,28 @@ console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
       return 0; // no sort criteria can find an ordering
     }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
 
-    // aggregate uniq lists in sorted list
-    var len = list.length;
-
-    var id2index = {}; // id's to list indexes mapping
-    var i;
-    for (i = 0; i < len; i++) {
-      var id = list[i].id_person;
-if (id in id2index) { console.error('person id ' + id + ' already present in id2index (a duplicate?!?)'); } // TODO: DEBUG-ONLY
-      id2index[id] = i;
+    function id2indexBuild() {
+      for (var i = 0; i < len; i++) { // rebuild id2index array
+        var id = list[i].id_person;
+        id2index[id] = i;
+      }
     }
 
-console.info('list: ', list);
-console.info('id2index: ', id2index);
-console.info('scanning list to unify uniq items...');
+    var len = list.length;
+    var id2index = {}; // id's to list indexes mapping
+    var i;
+    id2indexBuild();
     for (i = 0; i < len; i++) {
-console.info(' i: ', i);
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
-console.info('  list['+i+'] ('+list[i].name+') is a uniq primary');
         for (var next, j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
+          next = id2index[list[j].uniq_next];
           var src = j;
           var dst = ++i;
-console.info('  moving list['+src+'] to position '+dst+'...');
           list.move(src, dst);
-          next = id2index[list[j].uniq_next];
-console.info('  next uniq is '+next+'...');
+          id2indexBuild();
         }
       }
     }
-console.info('done scanning list to unify uniq items.');
     return list;
   }
 

@@ -19,6 +19,8 @@
 class PersonsController {
   #const EMAIL_PATTERN = "/^\S+@\S+\.\S+$/";
   const PHOTOS_PATH = "db/photos/";
+  const TIMEOUT_BETWEEN_DOWNLOADS = 60;
+  const RETRIES_MAX_FOR_DOWNLOADS = 3;
 
   /**
    * Constructor
@@ -50,12 +52,45 @@ class PersonsController {
 
       getUrlContents:
       $this->router->log("info", "getUrlContents($url) (TOR: " . ($useTor ? "true" : "false") . ")");
-      # TODO: try ... catch ... (here and for all Network public methods...)
-      $page = $this->network->getUrlContents($url, $source["charset"], null, false, $useTor);
-      if ($page === FALSE) {
+
+      ##### TODO: try ... catch ... (here and for all Network public methods...)
+      #$page = $this->network->getUrlContents($url, $source["charset"], null, false, $useTor);
+
+      $retry = 0;
+      retry_master:
+      try {
+        $page = $this->network->getUrlContents($url, $source["charset"], null, false, $useTor);
+        if (
+          (strpos($page, "La pagina che hai tentato di visualizzare non esiste") !== false)
+        ) {
+          $this->router->log("warning", "can't get page [$url]: " . "does not exist");
+        } else {
+          if (
+            (strpos($page, "Why do I have to complete a CAPTCHA?") !== false) OR
+            (strpos($page, "has banned your access") !== false)
+          ) {
+            $this->router->log("warning", "can't get page [$url]: " . "site denies access");
+            if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+              $retry++;
+              $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
+              sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
+              goto retry_master;
+            } else {
+              $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+              throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+            }
+          }
+        }
+      } catch(Exception $e) {
+        $message = $e->getMessage();
         $this->router->log("error", "can't get page contents on source [$sourceKey]");
         continue;
       }
+
+      #if ($page === FALSE) {
+      #  $this->router->log("error", "can't get page contents on source [$sourceKey]");
+      #  continue;
+      #}
       $persons_page = $page;
       if (preg_match_all($source["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
@@ -95,11 +130,10 @@ class PersonsController {
         $personId = null;
         if (($persons = $this->db->getPersonsByField("key", $key))) { # old key
           $person = $persons[0];
-          $personId = $person["id"];
+          $personId = $person["id_person"];
           $this->router->log("debug", "old person: $key (id: $personId)");
-          if (!$fullSync) { // requested to sync only new keys, skip this old key
-            continue;
-          }
+# DEBUG ONLY: profile...
+#continue;
         } else {
           $this->router->log("debug", "new person: $key (id: $id)");
         }
@@ -113,9 +147,46 @@ class PersonsController {
         }
 
         #$this->router->log("debug", "person details url: [$detailsUrl]");
-        # TODO: currently $this->network->getUrlContents() does not returns FALSE on error, but throws an exception...
-        # TODO: try ... catch ...
-        if (($page_details = $this->network->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor)) === FALSE) {
+#        if (($page_details = $this->network->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor)) === FALSE) {
+#          $this->router->log("error", "person $n ($key) url contents not found, giving up with this person");
+#          $error = true;
+#          continue;
+#        }
+
+        $retry = 0;
+        retry_detail:
+        try {
+          $page_details = $this->network->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor);
+          if (strpos($page_details, "La pagina che hai tentato di visualizzare non esiste") !== false) {
+            $this->router->log("warning", "can't get page [$detailsUrl]: " . "does not exist");
+          } else {
+            if (preg_match("/<link rel=\"stylesheet\" href=\"http:\/\/m\..*?\"/s", $page_details) >= 1) {
+              $this->router->log("error", "source [$sourceKey] for person $n ($key) returned unexpected mobile page, giving up with this person");
+              #$error = true; # TODO: error should be set...
+              continue;
+            } else {
+              if (
+                (strpos($page_details, "Why do I have to complete a CAPTCHA?") !== false) OR
+                (strpos($page_details, "has banned your access") !== false)
+              ) {
+                $this->router->log("warning", "can't get page [$detailsUrl]: " . "site denies access");
+                if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
+                  $retry++;
+                  $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
+                  sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
+                  goto retry_detail;
+                } else {
+                  $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+                  #throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+                  $this->router->log("error", "person $n ($key), retries exausted, giving up with this person");
+                  $error = true;
+                  continue;
+                }
+              }
+            }
+          }
+        } catch(Exception $e) {
+          $message = $e->getMessage();
           $this->router->log("error", "person $n ($key) url contents not found, giving up with this person");
           $error = true;
           continue;
@@ -192,6 +263,8 @@ class PersonsController {
         $personMaster["source_key"] = $sourceKey;
         $personMaster["url"] = $detailsUrl;
         $personMaster["timestamp_last_sync"] = $timestampNow;
+#$diff = ($personMaster["timestamp_last_sync"] - $timestampStart);
+#$this->router->log("debug", "timestampStart: $timestampStart, timestamp_last_sync (now): $timestampNow, difference is $diff, activity should be " . ($diff >= 0 ? "1" : "0"));
         $personMaster["page_sum"] = $pageSum;
         $personDetail = [];
         $personDetail["name"] = $name;
@@ -245,9 +318,13 @@ class PersonsController {
 
         if (
           !array_key_exists("id_person", $person) or // person is new
-          $fullSync or // a full sync was requested
-          ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
+          $fullSync #or // a full sync was requested
+######################          ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
+$this->router->log("debug", "PersonsController::sync() - PERSONID === $personId");
+
+/*
+# TODO: PAGE SUM ALWAYS CHANGES, WE CAN REOVE THIS CHECK...
 if (array_key_exists("id_person", $person) && !$fullSync) {
   if ($personMaster["page_sum"] !== $person["page_sum"]) {
     $this->router->log("debug", "PersonsController::sync() - NEW DETAILS PAGE (".$personMaster["page_sum"].") SUM DID CHANGE WITH RESPECT TO PREVIOUS SUM (".$person["page_sum"]."): RELOADING PHOTOS...");
@@ -255,6 +332,7 @@ if (array_key_exists("id_person", $person) && !$fullSync) {
     $this->router->log("debug", "PersonsController::sync() - OLD DETAILS PAGE (".$personMaster["page_sum"].") SUM DID NOT CHANGE WITH RESPECT TO PREVIOUS SUM: NOT RELOADING PHOTOS...");
   }
 }
+*/
           foreach ($photosUrls as $photoUrl) { // add photos
             if (is_absolute_url($photoUrl)) { // absolute photo url
               $photoUrl = str_replace("../", "", $photoUrl); // 'normalize' relative urls
@@ -265,20 +343,14 @@ if (array_key_exists("id_person", $person) && !$fullSync) {
           }
         }
 
-        $this->router->log("debug", "---");
+#        $this->router->log("debug", "---");
 #break;
       }
 #break;
     }
 
-    # TODO: do if ... (not if ($fullSync)...)
-    #if ($fullSync) { // full sync was requested
-      // assert persons activity after full sync completed, if we get no error
-      //  (to avoid marking all persons as not-active when a source is not available...)
-      if (!$error) {
-        $this->assertPersonsActivity($timestampStart, $sourceKey);
-      }
-    #}
+    // assert persons activity status
+    $this->assertPersonsActivity($timestampStart, $sourceKey, $error);
 
     // assert persons uniqueness after sync completed
     $this->assertPersonsUniqueness();
@@ -290,33 +362,287 @@ if (array_key_exists("id_person", $person) && !$fullSync) {
    * Assert persons activity: compare person's last sync'd timestamp with a given timestamp
    *  ("timestampStart" parameter), the timestamp last (or this) sync started.
    */
-  private function assertPersonsActivity($timestampStart, $sourceKey) {
+  private function assertPersonsActivity($timestampStart, $sourceKey, $error) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     #$this->router->log("info", "timestamp of last sync start: " . date("c", $timestampStart));
     foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
+      $active = null;
       $activeFromSource = $this->isPhoneActive($person["phone"], $sourceKey);
       #$this->router->log("info", " person " . $person["key"] . " - activeFromSource: [" . $activeFromSource"] . "]");
       if (!$activeFromSource) {
         // this person was found as explicitly "inactive" from source page
         $active = false;
-$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - activeFromSource = false, forcing active status: active: " . ($active ? "1" : "0"));
       } else {
-        // set activity flag based on the time of last sync for this person, compared to the time of this full sync
-        $timestampLastSyncPerson = $person["timestamp_last_sync"];
-        # TODO: CHANGE THIS: two consecutive syncs set all to not active, as olds are skipped(WHY, THEY ARE NOT! ???) !!!!!!!!!!
-        $active = ($timestampLastSyncPerson >= $timestampStart);
-$this->router->log("debug", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
+        // set activity flag based on the time of last sync for this person, compared to the time of this full sync,
+        //  but only if there were no error during sync, to avoid marking all persons as not-active when a source is not available...
+        if (!$error) { # TODO: try to find a better way to avoid marking all persons as not-active when a source is not available
+          $timestampLastSyncPerson = $person["timestamp_last_sync"];
+          $this->router->log("debug", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
+          # TODO: CHANGE THIS: two consecutive syncs set all to not active, as olds are skipped (WHY, THEY ARE NOT! ???) !!!!!!!!!!
+          $active = ($timestampLastSyncPerson >= $timestampStart);
+        } #else {
+        #$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - errors, not setting active field comparing timestamps");
+        #}
       }
-      #$this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
-      $this->db->setPerson($person["id_person"], [ "active" => $active ], []);
+      if ($active !== null) {
+$this->router->log("info", " person " . $person["key"] . "setting active field to " . "active: " . ($active ? "1" : "0"));
+        $this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
+        #$this->db->setPerson($person["id_person"], [ "active" => $active ], []); # DEBUG: WHITH THIS WE ALWASY GET A NULL FIELD, FOR TRUE VALUES!!!
+      }
     }
-$this->router->log("debug", "asserting persons activity finished");
+    $this->router->log("debug", "asserting persons activity finished");
   }
 
   /**
    * Assert persons uniqueness
    */
   public function assertPersonsUniqueness() {
+    $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
+## TODO: DEBUG-ONLY
+#$startTime = microtime(true); 
+    $persons = $this->db->getPersons();
+    $photos = $this->db->getAll("photo");
+## TODO: DEBUG-ONLY
+#$endTime = microtime(true);
+#$elapsedTime = $endTime - $startTime;
+#$this->router->log("debug", "[APU] personsCheckUniqueness - DURATION OF LOAD (microseconds): " . $elapsedTime);
+
+    # build an array of persons indexed by id
+    $persons_count = count($persons);
+    $photos_count = count($photos);
+    for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
+      $personId = $persons[$i]["id_person"];
+      $personsById[$personId] = $persons[$i];
+#if ($i === 3) {
+#$this->router->log("debug", "[APU] personsCheckUniqueness - personsById: " . any2string($personsById[$personId]));
+#}
+      $personsById[$personId]["photos"] = [];
+      for ($j = 0; $j < $photos_count; $j++) { // build a persons-by-id array
+        if ($photos[$j]["id_person"] === $personId) {
+          array_push($personsById[$personId]["photos"], $photos[$j]);
+        }
+      }
+    }
+
+#$this->router->log("debug", "[APU] personsCheckUniqueness - personsById count: " . count($personsById));
+#$this->router->log("debug", "[APU] personsCheckUniqueness - personsById (just id '1'): " . any2string($personsById["1"]));
+
+## TODO: DEBUG-ONLY
+#$endTime = microtime(true);
+#$elapsedTime = $endTime - $startTime;
+
+#return;
+
+    # check every couple of persons (avoiding permutations)
+    for ($i = 0; $i < $persons_count - 1; $i++) {
+      for ($j = $i + 1; $j < $persons_count; $j++) {
+        if (
+          $this->personsCheckSamePhone($persons[$i], $persons[$j]) ||
+          $this->personsCheckSamePhotos($personsById, $persons[$i]["id_person"], $persons[$j]["id_person"])
+         #$this->personsCheckSamePhotos($persons[$i], $persons[$j])
+        ) { // these two persons are unique
+          $id1 = $persons[$i]["id_person"];
+          $id2 = $persons[$j]["id_person"];
+
+#          $this->router->log("info", "assertPersonsUniqueness() - found 'uniq' persons: " . $persons[$i]['key'] . " and " . $persons[$j]['key']);
+
+          // next chain
+          $id = $idLast = $id1;
+$n = 0; # TODO: DEBUG ONLY
+          while ($id) {
+            $idLast = $id;
+            $id = $personsById[$id]["uniq_next"];
+            if ($id === $id2) { // $id2 is already in chain, break this while to avoid infinite loop...
+#              $this->router->log("info", "assertPersonsUniqueness() - $id exists already in next-chain for id1: $id1, id2: $id2");
+              #break;
+            }
+
+if (++$n >= 10) { # TODO: DEBUG ONLY
+  $this->router->log("error", "assertPersonsUniqueness() - loop detected ($id) in next section for id1: $id1, id2: $id2");
+  return;
+}
+            if (!$id) { # $idFirst contains first id in uniqueness prev-chain for this person
+              $this->db->setPerson($idLast, null, [ "uniq_next" => $id2 ]); // save uniq_next id to first person in next-chain
+            }
+          }
+
+          // prev chain
+          $id = $idFirst = $id2;
+$n = 0; # TODO: DEBUG ONLY
+          do {
+            $idFirst = $id;
+            $id = $personsById[$id]["uniq_prev"];
+            if ($id === $id1) { // $id1 is already in chain, break this while to avoid infinite loop...
+#              $this->router->log("info", "assertPersonsUniqueness() - $id exists already in prev-chain for id1: $id1, id2: $id2");
+              #break;
+            }
+
+if (++$n >= 10) { # TODO: DEBUG ONLY
+  $this->router->log("error", "assertPersonsUniqueness() - loop detected ($id) in prev section for id1: $id1, id2: $id2");
+  return;
+}
+            if (!$id) { # $idFirst contains first id in uniqueness prev-chain for this person
+              $this->db->setPerson($idFirst, null, [ "uniq_prev" => $id1 ]); // save uniq_next id to last person in chain
+            }
+          } while ($id);
+        }
+      }
+    }
+# TODO: DEBUG ONLY
+$this->router->log("debug", "asserting persons uniqueness finished");
+  }
+
+
+
+/*
+          # TODO: avoid possibly infinite loops...
+          // follow next unique chain, and add the 2nd person id as additional unique (next) person
+          $idNext = $personsById[$id1]["uniq_next"];
+# TODO: DEBUG ONLY
+$n = 0;
+          while ($idNext && $personsById[$idNext]["uniq_next"]) {
+            if (!($next = $personsById[$idNext]["uniq_next"])) break;
+ $this->router->log("debug", " while Next - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
+            $idNext = $next;
+# TODO: DEBUG ONLY
+if (++$n >= 10) {
+ $this->router->log("error", "assertPersonsUniqueness() - loop detected ($idNext) in next section for id1: $id1, id2: $id2");
+ return;
+}
+          }
+          $idNext = $idNext ? $idNext : $id1;
+          if ($personsById[$idNext]["uniq_next"] !== $id2) {
+            $personsById[$idNext]["uniq_next"] = $id2;
+$this->router->log("debug", "setting person of id $idNext uniq_next field to $id2");
+            $this->db->setPerson($idNext, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
+          }
+
+          # TODO: avoid possibly infinite loops...
+          // follow prev unique chain, and add the 1nd person id as additional unique (prev) person
+          $idPrev = $personsById[$id2]["uniq_prev"];
+# TODO: DEBUG ONLY
+$n = 0;
+          while ($idPrev && $personsById[$idPrev]["uniq_prev"]) {
+            if (!($prev = $personsById[$idPrev]["uniq_prev"])) break;
+ $this->router->log("debug", " while Prev - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
+            $idPrev = $prev;
+# TODO: DEBUG ONLY
+if (++$n >= 10) {
+ $this->router->log("error", "assertPersonsUniqueness() - loop detected ($idPrev) in next section for id1: $id1, id2: $id2");
+ return;
+}
+          }
+          $idPrev = $idPrev ? $idPrev : $id2;
+          if ($personsById[$idPrev]["uniq_next"] != $id1) {
+# TODO: CHECK IF WE GET HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            $personsById[$idPrev]["uniq_prev"] = $id1;
+$this->router->log("debug", "setting person of id $idPrev uniq_prev field to $id1");
+            $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
+          }
+        }
+      }
+    }
+
+# TODO: DEBUG ONLY
+$this->router->log("debug", "asserting persons uniqueness finished");
+  }
+*/
+
+  /**
+   * Check two persons uniqueness comparing their phone numbers
+   *
+   * @param  array $person1    the first person
+   * @param  array $person2    the second person
+   * @return integer: true     the persons are uniq (same phone)
+   *                  false    the persons are not uniq
+   */
+  private function personsCheckSamePhone($person1, $person2) {
+    return (
+      ($person1["phone"] && $person2["phone"]) &&
+      ($person1["phone"] === $person2["phone"])
+    );
+  }
+
+  /**
+   * Check two persons uniqueness comparing their photos
+   *
+   * @param  array $person1    the first person
+   * @param  array $person2    the second person
+   * @return integer: true     the persons are uniq (some photo in common)
+   *                  false    the persons are not uniq
+   */
+  public function personsCheckSamePhotos($personsById, $id1, $id2) {
+    $person1 = $personsById[$id1];
+    $person2 = $personsById[$id2];
+
+    $photo = new Photo($this->router, [ "data" => [] ]);
+    $minDistance = $photo->getOption("signatureDuplicationMinDistance");
+
+    foreach ($person1["photos"] as $photo1) {
+      foreach ($person2["photos"] as $photo2) {
+        if ($photo1["sum"] === $photo2["sum"]) { // the checksum matches
+$this->router->log("debug", "personsCheckSamePhotos() - persons with id $id1 and $id2 have EQUAL photos");
+          return true;
+        }
+        $distance = $photo->compareSignatures($photo1["signature"], $photo2["signature"]);
+        if ($distance <= $minDistance) { // duplicate found
+$this->router->log("debug", "personsCheckSamePhotos() - persons with id $id1 and $id2 have SIMILAR photos");
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+/*
+  public function OLD_personsCheckSamePhotos($person1, $person2) {
+return false;
+# TODO: DEBUG-ONLY
+#$startTime = microtime(true); 
+
+    $id1 = $person1["id_person"];
+    $id2 = $person2["id_person"];
+    $photos1 = $this->db->getByField("photo", "id_person", $id1);
+    $photos2 = $this->db->getByField("photo", "id_person", $id2);
+
+    foreach ($photos1 as $photo1) {
+      try {
+        #$this->router->log("debug", "personsCheckUniquenessByPhotos - new Photo: is there a 'url' field in \$photo1 ? " . any2string($photo1));
+        $photo = new Photo($this->router, [ "data" => $photo1 ]);
+      } catch (Exception $e) {
+        $this->router->log("error", "can't create new photo from data: " . $e->getMessage());
+        return false;
+      }
+
+      // check if photo is an exact duplicate
+      if ($this->photoCheckDuplication($photo, $photos2)) {
+        #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
+## TODO: DEBUG-ONLY
+#$this->router->log("debug", "personsCheckUniquenessByPhotos (duplication): TRUE");
+        unset($photo);
+        return true; // duplicate found
+      }
+      #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckDuplication()");
+      if ($this->photoCheckSimilarity($photo, $photos2)) {
+        #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
+## TODO: DEBUG-ONLY
+#$this->router->log("debug", "personsCheckUniquenessByPhotos (similarity): TRUE");
+        unset($photo);
+        return true; // similarity found
+      }
+      #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckSimilarity()");
+
+      unset($photo);
+    }
+
+# TODO: DEBUG-ONLY
+#$endTime = microtime(true);
+#$elapsedTime = $endTime - $startTime;
+#$this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (microseconds): " . $elapsedTime);
+    return false;
+  }
+*/
+/*
+  public function OLD_IMPLEMENTATION_assertPersonsUniqueness() {
     $this->router->log("info", "asserting persons uniqueness (checking for field matching for every couple of persons)");
     $persons = $this->db->getPersons(null);
 
@@ -348,17 +674,18 @@ $this->router->log("debug", "asserting persons activity finished");
 $n = 0;
           while ($idNext && $personsById[$idNext]["uniq_next"]) {
             if (!($next = $personsById[$idNext]["uniq_next"])) break;
+ $this->router->log("debug", " while Next - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
             $idNext = $next;
 # TODO: DEBUG ONLY
 if (++$n >= 10) {
- $this->router->log("debug", " w1 - idNext: [$idNext] - phone: " . $persons[$idNext]["phone"]);
- $this->router->log("info", "LOOP DETECTED ($idNext) IN NEXT SECTION FOR id1: $id1, id2: $id2");
+ $this->router->log("error", "assertPersonsUniqueness() - loop detected ($idNext) in next section for id1: $id1, id2: $id2");
  return;
 }
           }
-          $idNext = $idNext || $id1;
+          $idNext = $idNext ? $idNext : $id1;
           if ($personsById[$idNext]["uniq_next"] !== $id2) {
             $personsById[$idNext]["uniq_next"] = $id2;
+$this->router->log("debug", "setting person of id $idNext uniq_next field to $id2");
             $this->db->setPerson($idNext, null, [ "uniq_next" => $id2 ]); // save uniq_next id to person
           }
 
@@ -369,17 +696,19 @@ if (++$n >= 10) {
 $n = 0;
           while ($idPrev && $personsById[$idPrev]["uniq_prev"]) {
             if (!($prev = $personsById[$idPrev]["uniq_prev"])) break;
+ $this->router->log("debug", " while Prev - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
             $idPrev = $prev;
 # TODO: DEBUG ONLY
 if (++$n >= 10) {
- $this->router->log("info", "LOOP DETECTED ($idPrev) IN PREV SECTION FOR id1: $id1, id2: $id2");
- $this->router->log("debug", " w2 - idPrev: [$idPrev] - phone: " . $persons[$idPrev]["phone"]);
+ $this->router->log("error", "assertPersonsUniqueness() - loop detected ($idPrev) in next section for id1: $id1, id2: $id2");
  return;
 }
           }
-          $idPrev = $idPrev || $id2;
+          $idPrev = $idPrev ? $idPrev : $id2;
           if ($personsById[$idPrev]["uniq_next"] != $id1) {
+# TODO: CHECK IF WE GET HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $personsById[$idPrev]["uniq_prev"] = $id1;
+$this->router->log("debug", "setting person of id $idPrev uniq_prev field to $id1");
             $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to person
           }
         }
@@ -388,6 +717,7 @@ if (++$n >= 10) {
 # TODO: DEBUG ONLY
 $this->router->log("debug", "asserting persons uniqueness finished");
   }
+*/
 
   /**
    * get all persons, filtered with given data sieves
@@ -414,7 +744,9 @@ $this->router->log("debug", "asserting persons uniqueness finished");
 
       // fields "calculated"
       //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
-      $result[$personId]["photo_path_small_showcase"] = $this->photoGetByShowcase($personId, true)["path_small"];
+      $showcase = $this->photoGetByShowcase($personId, true);
+      $showcase = (isset($showcase["path_small"])) ? $showcase["path_small"]: null;
+      $result[$personId]["photo_path_small_showcase"] = $showcase;
       $result[$personId]["comments_count"] = $comments->countByPhone($person["phone"]);
       $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId);
     }
@@ -521,7 +853,7 @@ $this->router->log("debug", "asserting persons uniqueness finished");
 
   private function isPhoneActive($phone, $sourceKey) {
     #$source = $this->sourcesDefinitions[$sourceKey];
-$this->router->log("debug", " [ PPP ] [" . ($phone ? "true" : "false") . "]");
+if (!$phone) { $this->router->log("debug", " isPhoneActive() returns FALSE"); }
 
     return $phone ? true : false;
   }
@@ -836,78 +1168,6 @@ $this->router->log("debug", " [ PPP ] [" . ($phone ? "true" : "false") . "]");
   }
 
   /**
-   * Check two persons uniqueness comparyng their phone numbers
-   *
-   * @param  array $person1    the first person
-   * @param  array $person2    the second person
-   * @return integer: true     the persons are uniq (same phone)
-   *                  false    the persons are not uniq
-   */
-  private function personsCheckUniquenessByPhone($person1, $person2) {
-# TODO: DEBUG-ONLY
-if (
-      ($person1["phone"] && $person2["phone"]) &&
-      ($person1["phone"] === $person2["phone"])
-) { $this->router->log("debug", "personsCheckUniquenessByPhone: TRUE"); }
-    return (
-      ($person1["phone"] && $person2["phone"]) &&
-      ($person1["phone"] === $person2["phone"])
-    );
-  }
-
-  /**
-   * Check two persons uniqueness comparyng their photos
-   *
-   * @param  array $person1    the first person
-   * @param  array $person2    the second person
-   * @return integer: true     the persons are uniq (some photo in common)
-   *                  false    the persons are not uniq
-   */
-  public function personsCheckUniquenessByPhotos($person1, $person2) {
-# TODO: DEBUG-ONLY
-$startTime = microtime(true); 
-
-    $id1 = $person1["id_person"];
-    $id2 = $person2["id_person"];
-    $photos1 = $this->db->getByField("photo", "id_person", $id1);
-    $photos2 = $this->db->getByField("photo", "id_person", $id2);
-
-    foreach ($photos1 as $photo1) {
-      try {
-        #$this->router->log("debug", "personsCheckUniquenessByPhotos - new Photo: is there a 'url' field in \$photo1 ? " . any2string($photo1));
-        $photo = new Photo($this->router, [ "data" => $photo1 ]);
-      } catch (Exception $e) {
-        $this->router->log("error", "can't create new photo from data: " . $e->getMessage());
-        return false;
-      }
-
-      // check if photo is an exact duplicate
-      if ($this->photoCheckDuplication($photo, $photos2)) {
-        #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a duplicate with a photo of person with id $id2");
-# TODO: DEBUG-ONLY
-$this->router->log("debug", "personsCheckUniquenessByPhotos (duplication): TRUE");
-        return true; // duplicate found
-      }
-      #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckDuplication()");
-      if ($this->photoCheckSimilarity($photo, $photos2)) {
-        #$this->router->log("debug", "personsCheckUniquenessByPhotos($id1, $id2) - photo n. " . $photo1['number'] . ", person with id $id1, has a similarity with a photo of person with id $id2");
-# TODO: DEBUG-ONLY
-$this->router->log("debug", "personsCheckUniquenessByPhotos (similarity): TRUE");
-        return true; // similarity found
-      }
-      #$this->router->log("debug", "personsCheckUniquenessByPhotos - after photoCheckSimilarity()");
-
-      unset($photo);
-    }
-
-# TODO: DEBUG-ONLY
-$endTime = microtime(true);
-$elapsedTime = $endTime - $startTime;
-$this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (microseconds): " . $elapsedTime);
-    return false;
-  }
-
-  /**
    * Add a photo
    *
    * @param  integer $personId the id of the person's photo
@@ -926,6 +1186,7 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
     // build photo object from url
     try {
       $photo = new Photo($this->router, [ "url" => $photoUrl ]);
+#$this->router->log("debug", "photoAdd() - photo created");
     } catch (Exception $e) {
       $this->router->log("error", "can't create new photo from url: " . $e->getMessage());
       return false;
@@ -956,7 +1217,7 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
       #$this->router->log("debug", "photoAdd [$photoUrl] for person id " . $personId . " is a similarity, ignoring");
       return false; // similarity found
     }
-    $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING...");
+    $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING TO DB...");
 
     $showcase = true; # TODO: decide $showcase (flag to denote showcase photo) ...
 
@@ -966,18 +1227,23 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
     $photo->timestampCreation(time());
     $photo->thruthful("unknown"); // this is an offline-set property (it's very expensive to calculate)
     $photo->showcase($showcase);
+#$this->router->log("debug", "photoAdd() - 1");
    
     // store this photo
     if (($number = $this->photoStore($personId, $photo)) === false) {
       $this->router->log("error", "photo " . $photo->url() . " for person id " . $personId . " could not be stored locally");
       return false; // error storing photo locally
     }
+#$this->router->log("debug", "photoAdd() - 2");
     $photo->number($number);
 
     // add this photo to database
+#$this->router->log("debug", "photoAdd() - 3");
     $retval = $this->db->add("photo", $this->photo2Data($photo));
+#$this->router->log("debug", "photoAdd() - 4");
     unset($photo);
 
+#$this->router->log("debug", "photoAdd() - returning");
     return $retval;
   }
 
@@ -1065,6 +1331,7 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
    * @return boolean: true       if photo is a duplicate
    *                  false      if photo is not a fuplicate
    */
+/*
   private function photoCheckDuplication($photo, $photos) {
     if ($photos !== []) {
       foreach ($photos as $p) {
@@ -1075,7 +1342,7 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
     }
     return false;
   }
-
+*/
   /**
    * Check for photo similarity
    *
@@ -1084,7 +1351,9 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
    * @return boolean: true       if photo is similar to some else photo
    *                  false      if photo is not similar to some else photo
    */
+/*
   private function photoCheckSimilarity($photo, $photos) {
+#return false; # TODO: DEBUG_ONLY: CHECK IF assertPersonsUniqueness() SLOWNESS COMES FROM THIS FUNCTION...
     $retval = false;
     if ($photos !== []) {
       foreach ($photos as $p) {
@@ -1103,6 +1372,7 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
     unset($photo2);
     return $retval;
   }
+*/
 
   /**
    * Store a photo on local file system
@@ -1136,10 +1406,12 @@ $this->router->log("debug", "[TTTTT] personsCheckUniquenessByPhotos - DURATION (
     }
 
     // store the full and small bitmaps to file-system
+#$this->router->log("debug", "photoStore() - 1 - bitmapFull path: ", $pathnameFull);
     if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {
       $this->router->log("error", "can't save photo to file [$pathnameFull]");
       return false;
     }
+#$this->router->log("debug", "photoStore() - 2 - bitmapSmall path: ", $pathnameSmall);
     if ((file_put_contents($pathnameSmall, $photo->bitmapSmall())) === false) {
       $this->router->log("error", "can't save photo to file [$pathnameSmall]");
       return false;

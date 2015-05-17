@@ -910,7 +910,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       ";
       $statement = $this->db->prepare($sql);
       $statement->execute();
-      $result = $statement->fetch(PDO::FETCH_ASSOC);
+      $result = $statement->fetchall(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
       throw new Exception("can't get all records from table $table: " . $e->getMessage());

@@ -327,7 +327,7 @@ class Router {
         "code" => $error->getCode(),
         "file" => $error->getFile(),
         "line" => $error->getLine(),
-        #"trace" => $error->getTrace(), #AsString(),
+        "trace" => $error->getTraceAsString(),
         #"html" => $this->exception2HTML($error), # TODO: use it or remove it?
       ],
       "log" => $this->logs, # TODO: use it or remove it?
