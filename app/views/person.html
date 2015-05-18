@@ -146,7 +146,7 @@
           </div>
           <div class="col-xs-6 col-sm-3 col-md-2 col-lg-2">
             <div class="input-group input-group-bottom-spaced" title="The current activity status of this person">
-              <span class="input-group-addon"><span class="glyphicon" ng-class="{'text-success': person.active === '1', 'glyphicon-ok': person.active === '1', 'glyphicon-remove': person.active === '0'}"></span></span>
+              <span class="input-group-addon"><span class="glyphicon" ng-class="{'text-success': person.active === '1', 'glyphicon-ok': person.active, 'glyphicon-remove': !person.active}"></span></span>
               <input type="text" class="form-control" ng-value="(person.active === '1') ? 'active' : 'not active'" readonly>
             </div>
           </div>

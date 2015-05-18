@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col-xs-6">
       <div class="pull-left">
-        <span>{{personsCount}} person{{personsCount !== 1 ? 's' : ''}} listed</span>
+        <span ng-if="personsCount">{{personsCount}} person{{personsCount !== 1 ? 's' : ''}} listed</span>
       </div>
     </div>
     <div class="col-xs-6">

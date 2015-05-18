@@ -45,6 +45,62 @@ class Photo {
   }
 
   /**
+   * Create a photo from URL
+   *
+   * @param  string: photo URL
+   * @return object: new photo if url is a valid photo
+   *                 false     if url is not a valid photo
+   */
+  public function fromUrl($url) {
+    $this->url = $url;
+  }
+
+  /**
+   * Create a photo from data
+   *
+   * @param  data $array:   photo data structure
+   * @return object:        photo object
+   */
+  public function fromData($data) {
+    foreach ($data as $property => $value) {
+      $this->$property = $value;
+    }
+    if (!array_key_exists("bitmap", $data)) {
+      $this->bitmap = ""; // we don't need the url field, set a fake value
+    }
+    if (!array_key_exists("mime", $data)) {
+      $this->mime = ""; // we don't need the mime field, set a fake value
+    }
+  }
+
+  /**
+   * Extract all properties to be stored to database, as array
+   *
+   * @param  Photo: $photo       the photo object to check for duplication
+   * @return array:              the array with all fields to be stored to database
+   */
+  public function toData() {
+    $data = [];
+    foreach ($this as $property => $value) {
+      if (
+        ($property === "id_person") ||
+        ($property === "number") ||
+        ($property === "url") ||
+        ($property === "path_full") ||
+        ($property === "path_small") ||
+        ($property === "sum") ||
+        ($property === "timestamp_creation") ||
+        ($property === "timestamp_last_modification") ||
+        ($property === "signature") ||
+        ($property === "showcase") ||
+        ($property === "thruthful")
+      )
+      $data[$property] = $value;
+    }
+    return $data;
+  }
+
+  /**
    * Get an option by name
    *
    * @param  string: option name
@@ -54,26 +110,6 @@ class Photo {
     if (isset($this->options[$optionName])) {
       return $this->options[$optionName];
     }
-  }
-
-
-#public function test($text) {
-#  try {
-#    return $this->createImageFromText($text, $this->options["internalType"]);
-#  } catch(Exception $e) {
-#    throw new Exception("can't create image from text '$text'");
-#  }
-#}
-
-  /**
-   * Create a photo from URL
-   *
-   * @param  string: photo URL
-   * @return object: new photo if url is a valid photo
-   *                 false     if url is not a valid photo
-   */
-  public function fromUrl($url) {
-    $this->url = $url;
   }
 
   /**
@@ -104,15 +140,11 @@ class Photo {
    * Get the bitmap of the internal image, small size
    */
   public function bitmapSmall() {
-#$this->router->log("debug", "bitmapSmall() - smallHeight: " . $this->options["smallHeight"]);
     if (isset($this->bitmapSmall)) {
       return $this->bitmapSmall;
     }
-#$this->router->log("debug", "bitmapSmall() - 2");
     $this->load();
-#$this->router->log("debug", "bitmapSmall() - 3");
     $bitmapSmall = $this->photoScaleByHeight($this->bitmap, $this->options["smallHeight"]);
-#$this->router->log("debug", "bitmapSmall() - 4");
     $this->bitmapSmall = $this->convertBitmapToInternalType($bitmapSmall);
     return $this->bitmapSmall;
   }
@@ -161,7 +193,7 @@ class Photo {
       return $this->image = imagecreatefromstring($this->bitmap());
     } catch(Exception $e) {
       $this->router->log("error", "bitmap is not in image recognized format (" . any2string($this->bitmap) . ")");
-      throw new Exception("bitmap is not in image recognized format");
+      $this->image = null;
     }
   }
 
@@ -177,7 +209,7 @@ class Photo {
       return $this->imageFull = imagecreatefromstring($this->bitmapFull());
     } catch(Exception $e) {
       $this->router->log("error", "bitmap full is not in image recognized format");
-      throw new Exception("bitmap full is not in image recognized format");
+      $this->imageFull = null;
     }
   }
 
@@ -193,8 +225,7 @@ class Photo {
       return $this->imageSmall = imagecreatefromstring($this->bitmapSmall());
     } catch(Exception $e) {
       $this->router->log("error", "bitmap is not in image recognized format");
-      throw new Exception("bitmap small is not in image recognized format");
-      return false;
+      $this->imageSmall = null;
     }
   }
 
@@ -303,64 +334,15 @@ class Photo {
   }
 
   /**
-   * Create a photo from data
-   *
-   * @param  data $array:   photo data structure
-   * @return object:        photo object
-   */
-  public function fromData($data) {
-    foreach ($data as $property => $value) {
-      $this->$property = $value;
-    }
-    if (!array_key_exists("bitmap", $data)) {
-      $this->bitmap = ""; // we don't need the url field, set a fake value
-    }
-    if (!array_key_exists("mime", $data)) {
-      $this->mime = ""; // we don't need the mime field, set a fake value
-    }
-/*    
-    if (!array_key_exists("bitmap", $data)) {
-      // no bitmap: load it from db photos cache
-      if (!array_key_exists("path_full", $data)) {
-        $this->router->log("error", "Can't create photo from data: no 'path_full' specified");
-        throw new Exception("Can't create photo from data: no 'path_full' specified");
-      }
-      try {
-        $url = "../api/" . $this->path_full;
-        $this->bitmap = file_get_contents($url);
-        $this->mime = "image/jpeg"; // internal mime type (TODO: should be a class constant...)
-        $this->bitmapFull = $this->bitmapFull();
-        $this->bitmapSmall = $this->bitmapSmall();
-      } catch(Exception $e) {
-        $this->router->log("error", "can't get image [$url] contents: " . $e->getMessage());
-        throw new Exception("can't get image [$url] contents: " . $e->getMessage());
-      }
-    }
-*/
-  }
-
-  /**
    * Checks for photos similarities: check if one photo signature is close to the other photo signature
    */
   public function checkSimilarity($photo) {
     if (!$photo) {
       return false;
     }
-    #$this->router->log("debug", "\$this->bitmap length: " . strlen($this->bitmap));
-    #$this->router->log("debug", "\$this->url: " . any2string($this->url));
-
     $this->load();
     $distance = $this->compareSignatures($this->signature(), $photo->signature());
     if ($distance <= $this->options["signatureDuplicationMinDistance"]) { // duplicate found
-/*
-# DEBUG ONLY!
-$sim = "";
-$sim .= "id person: " .$this->id_person . ":<br><img src='" . $this->url . "' width='320'><br>\n";
-$sim .= "id person: " .$photo->id_person . ":<br><img src='" . $photo->url . "' width='320'><br>\n";
-$sim .= "distance ($distance) <= signatureDuplicationMinDistance (" . $this->options["signatureDuplicationMinDistance"] . ")\n";
-$sim .= "<hr>\n";
-file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
-*/
       return true;
     }
     return false;
@@ -378,24 +360,21 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
       $this->mime = null;
     }
 
-    #$this->router->log("info", "loading photo from network °°°°°°");
-
     $retry = 0;
     retry:
     try {
-      // images seem not to have a "last-modified" field in the header... So it's of no use to call "getLastModifiedTimestampFromUrl()" before downloading
+      // images seem not to have a "last-modified" field in the header...
+      // so it's of no use to call "getLastModifiedTimestampFromUrl()" before downloading
       $this->bitmap = $this->network->getImageFromUrl($this->url, $this->mime);
-      if (preg_match("/^image\//s", $this->mime)) { // mime type contains "image"
-        #$this->router->log("debug", "bitmap loaded successfully from " . $this->url);
-      } else { // mime type does not contain "image"
+      if (!preg_match("/^image\//s", $this->mime)) { // mime type contains "image"
+        // mime type does not contain "image"
         $this->router->log("warning", "curl, while getting image url returned mime type " . $this->mime);
         if (
           (strpos($this->bitmap, "La pagina che hai tentato di visualizzare non esiste") !== false)
         ) {
           $this->router->log("warning", "can't get image [$this->url]: " . "does not exist");
-          $this->bitmap = $this->createImageFromText("Image does not exist", "image/" . $this->options["internalType"]); // return an error image to avoid returning here forever...
+          $this->bitmap = $this->createImageFromText("Image does not exist", $this->options["internalType"]); // return an error image to avoid returning here forever...
         } else {
-# TODO: unify this check with the one in PersonsController::sync()... (?)
           if (
             (strpos($this->bitmap, "Why do I have to complete a CAPTCHA?") !== false) OR
             (strpos($this->bitmap, "has banned your access") !== false)
@@ -408,22 +387,20 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
               goto retry;
             } else {
               $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
-              throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
+              $this->bitmap = $this->createImageFromText("Image is denied", $this->options["internalType"]); // return an error image to avoid returning here forever...
             }
           } else {
             $this->router->log("warning", "can't get image [$this->url] contents: " . $this->bitmap);
             # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
             #throw new Exception("can't get image [$this->url] contents: " . $this->bitmap);
-            $this->bitmap = $this->createImageFromText("Image is wrong", "image/" . $this->options["internalType"]); // return an error image to avoid returning here forever...
+            $this->bitmap = $this->createImageFromText("Image is wrong", $this->options["internalType"]); // return an error image to avoid returning here forever...
           }
         }
       }
     } catch(Exception $e) {
       $message = $e->getMessage();
       $this->router->log("warning", "can't get image [$this->url] contents: " . $message);
-      # TODO: do not throw exception, ignore this (networking) error... (?), but handle it someway in bitmap...() functions...
-      #throw new Exception("can't get image [$this->url] contents: " . $message);
-      $this->bitmap = $this->createImageFromText("Image could not be loaded", "image/" . $this->options["internalType"]); // return an error image to avoid returning here forever...
+      $this->bitmap = $this->createImageFromText("Image could not be loaded", $this->options["internalType"]); // return an error image to avoid returning here forever...
     }
   }
 
@@ -444,7 +421,7 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
 
     // set the content-type
     #header("Content-Type: image/png");
-    header("Content-Type: " . $mime);
+    header("Content-Type: " . "image/" . $mime);
     
     // create the image
     $im = imagecreatetruecolor($width, $height);
@@ -469,19 +446,19 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
       case 'image/jpeg':
         imagejpeg($im);
         break;
-      case 'image/png':        
+      case 'image/png':
         imagepng($im);
         break;
       default:
         break;
     }
-    
+
     // save image contents
     $image = ob_get_contents();
-    
+
     // destroy the image
     imagedestroy($im);
-    
+
     // turn off output buffering
     ob_end_clean();
 
@@ -664,23 +641,6 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
     return $image;
   }
 
-/*
-  / **
-   * Resizes the surface of an image, preserving transparency
-   * /
-  public function imageSurfaceResize($image, $width, $height) {
-    $widthSource = imagesx($image);
-    $heightSource = imagesy($image);
-    $imageNew = $this->imageTransparent(imagecreatetruecolor($width, $height));
-    imagecopy(
-      $imageNew, $image,
-      ($width - $widthSource) / 2, ($height - $heightSource) / 2, 0, 0, # left, top, right, bottom
-      $widthSource, $heightSource
-    );
-    return $imageNew;
-  }
-*/
-
   /**
    * Destructor
    */
@@ -689,7 +649,7 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
 
 }
 
-
+# TESTS ###################################################################################
 #require "Network.php";
 #$source = [];
 #$source["url"] = "http://www.sexyguidaitalia.com/public/25090/3.jpg?t=635672905093169843";
@@ -700,7 +660,7 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
 #header("Content-Type: " . $mime);
 #print $img;
 #exit;
-######################################################################################################################
+###########################################################################################
 #require "Network.php";
 #$source = [];
 #$source["url"] = "http://192.168.10.30/escrape/tobetested/001-sgi.jpg";
@@ -711,7 +671,7 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
 #$similar = $p1->checkSimilarity($p2);
 #print "the images are " . ($similar ? "similar" : "different") . "\n";
 #exit;
-######################################################################################################################
+###########################################################################################
 #require "Network.php";
 #$source = [];
 #$source["url"] = "http://biografieonline.it/img/bio/Raffaella_Fico_1.jpg";
@@ -722,4 +682,4 @@ file_put_contents("/var/www/html/escrape/sim/index.html", $sim, FILE_APPEND);
 #header("Content-Type: " . $mime);
 #print $img;
 #exit;
-######################################################################################################################
+###########################################################################################
