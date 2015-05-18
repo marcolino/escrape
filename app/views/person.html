@@ -82,7 +82,7 @@
             <div class="dropdown" title="Nationality">
               <div class="input-group input-group-bottom-spaced" data-toggle="dropdown">
                 <span class="input-group-addon"><i class="f16"><i ng-class="countries.getCountryClass(person.nationality)"></i></i></span>
-                <input class="form-control" id="query" name="query" type="text" ng-value="countries.getCountryName(person.nationality)" />
+                <input class="form-control" type="text" ng-value="countries.getCountryName(person.nationality)" />
               </div>
               <ul class="dropdown-menu scrollable-menu" role="menu">
                 <li class="flag-li">
@@ -94,6 +94,7 @@
               </ul>
             </div>
           </div>
+
           <div class="col-xs-12 col-sm-6">
             <div class="input-group input-group-bottom-spaced" title="The phone number of this person">
               <span class="input-group-addon"><a ng-href="tel:{{person.phone}}"><span class="glyphicon glyphicon-earphone"></span></a></span>

@@ -5,45 +5,31 @@ app.service('Persons', function($http, $q, cfg, notify) {
 
   // private methods
   function handleSuccess(response) {
-    //console.info('SUCCESS - response.data:', response.data);
     if (response.data.error) {
       notify.error(response.data.error);
-      return $q.reject(response.data.error); // TODO: what does $q.reject does, exactly???
+      return $q.reject(response.data.error);
     } else {
-      //console.log('RESPONSE.DATA: ', response.data);
       return response.data;
     }
   }
 
   function handleError(response) {
+    var message;
     if (
       ! angular.isObject(response.data) ||
       ! response.data.message
     ) {
-      var message = 'An unknown error occurred in service [Person]';
+      message = 'Sorry, an error occurred on server in persons service';
       notify.error(message);
       return $q.reject(message);
     }
-    console.info('ERROR - response.data ???????????? WHEN/IF DOES THIS HAPPEN ????????????', response.data);
-    return $q.reject(response.data.message); // TODO: what does $q.reject does, exactly???
+    message = 'Sorry, a network error occurred communicating with server';
+    return $q.reject(message + ': ' + response.data.message);
   }
 
   // public methods
   return {
     getPersons: function (sieves, userId) {
-/*
-  TODO: REMOVE THIS CODE: WRONG APPROACH: WHEN FORCING A RELOAD
-        FOR A FILTER CHANGED, THE PERSONS LIST DOES NOT CHANGE...
-        COULD AVOID RELOADING FROM SERVER IF FILTERS DID NOT CHANGE:
-        RE-SETUP A DIGEST SYSTEM...
-
-      if (this.persons) {
-        //console.log('PERSONS IS CACHED!');
-        return this.persons;
-      } else {
-        //console.log('PERSONS IS UNDEFINED, LOAD FROM SERVER...');
-      }
-*/
       this.persons = $http({
         method: 'POST',
         url: apiUri + 'get',
@@ -63,9 +49,6 @@ app.service('Persons', function($http, $q, cfg, notify) {
     },
 
     setPerson: function (id, personMaster, personDetail, userId) {
-      // by the moment, we just invalidate persons memory cached in this service (it will be reloaded from server next time...)
-      // TODO: we should set also persons[id] with new person' data...
-      this.persons = null;
       return $http({
         method: 'POST',
         url: apiUri + 'set',
@@ -125,15 +108,6 @@ app.service('Persons', function($http, $q, cfg, notify) {
         url: apiUri + 'getSourcesCities' + '/' + countryCode,
       }).then(handleSuccess, handleError);
     },
-
-/*
-    getUniqIds: function (id) {
-      return $http({
-        method: 'GET',
-        url: apiUri + 'getUniqIds' + '/' + id,
-      }).then(handleSuccess, handleError);
-    },
-*/
 
     getActiveCountries: function (userId) {
       return $http({

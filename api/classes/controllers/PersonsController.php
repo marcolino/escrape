@@ -8,6 +8,8 @@
 
 class PersonsController {
   const PHOTOS_PATH = "db/photos/";
+  const TIMEOUT_BETWEEN_DOWNLOADS = 60;
+  const RETRIES_MAX_FOR_DOWNLOADS = 3;
 
   /**
    * Constructor
@@ -46,6 +48,7 @@ class PersonsController {
       if (preg_match_all($source["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
+        /*
         if (preg_match($source["patterns"]["ban-text"], $persons_page, $matches) >= 1) {
           if ($useTor) {
             $this->router->log("info", "source [$sourceKey] asks a security check; retrying without TOR...");
@@ -57,6 +60,7 @@ class PersonsController {
             continue;
           }
         }
+        */
         $this->router->log("error", "not any person pattern found on source [$sourceKey], giving up with this source");
         $error = true;
         continue;
@@ -287,8 +291,6 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
   }
 
   private function getUrlContents($url, $charset, $useTor) {
-    const TIMEOUT_BETWEEN_DOWNLOADS = 60;
-    const RETRIES_MAX_FOR_DOWNLOADS = 3;
     $retry = 0;
     retry:
     try {
@@ -307,8 +309,8 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
             (strpos($data, "has banned your access") !== false)
           ) {
             $this->router->log("warning", "can't get page [$url]: " . "access denied");
-            if ($retry < RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds
-              $sleep = TIMEOUT_BETWEEN_DOWNLOADS * $retry;
+            if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds
+              $sleep = self::TIMEOUT_BETWEEN_DOWNLOADS * $retry;
               $this->router->log("warning", "sleeping $sleep seconds before retrying...");
               sleep($sleep);
               $retry++;

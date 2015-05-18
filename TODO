@@ -20,7 +20,8 @@ TODO 1.0:
  - TEST PersonsController::getUrlContents() (@HOME)
  - TEST if null phones set to db (PersonsController::sync() - $personDetail["phone"] = $phone; ) couse some harm...
  - TEST new showcase selection strategy (the number 1...) (@HOME)
- 
+ - remove openedId, ... and implement openiong details page in a new tab...
+
  - solve all these TODO's
 
 TODO 1.1:

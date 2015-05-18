@@ -88,7 +88,6 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   
   function loadPersons() {
     console.log('LOAD PERSONS');
-$scope.isList = true;
     $scope.personsLoading = true;
     Persons.getPersons(Sieves.sieves, $scope.userId).then(function(persons) {
       applyPersons(persons);
@@ -96,11 +95,11 @@ $scope.isList = true;
   }
 
   function loadPerson() { // load single person
-$scope.isList = false;
     $rootScope.openedId = $scope.personId;
-console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
+//console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
     Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
-      angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
+//      angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
+$scope.person = person;
 
       console.log('PERSON:', $scope.person);
 
@@ -112,6 +111,7 @@ console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
         $scope.loadMapAndPano($scope.person.street_address);
       });
 
+      //$scope.personCountryFilter = $scope.countries.getCountryName(person.nationality);
       $scope.personsPerComment = {};
       if (!$scope.person.phone) { // empty phone, do not load comments
         $scope.person.comments = [];
@@ -668,6 +668,7 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
   $scope.countryChange = function(code) {
     //console.log('countryChange(): ', code);
     $scope.person.nationality = code;
+    //$scope.personCountryFilter = $scope.countries.getCountryName(code);
     $scope.savePerson($scope.person);
   };
 
