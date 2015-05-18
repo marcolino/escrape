@@ -101,7 +101,7 @@ class PersonsController {
         }
 
         // get person details page
-        $page_details = $this->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor);
+        $page_details = $this->getUrlContents($detailsUrl, $source["charset"], $useTor);
         if ($page_details === false) {
           $error = true;
           continue;
@@ -294,7 +294,8 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
     $retry = 0;
     retry:
     try {
-      $data = $this->network->getUrlContents($detailsUrl, $charset, null, false, $useTor);
+      #$this->router->log("debug", "getting url [$url], tor: " . ($useTor ? "1" : "0"));
+      $data = $this->network->getUrlContents($url, $charset, null, false, $useTor);
       if (strpos($data, "La pagina che hai tentato di visualizzare non esiste") !== false) {
         $this->router->log("warning", "can't get page [$url]: " . "does not exist");
         return false;
@@ -391,7 +392,30 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
 
     # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count - 1; $i++) {
+      // check only persons photos from system user, which are new (TODO: CHECK THIS!)
+      /*
+      if (
+        !(
+          $persons[$j]["timestamp_creation"] >= $timestampStartSync...) and
+          $persons[$j]["user_id"] === SYSTEM_USER_ID...)
+        )
+      ) { next; }
+      */
+
+$this->router->log("debug", " person n°: $i");
+
       for ($j = $i + 1; $j < $persons_count; $j++) {
+
+        // check only persons photos from system user, which are new (TODO: CHECK THIS!)
+        /*
+        if (
+          !(
+            $persons[$j]["timestamp_creation"] >= $timestampStartSync...) and
+            $persons[$j]["user_id"] === SYSTEM_USER_ID...)
+          )
+        ) { next; }
+        */
+
         if (
           $this->personsCheckSamePhone($persons[$i], $persons[$j]) ||
           $this->personsCheckSamePhotos($personsById, $persons[$i]["id_person"], $persons[$j]["id_person"])
@@ -400,24 +424,40 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
           $id2 = $persons[$j]["id_person"];
 
           // next chain
-          $id = $idLast = $id1;
+          $id = $idNext = $id1;
+$n = 0;
           while ($id) {
-            $idLast = $id;
+            $idNext = $id;
             $id = $personsById[$id]["uniq_next"];
-            if (!$id) { # $idLast contains last id in uniqueness next-chain for this person
-              $this->db->setPerson($idLast, null, [ "uniq_next" => $id2 ]); // save uniq_next id to last person in next-chain
+            if ($id === $id1) { // break infinite loops in the next chain
+              break;
             }
+            if (!$id) { # $idLast contains last id in uniqueness next-chain for this person
+              $this->db->setPerson($idNext, null, [ "uniq_next" => $id2 ]); // save uniq_next id to last person in next-chain
+            }
+if (++$n >= 10) {
+  $this->router->log("error", " loop detected in next chain (id: $id, id1: $id1, id2: $id2, idNext: $idNext)");
+  return;
+}
           }
 
           // prev chain
-          $id = $idFirst = $id2;
-          do {
-            $idFirst = $id;
+          $id = $idPrev = $id2;
+$n = 0;
+          while ($id) {
+            $idPrev = $id;
             $id = $personsById[$id]["uniq_prev"];
-            if (!$id) { # $idFirst contains first id in uniqueness prev-chain for this person
-              $this->db->setPerson($idFirst, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to first person in prev-chain
+            if ($id === $id2) { // break infinite loops in the prev chain
+              break;
             }
-          } while ($id);
+            if (!$id) { # $idPrev contains first id in uniqueness prev-chain for this person
+              $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to first person in prev-chain
+            }
+if (++$n >= 10) {
+  $this->router->log("error", " loop detected in prev chain (id: $id, id1: $id1, id2: $id2, idPrev: $idPrev)");
+  return;
+}
+          }
         }
       }
     }
@@ -434,6 +474,12 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
    *                  false    the persons are not uniq
    */
   private function personsCheckSamePhone($person1, $person2) {
+if (
+  ($person1["phone"] && $person2["phone"]) &&
+  ($person1["phone"] === $person2["phone"])
+) {
+    $this->router->log("debug", " " . $person1["name"] . " phone is the same as " . $person2["name"] . " phone");
+}
     return (
       ($person1["phone"] && $person2["phone"]) &&
       ($person1["phone"] === $person2["phone"])
@@ -458,12 +504,12 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
     foreach ($person1["photos"] as $photo1) {
       foreach ($person2["photos"] as $photo2) {
         if ($photo1["sum"] === $photo2["sum"]) { // the checksum matches
-          #$this->router->log("debug", "personsCheckSamePhotos() - persons with id $id1 and $id2 have EQUAL photos");
+          $this->router->log("debug", " " . $person1["name"] . " and " . $person2["name"] . " have EQUAL photos");
           return true;
         }
         $distance = $photo->compareSignatures($photo1["signature"], $photo2["signature"]);
         if ($distance <= $minDistance) { // duplicate found
-          #$this->router->log("debug", "personsCheckSamePhotos() - persons with id $id1 and $id2 have SIMILAR photos");
+          $this->router->log("debug", " " . $person1["name"] . " and " . $person2["name"] . " have SIMILAR photos");
           return true;
         }
       }

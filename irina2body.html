@@ -1,0 +1,795 @@
+<body id="ctl00_masterPageBody">
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-KK8FGK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>    
+(function (w, d, s, l, i) {
+    w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; 
+    j.async = true; j.src ='//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-KK8FGK');
+</script>
+<!-- End Google Tag Manager -->
+
+    <input name="ctl00$citta" type="hidden" id="ctl00_citta" value="torino" />
+    <script type="text/javascript" src="http://www.sexyguidaitalia.com/Scripts/webwidget_menu_vertical_menu1.js"></script>
+    <script language="javascript" type="text/javascript">
+        $(function () {
+
+            $(".webwidget_menu_vertical_menu1").webwidget_menu_vertical_menu1({
+                style_color: 'red',
+                font_color: '#666',
+                font_decoration: 'none', //none blink inherit line-through overline underline
+                animation_speed: 'fast', //"slow", "normal", or "fast"
+                directory: 'images'
+            });
+
+        });
+    </script>
+    <script type="text/javascript" src="http://www.sexyguidaitalia.com/Scripts/swfobject.js"></script>
+    <script type="text/javascript">
+        //        var flashvars = {
+        //            path2Here: 'http://www.sexyguidaitalia.com/images/slide/'
+        //        };
+        //        swfobject.embedSWF('http://www.sexyguidaitalia.com/swf/slideshow2.swf', "flashcontent", "125", "140", "8.0.0", "expressInstall.swf", flashvars);
+
+        //for ajax authentication
+        var servicePath = 'http://www.sexyguidaitalia.com/service/sendMail.asmx/sendForm';
+        var servicePathLogout = 'http://www.sexyguidaitalia.com/service/sendMail.asmx/logout';
+        var base = 'http://www.sexyguidaitalia.com'
+
+        //preferiti
+        function Preferiti() {
+            var title = document.title;
+            var url = document.location.href;
+            if (window.sidebar) // Mozilla Firefox
+            {
+                window.sidebar.addPanel(title, url, "");
+            }
+            else if (window.external) // Internet Explorer
+            {
+                window.external.AddFavorite(url, title);
+            }
+            else if (window.opera && window.print) // Opera
+            {
+                var elem = document.createElement('a');
+                elem.setAttribute('href', url);
+                elem.setAttribute('title', title);
+                elem.setAttribute('rel', 'sidebar');
+                elem.click();
+            }
+        }
+    </script>
+    <script type="text/javascript" src="http://www.sexyguidaitalia.com/Scripts/jquery.url.js"></script>
+    <script type="text/javascript" src="http://www.sexyguidaitalia.com/Scripts/sendMessage.js"></script>
+    <input name="ctl00$urlBack" type="hidden" id="ctl00_urlBack" />
+<div id="announcement" class="announcement">
+    <div>
+               <div style="padding-top: 180px; width: 480px; float: right; text-align:left;">
+                <br />
+                <br />
+                    <strong>Prima di proseguire nella navigazione ed entrare nel sito, <br />siete pregati di leggere attentamente le condizioni del nostro il <a href="http://www.sexyguidaitalia.com/disclaimer.aspx" style="color: Red;" class="disclaimerPop">QUI</a>: </strong>
+                    <br />
+                    <br />
+                    <strong>ACCEDI AL SITO SOLO SE ACCETTI LE CONDIZIONI SOPRA RIPORTATE E GLI ESONERI DI RESPONSABILITA’ ESPOSTI NEL DISCLAIMER</strong>
+                    <script type="text/javascript">
+                        $('.disclaimerPop').popupWindow({
+                            height: 850,
+                            width: 650,
+                            centerScreen: 1
+                        });                     
+                    </script>
+                </div>                
+                <div id="accetto">
+                    
+                    <span id="enter" style="cursor: pointer; color: Red; font-size: 24px; width: 20%;  border: 1px solid red;">Entra</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="http://www.google.com" rel="nofollow" title="Rifiuto il disclaimer ed esco immediatamente dal sito di Sexy Guida Italia" style="color: Red; font-size: 13px;">Esci</a>
+                </div>
+
+    </div>
+</div> 
+    <!-- inizio container -->
+    <div id="container">
+        <!-- inizio spacer -->
+        <div id="headerspacer">
+        </div>
+        <!-- fine spacer -->
+        <!-- inizio header -->
+        <div id="banner">
+            <!-- inizio area sx header -->
+            <div id="ctl00_headerleft" class="headerleft">
+                <a id="A1" href="http://blog.sexyguidaitalia.com" target="_blank">
+                    <img id="ctl00_rivista" title="Il blog escort della Sexyguidaitalia con news sul sito, curiosità dal web, e tanto altro sul mondo delle trans ed escort in Torino, Milano e Napoli" src="http://www.sexyguidaitalia.com/images/foto-blog.jpg" style="width:128px;border-width:0px;" /></a>
+                <div style="text-align: left; width: 140px; font-size: 10px;">
+                    <strong>&nbsp;<a id="A2" href="http://blog.sexyguidaitalia.com" target="_blank">ENTRA NEL BLOG</a></strong></div>
+            </div>
+            <!-- fine area sx header -->
+            <!-- inizio area dx header -->
+            <div id="headerright">
+                <a href="http://www.sexyguidaitalia.com">
+                    <img src="http://www.sexyguidaitalia.com/images/escort_trans/testalino_homepage18.jpg" id="ctl00_logo" border="0" alt="logo Sexy Guida Italia" title="Annunci escort Trans, Coppie, Donne, Uomini" />
+                </a>
+            </div>
+            <!-- fine area dx header -->
+        </div>
+        <!-- fine header -->
+        <form name="contact" method="post" action="">
+        <div id="loginArea">
+            
+            <ul>
+                <li>Username:
+                    <input name="ctl00$user" type="text" id="ctl00_user" class="textBoxMedium" />
+                </li>
+                <li>Password:
+                    <input name="ctl00$password" type="password" id="ctl00_password" class="textBoxMedium" />
+                </li>
+            </ul>
+            
+            <ul>
+                
+                <li><a id="accediBtn" class="accediBtn" title="Entra e commenta gli annunci escort" href="">Login</a> </li>
+                <li>&nbsp;&nbsp;&nbsp;&nbsp;<a title="Registrati e partecipa alla community hot più grande d'Italia" href="http://www.sexyguidaitalia.com/registrazioneUser.aspx" >Registrati</a>
+                </li>
+                <li>&nbsp;&nbsp;&nbsp;&nbsp;<a title="Recupera la password e accedi alla grande comunity" href="http://www.sexyguidaitalia.com/recuperoPass.aspx" >Recupera password</a>
+                </li>
+                
+            </ul>
+            <ul>
+                
+
+    <li>
+        <span id="ctl00_showLogin_userUtente"></span>
+        <!-- inserire i crediti qui  -->
+        
+            </ul>
+            <ul style="float: right; padding-right: 12px;">
+                <li>
+                    <div>
+                        registrati:&nbsp;<span id="ctl00_utentiRegistrati" style="font-weight:bold;">25477</span></div>
+                </li>
+            </ul>
+        </div>        
+        </form>
+<div style="float: left; width: 100%; margin: 0; padding:0;"><ul class='menuOver'><li style='float: left;  padding-right: 3px;'>ESCORT:</li><li><a href=http://www.sexyguidaitalia.com/escort/torino title="escort torino" > Torino</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/milano title="escort milano" > Milano</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/alessandria title="escort alessandria" > Alessandria</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/asti title="escort asti" > Asti</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/napoli title="escort napoli" > Napoli</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/biella title="escort biella" > Biella</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/novara title="escort novara" > Novara</a> </li></ul><ul class='menuOver'><li style='float: left;  padding-right: 3px;'>TRANS:&nbsp;&nbsp;</li><li><a href=http://www.sexyguidaitalia.com/trans/torino title="trans torino" > Torino</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/milano title="trans milano" > Milano</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/alessandria title="trans alessandria" > Alessandria</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/asti title="trans asti" > Asti</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/biella title="trans biella" > Biella</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/napoli title="trans napoli" > Napoli</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/novara title="trans novara" > Novara</a> </li></ul></div>
+        <!-- inizio container area content esterno -->
+        <div id="outer">
+            <!-- inizio container interno area content -->
+            <div id="inner">
+                <!-- inizio left -->
+                <div id="left">
+                    <div id="test">
+                        Annunci</div>
+
+                    <div class="webwidget_menu_vertical_menu1">
+                        <ul>
+
+                            <li id="ctl00_escort" class="current">
+                                <a id="ctl00_singoleBase" title="Annunci escort donne inserzioni accompagnatrici" href="http://www.sexyguidaitalia.com/escort">Donne escort</a>
+                            <ul><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-abruzzo  title="escortAbruzzo">Abruzzo</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/chieti title="escort chieti" rel="nofollow">Chieti</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/pescara title="escort pescara" rel="nofollow">Pescara</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-aosta  title="escortAosta">Aosta</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/aosta title="escort aosta" rel="nofollow">Aosta</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-calabria  title="escortCalabria">Calabria</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/cosenza title="escort cosenza" rel="nofollow">Cosenza</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-campania  title="escortCampania">Campania</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/avellino title="escort avellino" rel="nofollow">Avellino</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/benevento title="escort benevento" rel="nofollow">Benevento</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/caserta title="escort caserta" rel="nofollow">Caserta</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/napoli title="escort napoli" rel="nofollow">Napoli</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/salerno title="escort salerno" rel="nofollow">Salerno</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-emilia-romagna  title="escortEmilia Romagna">Emilia Romagna</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/bologna title="escort bologna" rel="nofollow">Bologna</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/ravenna title="escort ravenna" rel="nofollow">Ravenna</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/rimini title="escort rimini" rel="nofollow">Rimini</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-friuli  title="escortFriuli">Friuli</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/pordenone title="escort pordenone" rel="nofollow">Pordenone</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/trieste title="escort trieste" rel="nofollow">Trieste</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/udine title="escort udine" rel="nofollow">Udine</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-lazio  title="escortLazio">Lazio</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/latina title="escort latina" rel="nofollow">Latina</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/roma title="escort roma" rel="nofollow">Roma</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-liguria  title="escortLiguria">Liguria</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/genova title="escort genova" rel="nofollow">Genova</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-lombardia  title="escortLombardia">Lombardia</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/milano title="escort milano" rel="nofollow">Milano</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/bergamo title="escort bergamo" rel="nofollow">Bergamo</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/brescia title="escort brescia" rel="nofollow">Brescia</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/como title="escort como" rel="nofollow">Como</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/cremona title="escort cremona" rel="nofollow">Cremona</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/lecco title="escort lecco" rel="nofollow">Lecco</a> </li><li style='clear: both; padding: 0px;'><li><a href=http://www.sexyguidaitalia.com/escort/lodi title="escort lodi" rel="nofollow">Lodi</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/mantova title="escort mantova" rel="nofollow">Mantova</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/pavia title="escort pavia" rel="nofollow">Pavia</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/sondrio title="escort sondrio" rel="nofollow">Sondrio</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/varese title="escort varese" rel="nofollow">Varese</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/monza-brianza title="escort monza-brianza" rel="nofollow">Monza Brianza</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-marche  title="escortMarche">Marche</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/ancona title="escort ancona" rel="nofollow">Ancona</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/fermo title="escort fermo" rel="nofollow">Fermo</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-piemonte  title="escortPiemonte">Piemonte</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/torino title="escort torino" rel="nofollow">Torino</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/alessandria title="escort alessandria" rel="nofollow">Alessandria</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/biella title="escort biella" rel="nofollow">Biella</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/asti title="escort asti" rel="nofollow">Asti</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/cuneo title="escort cuneo" rel="nofollow">Cuneo</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/novara title="escort novara" rel="nofollow">Novara</a> </li><li style='clear: both; padding: 0px;'><li><a href=http://www.sexyguidaitalia.com/escort/verbania title="escort verbania" rel="nofollow">Verbania</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/vercelli title="escort vercelli" rel="nofollow">Vercelli</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/saluzzo title="escort saluzzo" rel="nofollow">Saluzzo</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/ivrea title="escort ivrea" rel="nofollow">Ivrea</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/casale-monferrato title="escort casale-monferrato" rel="nofollow">Casale Monferrato</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-puglia  title="escortPuglia">Puglia</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/bari title="escort bari" rel="nofollow">Bari</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-sardegna  title="escortSardegna">Sardegna</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/cagliari title="escort cagliari" rel="nofollow">Cagliari</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-sicilia  title="escortSicilia">Sicilia</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/messina title="escort messina" rel="nofollow">Messina</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-toscana  title="escortToscana">Toscana</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/grosseto title="escort grosseto" rel="nofollow">Grosseto</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-umbria  title="escortUmbria">Umbria</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/terni title="escort terni" rel="nofollow">Terni</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/escort/regione-veneto  title="escortVeneto">Veneto</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/escort/venezia title="escort venezia" rel="nofollow">Venezia</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/padova title="escort padova" rel="nofollow">Padova</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/treviso title="escort treviso" rel="nofollow">Treviso</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/verona title="escort verona" rel="nofollow">Verona</a> </li><li><a href=http://www.sexyguidaitalia.com/escort/vicenza title="escort vicenza" rel="nofollow">Vicenza</a </li></ul></li></ul></li>
+                            <li id="ctl00_uomini">
+                                <a id="ctl00_singoliBase" title="Annunci escort ragazzi inserzioni accompagnatori boys" href="http://www.sexyguidaitalia.com/uomini">Uomini</a>
+                            <ul><li class='top_border'>Campania <ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/uomini/napoli title="uomini napoli" rel="nofollow">Napoli</a </li></ul></li><li class='top_border'>Lombardia <ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/uomini/milano title="uomini milano" rel="nofollow">Milano</a </li></ul></li></ul></li>
+                            <li id="ctl00_trans">
+                                <a id="ctl00_transBase" title="Annunci escort trans inserzioni transex travestiti tx" href="http://www.sexyguidaitalia.com/trans">Trans</a>
+                            <ul><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-abruzzo  title="transAbruzzo">Abruzzo</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/pescara title="trans pescara" rel="nofollow">Pescara</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-aosta  title="transAosta">Aosta</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/aosta title="trans aosta" rel="nofollow">Aosta</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-campania  title="transCampania">Campania</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/avellino title="trans avellino" rel="nofollow">Avellino</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/benevento title="trans benevento" rel="nofollow">Benevento</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/caserta title="trans caserta" rel="nofollow">Caserta</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/napoli title="trans napoli" rel="nofollow">Napoli</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/salerno title="trans salerno" rel="nofollow">Salerno</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-emilia-romagna  title="transEmilia Romagna">Emilia Romagna</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/bologna title="trans bologna" rel="nofollow">Bologna</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/reggio-emilia title="trans reggio-emilia" rel="nofollow">Reggio Emilia</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-lazio  title="transLazio">Lazio</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/latina title="trans latina" rel="nofollow">Latina</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/roma title="trans roma" rel="nofollow">Roma</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-liguria  title="transLiguria">Liguria</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/genova title="trans genova" rel="nofollow">Genova</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-lombardia  title="transLombardia">Lombardia</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/milano title="trans milano" rel="nofollow">Milano</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/bergamo title="trans bergamo" rel="nofollow">Bergamo</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/brescia title="trans brescia" rel="nofollow">Brescia</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/como title="trans como" rel="nofollow">Como</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/cremona title="trans cremona" rel="nofollow">Cremona</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/lecco title="trans lecco" rel="nofollow">Lecco</a> </li><li style='clear: both; padding: 0px;'><li><a href=http://www.sexyguidaitalia.com/trans/lodi title="trans lodi" rel="nofollow">Lodi</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/mantova title="trans mantova" rel="nofollow">Mantova</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/pavia title="trans pavia" rel="nofollow">Pavia</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/sondrio title="trans sondrio" rel="nofollow">Sondrio</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/varese title="trans varese" rel="nofollow">Varese</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/monza-brianza title="trans monza-brianza" rel="nofollow">Monza Brianza</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-marche  title="transMarche">Marche</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/ancona title="trans ancona" rel="nofollow">Ancona</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/fermo title="trans fermo" rel="nofollow">Fermo</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-molise  title="transMolise">Molise</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/isernia title="trans isernia" rel="nofollow">Isernia</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-piemonte  title="transPiemonte">Piemonte</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/torino title="trans torino" rel="nofollow">Torino</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/alessandria title="trans alessandria" rel="nofollow">Alessandria</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/biella title="trans biella" rel="nofollow">Biella</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/asti title="trans asti" rel="nofollow">Asti</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/cuneo title="trans cuneo" rel="nofollow">Cuneo</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/novara title="trans novara" rel="nofollow">Novara</a> </li><li style='clear: both; padding: 0px;'><li><a href=http://www.sexyguidaitalia.com/trans/verbania title="trans verbania" rel="nofollow">Verbania</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/vercelli title="trans vercelli" rel="nofollow">Vercelli</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/saluzzo title="trans saluzzo" rel="nofollow">Saluzzo</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/ivrea title="trans ivrea" rel="nofollow">Ivrea</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/casale-monferrato title="trans casale-monferrato" rel="nofollow">Casale Monferrato</a </li></ul></li><li class='top_border'><a style='color: #d94129; font-weight: bold;' href=http://www.sexyguidaitalia.com/trans/regione-veneto  title="transVeneto">Veneto</a><ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/trans/venezia title="trans venezia" rel="nofollow">Venezia</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/padova title="trans padova" rel="nofollow">Padova</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/treviso title="trans treviso" rel="nofollow">Treviso</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/verona title="trans verona" rel="nofollow">Verona</a> </li><li><a href=http://www.sexyguidaitalia.com/trans/vicenza title="trans vicenza" rel="nofollow">Vicenza</a </li></ul></li></ul></li>
+                            <li id="ctl00_centri_massaggi">
+                                <a id="ctl00_cmBase" title="Annunci escort coppie inserzioni centri massaggi" href="http://www.sexyguidaitalia.com/centri_massaggi" style="line-height: 15px;">Centri<br /> Massaggi</a>
+                            <ul><li class='top_border'>Aosta <ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/centri_massaggi/aosta title="centri_massaggi aosta" rel="nofollow">Aosta</a </li></ul></li><li class='top_border'>Campania <ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/centri_massaggi/napoli title="centri_massaggi napoli" rel="nofollow">Napoli</a </li></ul></li><li class='top_border'>Lombardia <ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/centri_massaggi/milano title="centri_massaggi milano" rel="nofollow">Milano</a </li></ul></li><li class='top_border'>Piemonte <ul stle='width: 100%;'><li><a href=http://www.sexyguidaitalia.com/centri_massaggi/torino title="centri_massaggi torino" rel="nofollow">Torino</a </li></ul></li></ul></li>
+                            <li style='background: url(http://www.sexyguidaitalia.com/images/icona-video.png ) no-repeat right;'>
+                                <a href="http://www.sexyguidaitalia.com/annunci_personali/annunci-con-video.aspx" title="Annunci escort con video">Video<br /> annunci</a> 
+                            </li>
+                            <li style="background-image: none; text-transform: capitalize;">
+                                <a href="http://www.sexyguidaitalia.com/come_pubblicare.aspx" title="Annunci escort coppie inserzioni gratis">Inserisci annuncio</a> 
+                            </li>
+                        </ul>
+                    </div>
+                    <div id="test">
+                       Social</div>
+                    <div style="padding: 3px 0 0 0; text-align:center;">
+                    <div style="padding: 3px 0 0 5px;" >
+<a href="https://www.facebook.com/pages/Sexyguidaitalia/320708944769712?fref=ts" target="_blank"><img src="http://www.sexyguidaitalia.com/images/facebook.png"  alt="Sexy Guida Italia | Facebook" /></a>
+<br /> Segui Sexy Guida Italia su Facebook
+</div>
+<br /><br />
+<!-- Inserisci questo codice nel punto in cui vuoi che venga visualizzato il badge -->
+<a href="https://plus.google.com/103855476548409951985?prsrc=3"
+   rel="publisher" target="_top" style="text-decoration:none;display:inline-block;color:#333;text-align:center; font:13px/16px arial,sans-serif;white-space:nowrap;">
+<img src="//ssl.gstatic.com/images/icons/gplus-64.png" alt="" style="border:0;width:64px;height:64px;"/><br />
+<span style="font-weight:bold;">Sexy Guida Italia</span><br /><span>su Google+</span>
+</a>
+
+<!-- Inserisci questo tag dopo l'ultimo tag di widget. -->
+<script type="text/javascript">
+    window.___gcfg = { lang: 'it' };
+
+    (function () {
+        var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+        po.src = 'https://apis.google.com/js/platform.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+    })();
+</script>
+                    </div>
+                    <div id="test">
+                        Locali partner</div>
+                    <div style="padding: 3px;">
+                        <a href="http://www.sexyguidaitalia.com/jolly-club-torino.aspx">
+                            <img src="http://www.sexyguidaitalia.com/images/jclub.png" style="margin-left: -3px;" alt="Novita Anno 2013. La sexyguidaitalia è il primo sito che mette a disposizione dei nostri utenti e delle nostre inserzioniste un luogo dove incontrarsi, bere qualcosa, parlare e conoscersi. Vieni a farti un giro!" /></a>
+                            <br />
+                            <a href="http://www.sexyguidaitalia.com/jolly-club-torino.aspx"> Nei locali partner SGI invitiamo tutte <br />le nostre inserzioniste <br />e utenti a conoscersi!</a>                            
+                    </div>
+                    <div id="test">
+                        Ricerchiamo</div>
+                    <ul class="vert-one">
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/candidatura_att.aspx" title="Partecipa ai film hard Sexy Guida Italia">Attrici / Attori</A>
+                        </li>
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/referente.aspx" title="Collabora con Sexy Guida Italia nella tua citt&agrave;">Referenti in Italia</a>
+                        </li>
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/registrazione.aspx" id="ctl00_areaReferenti" title="Annunci escort coppie inserzioni gratis">"AREA REFERENTI" </a>
+                        </li>
+                    </ul>
+                    <div id="test">
+                        Seguici sempre</div>
+                    <ul class="vert-one">
+                        <li class="preferiti"><a href="#" onclick="Preferiti()" title="Preferisci Sexy Guida Italia agli altri siti di escort">&nbsp;&nbsp;&nbsp;Aggiungi ai preferiti</a> </li>
+                        <li><a href="#" onclick="this.style.behavior='url(#default#homepage)';this.setHomePage('http://www.sexyguidaitalia.com');return false" title="Imposta Sexy Guida Italia come prima pagina all'apertura del browser">Pagina iniziale</a> </li>
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/suggerimenti.aspx" title="Suggerimenti per Sexyguida Italia" >"Invia suggerimenti" </a></li>
+                    </ul>
+                    <div id="test">
+                        Sexyguida Italia</div>
+                    <ul class="vert-one">
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/chisiamo.aspx" title="Sexy Guida Italia l' editore principale di annunci, foto annunci, video annunci d'Italia">Chi siamo</a>
+                        </li>
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/contatti.aspx" title="Contatta l' editore di Sexy Guida Italia">Contattaci</a>
+                        </li>
+                        <li>
+                            <a href="http://www.sexyguidaitalia.com/link.asp" title="Siti amici">Siti amici</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- fine left -->
+                <div id="content">
+                    <!-- inizio content   il commento qui è inserito dopo il div di apertura per risolvere il bug del testo fantasma in ie6 -->
+                    <div id="testcontent">
+                        
+                        
+                        <div class='titoli_sitemap'><div itemscope itemtype='http://data-vocabulary.org/Breadcrumb' itemprop='breadcrumb' style='float: left; padding-left: 3px;'><a title="Torna alla home di Sexy Guida Italia" itemprop="url" href="../../"><span itemprop='title'> Home </span></a> > </div><div itemscope itemtype='http://data-vocabulary.org/Breadcrumb' itemprop='breadcrumb' style='float: left; padding-left: 3px;'><a title="Annunci Escort Italia" itemprop="url" href="../../escort"><span itemprop='title'>Escort</span></a> > </div><div itemscope itemtype='http://data-vocabulary.org/Breadcrumb' itemprop='breadcrumb' style='float: left; padding-left: 3px;'><a title="Annunci Escort Piemonte" itemprop="url" href="../regione-piemonte"><span itemprop='title'>Piemonte</span></a> > </div><div itemscope itemtype='http://data-vocabulary.org/Breadcrumb' itemprop='breadcrumb' style='float: left; padding-left: 3px;'><a title="Annunci Escort Torino" itemprop="url" href="../torino"><span itemprop='title' style='padding-left: 3px;'>Escort Torino</span></a> > </div><span><span itemprop='title' style='padding-left: 3px;'>Irina</span></span></div>
+                    </div>
+                    
+    <script type="text/javascript" src="../../Scripts/MyScripts.js"></script>
+    <script type="text/javascript">
+        $(function () {
+
+
+            var servicePath = '../../service/sendMail.asmx/vota';
+
+            $("#votaButton").click(function () {
+
+                var voto = $('select.drop').val();
+                var dataString = "{'voto': '" + voto + "','ID_annunci': '25275'}";
+                $.ajax({
+                    url: servicePath,
+                    data: dataString,
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        $('#contact_form').html("<div id='message' style='color:#C22400';></div>");
+                        if (data.d == "true") {
+                            $('#message').html("Voto registrato corretamente, Grazie")
+                        .hide()
+                        .fadeIn(1500, function () {
+                            $('#message').append("&nbsp;<img id='checkmark' src='../../images/yes.png' align='absmiddle' />");
+                        });
+                        } else if (data.d == "false") {
+                            $('#message').html("Oggi hai gia votato. Potrai rivotare domani");
+                        } else {
+                            $('#message').html("Non sei stato riconosciuto come utente, favore procedi al login");
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(XMLHttpRequest);
+                    }
+                });
+                return false;
+            });
+        });
+
+
+        $(document).ready(function () {
+            $(".fancybox").fancybox({
+                helpers: {
+                    overlay: {
+                        locked: false // try changing to true and scrolling around the page
+                    }
+                }
+            });
+
+            for (var i = 0; i <= '20'; i++) {
+                var rowHeight = $("#ctl00_content_commentiCommento" + i).height();
+                $("#ctl00_content_commentiUtente" + i).height(rowHeight);
+                $("#ctl00_content_commentiData" + i).height(rowHeight);
+            }
+        });
+
+    </script>
+    <input name="ctl00$content$hidPost" type="hidden" id="ctl00_content_hidPost" value="1" />
+    <div id="content">
+        
+
+<div class="barra_percorso">
+    <div class="titoli" style="float: left; width: 25%; margin-left: 20px;">
+    <a href="../../escort" id="ctl00_content_navigazione_linkCitta" title="Torna all'elenco delle città">ELENCO CITTA' D'ITALIA</a>
+    </div>
+    <div class="testo_rosso" style="text-align: right; margin-right: 20px; float: right; visibility:hidden;">
+     VISUALIZZA ANCHE ANNUNCI:&nbsp;  <a id="ctl00_content_navigazione_link1"></a>&nbsp;&nbsp;<a id="ctl00_content_navigazione_link2"></a>&nbsp;&nbsp;<a id="ctl00_content_navigazione_link3"></a>&nbsp;&nbsp;DI&nbsp;&nbsp;<span id="ctl00_content_navigazione_lblcitta" style="text-transform:uppercase;"></span></div>
+     <br />
+     <br />
+ </div>
+
+        <div id="ctl00_content_tblScheda" itemscope="" itemtype="http://data-vocabulary.org/Review-aggregate">
+            <table id="ctl00_content_tableContent" cellspacing="0" cellpadding="5" border="0" style="width:838px;border-collapse:collapse;">
+	<tr>
+		<td colspan="3">
+                            <!-- AddThis Button BEGIN -->
+    <div class="addthis_toolbox addthis_default_style" style="float: right; margin: 8px 0 8px 0;">
+        <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+        <a class="addthis_button_tweet"></a>
+        <a class="addthis_button_pinterest_pinit"></a>
+        <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+        <a class="addthis_counter addthis_pill_style"></a>
+    </div>
+    <script type="text/javascript">
+        var addthis_config = { data_ga_property: 'UA-3495729-3', data_ga_social: true };
+    </script>
+    <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-52371cd963bc40d5"></script>
+    <!-- AddThis Button END -->
+                    </td>
+	</tr><tr>
+		<td>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp&nbsp;<img id="ctl00_content_topBig" src="../../images/topBig.jpg" align="absmiddle" style="border-width:0px;" /></td><td align="left" colspan="2"><div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">
+			<h1>Incontra Irina a <span itemprop="addressLocality">TORINO</span></h1
+		</div></td>
+	</tr><tr>
+		<td>
+                <br /> 
+                    </td>
+	</tr><tr id="ctl00_content_TableRow0">
+		<td align="left" valign="top" rowspan="11"><img id="ctl00_content_FotoAnteprima" title="IRINA - Accompagnatrice Torino - Foto: copertina.jpg" itemprop="photo" src="../../public/25275/copertina.jpg" alt="IRINA - Accompagnatrice Torino - Foto: copertina.jpg" style="border-color:#C22400;border-width:1px;border-style:Solid;width:175px;" />
+                        <table cellpadding="3" cellspacing="0">
+                            <tr>
+                                <td style="color: #C22400; font-size: 11px">
+                                    <a href="../torino" id="ctl00_content_back1" rel="nofollow" style="color: #C22400; font-size: 12px; line-height: 25px; cursor: pointer;">TORNA AGLI ANNUNCI ESCORT DI TORINO</a>
+                                    <br />
+                                </td>
+                                <td rowspan="2" align="center">
+                                    <a href="../torino" id="ctl00_content_tornaImg" rel="nofollow" style="cursor: pointer;">
+                                        <img src="../../images/backButton.jpg" id="ctl00_content_Image1" alt="torna agli annunci" border="0" align="middle" /></a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td><td class="titoliScheda">
+                     Nome:
+                    </td><td id="ctl00_content_CellaNome"><span itemprop="itemreviewed">IRINA</span></td>
+	</tr><tr>
+		<td class="titoliScheda">
+                     Sesso:
+                    </td><td id="ctl00_content_CellaSesso">F</td>
+	</tr><tr>
+		<td class="titoliScheda">
+                     Zona
+                    </td><td id="ctl00_content_CellaZona">Mirafiori sud</td>
+	</tr><tr>
+		<td></td><td id="ctl00_content_CellaDescrizione">SEXY BAMBOLINA FINLANDESE, 28ANNI, ALTA 1,70, CALDISSIMA,
+ PER SODDISFARE TUTTI I TUOI DESIDERI PASSIONALI X MOMENTI DI VERO RELAX
+ E PIACERE CON CALMA E SENZA LIMITE DI PASSIONE.. SE HAI UN MOMENTO
+ DI PAUSA NELLA GIORNATA VIENI A CONOSCERMI! NON SONO SOLO UNA RAGAZZA 
+DAL FISICO INCREDIBILE, SONO ANCHE SIMPATICA E DI CLASSE. EDUCATISSSIMA, 
+DA ME TROVERAI UN AMBIENTE ACCOGLIENTE E CLIMATIZZATO, COMODO E CURATO NEI DETTAGLI,
+ SONO UNA BELLISSIMA RAGAZZA! LE MIE FOTO SENZA NESSUN RITOCCO,
+ MI TROVERAI SEMPRE COSI IN LINGERIE SEXY COME IN FOTO CHIAMAMI! FOTO RECENTISSIME MARZO 2015<br /><br /><span class="testoEvidenziato">Quando mi contatterai dimmi che mi hai visto su SEXYGUIDAITALIA.COM</span></td>
+	</tr><tr>
+		<td class="titoliScheda">
+                        Telefono:  
+                    </td><td id="ctl00_content_CellaTelefono" class="telefono"><span itemprop="telephone">334.1343471</span></td>
+	</tr><tr id="ctl00_content_rigaVoto">
+		<td class="titoliScheda">
+                voto:
+                    </td><td id="ctl00_content_CellaVoto"><div>
+			<span itemprop="rating" itemscope itemtype="http://data-vocabulary.org/Rating"><span itemprop="average">4,82</span></span> /5 (N° voti <span itemprop="votes">141</span> su <span itemprop="count">23</span> utenti)
+		</div></td>
+	</tr><tr>
+		<td class="titoliScheda">
+                    Visite: 
+                    </td><td><div>
+			110273
+		</div></td>
+	</tr>
+</table>
+            <table id="ctl00_content_tableVideo" cellspacing="0" cellpadding="3" border="0" style="width:99%;border-collapse:collapse;">
+	<tr>
+		<td id="ctl00_content_aggiungiCommenti" align="center"><input name="ctl00$content$ctl79" type="button" value="INSERISCI VOTO E COMMENTO" OnClick="javascript:location.href='../../annunci_personali/aggiungiCommenti.aspx?annuncio=25275&amp;escort=Escort&amp;url=adv4526';" /></td>
+	</tr><tr>
+
+	</tr><tr>
+		<td class="testo_generale_bold" colspan="3">
+            <br />
+            <br />
+
+             <span style="color:#C22400">Gallery personale: &nbsp;</span> tutte le foto sono state fornite, scelte e elaborate dall'inserzionista. Clicca su una foto per ingrandirla.
+            <br />
+            <br />
+                    </td>
+	</tr>
+</table>
+        </div>
+        <div style="text-align: center">
+            <table id="ctl00_content_tableFoto" cellspacing="3" cellpadding="0" align="Center" border="0" style="width:100%;">
+	<tr>
+		<td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/copertina.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: copertina.jpg" class="fotoClick" src="../../public/25275/anteprime/copertina.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: copertina.jpg" style="border-width:0px;" /></a></td><td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/2.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 2.jpg" class="fotoClick" src="../../public/25275/anteprime/2.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 2.jpg" style="border-width:0px;" /></a></td><td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/3.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 3.jpg" class="fotoClick" src="../../public/25275/anteprime/3.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 3.jpg" style="border-width:0px;" /></a></td><td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/4.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 4.jpg" class="fotoClick" src="../../public/25275/anteprime/4.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 4.jpg" style="border-width:0px;" /></a></td>
+	</tr><tr>
+		<td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/5.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 5.jpg" class="fotoClick" src="../../public/25275/anteprime/5.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 5.jpg" style="border-width:0px;" /></a></td><td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/6.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 6.jpg" class="fotoClick" src="../../public/25275/anteprime/6.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 6.jpg" style="border-width:0px;" /></a></td><td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/7.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 7.jpg" class="fotoClick" src="../../public/25275/anteprime/7.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 7.jpg" style="border-width:0px;" /></a></td><td class="voiceThumbs" style="background-color:#FFFF00;"><a rel='group' class='fancybox' href=../../public/25275/8.jpg?t=635675496514261312><img title="IRINA - Accompagnatrice Torino - Foto: 8.jpg" class="fotoClick" src="../../public/25275/anteprime/8.jpg?t=635675496514261312" alt="IRINA - Accompagnatrice Torino - Foto: 8.jpg" style="border-width:0px;" /></a></td>
+	</tr>
+</table>
+        </div>
+        <table id="ctl00_content_tabNoComment" align="Center" border="0">
+	<tr align="center">
+		<td>
+                    <br />
+                    <br />
+                    <span id="ctl00_content_inviaCommento" class="testo_rosso"></span></td>
+	</tr>
+</table>
+        <table id="ctl00_content_tableCommenti" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;">
+	<tr>
+		<td class="bottomScheda" colspan="2">
+   <br />
+   <br />
+    <div >
+        <span style="color:#C22400; font-weight: bold">Questi sono i commenti che mi hanno lasciato.</span>
+        <br />
+    </div>
+    <div>
+        Per accedere ai filmati delle inserzioniste, alle anteprime dei film hard, e lasciare eventuali commenti è necessario registrarsi. 
+        <br />
+    </div>
+   <br /> 
+   <br />
+                </td>
+	</tr><tr>
+		<td><form name="aspnetForm" method="post" action="adv4526?url=adv4526" id="aspnetForm">
+		<div>
+		<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwULLTE3NTY5Mzc1NjVkZLCgkgG/8Es9rDeanZ2gy4y/XuwF" />
+		</div>
+
+		<div>
+
+			<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="B54D2866" />
+		</div>		
+                    <div id="ctl00_content_containerCommenti">
+                        <div id="ctl00_content_utente" class="commentiData">
+                            UTENTE</div>
+                        <div id="ctl00_content_data" class="commentiData">
+                            DATA</div>
+                        <div id="ctl00_content_commento" class="commentiCommento">
+                            COMMENTO</div>
+                    <div id="ctl00_content_rowContenitoreItem0" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente0" class="commentiUtenteData" itemprop="reviewer">
+				red_bull<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData0" class="commentiUtenteData" itemprop="dtreviewed" datetime="2015-03-27">
+				27/03/2015
+			</div><div id="ctl00_content_commentiCommento0" class="commentiUtenteCommento" itemprop="description">
+				Conosciuta qualche tempo fa.... bella, dolce e tranquilla... peccato per il no a rai2 (come dice lei, solo se è piccolino!!!!!). comunque bella esperienza da provare e riprovare. ottima location e tanta pulizia
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem1" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente1" class="commentiUtenteDataAlt" itemprop="reviewer">
+				Mario-la-lingua<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData1" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2015-03-13">
+				13/03/2015
+			</div><div id="ctl00_content_commentiCommento1" class="commentiUtenteCommentoAlt" itemprop="description">
+				Una splendida creatura, dolce e passionale.Indimenticabilmente Paradisiaca
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem2" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente2" class="commentiUtenteData" itemprop="reviewer">
+				Lungomare<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData2" class="commentiUtenteData" itemprop="dtreviewed" datetime="2015-03-09">
+				09/03/2015
+			</div><div id="ctl00_content_commentiCommento2" class="commentiUtenteCommento" itemprop="description">
+				Sei sempre un bellissimo angelo! Appena torno a Torino passo a trovarti. Un bacio dolcissima. P.s. Non vedo l'ora di emergermi nelle tue coccole spinte.... 
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem3" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente3" class="commentiUtenteDataAlt" itemprop="reviewer">
+				Sempreduro666<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData3" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2015-02-24">
+				24/02/2015
+			</div><div id="ctl00_content_commentiCommento3" class="commentiUtenteCommentoAlt" itemprop="description">
+				Leggendo i commenti mi sono deciso a conoscerla, confermo tutto ciò che è stato scritto, è una ragazza molto bella, gentile, sorridente, educata, dolce, rispettosa e attenta alle esigenze del partner, fisico molto tonico e ben curato in tutti gli aspetti con un gran fondoschiena che parla da solo. Ti accoglie in un bell'appartamento, elegante e con comodità di parcheggio.  ottimo GFE,, con baci bacetti e strusciamenti vari. Consigliata assolutamente
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem4" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente4" class="commentiUtenteData" itemprop="reviewer">
+				picato69<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData4" class="commentiUtenteData" itemprop="dtreviewed" datetime="2014-12-08">
+				08/12/2014
+			</div><div id="ctl00_content_commentiCommento4" class="commentiUtenteCommento" itemprop="description">
+				Irina e'essenza della CLASSE.Ti accoglie nella sua alcova pulitissima profumata.Lei e' stupenda pelle vellutata profumatissima pulitissima, lato b uno SPETTACOLO della natura gambe lunghe occhi favolosi.Gfe FK 69 con tutta calma sono arrivato a un certo punto che mi girava veramente la testa.GRAZIE FANTASTICA IRINA alla prossima.PS. 5 stelle non bastano 10 con lode.
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem5" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente5" class="commentiUtenteDataAlt" itemprop="reviewer">
+				El toro<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData5" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2014-11-05">
+				05/11/2014
+			</div><div id="ctl00_content_commentiCommento5" class="commentiUtenteCommentoAlt" itemprop="description">
+				Bellissima, dolce, sensuale, porcella.. Un'ora da sogno!!!!!!! Grazie!!!
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem6" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente6" class="commentiUtenteData" itemprop="reviewer">
+				gigio74<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData6" class="commentiUtenteData" itemprop="dtreviewed" datetime="2014-10-07">
+				07/10/2014
+			</div><div id="ctl00_content_commentiCommento6" class="commentiUtenteCommento" itemprop="description">
+				Son venuto da te e mi hai avvolto nel calore della passione. Devi essere un`angelo caduto dal cielo perché  sei qualcosa di paradisiaco!!!
+
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem7" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente7" class="commentiUtenteDataAlt" itemprop="reviewer">
+				castigo<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData7" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2014-05-30">
+				30/05/2014
+			</div><div id="ctl00_content_commentiCommento7" class="commentiUtenteCommentoAlt" itemprop="description">
+				Tornato a torino andato subito da lei incredibile come sempre!
+unica info che posso dare di questa splendida donna:è fantastica si muove sul cazzo in un modo incredibile lo succhia con cosi tanta passione che sembra di essere in paradiso e per completare la giri e non immaginate ragazzi che cavalla
+e come scalpita bisogna stringere i suoi fianchi e farle sentire il vero piacere!!!
+P.S si bagna tantissima lei ed ha un profumo unico
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem8" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente8" class="commentiUtenteData" itemprop="reviewer">
+				pippo492<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData8" class="commentiUtenteData" itemprop="dtreviewed" datetime="2014-05-17">
+				17/05/2014
+			</div><div id="ctl00_content_commentiCommento8" class="commentiUtenteCommento" itemprop="description">
+				INFO di questa bellissima donna? Grazie.
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem9" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente9" class="commentiUtenteDataAlt" itemprop="reviewer">
+				verdad<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData9" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2014-04-24">
+				24/04/2014
+			</div><div id="ctl00_content_commentiCommento9" class="commentiUtenteCommentoAlt" itemprop="description">
+				ragazzi è una bomba sono tornato da lei dopo mesi!!
+Non sono riusciuto a controllare il respiro quindi talmente bella 
+e sensuale che toglie il fiato,bella  elegante ma soprattutto quel suo respiro mentre gode e cosi vogliosa che vorresti stare dentro lei per ore e muoverti per sentirla sempre più calda!! uaoooo! Da non perdere
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem10" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente10" class="commentiUtenteData" itemprop="reviewer">
+				luca-il-pittore<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData10" class="commentiUtenteData" itemprop="dtreviewed" datetime="2014-04-04">
+				04/04/2014
+			</div><div id="ctl00_content_commentiCommento10" class="commentiUtenteCommento" itemprop="description">
+				Era sera, era quasi primavera
+la luce era smorta 
+la luna era sorta
+cadevo felice come una pera
+nudo me ne stavo nel letto
+il cuor batteva in petto
+sudato,appagato stavo
+il nostro incontro ricordavo
+palpavo la mia pelle
+bramavo le tue mammelle
+ma tu dov'eri?
+con me non c'eri
+All'improvviso sento sul mio viso
+un lungo capello d'oro, un sorriso
+chissà con quale bacio 
+hai stretto quel laccio
+hai fatto un forte nodo 
+si scioglie solo quando godo
+che cos'è l'amore 
+se non del colore?
+Calore del tuo corpo
+bianco come la luna
+dolce come una duna
+a nulla più penso dopo
+ 
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem11" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente11" class="commentiUtenteDataAlt" itemprop="reviewer">
+				ilbanana<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData11" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2014-03-29">
+				29/03/2014
+			</div><div id="ctl00_content_commentiCommento11" class="commentiUtenteCommentoAlt" itemprop="description">
+				Voglio rinnovare il mio tributo ad Irina, splendida e giovane femmina Finlandese, scesa dalle fredde lande settentrionali nelle nostre terre calde ed accoglienti, per il piacere  di noi tutti, ma anche un po' suo
+La dolce Irina è ormai un mio appuntamento fisso .Sta diventando la mia dolce droga, dalla quale non voglio disintossicarmi...
+
+Recentemente ha anche rinnovato il suo arsenale di intimo, di un'eleganza e  sensualità senza confronto... secondo me non ce n'era bisogno, perché l'abbigliamento più adatto a lei è una goccia di Chanel n.5.
+
+Comunque, quando Irina mi accoglie nella sua alcova, iniziando a mugolare come una gattina in calore, facendo intravedere le sue dolci forme pronte per sesso, è difficile evitare di mantenere la lucidità, nell'attesa di sciogliersi nel piacere sessuale più puro.
+
+Mentre mi spoglio in modo confuso e sguaiato, cercando di liberarmi anch'io dei vestiti il più in fretta possibile, lei inizia una danza felina, piegata a carponi sul letto, davanti a te, porgendo alla tua vista - ormai quasi annebbiata dal desiderio - il suo sederino, perfetto, tutto da mangiare, che si dimena in attesa di una penetrazione forte, intensa, ma sempre dolcissima.
+
+Ciao, Irina, sono finiti i byte, ma non la mia passione per te! (e ricordati del mio invito...)
+
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem12" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente12" class="commentiUtenteData" itemprop="reviewer">
+				Lungomare<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData12" class="commentiUtenteData" itemprop="dtreviewed" datetime="2014-03-27">
+				27/03/2014
+			</div><div id="ctl00_content_commentiCommento12" class="commentiUtenteCommento" itemprop="description">
+				E' la seconda volta che vado a trovare  Irina ed alla fine devo dire che ne è  valsa veramente la pena!!! Irina è la ragazza dei sogni: bellissima, calda, passionale, elegante, profumata e dai modi gentili e raffinati!!! Ti mette a tuo agio e ti fa sentire un re come se fossi a casa tua e come se fosse la tua ragazza.., con i massaggini, carezze e baci affettuosi... Fa tutto con naturalezza ed eleganza. Sempre molto hot ma mai volgare, ti asseconda in qualsiasi desiderio e se ci sapete fare si apre un mondo che vi lascio scoprire da soli...... per quanto mi riguarda 10 e lode. A presto dolce Irina..
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem13" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente13" class="commentiUtenteDataAlt" itemprop="reviewer">
+				pippoferro<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData13" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2014-02-01">
+				01/02/2014
+			</div><div id="ctl00_content_commentiCommento13" class="commentiUtenteCommentoAlt" itemprop="description">
+				02/02/2014 ragazzi che dire semplicemente fantastica da provare
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem14" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente14" class="commentiUtenteData" itemprop="reviewer">
+				verdad<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData14" class="commentiUtenteData" itemprop="dtreviewed" datetime="2014-01-07">
+				07/01/2014
+			</div><div id="ctl00_content_commentiCommento14" class="commentiUtenteCommento" itemprop="description">
+				Ragazzi incredibile donna affascinante e incantatrice!!!
+Bellissima incontrarla è stato splendido è indescrivibile la sensazione che da questa donna appena la vedi è incredibile!! Se devo fare un esempio LEI è come una FERRARI!!!
+Sei emozionato prima di salire!!
+Godi e provi un brivido imparagonabile mentre la guidi!!
+Ti rimane dentro per sempre!!!
+Si lei è cosi il sogno di ogni uomo è perfetta!!
+
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem15" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente15" class="commentiUtenteDataAlt" itemprop="reviewer">
+				asterix999<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData15" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2013-12-10">
+				10/12/2013
+			</div><div id="ctl00_content_commentiCommento15" class="commentiUtenteCommentoAlt" itemprop="description">
+				Una femmina caldissima come non ne avevo mai viste!!!!
+Gli piace il sesso e lo fa con vero godimento e pura passione, un incontro con lei mi ha fatto arrivare in paradiso.
+Bella brava calda e golosa!!!!  Altissima passione' in tutto !!!!
+Tornero' spesso da te biondissima Irina
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem16" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente16" class="commentiUtenteData" itemprop="reviewer">
+				ilbanana<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData16" class="commentiUtenteData" itemprop="dtreviewed" datetime="2013-12-06">
+				06/12/2013
+			</div><div id="ctl00_content_commentiCommento16" class="commentiUtenteCommento" itemprop="description">
+				Irina è una dolcissima ragazza 26enne finlandese, venuta (fortunatamente :-) in Italia per amore, e poi rimasta per piacere... Il suo corpo è un vero spettacolo: mi ha confessato che ha dovuto pubblicare sul sito le foto peggiori, perché le altre non erano credibili... Ed è vero! La curva della sua schiena, la rotondità del suo sederino perfetto, e la sinuosità delle sue gambe lunghissime sono quasi irreali... E' la classica ragazza cubo.In più, mi ha confessato che l'uc cello le piace da morire (e si vede... :-). Location molto elegante e comoda. Ciao, piccola, a presto!!!
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem17" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente17" class="commentiUtenteDataAlt" itemprop="reviewer">
+				castigo<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData17" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2013-12-06">
+				06/12/2013
+			</div><div id="ctl00_content_commentiCommento17" class="commentiUtenteCommentoAlt" itemprop="description">
+				OIIIIII STATO DA LEI POCHI GIORNI FA!
+RAGAZZI E TREMENDA DA QUANDO GLI PARLI INSIEME AL TELEFONO LA SUA SENSUALITA' TI RAGGIUNGE E TI CATTURA.E VERO LABBRA MORBIDE E VELLUTATE CORPO ARMONISO E SENSUALISSIMO BEH IL PARADISO, TOTALMENTE SEXY E PORCELLINA SI ECCITA FACILMENTE E SENTI IL SUO CORPO VIBRARE E QUEL SEDERE COSI ROTONDO FIANCHI PERFETTI GAMBE E SENO E COSA IMPORTANTE UNA BOCCA COSI CALDA CHE NON SI PUO' RESISTERE SOLO A PENSARCI MI FA INDURIRE TUTTO!
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem18" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente18" class="commentiUtenteData" itemprop="reviewer">
+				Duro23<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData18" class="commentiUtenteData" itemprop="dtreviewed" datetime="2013-11-17">
+				17/11/2013
+			</div><div id="ctl00_content_commentiCommento18" class="commentiUtenteCommento" itemprop="description">
+				Sono stato da lei due giorni fa, mi ha aperto la porta una bionda bellissima in  lingerie molto sexy in autoreggenti e tacchi a spillo da far mancare il fiato.
+A letto e' davvero molto passionale e dolce, parla benissimo italiano,ottimo dialogo con tutta calma e con molta gentilezza.... A letto fa di tutto!!!!!    solo a pensarla mi viene voglia di tornare a trovarla.
+Casa pulitissima e molto bella in zona tranquilla e  parcheggio facile.
+Non se ne vedono tante come lei in giro....  Da non perdere.
+
+
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem19" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente19" class="commentiUtenteDataAlt" itemprop="reviewer">
+				23sicuri<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData19" class="commentiUtenteDataAlt" itemprop="dtreviewed" datetime="2013-11-05">
+				05/11/2013
+			</div><div id="ctl00_content_commentiCommento19" class="commentiUtenteCommentoAlt" itemprop="description">
+				e si donna veramente bella sensuale si muove come una piuma e e da sballo!!!
+e stata accogliente e molto tranquilla, bj da favola ti guarda mentre 
+lo succhia uaohhh ottima scopata bella da mettere a pecorina consigliatissima
+mi fai arrizzare il cazzo appena ti vedo bellissima a presto..
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div><div id="ctl00_content_rowContenitoreItem20" class="rowContenitoreItem" itemscope itemtype="http://data-vocabulary.org/Review">
+			<div id="ctl00_content_commentiUtente20" class="commentiUtenteData" itemprop="reviewer">
+				Superpippo22<br /><span itemprop="itemreviewed" style="visibility: Hidden;">IRINA</span>
+			</div><div id="ctl00_content_commentiData20" class="commentiUtenteData" itemprop="dtreviewed" datetime="2013-10-20">
+				20/10/2013
+			</div><div id="ctl00_content_commentiCommento20" class="commentiUtenteCommento" itemprop="description">
+				Non riesco a credere di averla trovata,e' dolce paziente e con tutta calma finalmente una ragazza che vale davvero la pena frequentare!
+Le foto sono vere e la location e' bella elegante e pulita.
+Ritornero' sicuramente.
+
+			</div><div class="stelle">
+
+			</div><span itemprop="rating" style="visibility: hidden;"></span>
+		</div></div>
+                    </form></td>
+	</tr><tr>
+		<td align="right" colspan="3">
+                    <br />
+                    <a href="../torino" id="ctl00_content_back2" rel="nofollow" style="color: #C22400; cursor: pointer;">TORNA AGLI ANNUNCI ESCORT DI TORINO</a><a href="../torino" id="ctl00_content_back3" rel="nofollow" style="text-decoration: none;">
+                        <img src="../../images/backButton.jpg" id="ctl00_content_image2" border="0" align="middle" /></a></td>
+	</tr>
+</table>
+    </div>
+
+                </div>
+                <!--FINE CONTENT-->
+            </div>
+            <!-- fine container interno area content -->
+        </div>
+        <!-- fine container esterno area content -->
+        <!-- inizio footer -->
+        <div id="footer">
+            Gli annunci inseriti in questo sito sono finalizzati alla ricerca di lavoro nel campo della produzione cinematografica e/o alla ricerca dell'anima gemella.<br />
+            <br />
+            <strong>Per informazioni riguardanti la pubblicazione degli annunci pubblicitari nel sito telefonare al n&deg; 393 4748467 oppure al n&deg; 393 9358631</strong>
+        </div>
+        <div id="footer">
+            <span class="colortextfooter">
+                
+<p class="testo_footer">
+Sexy Guida Italia – Inserzioni per adulti e annunci erotici – Info +39.393.4748467 oppure +39.393.9358631 – <a href="/cdn-cgi/l/email-protection#721b1c141d3201170a0b15071b16131b06131e1b135c111d1f"><span class="__cf_email__" data-cfemail="452c2b232a0536203d3c22302c21242c3124292c246b262a28">[email&#160;protected]</span><script cf-hash='f9e31' type="text/javascript">
+/* <![CDATA[ */!function(){try{var t="currentScript"in document?document.currentScript:function(){for(var t=document.getElementsByTagName("script"),e=t.length;e--;)if(t[e].getAttribute("cf-hash"))return t[e]}();if(t&&t.previousSibling){var e,r,n,i,c=t.previousSibling,a=c.getAttribute("data-cfemail");if(a){for(e="",r=parseInt(a.substr(0,2),16),n=2;a.length-n;n+=2)i=parseInt(a.substr(n,2),16)^r,e+=String.fromCharCode(i);e=document.createTextNode(e),c.parentNode.replaceChild(e,c)}}}catch(u){}}();/* ]]> */</script></a> – P. Iva: 09211930012 - <a href="http://www.sexyguidaitalia.com/disclaimer.aspx" target="_blank">Disclaimer</a>
+</p>
+
+            </span>
+        </div>
+        <!-- inizio spacer -->
+        <br />
+        <!-- fine spacer -->
+    </div>
+    <!-- fine container -->
+<script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l=document.getElementsByTagName("a"),t=document.createElement("textarea");for(i=0;l.length-i;i++){try{a=l[i].getAttribute("href");if(a&&a.indexOf("/cdn-cgi/l/email-protection") > -1  && (a.length > 28)){s='';j=27+ 1 + a.indexOf("/cdn-cgi/l/email-protection");if (a.length > j) {r=parseInt(a.substr(j,2),16);for(j+=2;a.length>j&&a.substr(j,1)!='X';j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}j+=1;s+=a.substr(j,a.length-j);}t.innerHTML=s.replace(/</g,"&lt;").replace(/>/g,"&gt;");l[i].setAttribute("href","mailto:"+t.value);}}catch(e){}}}catch(e){}})();
+/* ]]> */
+</script>
+</body>
