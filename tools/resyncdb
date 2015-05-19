@@ -30,6 +30,7 @@ shift $((OPTIND-1))
 clear
 if [ -n "$drop" ]; then
   echo "dropping database..."
+  # TODO: backup db! (and photos...)
   sudo rm -rf /var/www/html/escrape/api/db/*
 fi
 if [ -n "$images" ]; then

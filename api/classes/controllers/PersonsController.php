@@ -88,7 +88,7 @@ class PersonsController {
           $personId = $person["id_person"];
           $this->router->log("debug", "old person: $key (id: $personId)");
         } else {
-          $this->router->log("debug", "new person: $key (id: $id)");
+          $this->router->log("debug", "new person: $key");
         }
 
         // get person details url
@@ -107,59 +107,17 @@ class PersonsController {
           continue;
         }
 
-/*
-        $retry = 0;
-        retry_detail:
-        try {
-          $page_details = $this->network->getUrlContents($detailsUrl, $source["charset"], null, false, $useTor);
-          if (strpos($page_details, "La pagina che hai tentato di visualizzare non esiste") !== false) {
-            $this->router->log("warning", "can't get page [$detailsUrl]: " . "does not exist");
-          } else {
-            # TODO: why does this sometimes happen?
-            if (preg_match("/<link rel=\"stylesheet\" href=\"http:\/\/m\..*?\"/s", $page_details) >= 1) {
-              $this->router->log("error", "source [$sourceKey] for person $n ($key) returned unexpected mobile page, giving up with this person");
-              $error = true;
-              continue;
-            } else {
-              if (
-                (strpos($page_details, "Why do I have to complete a CAPTCHA?") !== false) OR
-                (strpos($page_details, "has banned your access") !== false)
-              ) {
-                $this->router->log("warning", "can't get page [$detailsUrl]: " . "site denies access");
-                if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds to avoid being banned...
-                  $retry++;
-                  $this->router->log("warning", "sleeping " . self::TIMEOUT_BETWEEN_DOWNLOADS * $retry . " seconds before retrying...");
-                  sleep(self::TIMEOUT_BETWEEN_DOWNLOADS * $retry);
-                  goto retry_detail;
-                } else {
-                  $this->router->log("error", "all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
-                  #throw new Exception("all " . self::TIMEOUT_BETWEEN_DOWNLOADS . " retries exausted, giving up");
-                  $this->router->log("error", "person $n ($key), retries exausted, giving up with this person");
-                  $error = true;
-                  continue;
-                }
-              }
-            }
-          }
-        } catch(Exception $e) {
-          $message = $e->getMessage();
-          $this->router->log("error", "person $n ($key) url contents not found, giving up with this person");
-          $error = true;
-          continue;
-        }
-        if (strlen($page_details) <= 0) {
-          $this->router->log("error", "person $n ($key) details page is empty, giving up with this person");
-          $error = true;
-          continue;
-        }
-*/
         // calculate sum of page body
-        if (preg_match("/<body.*?>(.*?)<\/body>/is", $page_details, $matches) >= 1) {
-          $page_details_body = $matches[1];
-          $pageSum = md5($page_details_body);
+        if (preg_match($source["patterns"]["person-body"], $page_details, $matches) >= 1) {
+          $body = $matches[1];
         } else {
-          $pageSum = md5($page_details);
+          $body = $page_details;
         }
+        // remove all patterns to be removed (they change on every load) from body before sum
+        foreach ($source["patterns"]["person-body-patterns-to-remove-before-sum"] as $pattern) {
+          $body = preg_replace($pattern, "", $body);
+        }
+        $pageSum = md5($body);
 
         // get person phone
         if (preg_match($source["patterns"]["person-phone"], $page_details, $matches) >= 1) {
@@ -254,6 +212,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
   $this->router->log("debug", "PersonsController::sync() - BODY SUM IS CHANGED :-(((");
 } else {
   $this->router->log("debug", "PersonsController::sync() - BODY SUM IS THE SAME :-)))");
+  continue; # TODO: use 'or' below, it's better...
 }
 #######################################################################
 
@@ -402,7 +361,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
       ) { next; }
       */
 
-$this->router->log("debug", " person n°: $i");
+$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ")");
 
       for ($j = $i + 1; $j < $persons_count; $j++) {
 
@@ -428,10 +387,10 @@ $this->router->log("debug", " person n°: $i");
 $n = 0;
           while ($id) {
             $idNext = $id;
-            $id = $personsById[$id]["uniq_next"];
-            if ($id === $id1) { // break infinite loops in the next chain
+            if ($idNext === $id1) { // do not set the same id as uniq_next field (avoid infinite loops)
               break;
             }
+            $id = $personsById[$id]["uniq_next"];
             if (!$id) { # $idLast contains last id in uniqueness next-chain for this person
               $this->db->setPerson($idNext, null, [ "uniq_next" => $id2 ]); // save uniq_next id to last person in next-chain
             }
@@ -446,10 +405,10 @@ if (++$n >= 10) {
 $n = 0;
           while ($id) {
             $idPrev = $id;
-            $id = $personsById[$id]["uniq_prev"];
-            if ($id === $id2) { // break infinite loops in the prev chain
+            if ($idPrev === $id2) { // do not set the same id as uniq_prev field (avoid infinite loops)
               break;
             }
+            $id = $personsById[$id]["uniq_prev"];
             if (!$id) { # $idPrev contains first id in uniqueness prev-chain for this person
               $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to first person in prev-chain
             }
