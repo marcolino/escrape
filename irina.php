@@ -1,9 +1,66 @@
-img src=".*?\/testalino_homepage\d+.jpg"
+<?php
 
+  $sourcesDefinitions = [
+    "facebook" => [
+      "patterns-to-remove-from-body-before-sum" => [
+        "/<img src=\".*?\/testalino_homepage\d+.jpg\"/s",
+        "/Visite:\s+<\/td><td><div>\s+\d+\s+<\/div><\/td>/s",
+        "/\?t=\d+/s",
+        "/email-protection#.+\"/s",
+      ],
+    ],
+  ];
+
+  $data_1 = file_get_contents("irina1body.html");
+  $data_2 = file_get_contents("irina2body.html");
+
+  foreach ($sourcesDefinitions as $sourceKey => $source) {
+    $patternsToRemove = $source["patterns-to-remove-from-body-before-sum"];
+    foreach ($patternsToRemove as $patternToRemove) {
+      print "removing pattern [$patternToRemove]\n";
+      $data = preg_replace($patternToRemove, "", $data_1);
+      if ($data === $data_1) { print "NOT changed in data 1!\n"; }
+      $data_1 = $data;
+      $data = preg_replace($patternToRemove, "", $data_2);
+      if ($data === $data_2) { print "NOT changed in data 2!\n"; }
+      $data_2 = $data;
+    }
+  }
+
+  $md5_1 = md5($data_1);
+  $md5_2 = md5($data_2);
+
+  if ($md5_1 === $md5_2) {
+  	print "files contents are the same.\n";
+  } else {
+  	print "files contents differ...\n";
+  }
+
+/*
+
+  ...
+  "sgi" => [
+    "patterns-to-remove-from-body-before-sum" => [
+      "/<img src=\".*?\/testalino_homepage\d+.jpg\"/s",
+      "/Visite:\s+<\/td><td><div>\s+\d+\s+<\/div><\/td>/s",
+      "/\?t=\d+/s",
+      "/email-protection#.+\"/s",
+    ],
+  ],
+  ...
+
+  $patternsToRemove = $source["patterns-to-remove-from-body-before-sum"];
+  foreach ($patternsToRemove as $patternToRemove) { // remove all patterns to remove from body before sum
+    $contents = preg_replace($patternToRemove, "", $contents);
+  }
+
+*/
+
+
+/*
+"img src=".*?\/testalino_homepage\d+.jpg
 Visite: \s+</td><td><div>\s+\d+\s+</div></td>
-
 ?t=\d+>
-
 email-protection#\d+"
 
 110c110
@@ -26,3 +83,6 @@ email-protection#\d+"
 < Sexy Guida Italia – Inserzioni per adulti e annunci erotici – Info +39.393.4748467 oppure +39.393.9358631 – <a href="/cdn-cgi/l/email-protection#9ff6f1f9f0dfecfae7e6f8eaf6fbfef6ebfef3f6feb1fcf0f2"><span class="__cf_email__" data-cfemail="51383f373e112234292836243835303825303d38307f323e3c">[email&#160;protected]</span><script cf-hash='f9e31' type="text/javascript">
 ---
 > Sexy Guida Italia – Inserzioni per adulti e annunci erotici – Info +39.393.4748467 oppure +39.393.9358631 – <a href="/cdn-cgi/l/email-protection#721b1c141d3201170a0b15071b16131b06131e1b135c111d1f"><span class="__cf_email__" data-cfemail="452c2b232a0536203d3c22302c21242c3124292c246b262a28">[email&#160;protected]</span><script cf-hash='f9e31' type="text/javascript">
+*/
+
+?>
