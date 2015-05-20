@@ -20,6 +20,21 @@ TODO 1.0:
  - TEST new showcase selection strategy (the number 1...) (@HOME)
  - remove openedId, ... and implement opening details page in a new tab... (DONE, TO BE TESTED @HOME)
  - CHECK active flag for NOT active persons is set to '0' (not null...)
+ - person_detail.showcase ???
+ - photo.timestamp_last_modicifation ???
+ - how do we set showcase flag? (should be: photo.number === 1 ...)
+ - why nationalit in some persons is null, and some is 'world'?
+ - name truncation: much longer... (and put full name in title of name, not in title of showcase photo...)
+ - adjust person source link href (now is about:blank ...)
+ - HOW TO FORCE RELOAD OF SINGLE ROW IN PERSONS VIEW AFTER PERSON MODIFICATION?
+ - toe: description: "<br /><br />" => should be removed in normalization...
+ - "Irene Italiana": person view: all photos are portait, there is no margin below...
+ - Kelly (id: 180) person view has "previous" button, but "+" does not open... (because it is not active... OK? No, make a js function which check activity of uniq_next's... )
+ - think again to css for opened-uniq_chain identification (now it's a black bottom border...)
+ - when sorting, consider null votes as a median value (5?)
+ - Mila Se... e Mila Sc... mix when uniq-next is opened... :-(
+ - id: 317, person view photos in two groups, the first upper, the second lower... ??? :-(
+ - remove filelog foir curl (and remove curl.log)...
  - solve all these TODO's
 
 TODO 1.1:

@@ -4,6 +4,7 @@ dist
 .sass-cache
 bower_components
 api/db
+api/db-backup
 api/logs
 api/setup/persons.php
 api/setup/comments.php

@@ -203,12 +203,11 @@
 #######################################################################
 # TODO: TEST IF *BODY* PAGE SUM DOES NOT CHANGE IF PAGE IS NOT UPDATED
 #######################################################################
-if ($personMaster["page_sum"] !== $person["page_sum"]) {
-  $this->router->log("debug", "PersonsController::sync() - BODY SUM IS CHANGED :-(((");
-} else {
-  $this->router->log("debug", "PersonsController::sync() - BODY SUM IS THE SAME :-)))");
-  #continue; # TODO: use 'or' below, it's better...
-}
+#if ($personMaster["page_sum"] !== $person["page_sum"]) {
+#  $this->router->log("debug", "PersonsController::sync() - BODY SUM IS CHANGED :-(((");
+#} else {
+#  $this->router->log("debug", "PersonsController::sync() - BODY SUM IS THE SAME :-)))");
+#}
 #######################################################################
 
         } else { # new key, insert it
@@ -219,10 +218,11 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
 
         if (
           !array_key_exists("id_person", $person) or // person is new
-          $fullSync #or // a full sync was requested (TODO: if "page sum" method works, fullSync option is not useful anymore...)
-         #($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
+          $fullSync or // a full sync was requested (TODO: if "page sum" method works, fullSync option is not useful anymore...)
+          ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
           foreach ($photosUrls as $photoUrl) { // add photos
+            $this->router->log("debug", "PersonsController::sync() - adding photo $photoUrl");
             $this->photoAdd($personId, $photoUrl, $source);
           }
         }
@@ -309,7 +309,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
         }
       }
       if ($active !== null) {
-        $this->router->log("info", " person " . $person["key"] . "setting active field to " . "active: " . ($active ? "1" : "0"));
+        $this->router->log("info", " person " . $person["key"] . " - setting active field to " . ($active ? "1" : "0"));
         #$this->db->setPerson($person["id_person"], [ "active" => $active ? 1 : 0 ], []);
         $this->db->setPerson($person["id_person"], [ "active" => $active ], []); # TODO: RE-TEST THIS
       }
@@ -342,8 +342,8 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
     # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count - 1; $i++) {
       // check only persons photos from system user (TODO: TEST THIS!)
-      if ($persons[$i]["user_id"] !== $this->db->systemUserId()) {
-$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") IS NOT A SYSTEM RECORD, SKIPPING");
+      if ($persons[$i]["id_user"] !== $this->db->systemUserId()) {
+#$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") IS NOT A SYSTEM RECORD, SKIPPING");
         continue;
       }
       // check only persons which are new (TODO: TEST THIS!)
@@ -408,7 +408,7 @@ $n = 0;
               break;
             }
             if (!$id) { # $idPrev contains first id in uniqueness prev-chain for this person
-              $this->router->log("info", " SETTING id1 [$id1] AS uniq_prev IN id [$idPrev]");
+              $this->router->log("info", "SETTING id1 [$id1] AS uniq_prev IN id [$idPrev]");
               $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to first person in prev-chain
             }
 if (++$n >= 10) {
@@ -993,13 +993,38 @@ if (
 */
 
   /**
+   * Extract from a Photo object all properties to be stored to database, as array
+   *
+   * @param  Photo: $photo       the photo object to check for duplication
+   * @return array:              the array with all fields to be stored to database
+   */
+  private function photo2Data($photo) {
+    $data = [];
+    foreach($photo as $property => $value) {
+      if (
+        ($property === "id_person") ||
+        ($property === "number") ||
+        ($property === "url") ||
+        ($property === "path_full") ||
+        ($property === "path_small") ||
+        ($property === "sum") ||
+        ($property === "timestamp_creation") ||
+        ($property === "signature") ||
+        ($property === "showcase") ||
+        ($property === "thruthfulness")
+      )
+      $data[$property] = $value;
+    }
+    return $data;
+  }
+
+  /**
    * Check for photo exact duplication
    *
    * @param  Photo: $photo       the photo object to check for duplication
    * @return boolean: true       if photo is a duplicate
    *                  false      if photo is not a fuplicate
    */
-/*
   private function photoCheckDuplication($photo, $photos) {
     if ($photos !== []) {
       foreach ($photos as $p) {
@@ -1010,7 +1035,7 @@ if (
     }
     return false;
   }
-*/
+
   /**
    * Check for photo similarity
    *
@@ -1019,9 +1044,7 @@ if (
    * @return boolean: true       if photo is similar to some else photo
    *                  false      if photo is not similar to some else photo
    */
-/*
   private function photoCheckSimilarity($photo, $photos) {
-#return false; # TODO: DEBUG_ONLY: CHECK IF assertPersonsUniqueness() SLOWNESS COMES FROM THIS FUNCTION...
     $retval = false;
     if ($photos !== []) {
       foreach ($photos as $p) {
@@ -1040,7 +1063,6 @@ if (
     unset($photo2);
     return $retval;
   }
-*/
 
   /**
    * Store a photo on local file system

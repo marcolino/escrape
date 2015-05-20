@@ -30,8 +30,11 @@ shift $((OPTIND-1))
 clear
 if [ -n "$drop" ]; then
   echo "dropping database..."
-  # TODO: backup db! (and photos...)
-  sudo rm -rf /var/www/html/escrape/api/db/*
+  #sudo rm -rf /var/www/html/escrape/api/db/*
+  # backup db! (and photos...)
+  db_backup_path="/var/www/html/escrape/api/db-backup/`date +%Y-%m-%d_%H:%M:%S`"
+  mkdir "$db_backup_path"
+  mv /var/www/html/escrape/api/db/* "$db_backup_path"
 fi
 if [ -n "$images" ]; then
   echo "re-syncing persons (all images included, full mode)..."

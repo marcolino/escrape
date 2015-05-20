@@ -116,7 +116,7 @@
         <div class="clearfix clearfix-thick visible-xs">&nbsp;</div>
   
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the number of possible comments found for this person::{{::tooltipLegenda}}">
+          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the number of possible comments found for this person:{{::tooltipLegenda}}">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('comments')">
                 <span ng-click="addSortCriteria('comments')">
@@ -137,7 +137,7 @@
           </div>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the median rating of comments for this person::{{::tooltipLegenda}}">
+          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the median rating of comments for this person:{{::tooltipLegenda}}">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('rating')">
                 <span ng-click="addSortCriteria('rating')">
@@ -158,7 +158,7 @@
           </div>
         </div>
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the vote of this person, given by current user::{{::tooltipLegenda}}">
+          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the vote of this person, given by current user:{{::tooltipLegenda}}">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('vote')">
                 <span ng-click="addSortCriteria('vote')">
@@ -182,7 +182,7 @@
 
       <div class="row" style="padding-bottom:2px;">
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
-          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the 'new' flag for this person::{{::tooltipLegenda}}">
+          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the 'new' flag for this person:{{::tooltipLegenda}}">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('new')">
                 <span ng-click="addSortCriteria('new')">
@@ -237,6 +237,7 @@
            }"></i>
         </a>
       </div>
+<!--<pre> person.photo_path_small_showcase: {{person.photo_path_small_showcase}} </pre>-->
       <div class="showcase-right">
         <div class="img-rounded img-clip-container" ng-attr-title="{{::person.name}}">
           <a href="" ng-click="openDetailsInNewWindow(person.id_person)" class="no-text-decoration">

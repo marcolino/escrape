@@ -532,7 +532,7 @@ class Photo {
 */
 /* NEW VERSION - TODO: IT THIS FASTER? */
     for ($p = 0; $p < $pixels; $p++) {
-      if ($signature1{$i} != $signature2{$i}) {
+      if ($signature1{$p} != $signature2{$p}) {
         $hammingDistance++;
       }
     }
