@@ -109,12 +109,12 @@ body {
 
 /* person new attribute */
 .person-new {
-  color: darkred;
+  color: #ff7e00;
 }
 
 /* person not-new attribute */
 .person-not-new {
-  color: black;
+  color: #bbb;
 }
 
 /* right-scrollbar-placeholder, for persons header labels */

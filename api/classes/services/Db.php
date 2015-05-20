@@ -1209,6 +1209,10 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
   }
 */
 
+  function systemUserId() {
+    return self::DB_SYSTEM_USER_ID;
+  }
+
   function __destruct() {
     $this->db = null;
   }

@@ -1,27 +1,25 @@
 TODO 1.0:
- - in google search results page, add a "white list" handling (list/add(?), remove, ...)
- - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
+ - google search:
+    - separate tabs for photos slideshow and google search...
+    - duplicate photo table in photo + photo_detail tables, to save thruthful/un-thruthful flag per person... (A LOT OF WORK... :-()
+    - in search results page, add a "white list" handling (list/add(?), remove, ...)
+    - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
+    - before google search, check image has already thruthful flag...
+    - test un-thruthful images rendering in views...
+    - handle thruthful/un-thruthful flag storing
  - think about a way to allow users to add/remove uniquenesses...
  - handle all exceptions at least with notify.error() ...
- - before google search, check image has already thruthful flag...
- - test un-thruthful images rendering in views...
- - handle thruthful/un-thruthful flag storing
  - move style="..." from all views to style.css...
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
  - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?) (@HOME)
  - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
- - avoid scrolling to saved person position when changing sort order... (DONE, TO BE CHECKED)
- - does nationalityDetect recognizes sud[\s-]+america(na)?
- - does nationalityDetect recognizes Orientale in the name?
- - someway avoid ("Unknown") errors to be notify-ed to user multiple times (and think to a better error description...)
  - normalizeNationality(): remove <i class='icon-info'></i>, and handle it in view...
- - nationality combo: accept input keys to scroll items (ASKED ON SO...)
- - TEST if *body* page sum does not change if page is not updated (@HOME)
+ - TEST if *body* page sum does not change if page is not updated (@HOME) (DONE, TO BE TESTED)
  - TEST PersonsController::getUrlContents() (@HOME)
  - TEST if null phones set to db (PersonsController::sync() - $personDetail["phone"] = $phone; ) cause some harm...
  - TEST new showcase selection strategy (the number 1...) (@HOME)
- - remove openedId, ... and implement openiong details page in a new tab...
-
+ - remove openedId, ... and implement opening details page in a new tab... (DONE, TO BE TESTED @HOME)
+ - CHECK active flag for NOT active persons is set to '0' (not null...)
  - solve all these TODO's
 
 TODO 1.1:
@@ -34,9 +32,10 @@ TODO 1.1:
  - if sieves filter out a 'primary' person and not a secondary (, ...) person, then should show secondary (, ...) person (currently all the group is hidden) ...
  - use the same capitalizing convention for all exceptions (all lowercase? / First uppercase?)
  - use $userId in *all* methods in Db class
- - disable htmp stack trace for SLim errors
+ - disable html stack trace for Slim errors (?)
  - why assertPersonsUniqueness() is so slow? Can we fasten it? Use XDEBUG @HOME...
  - why SGI source sometimes answers with mobile version page?
+ - nationality combo: accept input keys to scroll items (ASKED ON S.O., ON HOLD...)
 
 TODO 2.0:
  - I18n (?) (see:
@@ -180,3 +179,7 @@ DONE:
  - remove empty items in sieves nationality dropdown... (DONE, TO BE TESTED @HOME...)
  - test personsCheckUniquenessByPhotos() (DONE (?), TO BE TESTED @HOME)
  - avoid name normalization for sgi ("IN.... RU...") (DONE, TO BE TESTED @HOME...)
+ - avoid scrolling to saved person position when changing sort order... (OPENING DETAILS IN NEW PAGE, PROBLEM VANISHED)
+ - does nationalityDetect recognizes sud[\s-]+america(na)?
+ - does nationalityDetect recognizes Orientale in the name?
+ - someway avoid ("Unknown") errors to be notify-ed to user multiple times (WE GIVE UP, IT'S NOT DESIRABLE...)

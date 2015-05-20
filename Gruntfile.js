@@ -66,7 +66,7 @@ module.exports = function (grunt) {
     // The actual grunt server settings
     connect: {
       options: {
-        port: 9000,
+        port: 9090,
         // Change this to '0.0.0.0' to access the server from outside.
         //hostname: 'localhost',
         hostname: '0.0.0.0',
@@ -113,7 +113,7 @@ module.exports = function (grunt) {
 
     open: {
       dev: {
-        path: 'http://127.0.0.1:9000/',
+        path: 'http://127.0.0.1:9090/',
       },
     },
 

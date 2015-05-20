@@ -1,6 +1,6 @@
-<div class="container">
+<div class="container" ng-cloak>
 
-  <!--<pre>person:{{::person}}</pre>-->
+  <!--<pre>person:{{person}}</pre>-->
 
 <!--
 
@@ -13,9 +13,11 @@
 -->
   <div class="tabbable tabs-below">
     <ul class="nav nav-pills">
+      <!--
       <li ng-class="{active: tabSelected === 'list', hide: tabs['list'].hidden}">
         <a href="" ng-click="back(person.id_person)"><span class="glyphicon glyphicon-chevron-left"></span>{{tabs['list'].description}}</a>
       </li>
+      -->
       <li ng-class="{active: tabSelected === 'main', hide: tabs['main'].hidden}">
         <a href="" ng-click="tabSelected = 'main'">{{tabs['main'].description}}</a>
       </li>
@@ -112,13 +114,13 @@
             </div>
           </div>
           <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-            <div class="input-group input-group-bottom-spaced" ng-attr-title="Date of first presence is {{firstSeen(person)}}">
-              <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+            <div class="input-group input-group-bottom-spaced" ng-attr-title="{{isNew(person) ? 'New' : 'Old '}} person record: was first seen {{firstSeen(person)}}">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-star" ng-class="{ 'person-new': isNew(person), 'person-not-new': !isNew(person) }"></span></span>
               <input type="text" class="form-control" ng-value="firstSeen(person)" readonly>
             </div>
           </div>
           <div class="col-xs-12 col-sm-4 col-md-2 col-lg-2">
-            <div class="input-group input-group-bottom-spaced" ng-click="openInNewTab('{{person.url}}')" title="the referral source site for this person">
+            <div class="input-group input-group-bottom-spaced" ng-click="openInNewWindow('{{person.url}}')" title="the referral source site for this person">
               <span class="input-group-addon"><span class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></span></span>
               <input type="text" class="form-control" ng-model="person.source_key" placeholder="Referral source" readonly>
             </div>
@@ -161,12 +163,12 @@
           -->
           <span ng-if="person.uniq_prev !== null">
             <div class="col-xs-5 col-sm-2 col-lg-2">
-              <button class="btn btn-info" title="Previous source for this person" ng-click="open(person.uniq_prev)"><i class="glyphicon glyphicon-step-backward">&nbsp;</i>Previous</button>
+              <button class="btn btn-info" title="Previous source for this person" ng-click="openDetails(person.uniq_prev)"><i class="glyphicon glyphicon-step-backward">&nbsp;</i>Previous</button>
             </div>
           </span>
           <span ng-if="person.uniq_next !== null">
             <div class="col-xs-5 col-sm-2 col-lg-2">
-              <button class="btn btn-info" title="Next source for this person" ng-click="open(person.uniq_next)"><i class="glyphicon glyphicon-step-forward">&nbsp;</i>Next</button>
+              <button class="btn btn-info" title="Next source for this person" ng-click="openDetails(person.uniq_next)"><i class="glyphicon glyphicon-step-forward">&nbsp;</i>Next</button>
             </div>
           </span>
           <div class="col-xs-2 col-sm-8 col-lg-8">

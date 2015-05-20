@@ -522,11 +522,21 @@ class Photo {
   public function compareSignatures($signature1, $signature2) {
     $hammingDistance = 0;
     $pixels = $this->options["signaturePixelsPerSide"] * $this->options["signaturePixelsPerSide"];
+
+/* OLD AND SLOOOOOOOOOOOW VERSION
     for ($p = 0; $p < $pixels; $p++) {
       if (substr($signature1, $p, 1) != substr($signature2, $p, 1)) {
         $hammingDistance++;
       }
     }
+*/
+/* NEW VERSION - TODO: IT THIS FASTER? */
+    for ($p = 0; $p < $pixels; $p++) {
+      if ($signature1{$i} != $signature2{$i}) {
+        $hammingDistance++;
+      }
+    }
+
     #return ($pixels - $hammingDistance) / $pixels; # returned value is in the range 0 -> 1
     return $hammingDistance / $pixels; # returned value is in the range 0 -> 1
   }

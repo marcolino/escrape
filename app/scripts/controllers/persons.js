@@ -39,6 +39,8 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.sieves = Sieves.sieves; // TODO: 'Sieves.sieves' => 'Sieves.all' in sieves.js service... And use 'Sieves.all' instead of 'sieves' in controllers and views, deleting this row...
   $scope.photosOccurrencesWhitelist = [];
   $scope.personsEmpty = false; // not yet loaded
+  $scope.tooltipLegenda = "\n\ • click on this label to enable/disable the sort on this column\n\ • click on the arrow to flip the sort direction";
+
   // watch for sieves changes
   //$scope.$watch('Sieves.getDigest()', function() {
   //  console.log('Sieves.getDigest() CHANGED, RELOADING SIEVES...');
@@ -51,12 +53,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   // AT BOTTOM: loadPersons(); // load persons list
 
   // watch for sieves changes
-  $rootScope.$on('sievesChangedHard', function(/*event, args*/) {
-    console.log('SIEVES - sievesChanged HARD');
+  $rootScope.$on('sievesChangedHard', function(/*event, args*/) { // explicitly apply sieves changes
+    //console.log('SIEVES - sievesChanged HARD');
     loadPersons(); // re-load persons list
   });
-  $rootScope.$on('sievesChangedSoft', function(/*event, args*/) {
-    console.log('SIEVES - sievesChanged SOFT');
+  $rootScope.$on('sievesChangedSoft', function(/*event, args*/) { // implicitly apply sieves changes
+    //console.log('SIEVES - sievesChanged SOFT');
     applyPersons($scope.persons); // re-apply persons list
   });
 
@@ -83,7 +85,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     $scope.personsCount = $scope.countPersons(); // for footer controller
     $scope.personsEmpty = $scope.personsCount === 0;
     $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
-    $scope.scrollToOpenedId(); // scroll to remembered row id
+    //$scope.scrollToOpenedId(); // scroll to remembered row id
   }
   
   function loadPersons() {
@@ -95,14 +97,13 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   }
 
   function loadPerson() { // load single person
-    $rootScope.openedId = $scope.personId;
+    //$rootScope.openedId = $scope.personId;
 //console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
     Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
-//      angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
-$scope.person = person;
+      //angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
+      $scope.person = person;
 
       console.log('PERSON:', $scope.person);
-
       //$scope.person.street_region = 'it'; // TODO: get street_region from setup/cfg ?
       // watch for person street address changes
       $scope.$watch('person.street_address', function() {
@@ -282,21 +283,32 @@ $scope.person = person;
     return count;
   };
 
-  $scope.back = function(/*idPerson*/) {
-//console.info('Going back with search hash of ', idPerson);
+  /*
+  $scope.back = function() {
     $location.path('/'); //.search({st: idPerson});
   };
+  */
 
-  $scope.open = function(id, tab) {
+  $scope.openDetails = function(id, tab) {
     //$rootScope.openedId = id;
-    $rootScope.tabSelected = tab;
+    if (tab) {
+      $rootScope.tabSelected = tab;
+    }
     $location.path('/details/' + id);
   };
 
-  $scope.openInNewTab = function(url) {
+  $scope.openDetailsInNewWindow = function(id, tab) {
+    if (tab) { // set requested tab (if any) as the selected one
+      $rootScope.tabSelected = tab;
+    }
+    $window.open('/#' + '/details/' + id, '_blank');
+  };
+
+  $scope.openInNewWindow = function(url) {
     $window.open(url, '_blank');
   };
 
+/*
   $scope.scrollToOpenedId = function() {
     $timeout(function() {
       if ($rootScope.openedId) {
@@ -306,7 +318,7 @@ $scope.person = person;
         $location.hash(hash);
         $anchorScroll();
         $location.hash(null);
-        /* $anchorScroll($rootScope.openedId); // only valid since angular-1.4-rc-0... */
+        / * $anchorScroll($rootScope.openedId); // only valid since angular-1.4-rc-0... * /
         $rootScope.openedId = null;
 //console.info(' $rootScope.openedId after null: ', $rootScope.openedId);
 //console.info(' hash after null: ', hash);
@@ -317,23 +329,23 @@ $scope.person = person;
       }
     });
   };
+*/
 
   $scope.isNew = function(person) {
-    var timestampLastSync = person.timestamp_last_sync * 1000;
-    var now = new Date();
-    return (now - timestampLastSync) < (cfg.person.NEW_DURATION_DAYS * cfg.MILLISECONDS_PER_DAY);
+    var timestampCreation = person.timestamp_creation * 1000;
+    var now = new Date().getTime();
+    return (now - timestampCreation) < (cfg.person.NEW_DURATION_DAYS * cfg.MILLISECONDS_PER_DAY);
   };
 
   $scope.firstSeen = function(person) {
-    var MILLISECONDS_PER_DAY = (1000 * 60 * 60 * 24);
     var timestampCreation = person.timestamp_creation * 1000;
     var firstSeenAsString;
     var now = new Date();
-    var timestampStartOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    var timestampStartOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate()) - (1 * MILLISECONDS_PER_DAY);
-    var timestampOneWeekAgo = new Date(now - (7 * MILLISECONDS_PER_DAY));
-    var timestampOneMonthAgo = new Date(now - (30 * MILLISECONDS_PER_DAY));
-    var timestampOneYearAgo = new Date(now - (365 * MILLISECONDS_PER_DAY));
+    var timestampStartOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var timestampStartOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (1 * cfg.MILLISECONDS_PER_DAY);
+    var timestampOneWeekAgo = new Date(now - (7 * cfg.MILLISECONDS_PER_DAY)).getTime();
+    var timestampOneMonthAgo = new Date(now - (30 * cfg.MILLISECONDS_PER_DAY)).getTime();
+    var timestampOneYearAgo = new Date(now - (365 * cfg.MILLISECONDS_PER_DAY)).getTime();
     if (timestampCreation >= timestampStartOfToday) { // creation date is today
       firstSeenAsString = 'today, at ' + $filter('date')(timestampCreation, 'HH:mm');
     } else {
@@ -430,6 +442,15 @@ $scope.person = person;
     }
     return name;
   };
+
+/*
+  $scope.isUniq = function(personId) {
+    return (
+      ($scope.persons[personId].uniq_prev !== null) ||
+      ($scope.persons[personId].uniq_next !== null)
+    );
+  };
+*/
 
   $scope.isUniqPrimary = function(personId) {
     return (
@@ -678,20 +699,27 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     $scope.savePerson($scope.person);
   };
 
-  $scope.voteChange = function(vote) {
-    if (vote === 0) { // noop
+  $scope.voteChange = function(delta) {
+    if (delta === 0) { // noop
       return;
     }
-//if (!$scope.person.vote) { console.info('$scope.person.vote:', $scope.person.vote); }
-    if (!$scope.person.vote) {
-      $scope.person.vote = 0;
-    }
-    if (vote > 0) {
-      $scope.person.vote = Math.min(cfg.person.vote.max, parseInt($scope.person.vote) + parseInt(vote));
+    if ($scope.person.vote === null) {
+      if (delta > 0) {
+        $scope.person.vote = 0;
+      } else {
+        // do nothing
+      }
     } else {
-      $scope.person.vote = Math.max(cfg.person.vote.min, parseInt($scope.person.vote) + parseInt(vote));
+      if ($scope.person.vote === 0 && delta < 0) {
+        $scope.person.vote = null;
+      } else {
+        if (delta > 0) {
+          $scope.person.vote = Math.min(cfg.person.vote.max, parseInt($scope.person.vote) + parseInt(delta));
+        } else {
+          $scope.person.vote = Math.max(cfg.person.vote.min, parseInt($scope.person.vote) + parseInt(delta));
+        }
+      }
     }
-    //$scope.persons[$scope.personId].vote = $scope.person.vote; // TODO: DO WE NEED THIS INSTRUCTION?
     $scope.savePerson($scope.person);
   };
 
