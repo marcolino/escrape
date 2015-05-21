@@ -470,11 +470,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       var idNext;
       do {
         idNext = $scope.persons[id].uniq_next;
-        if (idNext && $scope.persons[idNext].active) {
+        if (idNext && $scope.persons[idNext] && $scope.persons[idNext].active) {
           isUniqPrimary = true;
           break;
         }
-      } while (idNext);
+        break; // TODO: WITHOUT THIS BREAK LOOP NEVER ENDS... ????????????????
+      } while (idNext && $scope.persons[idNext]);
     }
     return isUniqPrimary;
 /*

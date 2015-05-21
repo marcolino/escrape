@@ -214,7 +214,7 @@
           ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
           foreach ($photosUrls as $photoUrl) { // add photos
-            $this->router->log("debug", "PersonsController::sync() - adding photo $photoUrl");
+            $this->router->log("debug", "PersonsController::sync() - photo $photoUrl");
             $this->photoAdd($personId, $photoUrl, $source);
           }
         }
@@ -242,13 +242,14 @@
         return false;
       } else {
         # TODO: why does this sometimes happen?
-        if (preg_match("/<link rel=\"stylesheet\" href=\"http:\/\/m\..*?\"/s", $data) >= 1) {
-          $this->router->log("error", "url [$url] returned unexpected mobile page");
-          return false;
-        } else {
+#        if (preg_match("/<link rel=\"stylesheet\" href=\"http:\/\/m\..*?\"/s", $data) >= 1) {
+#          $this->router->log("error", "url [$url] returned unexpected mobile page");
+#          return false;
+#        } else {
           if (
-            (strpos($data, "Why do I have to complete a CAPTCHA?") !== false) OR
-            (strpos($data, "has banned your access") !== false)
+            (strpos($data, "Why do I have to complete a CAPTCHA?") !== false) or
+            (strpos($data, "has banned your access") !== false) or
+            (preg_match("/<link rel=\"stylesheet\" href=\"http:\/\/m\..*?\"/s", $data) >= 1)
           ) {
             $this->router->log("warning", "can't get page [$url]: " . "access denied");
             if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds
@@ -262,7 +263,7 @@
               return false;
             }
           }
-        }
+#        }
       }
     } catch(Exception $e) {
       $message = $e->getMessage();
@@ -340,7 +341,7 @@
       }
       // check only persons which are new (TODO: TEST THIS!)
       if ($persons[$i]["timestamp_creation"] >= $timestampStart) {
-$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") timestamp_creation (" . $persons[$i]["timestamp_creation"] . " >= timestamp (" . $timestampStart . "), IS NOT NEW, SKIPPING");
+#$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") timestamp_creation (" . $persons[$i]["timestamp_creation"] . " >= timestamp (" . $timestampStart . "), IS NOT NEW, SKIPPING");
         continue;
       }
  
@@ -366,16 +367,16 @@ $n = 0;
             $idNext = $id;
             $id = $personsById[$id]["uniq_next"];
             if ($id === $id1) { // closed loop found: break it
-              $this->router->log("warning", " CLOSED NEXT CHAIN LOOP FOUND ON id [$id]: EXITING THIS CLOSED LOOP");
+              #$this->router->log("warning", " CLOSED NEXT CHAIN LOOP FOUND ON id [$id]: EXITING THIS CLOSED LOOP");
               $this->db->setPerson($id, null, [ "uniq_next" => $id2 ]); // save uniq_next id to last person in next-chain
               break;
             }
             if ($id === $id2) { // this id2 is already set as uniq_next: exit this loop
-              $this->router->log("warning", " id2 [$id2] IS ALREADY SET AS UNIQ_NEXT: EXITING THIS LOOP");
+              #$this->router->log("warning", " id2 [$id2] IS ALREADY SET AS UNIQ_NEXT: EXITING THIS LOOP");
               break;
             }
             if (!$id) { # $idLast contains last id in uniqueness next-chain for this person
-              $this->router->log("info", "SETTING id2 [$id2] AS uniq_next IN id [$idNext]");
+              #$this->router->log("info", "SETTING id2 [$id2] AS uniq_next IN id [$idNext]");
               $this->db->setPerson($idNext, null, [ "uniq_next" => $id2 ]); // save uniq_next id to last person in next-chain
             }
 if (++$n >= 10) {
@@ -391,16 +392,16 @@ $n = 0;
             $idPrev = $id;
             $id = $personsById[$id]["uniq_prev"];
             if ($id === $id2) { // closed loop found: break it
-              $this->router->log("warning", " CLOSED PREV CHAIN LOOP FOUND ON id [$id]: EXITING THIS CLOSED LOOP");
+              #$this->router->log("warning", " CLOSED PREV CHAIN LOOP FOUND ON id [$id]: EXITING THIS CLOSED LOOP");
               $this->db->setPerson($id, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to first person in prev-chain
               break;
             }
             if ($id === $id1) { // this id1 is already set as uniq_prev: exit this loop
-              $this->router->log("warning", " id1 [$id1] IS ALREADY SET AS UNIQ_PREV: EXITING THIS LOOP");
+              #$this->router->log("warning", " id1 [$id1] IS ALREADY SET AS UNIQ_PREV: EXITING THIS LOOP");
               break;
             }
             if (!$id) { # $idPrev contains first id in uniqueness prev-chain for this person
-              $this->router->log("info", "SETTING id1 [$id1] AS uniq_prev IN id [$idPrev]");
+              #$this->router->log("info", "SETTING id1 [$id1] AS uniq_prev IN id [$idPrev]");
               $this->db->setPerson($idPrev, null, [ "uniq_prev" => $id1 ]); // save uniq_prev id to first person in prev-chain
             }
 if (++$n >= 10) {
