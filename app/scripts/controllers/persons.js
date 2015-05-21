@@ -39,7 +39,7 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.sieves = Sieves.sieves; // TODO: 'Sieves.sieves' => 'Sieves.all' in sieves.js service... And use 'Sieves.all' instead of 'sieves' in controllers and views, deleting this row...
   $scope.photosOccurrencesWhitelist = [];
   $scope.personsEmpty = false; // not yet loaded
-  $scope.tooltipLegenda = "\n\ • click on this label to enable/disable the sort on this column\n\ • click on the arrow to flip the sort direction";
+  $scope.tooltipLegenda = '\n\ • click on this label to enable/disable the sort on this column\n\ • click on the arrow to flip the sort direction';
 
   // watch for sieves changes
   //$scope.$watch('Sieves.getDigest()', function() {
@@ -159,12 +159,25 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
         var crit = criteria[i].name;
         var dir = criteria[i].direction;
         if (crit) {
-          if (dir === 'ascending') {
-            if (object[a][crit] > object[b][crit]) { return 1; }
-            if (object[a][crit] < object[b][crit]) { return -1; }
+          var aval, bval;
+          // consider null vote a median value
+          if (crit === 'vote' && (object[a][crit] === null)) {
+            aval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
           } else {
-            if (object[a][crit] > object[b][crit]) { return -1; }
-            if (object[a][crit] < object[b][crit]) { return 1; }
+            aval = object[a][crit];
+          }
+          if (crit === 'vote' && (object[b][crit] === null)) {
+            bval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
+          } else {
+            bval = object[b][crit];
+          }
+
+          if (dir === 'ascending') {
+            if (aval > bval) { return 1; }
+            if (aval < bval) { return -1; }
+          } else {
+            if (aval > bval) { return -1; }
+            if (aval < bval) { return 1; }
           }
         }
         // objects are equal, according to this criterium: proceed with next criterium
@@ -435,27 +448,46 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     }
   };
 
-  $scope.shorten = function(name) {
-    var maxlen = 20;
+  $scope.shorten = function(name) { // TODO: should do this depending on screen width? (in CSS?)
+    var maxlen = 40;
     if (name.length > maxlen) {
       name = name.substr(0, maxlen - 1) + '…';
     }
     return name;
   };
 
-/*
   $scope.isUniq = function(personId) {
     return (
       ($scope.persons[personId].uniq_prev !== null) ||
       ($scope.persons[personId].uniq_next !== null)
     );
   };
-*/
 
   $scope.isUniqPrimary = function(personId) {
+    var isUniqPrimary = false;
+    if ($scope.persons[personId].uniq_prev === null) {
+      var id = personId;
+      var idNext;
+      do {
+        idNext = $scope.persons[id].uniq_next;
+        if (idNext && $scope.persons[idNext].active) {
+          isUniqPrimary = true;
+          break;
+        }
+      } while (idNext);
+    }
+    return isUniqPrimary;
+/*
     return (
       ($scope.persons[personId].uniq_prev === null) &&
       ($scope.persons[personId].uniq_next !== null)
+    );
+*/
+  };
+
+  $scope.isUniqSecondary = function(personId) {
+    return (
+      ($scope.persons[personId].uniq_prev !== null)
     );
   };
 
@@ -474,6 +506,13 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     return (
       $scope.isUniqPrimary(personId) &&
       $scope.persons[personId].uniq_opened
+    );
+  };
+
+  $scope.isUniqShown = function(personId) {
+    return (
+      $scope.isUniqPrimaryOrSingle(personId) ||
+      ($scope.persons[personId].uniq_opened === true)
     );
   };
 
@@ -496,12 +535,24 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     }
   };
 
-  $scope.isUniqShown = function(personId) {
-    return (
-      $scope.isUniqPrimaryOrSingle(personId) ||
-      ($scope.persons[personId].uniq_opened === true)
-    );
+/*
+  $scope.uniqShowAll = function() {
+    for (var personId in $scope.persons) {
+      if ($scope.persons.hasOwnProperty(personId)) {
+        var person = $scope.persons[personId];
+        person.uniq_opened = true;
+      }
+    }
   };
+
+  $scope.uniqHideAll = function() {
+    for (var personId in $scope.persons) {
+      if ($scope.persons.hasOwnProperty(personId)) {
+        $scope.persons[personId].uniq_opened = false;
+      }
+    }
+  };
+*/
 
   $scope.savePerson = function(person) {
     if (!$scope.userId) {
@@ -908,13 +959,8 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     return angle;
   };
 
-
-
   if (!$scope.personId) { // load persons list
-    if ($scope.persons.length === 0) { // TODO: DO WE NEED THIS TEST??? NOOO
     loadPersons();
-    }
-    else { console.info('§§§§§§§§§§§§§ PERSONS NOT LOADED §§§§§§§§§§§§ $scope.persons.length:', $scope.persons.length);}
   } else { // load single person
     loadPerson();
   }

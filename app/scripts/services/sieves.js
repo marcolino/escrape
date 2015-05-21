@@ -26,7 +26,9 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
       cityCode: cfg.sources.cityCode,
       categoryCode: cfg.sources.category,
     },
-    //uniqIds: [],
+    actions: {
+      isopened: false,
+    },
     user: {
       id: null,
     },
@@ -40,6 +42,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
 
   service.load = function (force) {
     service.sieves = {};
+    //service.sourcesCities = {};
     var key = cfg.site.name;
     if (Authentication.signedIn()) { // add authdata to key, if user is signed in
       key += '-' + $rootScope.globals.currentUser.authdata;
@@ -69,13 +72,13 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     });
   };
 
-  service.store = function () {
+  service.store = function () { // TODO: handle section (?)
     var key = cfg.site.name;
     if (Authentication.signedIn()) {
       key += '-' + $rootScope.globals.currentUser.authdata;
     }
     $cookieStore.put(key, service.sieves);
-    //console.log('stored sieves:', service.sieves);
+console.log('stored sieves:', service.sieves);
   };
 
   service.reset = function (section) {

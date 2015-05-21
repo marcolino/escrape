@@ -46,7 +46,9 @@ class Network {
       @unlink(self::LOG_FILE); // clear curl log
     }
     $this->log = null;
-    $this->logInit();
+    #$this->logInit();
+    # TODO: HOW DO EXCEPTIONS PROPAGATE UP, FROM THIS CLASS?
+    #       IF THEY DO NOT PROPAGATE WELL, REQUEST A router HERE, TO LOG AS OTHER CLASSES...
   }
 
   /**
@@ -113,10 +115,10 @@ class Network {
     $retry = 0;
     retry:
     try {
-      $this->logWrite("curl to [$url]" . ($tor ? " (TOR)" : ""));
+      #$this->logWrite("curl to [$url]" . ($tor ? " (TOR)" : ""));
       $ch = curl_init(); // initialize curl operation
       if (($errno = curl_errno($ch))) {
-        $this->logWrite("can't initialize curl: " . curl_strerror($errno));
+        #$this->logWrite("can't initialize curl: " . curl_strerror($errno));
         throw new Exception("can't initialize curl: " . curl_strerror($errno));
       }
       curl_setopt_array($ch, $curlOptions);
@@ -128,14 +130,14 @@ class Network {
           # TODO: ensure timeouts can be recovered, otherwise remove this retries stuff...
           $retry++;
           if ($retry < self::RETRIES_MAX) {
-            $this->logWrite("timeout executing curl to [$url], retry n. $retry");
+            #$this->logWrite("timeout executing curl to [$url], retry n. $retry");
             goto retry;
           } else {
-            $this->logWrite("timeout executing curl to [$url], retry n. $retry, throwing exception");
+            #$this->logWrite("timeout executing curl to [$url], retry n. $retry, throwing exception");
             throw new Exception("timeout retries exhausted executing curl to [$url]");
           }
         }
-        $this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
+        #$this->logWrite("can't execute curl to [$url]: " . curl_strerror($errno));
         throw new Exception("can't execute curl to [$url]: " . curl_strerror($errno));
       }
       $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
@@ -161,7 +163,7 @@ class Network {
     $mimeType = null;
     if (!$retval) {
       $mimeType = "empty";
-      $this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
+      #$this->logWrite("error getting image url [$url] with curl: " . "image content is " . $mimeType);
       throw new Exception("error getting image url [$url] with curl: " . "image content is " . $mimeType);
     }
     $mimeType = $contentType;
@@ -239,6 +241,7 @@ class Network {
     return ($fsock) ? true : false;
   }
 
+/*
   private function logInit() {
     if (!$this->log) { // check it's not already initialized
       if (null !== self::LOG_FILE) {
@@ -285,12 +288,13 @@ class Network {
       fclose($this->log);
     }
   }
+*/
 
   /**
    * Destructor
    */
   function __destruct() {
-    $this->logClose();
+    #$this->logClose();
   }
 
 }

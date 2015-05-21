@@ -218,6 +218,7 @@ app.service('Countries', function() {
       return countries.sort(compare);
 	},
 	getCountryName: function(countryCode) {
+//console.log('getCountryName() - countryCode: ', countryCode);
 	  for (var i = 0; i < countries.length; i++) {
         if (countries[i].code === countryCode) {
           return countries[i].name;

@@ -120,7 +120,7 @@
             </div>
           </div>
           <div class="col-xs-12 col-sm-4 col-md-2 col-lg-2">
-            <div class="input-group input-group-bottom-spaced" ng-click="openInNewWindow('{{person.url}}')" title="the referral source site for this person">
+            <div class="input-group input-group-bottom-spaced" ng-click="openInNewWindow(person.url)" title="the referral source site for this person">
               <span class="input-group-addon"><span class="img-rounded"><img ng-src="images/referral-sources/{{person.source_key}}.png" class="img-rounded img-source" /></span></span>
               <input type="text" class="form-control" ng-model="person.source_key" placeholder="Referral source" readonly>
             </div>

@@ -34,7 +34,7 @@
           </a>
 
             <!-- user profile button -->
-          <a href="#/users/id" ng-class="{'btn':1, 'btn-default':1, 'btn-spaced':1, 'navbar-btn':1, 'navbar-right':1, 'btn-primary': getUserRole() === 'admin', }" ng-attr-title="Welcome, {{getUserName()}}">
+          <a href="#/users/id" class="btn btn-default btn-spaced navbar-btn navbar-right" ng-class="{'btn-primary': getUserRole() === 'admin' }" ng-attr-title="Welcome, {{getUserName()}}">
             <span class="glyphicon glyphicon-user"></span> {{getUserName()}}
           </a>
         </span>

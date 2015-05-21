@@ -1,7 +1,7 @@
 'use strict';
  
 app.controller('AuthenticationController',
-  function ($scope, $rootScope, $location, $aside, $timeout, cfg, Authentication, Countries, Persons, Sieves) {
+  function ($scope, $rootScope, $location, $aside, $timeout, cfg, /*notify, */Authentication, Countries, Persons, Sieves) {
     $scope.cfg = cfg;
     $scope.countries = Countries;
     $scope.Sieves = Sieves;
@@ -145,7 +145,11 @@ app.controller('AuthenticationController',
 
     $scope.getSourcesCity = function(cityCode) {
       var sourcesCities = Sieves.sourcesCities;
-      return sourcesCities[cityCode].name;
+      if (typeof sourcesCities !== 'undefined') {
+        if (typeof sourcesCities[cityCode] !== 'undefined') {
+          return sourcesCities[cityCode].name;
+        }
+      }
     };
 
     $scope.getSourcesCategories = function() {

@@ -6,14 +6,6 @@
  * @author  Marco Solari <marcosolari@gmail.com>
  */
 
-/* TODO:
-      "toe" => [
-        "/<span.*?>Visite:<\/span>\s*<span.*?>\s*\d+<\/span>/s",
-        "/<span.*?>Impression:<\/span>\s*<span.*?>\s+[\d.]+<\/span>/s",
-        "/<i class=\"icon-clock\"><\/i>\s*\d+\/\d+\/\d+\s*\d+:\d+:\d+/s",
-      ],
-*/
-
   class PersonsController {
   const PHOTOS_PATH = "db/photos/";
   const TIMEOUT_BETWEEN_DOWNLOADS = 60;
@@ -574,7 +566,7 @@ if (
   }
 
   private function normalizeDescription($value) {
-    $value = preg_replace("/<br(?: \/)?>/", "\n", $value); // convert <br>'s to newlines
+    $value = preg_replace("/(<br\s*\/?>)+/", "\n", $value); // convert <br>'s to newlines
     $value = strip_tags($value); // strip all other html tags from source
     return $value;
   }
@@ -1242,7 +1234,13 @@ if (
 
 # TODO: ONLY TO DEBUG ###############################################
 #require "classes/services/Network.php";
-#$pc = new PersonsController(null);
+#$r = new stdClass(); $r->db = null;
+#$pc = new PersonsController($r);
+#
+#$des = "uno<br><br><br/>due";
+#$nordes = $pc->normalizeDescription($des);
+#print "Description: [$des] => [$nordes]\n";
+#
 #$name = "Amina russa";
 #$description = "xyz...";
 #$nationality = $pc->detectNationality($name, $description, "it");
