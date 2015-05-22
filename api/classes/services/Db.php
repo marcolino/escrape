@@ -92,6 +92,7 @@ class DB extends PDO {
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
+          page_cleaned TEXT, -- TO DEBUG ONLY...
           page_sum TEXT,
           active INTEGER
          );

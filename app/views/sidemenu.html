@@ -6,7 +6,7 @@
 
       <!-- search widget -->
       <div class="input-group">
-        <input type="text" class="form-control input-search-clear" ng-model="sieves.search.term" placeholder="Search" key-enter="search()">
+        <input type="text" class="form-control input-search-clear" ng-model="Sieves.sieves.search.term" placeholder="Search" key-enter="search()">
         <div class="input-group-btn">
           <button class="btn btn-default button-search-clear" ng-click="searchClear()">
             <i class="glyphicon glyphicon-remove"></i>
@@ -21,14 +21,14 @@
 
       <accordion-group is-open="Sieves.sieves.filters.isopened">
         <accordion-heading>
-          Filters <i class="pull-right glyphicon" ng-click="toggleSectionOpened('filters', sieves.filters.isopened)" ng-class="{'glyphicon-chevron-down': sieves.filters.isopened, 'glyphicon-chevron-right': !sieves.filters.isopened}"></i>
+          Filters <i class="pull-right glyphicon" ng-click="toggleSectionOpened('filters', Sieves.sieves.filters.isopened)" ng-class="{'glyphicon-chevron-down': Sieves.sieves.filters.isopened, 'glyphicon-chevron-right': !Sieves.sieves.filters.isopened}"></i>
         </accordion-heading>
   
         <div>Persons active / not active:</div>
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
-            <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getClassActive(sieves.filters.active)"></i></span>
-            <input class="form-control default-cursor" type="text" ng-value="sieves.filters.active" readonly="" />
+            <span class="input-group-addon" title="Filter active or not active persons"><i ng-class="getClassActive(Sieves.sieves.filters.active)"></i></span>
+            <input class="form-control default-cursor" type="text" ng-value="Sieves.sieves.filters.active" readonly="" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="mode in actives()">
@@ -41,7 +41,7 @@
         <div>Persons with minumum vote:</div>
         <div class="input-group">
           <span class="input-group-addon" title="Vote up" ng-click="setFilterVoteMin(+1)"><i class="glyphicon glyphicon-thumbs-up"></i></span>
-          <input type="text" class="form-control default-cursor" ng-value="sieves.filters.voteMin" readonly="" />
+          <input type="text" class="form-control default-cursor" ng-value="Sieves.sieves.filters.voteMin" readonly="" />
           <span class="input-group-addon" title="Vote down" ng-click="setFilterVoteMin(-1)"><i class="glyphicon glyphicon-thumbs-down"></i></span>
         </div>
         <p class="menu-item-separator"></p>
@@ -50,7 +50,7 @@
         <div class="form-group">
           <div class="input-group">
             <span class="input-group-addon" title="Increase minimum comments count" ng-click="setFilterCommentsCountMin(+1)"><i class="glyphicon glyphicon-bullhorn rotate90ccw"></i></span>
-            <input type="text" class="form-control default-cursor" ng-value="sieves.filters.commentsCountMin" readonly="" />
+            <input type="text" class="form-control default-cursor" ng-value="Sieves.sieves.filters.commentsCountMin" readonly="" />
             <span class="input-group-addon" title="Decrease minimum comments count" ng-click="setFilterCommentsCountMin(-1)"><i class="glyphicon glyphicon-bullhorn rotate90cw"></i></span>
           </div>
         </div>
@@ -59,15 +59,15 @@
         <div>Persons in age range:</div>
         <div class="input-group" style="height:20px">
           <span class="input-group-addon" title="Age range"><i class="glyphicon glyphicon-apple"></i></span>
-          <div range-slider-inline show-values="false" min="cfg.person.age.min" max="cfg.person.age.max" model-min="sieves.filters.age.min" model-max="sieves.filters.age.max" ng-mouseup="setFilterAgeRange()" touchend="setFilterAgeRange()"></div>
+          <div range-slider-inline show-values="false" min="cfg.person.age.min" max="cfg.person.age.max" model-min="Sieves.sieves.filters.age.min" model-max="Sieves.sieves.filters.age.max" ng-mouseup="setFilterAgeRange()" touchend="setFilterAgeRange()"></div>
         </div>
         <p class="menu-item-separator"></p>
 
         <div>Persons from country:</div>
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
-            <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(sieves.filters.nationality)"></i></i></span>
-            <input class="form-control default-cursor" type="text" ng-value="getCountryName(sieves.filters.nationality)" />
+            <span class="input-group-addon" title="Nationality"><i class="f16"><i ng-class="countries.getCountryClass(Sieves.sieves.filters.nationality)"></i></i></span>
+            <input class="form-control default-cursor" type="text" ng-value="getCountryName(Sieves.sieves.filters.nationality)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="(countryCode, countryName) in activeCountries" class="flag-li">
@@ -93,14 +93,14 @@
 
       <accordion-group is-open="Sieves.sieves.options.isopened">
         <accordion-heading>
-          Options <i class="pull-right glyphicon" ng-click="toggleSectionOpened('options', sieves.options.isopened)" ng-class="{'glyphicon-chevron-down': sieves.options.isopened, 'glyphicon-chevron-right': !sieves.options.isopened}"></i>
+          Options <i class="pull-right glyphicon" ng-click="toggleSectionOpened('options', Sieves.sieves.options.isopened)" ng-class="{'glyphicon-chevron-down': Sieves.sieves.options.isopened, 'glyphicon-chevron-right': !Sieves.sieves.options.isopened}"></i>
         </accordion-heading>
   
         <div>Source country:</div><!-- TODO: find better labels... -->
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
-            <span class="input-group-addon" title="Country which persons are listed under"><i class="f16"><i ng-class="countries.getCountryClass(sieves.options.countryCode)"></i></i></span></span>
-            <input class="form-control default-cursor" id="query" type="text" ng-value="countries.getCountryName(sieves.options.countryCode)" />
+            <span class="input-group-addon" title="Country which persons are listed under"><i class="f16"><i ng-class="countries.getCountryClass(Sieves.sieves.options.countryCode)"></i></i></span></span>
+            <input class="form-control default-cursor" id="query" type="text" ng-value="countries.getCountryName(Sieves.sieves.options.countryCode)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="(countryCode, country) in getSourcesCountries()" class="country"> <!-- TODO: class=country??? -->
@@ -114,7 +114,7 @@
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
             <span class="input-group-addon" title="City which persons are listed under"><i class="fa fa-building-o"></i></span>
-            <input class="form-control default-cursor" type="text" ng-value="getSourcesCity(sieves.options.cityCode)" />
+            <input class="form-control default-cursor" type="text" ng-value="getSourcesCity(Sieves.sieves.options.cityCode)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="(cityCode, city) in getSourcesCities()" class="city"> <!-- TODO: class=city??? -->
@@ -127,7 +127,7 @@
         <div class="dropdown">
           <div class="input-group" data-toggle="dropdown">
             <span class="input-group-addon" title="Category persons belong to"><i ng-show="!cfg.fake" class="fa fa-venus-mars"></i><i ng-show="cfg.fake" class="glyphicon glyphicon-folder-open"></i></span>
-            <input class="form-control default-cursor" type="text" ng-value="getSourcesCategory(sieves.options.categoryCode)" />
+            <input class="form-control default-cursor" type="text" ng-value="getSourcesCategory(Sieves.sieves.options.categoryCode)" />
           </div>
           <ul class="dropdown-menu scrollable-menu" role="menu">
             <li ng-repeat="(categoryCode, categoryName) in getSourcesCategories()" class="category"> <!-- TODO: class=category??? -->
@@ -143,7 +143,7 @@
 
       <accordion-group is-open="Sieves.sieves.actions.isopened">
         <accordion-heading>
-          Actions <i class="pull-right glyphicon" ng-click="toggleSectionOpened('actions', sieves.actions.isopened)" ng-class="{'glyphicon-chevron-down': sieves.actions.isopened, 'glyphicon-chevron-right': !sieves.actions.isopened}"></i>
+          Actions <i class="pull-right glyphicon" ng-click="toggleSectionOpened('actions', Sieves.sieves.actions.isopened)" ng-class="{'glyphicon-chevron-down': Sieves.sieves.actions.isopened, 'glyphicon-chevron-right': !Sieves.sieves.actions.isopened}"></i>
         </accordion-heading>
   
         <button class="btn btn-success btn-block" ng-click="Persons.duplicationsHandlingModeFlip(); close();">

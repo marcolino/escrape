@@ -38,6 +38,7 @@ TODO 1.0:
  - login: wrong password => hide loading gif...
  - rethink about countries/cities/category
  - rethink about authentication / sieves / persons view/controllers relationships...
+ - person-patterns-to-remove-before-sum (@HOME)
 
  - solve all these TODO's
 
