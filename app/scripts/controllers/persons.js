@@ -81,7 +81,18 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     console.log('APPLY PERSONS');
     $scope.personsLoading = false;
     $scope.persons = persons;
-    $scope.personsList = sortObjectToList(persons, $scope.sieves.sort/*$scope.sortCriteria*/);
+    $scope.personsList = sortObjectToList(persons, $scope.sieves.sort);
+console.info('SIEVES.SORT:', $scope.sieves.sort);
+console.info('PERSONS (' + $scope.personsList.length + '):', $scope.personsList);
+
+/*
+var list = $scope.personsList;
+var len = list.length;
+for (var i = 0; i < len; i++) {
+ console.log('id: ' + list[i].id_person + ', active: ' + list[i].active + ', name: ' + list[i].name);
+}
+*/
+
     $scope.personsCount = $scope.countPersons(); // for footer controller
     $scope.personsEmpty = $scope.personsCount === 0;
     $rootScope.$emit('personsLoaded', { personsCount: $scope.personsCount });
@@ -157,19 +168,32 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       var len = criteria.length;
       for (var i = 0; i < len; i++) {
         var crit = criteria[i].name;
+        //console.log('crit:' + crit);
         var dir = criteria[i].direction;
+        //console.log('dir:' + dir);
         if (crit) {
           var aval, bval;
           // consider null vote a median value
+          if (crit === 'new') {
+            crit = 'timestamp_creation';
+          } else
+          if (crit === 'source') {
+            crit = 'url';
+          } else
+          if (crit === 'comments') {
+            crit = 'comments_count';
+          }
           if (crit === 'vote' && (object[a][crit] === null)) {
             aval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
           } else {
-            aval = object[a][crit];
+            aval = object[a][crit] || '~'; // replace null values with '~', which comes after all ASCII characters
+            //console.log('aval:', aval);
           }
           if (crit === 'vote' && (object[b][crit] === null)) {
             bval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
           } else {
-            bval = object[b][crit];
+            bval = object[b][crit] || '~'; // replace null values with '~', which comes after all ASCII characters
+            //console.log('bval:', bval);
           }
 
           if (dir === 'ascending') {
@@ -356,25 +380,35 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     var now = new Date();
     var timestampStartOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     var timestampStartOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (1 * cfg.MILLISECONDS_PER_DAY);
+    var timestampStartOfBeforeYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (2 * cfg.MILLISECONDS_PER_DAY);
+    var timestampOneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (7 * cfg.MILLISECONDS_PER_DAY);
+    var timestampOneMonthAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (30 * cfg.MILLISECONDS_PER_DAY);
+    var timestampOneYearAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (365 * cfg.MILLISECONDS_PER_DAY);
+/*
     var timestampOneWeekAgo = new Date(now - (7 * cfg.MILLISECONDS_PER_DAY)).getTime();
     var timestampOneMonthAgo = new Date(now - (30 * cfg.MILLISECONDS_PER_DAY)).getTime();
     var timestampOneYearAgo = new Date(now - (365 * cfg.MILLISECONDS_PER_DAY)).getTime();
+*/
     if (timestampCreation >= timestampStartOfToday) { // creation date is today
       firstSeenAsString = 'today, at ' + $filter('date')(timestampCreation, 'HH:mm');
     } else {
       if (timestampCreation >= timestampStartOfYesterday) { // creation date is yesterday
         firstSeenAsString = 'yesterday, at ' + $filter('date')(timestampCreation, 'HH:mm');
       } else {
-        if (timestampCreation >= timestampOneWeekAgo) { // creation date is one week ago or less
-          firstSeenAsString = 'this last week, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+        if (timestampCreation >= timestampStartOfBeforeYesterday) { // creation date is the day before yesterday
+          firstSeenAsString = 'two days ago, at ' + $filter('date')(timestampCreation, 'HH:mm');
         } else {
-          if (timestampCreation >= timestampOneMonthAgo) { // creation date is one month ago or less
-            firstSeenAsString = 'this last month, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+          if (timestampCreation >= timestampOneWeekAgo) { // creation date is one week ago or less
+            firstSeenAsString = 'this last week, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
           } else {
-            if (timestampCreation >= timestampOneYearAgo) { // creation date is one year ago or less
-              firstSeenAsString = 'this last year, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
-            } else { // default, creation date is older than one year since now
-              firstSeenAsString = 'more than one year ago, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+            if (timestampCreation >= timestampOneMonthAgo) { // creation date is one month ago or less
+              firstSeenAsString = 'this last month, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+            } else {
+              if (timestampCreation >= timestampOneYearAgo) { // creation date is one year ago or less
+                firstSeenAsString = 'this last year, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+              } else { // default, creation date is older than one year since now
+                firstSeenAsString = 'one year or more ago, on ' + $filter('date')(timestampCreation, 'dd MMMM yyyy');
+              }
             }
           }
         }
@@ -388,8 +422,12 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     var index = $scope.sieves.sort.hasName(criterium);
     if (index < 0) {
       var len = $scope.sieves.sort.length;
-      $scope.sieves.sort[len] = { 'name': criterium, 'direction': 'ascending' };
-      //console.info('sievs sort: ', $scope.sieves.sort);
+      $scope.sieves.sort[len] = {
+        'name': criterium, 'direction': (
+          criterium === 'new' ||
+          criterium === 'vote'
+        ) ? 'descending' : 'ascending'
+      };
       $scope.personsList = sortObjectToList($scope.persons, $scope.sieves.sort);
       Sieves.finalize(false);
     }

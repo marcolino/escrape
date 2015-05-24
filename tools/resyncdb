@@ -6,7 +6,7 @@ usage() {
   echo "
 Usage: $0
           [ -d | --drop (drop db and re-sync) ] |
-          [ -i | --images(sync all images too) ]
+          [ -i | --images-forced (force download of all images) ]
 " 1>&2
   exit 1
 }
@@ -37,9 +37,9 @@ if [ -n "$drop" ]; then
   mv /var/www/html/escrape/api/db/* "$db_backup_path"
 fi
 if [ -n "$images" ]; then
-  echo "re-syncing persons (all images included, full mode)..."
+  echo "re-syncing persons (force download of all images, full mode)..."
   time curl -X GET -i localhost/escrape/api/persons/sync/full && echo
 else
-  echo "re-syncing persons (ignore old images, standard mode)..."
+  echo "re-syncing persons (standard mode)..."
   time curl -X GET -i localhost/escrape/api/persons/sync && echo
 fi

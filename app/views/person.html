@@ -48,7 +48,7 @@
                   <div ng-if="photo.thruthful === 'true'">
                     <img src="images/watermarks/thruthful-label.png" class="label-image" />
                   </div>
-                  <div ng-if="photo.thruthful === 'unknown'">
+                  <div ng-if="photo.thruthful === 'unknown' || photo.thruthful === null"><!-- TODO: set new photos with thruthful flag as 'unknown', OR alwasy use null... -->
                     <img src="images/watermarks/unknown-label.png" class="label-image" />
                   </div>
                 </a>

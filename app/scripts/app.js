@@ -15,7 +15,7 @@ function NavBarController($scope) {
 }
 */
 var app = angular.module('escrapeApp', [
-    'ngAnimate',
+    //'ngAnimate',
     'ngAria',
     'ngCookies',
     'ngMessages',

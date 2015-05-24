@@ -38,8 +38,12 @@ TODO 1.0:
  - login: wrong password => hide loading gif...
  - rethink about countries/cities/category
  - rethink about authentication / sieves / persons view/controllers relationships...
- - person-patterns-to-remove-before-sum (@HOME)
-
+ - toe: load all images ("?p=1, ?p=2, ...)
+ - review photoGetByShowcase()... (reload from DB ???, no, showcase = 1 if (number ===1 )...)
+ - when filtering for vote (4 / 5 / ...), apply rule: null === ((9-0)/2) = 4.5 ...
+ - first click on photos: no prev/next
+ - how to show a person if it's top-uniq is not active???
+ 
  - solve all these TODO's
 
 TODO 1.1:
@@ -204,3 +208,4 @@ DONE:
  - does nationalityDetect recognizes sud[\s-]+america(na)?
  - does nationalityDetect recognizes Orientale in the name?
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (WE GIVE UP, IT'S NOT DESIRABLE...)
+ - person-patterns-to-remove-before-sum (@HOME)
