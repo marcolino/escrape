@@ -160,6 +160,15 @@
           $description = "";
         }
  
+        // get person street address
+        if (preg_match($source["patterns"]["person-street-address"], $page_details, $matches) >= 1) {
+          $streetAddress = $this->normalizeStreetAddress($matches[1]);
+$this->router->log("debug", " OOOOOOOOOOOOOOO STREET ADDRESS FOUND: [$name] => [$streetAddress]");
+        } else {
+          #$this->router->log("warning", "person $n description not found on source [$sourceKey]");
+          $streetAddress = null;
+        }
+
         /*
         # TODO: IGNORE NATIONALITY ON SITE, USE NAME/DESCRIPTION TO DETECT IT!
         // get person nationality
@@ -174,7 +183,6 @@
         }
         */
 
-        $streetAddress = null;
         $age = null;
         $vote = null;
         $timestampNow = time();
@@ -211,7 +219,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
   if (($person["page_cleaned"] !== null) and ($personMaster["page_cleaned"] !== null)) {
     file_put_contents("/tmp/person-old.html", $person["page_cleaned"]);
     file_put_contents("/tmp/person-new.html", $personMaster["page_cleaned"]);
-    $diff = shell_exec("diff --context=1 '/tmp/person-old.html' '/tmp/person-new.html'");
+    $diff = shell_exec("diff --context=0 '/tmp/person-old.html' '/tmp/person-new.html'");
     $this->router->log("debug", "PersonsController::sync() - DEBUG ME - diff:\n\n$diff");
   }
 } else {
@@ -382,12 +390,12 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       // check only persons which are new (TODO: TEST THIS!)
       if ($persons[$i]["timestamp_creation"] < $timestampStart) {
-        $this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") timestamp_creation (" . $persons[$i]["timestamp_creation"] . " < timestamp (" . $timestampStart . "), IS OLD");
+        #$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") timestamp_creation (" . $persons[$i]["timestamp_creation"] . " < timestamp (" . $timestampStart . "), IS OLD");
         if (!$this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          $this->router->log("debug", " person n°: $i NOT DEBUG_UNIQ: SKIPPING");
+          #$this->router->log("debug", " person n°: $i NOT DEBUG_UNIQ: SKIPPING");
           continue;
         } else {
-          $this->router->log("debug", " person n°: $i DEBUG_UNIQ: NOT SKIPPING");
+          #$this->router->log("debug", " person n°: $i DEBUG_UNIQ: NOT SKIPPING");
         }
       }
  
@@ -619,6 +627,10 @@ if (
   private function normalizeDescription($value) {
     $value = preg_replace("/(<br\s*\/?>)+/", "\n", $value); // convert <br>'s to newlines
     $value = strip_tags($value); // strip all other html tags from source
+    return $value;
+  }
+
+  private function normalizeStreetAddress($value) {
     return $value;
   }
 
