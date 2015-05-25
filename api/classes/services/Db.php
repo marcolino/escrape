@@ -165,7 +165,7 @@ class DB extends PDO {
           path_small TEXT,
           sum VARCHAR(32),
           timestamp_creation INTEGER,
-          timestamp_last_modification INTEGER,
+          --timestamp_last_modification INTEGER, -- DO WE NEED THIS???
           signature VARCHAR(256),
           showcase INTEGER,
           thruthful INTEGER

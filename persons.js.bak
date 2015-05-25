@@ -209,84 +209,28 @@ for (var i = 0; i < len; i++) {
       return 0; // no sort criteria can find an ordering
     }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
 
-    function id2indexBuild(iStart) {
-      for (var i = iStart; i < len; i++) { // rebuild id2index array
-        id2index[list[i].id_person] = i;
+    function id2indexBuild() {
+      for (var i = 0; i < len; i++) { // rebuild id2index array
+        var id = list[i].id_person;
+        id2index[id] = i;
       }
     }
 
-    // aggregate uniq persons
     var len = list.length;
     var id2index = {}; // id's to list indexes mapping
-    id2indexBuild(0);
-    var i, j, src, dst, next;
+    var i;
+    id2indexBuild();
     for (i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
-        for (j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
+        for (var next, j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
           next = id2index[list[j].uniq_next];
-          src = j;
-          dst = ++i;
+          var src = j;
+          var dst = ++i;
           list.move(src, dst);
-          // TODO TEST MEEEEEEEEEEEEEEEEEEEEEEE
-          //id2indexBuild();
-          id2indexBuild(Math.min(src, dst));
+          id2indexBuild();
         }
       }
     }
-
-// TO BE DEBUGGED... ////////////////////////////////////////////////////////////////////
-console.log('id2index:', id2index);
-    for (i = 0; i < len; i++) {
-      if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
-console.log('i:', i, ' - a uniq primary found');
-        // pop up active persons in uniq chains, otherwise, if a not-active person is on
-        // top, all chain should be hidden when 'show only active persons' filter is set
-//console.log('list[i].active === 0:', list[i].active === '0' ? 'false' : 'true');
-console.log('pop up active persons in uniq chains - starting j:', i);
-        for (j = i; j !== undefined && list[j].active === '0'; j = id2index[list[j].uniq_next]) {
-          // nop
-console.log('pop up active persons in uniq chains - found j:', j);
-        }
-console.log('pop up active persons in uniq chains FINISHED - j:', j);
-        if (j !== undefined && j !== i) { // the first active person found is not the first on this chain
-          src = j;
-          dst = i;
-console.log('moving index ' + src + ' to index ' + dst + '.');
-          list.move(src, dst); // swap first person (not active) with first active person
-          // swap uniq flags, too
-          var src_next = list[src].uniq_next;
-          var dst_next = list[dst].uniq_next;
-          var src_prev = list[src].uniq_prev;
-          var dst_prev = list[dst].uniq_prev;
-          list[src].uniq_next = dst_next;
-          list[dst].uniq_next = dst_prev;
-          list[src].uniq_prev = src_next;
-          list[dst].uniq_prev = src_prev;
-
-          /*
-          $scope.persons[list[src].id_person].uniq_next = dst_next;
-          $scope.persons[list[dst].id_person].uniq_next = dst_prev;
-          $scope.persons[list[src].id_person].uniq_prev = src_next;
-          $scope.persons[list[dst].id_person].uniq_prev = src_prev;
-          */
-          // TODO TEST MEEEEEEEEEEEEEEEEEEEEEEE
-          //id2indexBuild();
-          id2indexBuild(Math.min(src, dst));
-console.log('id2index:', id2index);
-        }
-      }
-    }
-
-console.log('-------------');
-for (i = 0; i < len; i++) {
-  //console.log(list[i].name + ' active flag is ' + list[i].active);
-  console.log('i: ' + i + ', active: ' + list[i].active + ', next: ' + (list[i].uniq_next ? list[i].uniq_next : 'X') + ', prev: ' + (list[i].uniq_prev ? list[i].uniq_prev : 'X') + ' => ' + list[i].name);
-}
-console.log('-------------');
-console.log('scope.persons: ', $scope.persons);
-console.log('-------------');
-/////////////////////////////////////////////////////////////////////////////////////////
-
     return list;
   }
 
@@ -562,19 +506,13 @@ console.log('-------------');
     if ($scope.persons[personId].uniq_prev === null) {
       var id = personId;
       var idNext;
-var n = 0;
       do {
         idNext = $scope.persons[id].uniq_next;
         if (idNext && $scope.persons[idNext] && $scope.persons[idNext].active) {
           isUniqPrimary = true;
           break;
         }
-//        break; // TODO: WITHOUT THIS BREAK LOOP COULD NEVER END... ????????????????
-if (++n > 10) {
-  console.error('isUniqPrimary(): INFINITE LOOP DETECTED!');
-  break;
-}
-
+        break; // TODO: WITHOUT THIS BREAK LOOP NEVER ENDS... ????????????????
       } while (idNext && $scope.persons[idNext]);
     }
     return isUniqPrimary;

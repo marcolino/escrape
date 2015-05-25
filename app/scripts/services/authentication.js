@@ -9,6 +9,10 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
     $http.post(apiUri + 'register', { username: username, password: password })
     .success(function (response) {
       callback(response);
+      if (!response.success && response.message) {
+        notify.error(response.message);
+        return($q.reject(response.message));
+      }
     })
     .error(function (response) {
       if (
@@ -17,9 +21,12 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
       ) {
         var message = 'An unknown error occurred in registration service';
         notify.error(message);
+        response.message = message; // TODO: test this...
+        callback(response); // TODO: test this...
         return($q.reject(message));
       }
       notify.error(response.data.message);
+      callback(response); // TODO: test this...
       return($q.reject(response.data.message));
     });
   };
@@ -27,11 +34,11 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
   service.login = function (username, password, callback) {
     $http.post(apiUri + 'login', { username: username, password: password })
     .success(function (response) {
+      callback(response);
       if (!response.success && response.message) {
         notify.error(response.message);
         return($q.reject(response.message));
       }
-      callback(response);
     })
     .error(function (response) {
       if (
@@ -40,9 +47,12 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
       ) {
         var message = 'An unknown error occurred in login service';
         notify.error(message);
+        response.message = message; // TODO: test this...
+        callback(response); // TODO: test this...
         return($q.reject(message));
       }
       notify.error(response.data.message);
+      callback(response); // TODO: test this...
       return($q.reject(response.data.message));
     });
   };

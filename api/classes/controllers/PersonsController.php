@@ -174,7 +174,7 @@
         }
         */
 
-        $streetAddress = null; # WAS ""... # TODO: add logic to grab this data from person's (or comments) page
+        $streetAddress = null;
         $age = null;
         $vote = null;
         $timestampNow = time();

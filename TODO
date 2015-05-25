@@ -7,41 +7,15 @@ TODO 1.0:
     - before google search, check image has already thruthful flag...
     - test un-thruthful images rendering in views...
     - handle thruthful/un-thruthful flag storing
- - handle all exceptions at least with notify.error() ... (in Network.php class, above all...)
+ - handle all exceptions at least with notify.error() ...
  - move style="..." from all views to style.css...
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
- - add a "milf" field (/(matur.)|(milf)/) in person's table... (or age?) (@HOME)
- - handle person's race ('oriente' / 'sudamerica') ... (?) (@HOME)
- - normalizeNationality(): remove <i class='icon-info'></i>, and handle it in view...
- - TEST if *body* page sum does not change if page is not updated (@HOME) (DONE, TO BE TESTED)
- - TEST PersonsController::getUrlContents() (@HOME)
- - TEST if null phones set to db (PersonsController::sync() - $personDetail["phone"] = $phone; ) cause some harm...
- - TEST new showcase selection strategy (the number 1...) (@HOME)
- - remove openedId, ... and implement opening details page in a new tab... (DONE, TO BE TESTED @HOME)
- - CHECK active flag for NOT active persons is set to '0' (not null...) (SHOULD BE OK...)
- - person_detail.showcase ???
- - photo.timestamp_last_modification ???
- - how do we set showcase flag? (should be: photo.number === 1 ...)
- - why nationality in some persons is null, and some is 'world'? (<i class='icon-info'></i>)
- - name truncation: much longer... (and put full name in title of name, not in title of showcase photo...) (DONE)
- - adjust person source link href (now is about:blank ...) (DONE, TO BE TESTED)
- - HOW TO FORCE RELOAD OF SINGLE ROW IN PERSONS VIEW AFTER PERSON MODIFICATION?
- - toe: description: "<br /><br />" => should be removed in normalization... (DONE, TO BE TESTED)
- - "Irene Italiana": person view: all photos are portait, there is no margin below... (TO BE DEBUGGED @HOME)
- - Kelly (id: 180) person view has "previous" button, but "+" does not open... (because it is not active... OK? No, make a js function which check activity of uniq_next's... ) (DONE: CHECK isUniqPrimary()...)
+ - handle person's race ('oriente' / 'sudamerica') ... (?) (currently we ignore it... we could extend countries service to handle "custom countries" (or ethnicity) ... (like "europe-east", "america-south", "east", ...)
+ - how to force reload of single row in persons view after person modification?
  - think again to css for opened-uniq_chain identification (now it's a black bottom border...)
- - when sorting, consider null votes as a median value (4.5?) (DONE, TO BE CHECKED)
- - Mila Se... e Mila Sc... mix when uniq-next is opened... :-(
- - id: 317, person view photos in two groups, the first upper, the second lower... ??? :-( ("thruthful" flag empty, and not "unknown")
- - remove filelog for curl (and remove curl.log)...
  - revise sieves.options handling...
- - login: wrong password => hide loading gif...
  - rethink about countries/cities/category
  - rethink about authentication / sieves / persons view/controllers relationships...
- - toe: load all images ("?p=1, ?p=2, ...)
- - review photoGetByShowcase()... (reload from DB ???, no, showcase = 1 if (number ===1 )...)
- - when filtering for vote (4 / 5 / ...), apply rule: null === ((9-0)/2) = 4.5 ...
- - first click on photos: no prev/next
  - how to show a person if it's top-uniq is not active???
  
  - solve all these TODO's
@@ -61,6 +35,7 @@ TODO 1.1:
  - why SGI source sometimes answers with mobile version page?
  - nationality combo: accept input keys to scroll items (ASKED ON S.O., ON HOLD...)
  - think about a way to allow users to add/remove uniquenesses...
+ - add more fields (ex.: milf OR (/(matur.)|(milf)/)) in person's table, and the handle them in sync() and person view...
 
 TODO 2.0:
  - I18n (?) (see:
@@ -209,3 +184,28 @@ DONE:
  - does nationalityDetect recognizes Orientale in the name?
  - someway avoid ("Unknown") errors to be notify-ed to user multiple times (WE GIVE UP, IT'S NOT DESIRABLE...)
  - person-patterns-to-remove-before-sum (@HOME)
+ - normalizeNationality(): remove <i class='icon-info'></i>, and handle it in view...
+ - TEST if *body* page sum does not change if page is not updated (@HOME) (DONE, TO BE TESTED)
+ - TEST PersonsController::getUrlContents() (@HOME)
+ - TEST if null phones set to db (PersonsController::sync() - $personDetail["phone"] = $phone; ) cause some harm...
+ - TEST new showcase selection strategy (the number 1...) (@HOME)
+ - remove openedId, ... and implement opening details page in a new tab... (DONE, TO BE TESTED @HOME)
+ - CHECK active flag for NOT active persons is set to '0' (not null...) (SHOULD BE OK...)
+ - person_detail.showcase ???
+ - photo.timestamp_last_modification ??? (UNUSELESS, COMMENTED OUT)
+ - why nationality in some persons is null, and some is 'world'? (<i class='icon-info'></i>) (IT'S ETNICITY, IGNORED)
+ - how do we set showcase flag? (should be: photo.number === 1 ...)
+ - name truncation: much longer... (and put full name in title of name, not in title of showcase photo...) (DONE)
+ - adjust person source link href (now is about:blank ...) (DONE, TO BE TESTED)
+ - toe: description: "<br /><br />" => should be removed in normalization... (DONE, TO BE TESTED)
+ - "Irene Italiana": person view: all photos are portait, there is no margin below... (TO BE DEBUGGED @HOME)
+ - Kelly (id: 180) person view has "previous" button, but "+" does not open... (because it is not active... OK? No, make a js function which check activity of uniq_next's... ) (DONE: CHECK isUniqPrimary()...)
+ - when sorting, consider null votes as a median value (4.5?) (DONE, TO BE CHECKED)
+ - Mila Se... e Mila Sc... mix when uniq-next is opened... :-(
+ - id: 317, person view photos in two groups, the first upper, the second lower... ??? :-( ("thruthful" flag empty, and not "unknown")
+ - remove file logging for curl (and remove curl.log)...
+ - login: wrong password => hide loading gif...
+ - toe: load all images ("?p=1, ?p=2, ...)
+ - review photoGetByShowcase()... (reload from DB ???, no, showcase = 1 if (number ===1 )...)
+ - when filtering for vote (4 / 5 / ...), apply rule: null === ((9-0)/2) = 4.5 ...
+ - first click on photos: no prev/next (BOOH, DOESN'T HAPPEN ANYMORE...)

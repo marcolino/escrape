@@ -29,7 +29,6 @@ class UsersController {
     }
     $user = $this->db->getByField("user", "username", $username);
     if (count($user) === 1) {
-# TODO: message => $error ... (?)
       return [ "message" => "Sorry, this username is already registered" ];
     }
     if (!$this->checkPasswordStrength($password)) {
@@ -41,7 +40,6 @@ class UsersController {
       "role" => "user",
     ];
     $this->db->add("user", $user);
-# TODO: $user["userId" => $userId]; ...
     return [ "success" => true, "user" => $user ];
   }
 
@@ -51,7 +49,6 @@ class UsersController {
       "password" => $this->scramblePassword($password)
     ]);
     if (count($user) === 1) {
-# TODO: $user["userId" => $userId]; ...
       return [ "success" => true, "user" => $user[0] ];
     } else {
       return [ "message" => "Wrong username/password, please try again" ];

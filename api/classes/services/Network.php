@@ -176,13 +176,15 @@ class Network {
     return $retval;
   }
 
-  /**
+/*
+  # TODO: THIS FUNCTION SHOULD BE USELESS...
+  / **
    * Get image 'Last-Modified' header value
    *
    * @param  string $url        url to be retrieved
    * @return null               no last modification timestamp in header
    *         integer            last modification timestamp
-   */
+   * /
   public function getLastModificationTimestampFromUrl($url) {
     #$this->logWrite("getLastModificationTimestampFromUrl()");
     $headers = $this->getUrlContents($url, null, null, true, false);
@@ -202,6 +204,7 @@ class Network {
     }
     return $timestamp;
   }
+*/
 
 /*
   # TODO: THIS FUNCTION SHOULD BE USELESS...

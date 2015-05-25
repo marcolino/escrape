@@ -59,17 +59,19 @@ app.controller('AuthenticationController',
     $scope.login = function () {
       $scope.dataLoading = true;
       Authentication.clearCredentials();
-      Authentication.login($scope.username, $scope.password, function(response) {
-        //console.log('login():', response);
-        $scope.dataLoading = false;
-        if (response.success) {
-          setCredentials(response);
-          Sieves.load(true); // reload sieves, (forcing the reloading)
-          $location.path('/#');
-        } else {
-          $scope.error = response.message;
+      Authentication.login($scope.username, $scope.password,
+        function(response) {
+          console.log('login() success:', response);
+          $scope.dataLoading = false;
+          if (response.success) {
+            setCredentials(response);
+            Sieves.load(true); // reload sieves, (forcing the reloading)
+            $location.path('/#');
+          } else {
+            $scope.error = response.message;
+          }
         }
-      });
+      );
     };
 
     $scope.logout = function () {

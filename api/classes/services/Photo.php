@@ -465,9 +465,11 @@ class Photo {
     return $image;
   }
 
-  /**
+/*
+  # TODO: THIS FUNCTION SHOULD BE USELESS...
+  / **
    * Gets photo last modification timestamp
-   */
+   * /
   public function getLastModificationTimestamp() {
     if (isset($this->timestamp_last_modification)) {
 #throw new Exception("OLD LMT !!!");
@@ -477,7 +479,8 @@ class Photo {
 #throw new Exception("NEW LMT: " . $this->timestamp_last_modification);
     return $this->timestamp_last_modification;
   }
-
+*/
+  
   /**
    * Converts a bitmap to internal type bitmap
    */
