@@ -209,6 +209,8 @@ for (var i = 0; i < len; i++) {
       return 0; // no sort criteria can find an ordering
     }).map(function(key) { return object[key]; }); // map resulting array of keys to array of objects
 
+// TODO: IGNORE persons with id_user !== 1 !!!
+
     function id2indexBuild(iStart) {
       for (var i = iStart; i < len; i++) { // rebuild id2index array
         id2index[list[i].id_person] = i;

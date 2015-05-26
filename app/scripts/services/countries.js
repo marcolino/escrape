@@ -200,6 +200,16 @@ app.service('Countries', function() {
 	{ code: 'zm', name: 'Zambia' },
 	{ code: 'zw', name: 'Zimbabwe' },
 	{ code: 'africa', name: 'Africa', type: 'region' },
+
+	{ code: 'asia', name: 'Asia', type: 'region' },
+	{ code: 'caribbean', name: 'Caribbean', type: 'region' },
+	{ code: 'central-america', name: 'Central America', type: 'region' },
+	{ code: 'eastern-europe', name: 'Eastern Europe', type: 'region' },
+	{ code: 'europe', name: 'Europe', type: 'region' },
+	{ code: 'middle-east', name: 'Middle East', type: 'region' },
+	{ code: 'north-america', name: 'North America', type: 'region' },
+	{ code: 'oceania', name: 'Oceania', type: 'region' },
+	{ code: 'south-america', name: 'South America', type: 'region' },
   ];
 
   var Countries = {

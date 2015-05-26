@@ -163,7 +163,7 @@
         // get person street address
         if (preg_match($source["patterns"]["person-street-address"], $page_details, $matches) >= 1) {
           $streetAddress = $this->normalizeStreetAddress($matches[1]);
-$this->router->log("debug", " OOOOOOOOOOOOOOO STREET ADDRESS FOUND: [$name] => [$streetAddress]");
+#$this->router->log("debug", " OOOOOOOOOOOOOOO STREET ADDRESS FOUND: [$name] => [$streetAddress]");
         } else {
           #$this->router->log("warning", "person $n description not found on source [$sourceKey]");
           $streetAddress = null;
@@ -670,13 +670,12 @@ if (
           "bolivi(a|ana)" => "bo",
           "bosni(a|aca)" => "ba",
           "brasil(e|iana)" => "br",
-          "caraibi(ca)?" => "bs",
           "bulgar(a|ia)" => "bu",
           "canad(a|ese)" => "ca",
           "capo\s*verd(e|iana)" => "cv",
           "ch?il(e|ena)" => "cl",
           "ch?in(a|ese)" => "cn",
-          "orient(e|ale)" => "cn",
+          "orient(e|ale)" => "asia",
           "colombi(a|ana)" => "co",
           "costa\s*ric(a|he..)" => "cr",
           "croa([tz]ia|ta)" => "hr",
@@ -756,10 +755,20 @@ if (
           "turc(hia|a)" => "tr",
           "u[kc]raina" => "ua",
           "urugua([yi])|(gia)|([yi]ana)" => "uy",
-          "sud[\s-]?america(na)?" => "br",
           "america(na)?" => "us",
           "venezuela(na)?" => "ve",
           "vietnam(ita)?" => "vn",
+          "asia(tica)?" => "asia",
+          "africa(na)?" => "africa",
+          "america[\s-]?centrale" => "central-america",
+          "caraibi(ca)?" => "caribbean",
+          "nord[\s-]?america(na)?" => "north-america",
+          "europa[\s-]+orientale]" => "eastern-europe",
+          "europea" => "europe",
+          "orient[e|(ale)]" => "asia",
+          "medio[\s-]?orientale" => "middle-east",
+          "oceania" => "oceania",
+          "sud[\s-]?america(na)?" => "south-america",
         ],
         "negative-lookbehind" => [
           "alla",
