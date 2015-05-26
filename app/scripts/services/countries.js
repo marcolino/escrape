@@ -199,7 +199,7 @@ app.service('Countries', function() {
 	{ code: 'ye', name: 'Yemen' },
 	{ code: 'zm', name: 'Zambia' },
 	{ code: 'zw', name: 'Zimbabwe' },
-	{ code: 'africa', name: 'Africa' },
+	{ code: 'africa', name: 'Africa', type: 'region' },
   ];
 
   var Countries = {
@@ -209,14 +209,16 @@ app.service('Countries', function() {
       function compare(a, b) {
        	// '<' / '>' compare method is faster than localeCompare but sorts only ASCII names
        	return (
-       	  a.name === Countries.firstCountryName ? -1 :
+       	  a.name === Countries.firstCountryName ? -1 : // firstCountryName on top
        	  b.name === Countries.firstCountryName ? 1 :
-       	  a.name < b.name ? -1 :
+       	  (a.type === 'region' && b.type !== 'region') ? 1 : // regions on bottom
+       	  (a.type !== 'region' && b.type === 'region') ? -1 :
+       	  a.name < b.name ? -1 : // standard alphabetical order
        	  a.name > b.name ? 1 :
-       	  0
+       	  0 // same names (shouldn't happen)
        	);
       }
-      return countries.sort(compare);
+      return countries.sort(compare); // do not sort, to let world regions on bottom...
 	},
 	getCountryName: function(countryCode) {
 //console.log('getCountryName() - countryCode: ', countryCode);
