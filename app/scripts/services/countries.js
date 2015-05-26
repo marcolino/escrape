@@ -199,6 +199,7 @@ app.service('Countries', function() {
 	{ code: 'ye', name: 'Yemen' },
 	{ code: 'zm', name: 'Zambia' },
 	{ code: 'zw', name: 'Zimbabwe' },
+	{ code: 'africa', name: 'Africa' },
   ];
 
   var Countries = {
