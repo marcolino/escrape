@@ -573,7 +573,7 @@ var n = 0;
         }
 //        break; // TODO: WITHOUT THIS BREAK LOOP COULD NEVER END... ????????????????
 if (++n > 10) {
-  console.error('isUniqPrimary(): INFINITE LOOP DETECTED!');
+  console.error('isUniqPrimary('+personId+'): INFINITE LOOP DETECTED!');
   break;
 }
 
