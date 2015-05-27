@@ -680,8 +680,6 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
       'rating',
       'showcase',
       'thruthful',
-      'uniq_prev',
-      'uniq_next',
     ];
     var personDetail = {};
     angular.forEach(person, function(value, key) {

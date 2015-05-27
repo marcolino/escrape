@@ -357,7 +357,7 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
     $persons[$i]["uniq_prev"] = null; // reset all uniq_prev fields, will be recalculated
     $persons[$i]["uniq_next"] = null; // reset all uniq_next fields, will be recalculated
-    $this->db->setPerson($persons[$i]["id_person"], null, [ "uniq_prev" => null, "uniq_next" => null ]);
+    $this->db->setPerson($persons[$i]["id_person"], [ "uniq_prev" => null, "uniq_next" => null ], null);
   }
   $this->router->log("info", " RESETTING PERSONS UNIQ PREV/NEXT - DONE");
 }
@@ -403,7 +403,8 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       for ($j = $i + 1; $j < $persons_count; $j++) {
         if (
-          $this->personsCheckSamePhone($persons[$i], $persons[$j]) ||
+          # AVOID PHONE MATCHING, SINCE DIFFERENT PERSONS COUD SHARE ONE PHONE NUMBER...
+          #$this->personsCheckSamePhone($persons[$i], $persons[$j]) ||
           $this->personsCheckSamePhotos($personsById, $persons[$i]["id_person"], $persons[$j]["id_person"])
         ) { // these two persons are to be unified
           $id1 = $persons[$i]["id_person"];
@@ -430,7 +431,7 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $id1Bot = $id;
             $id = $personsById[$id]["uniq_next"];
             if ($id2 === $id) { continue; } // $id2 in $id1 chain: continue to next person
-            if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN ID1 BOT SEARCH (id: [$id], id1: [$id1], id2: [$id2], id1Top: [$id1Bot])"); return false; }
+            if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN ID1 BOT SEARCH (id: [$id], id1: [$id1], id2: [$id2], id1Bot: [$id1Bot])"); return false; }
           }
 
           // get $id2 top chain id in $id2Top
@@ -440,7 +441,8 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $id2Top = $id;
             $id = $personsById[$id]["uniq_prev"];
             if ($id1 === $id) { continue; } // $id1 in $id2 chain: continue to next person
-            if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN ID2 TOP SEARCH (id: [$id], id1: [$id1], id2: [$id2], id1Top: [$id2Top])"); return false; }
+            if ($id2 === $id) { continue; } // $id1 in $id2 chain: continue to next person
+            if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN ID2 TOP SEARCH (id: [$id], id1: [$id1], id2: [$id2], id2Top: [$id2Top])"); return false; }
           }
           // get $id2 bottom chain id in $id2Bot
           $id = $id2Bot = $id1;
@@ -449,19 +451,66 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $id2Bot = $id;
             $id = $personsById[$id]["uniq_next"];
             if ($id1 === $id) { continue; } // $id1 in $id2 chain: continue to next person
-            if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN ID2 BOT SEARCH (id: [$id], id1: [$id1], id2: [$id2], id1Top: [$id2Bot])"); return false; }
+            if ($id2 === $id) { continue; } // $id1 in $id2 chain: continue to next person
+            if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN ID2 BOT SEARCH (id: [$id], id1: [$id1], id2: [$id2], id2Bot: [$id2Bot])"); return false; }
           }
 
           // $id1 is not in $id2 chain, and $id2 is not in $id1 chain: attach $id2Top to $id1Bot
           if ($id1Bot !== $id2Top) { // avoid linking ids to themselves
-            $this->db->setPerson($id1Bot, null, [ "uniq_next" => $id2Top ]);
-            $this->db->setPerson($id2Top, null, [ "uniq_prev" => $id1Bot ]);
+            $this->db->setPerson($id1Bot, [ "uniq_next" => $id2Top ], null);
+            $this->db->setPerson($id2Top, [ "uniq_prev" => $id1Bot ], null);
+          } else { # TODO: PERHAPS WE CAN REMOVE THIS ELSE CLAUSE...
+            $this->router->log("error", " ££££££££££ LOOP DETECTED JUST BEFORE SET-PERSON!!! THIS HAPPENS!!! (id1Top: [$id1Top], id2Bot: [$id2Bot])");
+            return false;
           }
         }
       }
     }
 
     $this->router->log("debug", "asserting persons uniqueness finished");
+
+/*
+#################################################################################
+### DEBUG ONLY: PRINT NEXT / PREV CHAINS...
+#################################################################################
+    $persons = $this->db->getPersons();
+    for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
+      $personId = $persons[$i]["id_person"];
+      $personsById[$personId] = $persons[$i];
+      $personsById[$personId]["photos"] = [];
+      for ($j = 0; $j < $photos_count; $j++) { // add person photos array to persons-by-id array
+        if ($photos[$j]["id_person"] === $personId) {
+          array_push($personsById[$personId]["photos"], $photos[$j]);
+        }
+      }
+    }
+    $this->router->log("debug", "DEBUG - NEXT CHAIN:");
+    for ($i = 0; $i < $persons_count; $i++) {
+      $id = $persons[$i]["id_person"];
+      $chain = "";
+      $n = 0;
+      while ($id) {
+        $chain .= "$id =N=> ";
+        $id = $personsById[$id]["uniq_next"];
+        if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN NEXT CHAIN (id: $id)"); break; }
+      }
+      $this->router->log("debug", "[$i] $chain");
+    }
+
+    $this->router->log("debug", "DEBUG - PREV CHAIN:");
+    for ($i = 0; $i < $persons_count; $i++) {
+      $id = $persons[$i]["id_person"];
+      $chain = "";
+      $n = 0;
+      while ($id) {
+        $chain .= "$id =P=> ";
+        $id = $personsById[$id]["uniq_prev"];
+        if (++$n >= 10) { $this->router->log("error", "LOOP DETECTED IN PREV CHAIN (id: $id)"); break; }
+      }
+      $this->router->log("debug", "[$i] $chain");
+    }
+#################################################################################
+*/
     return true;
   }
 

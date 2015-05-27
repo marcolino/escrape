@@ -94,7 +94,9 @@ class DB extends PDO {
           timestamp_last_sync INTEGER,
           page_cleaned TEXT, -- TO DEBUG ONLY...
           page_sum TEXT,
-          active INTEGER
+          active INTEGER,
+          uniq_prev TEXT,
+          uniq_next TEXT
          );
          CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
         "
@@ -117,9 +119,7 @@ class DB extends PDO {
           vote INTEGER,
           rating INTEGER,
           showcase INTEGER,
-          thruthful INTEGER,
-          uniq_prev TEXT,
-          uniq_next TEXT
+          thruthful INTEGER
          );
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "

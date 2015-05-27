@@ -16,7 +16,8 @@ TODO 1.0:
  - revise sieves.options handling...
  - rethink about countries/cities/category
  - rethink about authentication / sieves / persons view/controllers relationships...
- 
+ - if photos are a little zoomed, no match is found: find a solution to however find a match, or allow user to add uniqueness flag... IDEA: if the phone matches, use a lower similarity factor...
+
  - solve all these TODO's
 
 TODO 1.1:
