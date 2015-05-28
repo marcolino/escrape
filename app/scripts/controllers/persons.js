@@ -426,10 +426,43 @@ console.log('-------------');
   };
 */
 
+  // TODO: REMOVE THIS METHOD, USE ONLY newness() ...
   $scope.isNew = function(person) {
     var timestampCreation = person.timestamp_creation * 1000;
     var now = new Date().getTime();
     return (now - timestampCreation) < (cfg.person.NEW_DURATION_DAYS * cfg.MILLISECONDS_PER_DAY);
+  };
+
+  $scope.newnessGetClass = function(person) {
+    var className = 'person-newness-ages-ago';
+    var timestampCreation = person.timestamp_creation * 1000;
+    var now = new Date();
+
+    var timestampOneDayAgo = new Date(now - (1 * cfg.MILLISECONDS_PER_DAY)).getTime();
+    if (timestampCreation >= timestampOneDayAgo) { // creation date is not older than 24 hours
+      className = 'person-newness-one-day-ago';
+    } else {
+      var timestampTwoDaysAgo = new Date(now - (2 * cfg.MILLISECONDS_PER_DAY)).getTime();
+      if (timestampCreation >= timestampTwoDaysAgo) { // creation date is not older than 48 hours
+        className = 'person-newness-two-days-ago';
+      } else {
+        var timestampOneWeekAgo = new Date(now - (7 * cfg.MILLISECONDS_PER_DAY)).getTime();
+        if (timestampCreation >= timestampOneWeekAgo) { // creation date is not older than 48 hours
+          className = 'person-newness-one-week-ago';
+        } else {
+          var timestampOneMonthAgo = new Date(now - (30 * cfg.MILLISECONDS_PER_DAY)).getTime();
+          if (timestampCreation >= timestampOneMonthAgo) { // creation date is not older than 48 hours
+            className = 'person-newness-one-week-ago';
+          } else {
+            var timestampOneYearAgo = new Date(now - (365 * cfg.MILLISECONDS_PER_DAY)).getTime();
+            if (timestampCreation >= timestampOneYearAgo) { // creation date is not older than 48 hours
+              className = 'person-newness-one-year-ago';
+            }
+          }
+        }
+      }
+    }
+    return className;
   };
 
   $scope.firstSeen = function(person) {
@@ -442,11 +475,6 @@ console.log('-------------');
     var timestampOneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (7 * cfg.MILLISECONDS_PER_DAY);
     var timestampOneMonthAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (30 * cfg.MILLISECONDS_PER_DAY);
     var timestampOneYearAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - (365 * cfg.MILLISECONDS_PER_DAY);
-/*
-    var timestampOneWeekAgo = new Date(now - (7 * cfg.MILLISECONDS_PER_DAY)).getTime();
-    var timestampOneMonthAgo = new Date(now - (30 * cfg.MILLISECONDS_PER_DAY)).getTime();
-    var timestampOneYearAgo = new Date(now - (365 * cfg.MILLISECONDS_PER_DAY)).getTime();
-*/
     if (timestampCreation >= timestampStartOfToday) { // creation date is today
       firstSeenAsString = 'today, at ' + $filter('date')(timestampCreation, 'HH:mm');
     } else {

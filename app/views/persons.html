@@ -220,8 +220,8 @@
     </div>
   </div>
 
-  <div class="row row-gap" ng-repeat="person in personsList"
-    NOng-attr-id="{{::person.id_person}}" ng-show="isUniqShown('{{::person.id_person}}')"
+  <div class="row row-gap" ng-repeat="person in personsList track by person.id_person"
+    ng-show="isUniqShown('{{::person.id_person}}')"
     ng-class="{
       'person-inactive': person.active !== '1',
       'person-uniq-id-last': isUniqLast('{{::person.id_person}}')
@@ -309,8 +309,8 @@
       <div class="row" style="padding-bottom:2px;">
         <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2">
           <div class="person-is-new">
-            <button class="btn btn-default btn-wider" type="button" ng-click="openDetailsInNewWindow(person.id_person)" ng-attr-title="{{::isNew(person) ? 'New' : 'Old '}} person record: was first seen {{::firstSeen(person)}}">
-              <span><i class="glyphicon glyphicon-star" ng-class="{ 'person-new': isNew(person), 'person-not-new': !isNew(person) }"></i></span>
+            <button class="btn btn-default btn-wider" type="button" ng-click="openDetailsInNewWindow(person.id_person)" ng-attr-title="this person was first seen {{::firstSeen(person)}}">
+              <span><i class="glyphicon glyphicon-star" ng-class="newnessGetClass(person)"></i></span>
             </button>
           </div>
         </div>

@@ -114,8 +114,8 @@
             </div>
           </div>
           <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-            <div class="input-group input-group-bottom-spaced" ng-attr-title="{{isNew(person) ? 'New' : 'Old '}} person record: was first seen {{firstSeen(person)}}">
-              <span class="input-group-addon"><span class="glyphicon glyphicon-star" ng-class="{ 'person-new': isNew(person), 'person-not-new': !isNew(person) }"></span></span>
+            <div class="input-group input-group-bottom-spaced" ng-attr-title="this person was first seen {{firstSeen(person)}}">
+              <span class="input-group-addon"><span class="glyphicon glyphicon-star" ng-class="newnessGetClass(person)"></span></span>
               <input type="text" class="form-control" ng-value="firstSeen(person)" readonly>
             </div>
           </div>
@@ -229,15 +229,15 @@
       <div class="slides-control">
         <carousel disable-animation="false">
           <slide ng-repeat="photo in person.photos" active="photo.active">
-            <img class="slide" ng-src="{{cfg.apiUri + '/' + photo.path_full}}" />
+            <img ng-src="{{cfg.apiUri + '/' + photo.path_full}}" class="slideX" />
             <div class="carousel-caption">
               <p>{{slide.text}}</p>
             </div>
             <div class="carousel-toolbar">
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
-            <br>
-                  <button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thrutfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
+                  <br>
+                  <button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
                 </div>
               </div>
             </div>

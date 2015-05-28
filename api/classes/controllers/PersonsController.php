@@ -402,10 +402,13 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       $this->router->log("debug", " [$i/$persons_count]");
 
       for ($j = $i + 1; $j < $persons_count; $j++) {
+        $relationship = false;
+        if ($this->personsCheckSamePhone($persons[$i], $persons[$j])) {
+          # same phone, te persons probably have some relationship
+          $relationship = true;
+        }
         if (
-          # AVOID PHONE MATCHING, SINCE DIFFERENT PERSONS COUD SHARE ONE PHONE NUMBER...
-          #$this->personsCheckSamePhone($persons[$i], $persons[$j]) ||
-          $this->personsCheckSamePhotos($personsById, $persons[$i]["id_person"], $persons[$j]["id_person"])
+          $this->personsCheckSamePhotos($personsById, $persons[$i]["id_person"], $persons[$j]["id_person"], $relationship)
         ) { // these two persons are to be unified
           $id1 = $persons[$i]["id_person"];
           $id2 = $persons[$j]["id_person"];
@@ -538,17 +541,22 @@ if (
   /**
    * Check two persons uniqueness comparing their photos
    *
-   * @param  array $person1    the first person
-   * @param  array $person2    the second person
-   * @return integer: true     the persons are uniq (some photo in common)
-   *                  false    the persons are not uniq
+   * @param  array $personsById      the array of persons, by id
+   * @param  integer $id1            the id of the first person
+   * @param  integer $id2            the id of the second person
+   * @param  boolean $relationship   true if persons have some relationship
+   * @return integer: true           the persons are uniq (some photo in common)
+   *                  false          the persons are not uniq
    */
-  private function personsCheckSamePhotos($personsById, $id1, $id2) {
+  private function personsCheckSamePhotos($personsById, $id1, $id2, $relationship) {
     $person1 = $personsById[$id1];
     $person2 = $personsById[$id2];
 
     $photo = new Photo($this->router, [ "data" => [] ]);
-    $minDistance = $photo->getOption("signatureDuplicationMinDistance");
+    $minDistance = $photo->getOption($relationship ?
+      "signatureDuplicationMinRelatedDistance" :
+      "signatureDuplicationMinUnrelatedDistance"
+    );
 
     foreach ($person1["photos"] as $photo1) {
       foreach ($person2["photos"] as $photo2) {

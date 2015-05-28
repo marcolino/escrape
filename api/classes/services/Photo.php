@@ -9,7 +9,8 @@
 class Photo {
   const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
   const SMALL_HEIGHT = 96; // small photo height (pixels)
-  const SIGNATURE_DUPLICATION_MIN_DISTANCE = 0.06; // minimum % distance for similarity duplication # TODO: tune-me
+  const SIGNATURE_DUPLICATION_MIN_UNRELATED_DISTANCE = 0.06; // minimum % distance for *unrelated* images similarity check
+  const SIGNATURE_DUPLICATION_MIN_RELATED_DISTANCE = 0.24; // minimum % distance for *related* images similarity check # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
   const TIMEOUT_BETWEEN_DOWNLOADS = 60;
   const RETRIES_MAX_FOR_DOWNLOADS = 3;
@@ -23,8 +24,11 @@ class Photo {
     if (!isset($this->options["smallHeight"])) {
       $this->options["smallHeight"] = self::SMALL_HEIGHT;
     }
-    if (!isset($this->options["signatureDuplicationMinDistance"])) {
-      $this->options["signatureDuplicationMinDistance"] = self::SIGNATURE_DUPLICATION_MIN_DISTANCE;
+    if (!isset($this->options["signatureDuplicationMinUnrelatedDistance"])) {
+      $this->options["signatureDuplicationMinUnrelatedDistance"] = self::SIGNATURE_DUPLICATION_MIN_UNRELATED_DISTANCE;
+    }
+    if (!isset($this->options["signatureDuplicationMinRelatedDistance"])) {
+      $this->options["signatureDuplicationMinRelatedDistance"] = self::SIGNATURE_DUPLICATION_MIN_RELATED_DISTANCE;
     }
     if (!isset($this->options["signaturePixelsPerSide"])) {
       $this->options["signaturePixelsPerSide"] = self::SIGNATURE_PIXELS_PER_SIDE;
@@ -334,15 +338,20 @@ class Photo {
   }
 
   /**
-   * Checks for photos similarities: check if one photo signature is close to the other photo signature
+   * Checks for photos similarities: check if one photo signature is close to the other photo signature;
+   * if relationship is true, images are probably related, so we use a higher distance.
    */
-  public function checkSimilarity($photo) {
+  public function checkSimilarity($photo, $relationship = false) {
     if (!$photo) {
       return false;
     }
     $this->load();
+    $minDistance = $relationship ?
+      $this->options["signatureDuplicationMinRelatedDistance"] :
+      $this->options["signatureDuplicationMinUnrelatedDistance"]
+    ;
     $distance = $this->compareSignatures($this->signature(), $photo->signature());
-    if ($distance <= $this->options["signatureDuplicationMinDistance"]) { // duplicate found
+    if ($distance <= $minDistance) { // duplicate found
       return true;
     }
     return false;
@@ -665,6 +674,16 @@ class Photo {
 # TESTS ###################################################################################
 #require "Network.php";
 #$source = [];
+#$source["url"] = "http://192.168.10.30/escrape/toe-1.jpg";
+#$p1 = new Photo(null, $source, null);
+#$source["url"] = "http://192.168.10.30/escrape/sgi-1.jpg"; # similar
+#$p2 = new Photo(null, $source, null);
+#$similar = $p1->checkSimilarity($p2, true);
+#print "the images are " . ($similar ? "similar" : "different") . "\n";
+#exit;
+###########################################################################################
+#require "Network.php";
+#$source = [];
 #$source["url"] = "http://www.sexyguidaitalia.com/public/25090/3.jpg?t=635672905093169843";
 #$p = new Photo(null, $source, null);
 #$text = "Image does not exist";
@@ -696,3 +715,5 @@ class Photo {
 #print $img;
 #exit;
 ###########################################################################################
+
+?>

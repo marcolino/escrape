@@ -367,6 +367,9 @@ p.menu-item-separator {
   background-image: none;
   text-shadow: 1px 1px 0 #fff;
 }
+.carousel-indicators {
+  bottom: 36px;
+}
 .carousel-indicators li {
   background-color: #ddd;
 }
@@ -447,41 +450,89 @@ p.menu-item-separator {
   overflow-y: auto;
 }
 
+/* person newness classes */
+.person-newness-one-day-ago {
+  color: hsla(100, 100%, 50%, 1);
+}
+.person-newness-two-days-ago {
+  color: hsla(100, 100%, 40%, 1);
+}
+.person-newness-one-week-ago {
+  color: hsla(100, 100%, 30%, 1);
+}
+.person-newness-one-week-ago {
+  color: hsla(100, 100%, 20%, 1);
+}
+.person-newness-one-year-ago {
+  color: hsla(100, 100%, 10%, 1);
+}
+.person-newness-ages-ago {
+  color: hsla(100, 100%, 0%, 1);
+}
+
 /* vertical media queries for comments container */
 /* TODO: use more blocks, to make it more responsive */
 @media(max-height: 239px) {
   .comments {
     height: 80px;
   }
+  .carousel-inner > .item > img {
+    max-height: 100px;
+    width: auto;
+  }
 }
 @media(min-height: 240px) {
   .comments {
     height: 120px;
+  }
+  .carousel-inner > .item > img {
+    max-height: 200px;
+    width: auto;
   }
 }
 @media(min-height: 320px) {
   .comments {
     height: 170px;
   }
+  .carousel-inner > .item > img {
+    max-height: 250px;
+    width: auto;
+  }
 }
 @media(min-height: 480px) {
   .comments {
     height: 330px;
+  }
+  .carousel-inner > .item > img {
+    max-height: 300px;
+    width: auto;
   }
 }
 @media(min-height: 768px) {
   .comments {
     height: 618px;
   }
+  .carousel-inner > .item > img {
+    max-height: 500px;
+    width: auto;
+  }
 }
 @media(min-height: 992px) {
   .comments {
     height: 842px;
   }
+  .carousel-inner > .item > img {
+    max-height: 700px;
+    width: auto;
+  }
 }
 @media(min-height: 1200px) {
   .comments {
     height: 1050px;
+  }
+  .carousel-inner > .item > img {
+    max-height: 950px;
+    width: auto;
   }
 }
 
