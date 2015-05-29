@@ -33,7 +33,7 @@ if [ -n "$drop" ]; then
   #sudo rm -rf /var/www/html/escrape/api/db/*
   # backup db! (and photos...)
   db_backup_path="/var/www/html/escrape/api/db-backup/`date +%Y-%m-%d_%H:%M:%S`"
-  mkdir "$db_backup_path"
+  mkdir -p "$db_backup_path"
   mv /var/www/html/escrape/api/db/* "$db_backup_path"
 fi
 if [ -n "$images" ]; then

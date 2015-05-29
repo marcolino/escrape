@@ -220,7 +220,8 @@
     </div>
   </div>
 
-  <div class="row row-gap" ng-repeat="person in personsList track by person.id_person"
+  <div infinite-scroll="loadMore()" infinite-scroll-distance="0">
+  <div class="row row-gap" ng-repeat="person in personsList | limitTo:totalDisplayed"
     ng-show="isUniqShown('{{::person.id_person}}')"
     ng-class="{
       'person-inactive': person.active !== '1',
@@ -317,5 +318,6 @@
       </div>
 
     </div>
+  </div>
   </div>
 </div>

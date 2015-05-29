@@ -38,7 +38,7 @@
       $pageNext = 1;
 
       page_next:
-      $pathNext = $source["path_next"] ? sprintf($source["path_next"], $pageNext) : null;
+      $pathNext = $source["path-next"] ? sprintf($source["path-next"], $pageNext) : null;
 
       # TODO: handle country / city / category (instead of a fixed path)
       $url = $source["url"] . "/" . $source["path"] . $pathNext;
@@ -55,7 +55,7 @@
       if (preg_match_all($source["patterns"]["person"], $persons_page, $matches)) {
         $person_cells = $matches[1];
       } else {
-        if ($source["path_next"] and $pageNext > 1) { // path_next is defined, and we are on a page next to the first one
+        if ($source["path-next"] and $pageNext > 1) { // path-next is defined, and we are on a page next to the first one
           continue;
         } else {
           $this->router->log("error", "not any person pattern found on source [$sourceKey], giving up with this source");
@@ -243,7 +243,7 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
           }
         }
       }
-      if ($source["path_next"]) {
+      if ($source["path-next"]) {
         $pageNext++;
         goto page_next;
       }
@@ -526,12 +526,14 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    *                  false    the persons are not uniq
    */
   private function personsCheckSamePhone($person1, $person2) {
+/*
 if (
   ($person1["phone"] && $person2["phone"]) &&
   ($person1["phone"] === $person2["phone"])
 ) {
     $this->router->log("debug", "  SAME PHONE - \"" . $person1["name"] . "\" & \"" . $person2["name"] . "\"");
 }
+*/
     return (
       ($person1["phone"] && $person2["phone"]) &&
       ($person1["phone"] === $person2["phone"])

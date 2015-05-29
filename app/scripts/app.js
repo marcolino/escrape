@@ -29,6 +29,7 @@ var app = angular.module('escrapeApp', [
     'ui.bootstrap',
     'ui-rangeSliderInline',
     'toastr',
+    'infinite-scroll',
   ]);
 
 // configure routing system

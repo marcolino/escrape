@@ -282,7 +282,9 @@ console.log('id2index:', id2index);
 console.log('-------------');
 for (i = 0; i < len; i++) {
   //console.log(list[i].name + ' active flag is ' + list[i].active);
-  console.log('i: ' + i + ', active: ' + list[i].active + ', next: ' + (list[i].uniq_next ? list[i].uniq_next : 'X') + ', prev: ' + (list[i].uniq_prev ? list[i].uniq_prev : 'X') + ' => ' + list[i].name);
+  if (list[i].uniq_next || list[i].uniq_prev) {
+    console.log('i: ' + i + ', active: ' + list[i].active + ', next: ' + (list[i].uniq_next ? list[i].uniq_next : 'X') + ', prev: ' + (list[i].uniq_prev ? list[i].uniq_prev : 'X') + ' => ' + list[i].name);
+  }
 }
 console.log('-------------');
 console.log('scope.persons: ', $scope.persons);
@@ -294,8 +296,15 @@ console.log('-------------');
 
 
 
-// TODO: check which currently "public" methods could be set as "private"...
   // public methods
+
+  /* infinite scroll handling */
+  $scope.displayedPerPage = 50;
+  $scope.totalDisplayed = $scope.displayedPerPage;
+  $scope.loadMore = function () {
+    $scope.totalDisplayed += $scope.displayedPerPage;
+    console.log('loadMore() - totalDisplayed:', $scope.totalDisplayed);
+  };
 
   $scope.flipPersonInCommentActive = function(commentId, personId) {
     var len, i; //, active, person;
