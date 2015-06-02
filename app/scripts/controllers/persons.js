@@ -299,7 +299,7 @@ console.log('-------------');
   // public methods
 
   /* infinite scroll handling */
-  $scope.displayedPerPage = 50;
+  $scope.displayedPerPage = 32;
   $scope.totalDisplayed = $scope.displayedPerPage;
   $scope.loadMore = function () {
     $scope.totalDisplayed += $scope.displayedPerPage;
