@@ -1,2 +1,2 @@
 /* exported latestTag */
-var latestTag = 'v0.0.3';
+var latestTag = 'v0.0.4';

@@ -119,7 +119,7 @@ class DB extends PDO {
           vote INTEGER,
           rating INTEGER,
           showcase INTEGER,
-          thruthful INTEGER
+          thruthful INTEGER -- TODO: do we need this field?
          );
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "

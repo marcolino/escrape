@@ -504,7 +504,7 @@ p.menu-item-separator {
     height: 330px;
   }
   .carousel-inner > .item > img {
-    max-height: 300px;
+    max-height: 450px;
     width: auto;
   }
 }
@@ -513,7 +513,7 @@ p.menu-item-separator {
     height: 618px;
   }
   .carousel-inner > .item > img {
-    max-height: 500px;
+    max-height: 640px;
     width: auto;
   }
 }
