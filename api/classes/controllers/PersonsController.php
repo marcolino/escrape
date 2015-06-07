@@ -8,7 +8,7 @@
 
   class PersonsController {
   const PHOTOS_PATH = "db/photos/";
-  const TIMEOUT_BETWEEN_DOWNLOADS = 60;
+  const TIMEOUT_BETWEEN_DOWNLOADS = 30;
   const RETRIES_MAX_FOR_DOWNLOADS = 3;
 
   /**
@@ -19,7 +19,7 @@
     $this->router = $router;
     $this->network = new Network();
     $this->db = $router->db;
-    $this->DEBUG_UNIQ = 1; # DEBUG-UNIQ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+    $this->DEBUG_UNIQ = 0; # DEBUG-UNIQ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   }
 
   /**
@@ -64,10 +64,11 @@
         }
       }
       
-      $persons = $person = [];
+      $persons = [];
       $n = 0;
       $tot = count($person_cells);
       foreach ($person_cells as $person_cell) {
+        $person = [];
         $n++;
 
         // get person id
@@ -163,7 +164,6 @@
         // get person street address
         if (preg_match($source["patterns"]["person-street-address"], $page_details, $matches) >= 1) {
           $streetAddress = $this->normalizeStreetAddress($matches[1]);
-#$this->router->log("debug", " OOOOOOOOOOOOOOO STREET ADDRESS FOUND: [$name] => [$streetAddress]");
         } else {
           #$this->router->log("warning", "person $n description not found on source [$sourceKey]");
           $streetAddress = null;
@@ -211,21 +211,23 @@
 
         if ($personId) { # old key, update it
           $this->set($personId, $personMaster, $personDetail);
-#######################################################################
-# TODO: TEST IF *BODY* PAGE SUM DOES NOT CHANGE IF PAGE IS NOT UPDATED
-#######################################################################
-if ($personMaster["page_sum"] !== $person["page_sum"]) {
-  $this->router->log("debug", "PersonsController::sync() - body sum is changed");
-  if (($person["page_cleaned"] !== null) and ($personMaster["page_cleaned"] !== null)) {
-    file_put_contents("/tmp/person-old.html", $person["page_cleaned"]);
-    file_put_contents("/tmp/person-new.html", $personMaster["page_cleaned"]);
-    $diff = shell_exec("diff --context=0 '/tmp/person-old.html' '/tmp/person-new.html'");
-    $this->router->log("debug", "PersonsController::sync() - DEBUG ME - diff:\n\n$diff");
-  }
-} else {
-#  $this->router->log("debug", "PersonsController::sync() - body sum did not change");
-}
-#######################################################################
+          #######################################################################
+          # TODO: TEST IF *BODY* PAGE SUM DOES NOT CHANGE IF PAGE IS NOT UPDATED
+          #######################################################################
+          if ($personMaster["page_sum"] !== $person["page_sum"]) {
+            $this->router->log("debug", "PersonsController::sync() - body sum is changed");
+          /*
+            if (($person["page_cleaned"] !== null) and ($personMaster["page_cleaned"] !== null)) {
+              file_put_contents("/tmp/person-old.html", $person["page_cleaned"]);
+              file_put_contents("/tmp/person-new.html", $personMaster["page_cleaned"]);
+              $diff = shell_exec("diff --context=0 '/tmp/person-old.html' '/tmp/person-new.html'");
+              $this->router->log("debug", "PersonsController::sync() - DEBUG ME - diff:\n\n$diff");
+            }
+          */
+          } else {
+          #  $this->router->log("debug", "PersonsController::sync() - body sum did not change");
+          }
+          #######################################################################
         } else { # new key, insert it
           $personMaster["key"] = $key; // set univoque key only when adding person
           $personMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
@@ -233,12 +235,12 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
         }
 
         if (
-          !array_key_exists("id_person", $person) or // person is new
+          empty($person) or // person is new
           $fullSync or // a full sync was requested (TODO: if "page sum" method works, fullSync option is not useful anymore...)
           ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
           foreach ($photosUrls as $photoUrl) { // add photos
-            #$this->router->log("debug", "PersonsController::sync() - photo $photoUrl");
+            $this->router->log("debug", "PersonsController::sync() - photo $photoUrl");
             $this->photoAdd($personId, $photoUrl, $source);
           }
         }
@@ -285,9 +287,11 @@ if ($personMaster["page_sum"] !== $person["page_sum"]) {
         if ($problem) {
           $this->router->log("warning", "can't get page [$url]: " . $problem);
           if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds
-            $sleep = self::TIMEOUT_BETWEEN_DOWNLOADS * $retry;
-            $this->router->log("warning", "sleeping $sleep seconds before retrying...");
-            sleep($sleep);
+            if ($problem === "access denied") {
+              $sleep = self::TIMEOUT_BETWEEN_DOWNLOADS * $retry;
+              $this->router->log("warning", "sleeping $sleep seconds before retrying...");
+              sleep($sleep);
+            }
             $retry++;
             goto retry;
           } else {
@@ -381,10 +385,10 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     # check every couple of persons (avoiding permutations)
-    for ($i = 0; $i < $persons_count - 1; $i++) {
+    for ($i = 0; $i < $persons_count/* - 1*/; $i++) {
       // check only persons photos from system user (TODO: TEST THIS!)
       if ($persons[$i]["id_user"] !== $this->db->systemUserId()) {
-#$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") IS NOT A SYSTEM RECORD, SKIPPING");
+$this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["id_user"] . ") IS NOT A SYSTEM RECORD, SKIPPING (SHOULD NOT HAPPEN)");
         continue;
       }
 
@@ -399,7 +403,7 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
       }
  
-      $this->router->log("debug", " [$i/$persons_count]");
+      $this->router->log("debug", " [".(1+$i)."/$persons_count]");
 
       for ($j = $i + 1; $j < $persons_count; $j++) {
         $relationship = false;
@@ -803,7 +807,7 @@ if (
           "slovacch(i)?a" => "sk",
           "sloven(i)?a" => "si",
           "somal(i)?a" => "so",
-          "spagn(a|ola)" => "es",
+          "spagn(a)" => "es", // "spagnola" ignored on purpose
           "sve(zia|dese)" => "se",
           "svizzera" => "ch",
           "s[yi]ria(na)?" => "sy",
@@ -1038,6 +1042,7 @@ if (
     // check if photo has similarities
     $photo->signature();
     if ($this->photoCheckSimilarity($photo, $photos)) {
+      // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!
       return false; // similarity found
     }
     $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING TO DB...");

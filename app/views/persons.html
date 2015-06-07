@@ -220,7 +220,8 @@
     </div>
   </div>
 
-  <div infinite-scroll="loadMore()" infinite-scroll-distance="0">
+<!--<pre>{{personsList}}</pre>-->
+  <div infinite-scroll="loadMore()" infinite-scroll-distance="5">
   <div class="row row-gap" ng-repeat="person in personsList | limitTo:totalDisplayed"
     ng-show="isUniqShown('{{::person.id_person}}')"
     ng-class="{

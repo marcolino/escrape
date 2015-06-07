@@ -237,7 +237,8 @@
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
                   <br>
-                  <button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
+                  <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
+                  <button ng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
                 </div>
               </div>
             </div>
@@ -317,7 +318,7 @@
           </h5>
           <h5>
             <span ng-if="person.comments.length > 0">
-              Median rating of comments for <span class="label label-as-badge label-success">{{person.name}}</span> is <span class="label label-as-badge label-danger">{{person.rating}}</span>.
+              Median rating of comments for <span class="label label-as-badge label-success">{{person.name}}</span> is <span class="label label-as-badge label-danger">{{person.rating ? person.rating : 'not set'}}</span>.
             </span>
           </h5>
         </span>
@@ -331,7 +332,7 @@
                       <div class="pull-right"><i>N&deg;:</i></div>
                     </div>
                     <div class="col-xs-8" style="padding-left: 5px;">
-                      <div>{{1+$index}} (id:{{comment.id}})</div>
+                      <div>{{1+$index}} <i>(id:{{comment.id}})</i></div>
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
@@ -347,7 +348,7 @@
                       <div class="pull-right"><i>Date:</i></div>
                     </div>
                     <div class="col-xs-8" style="padding-left: 5px;">
-                      <div>{{comment.timestamp | date:'yyyy-MM-dd HH:mm:ss'}}</div>
+                      <div>{{comment.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</div><!-- TODO: define a comment.date() method to get commentd date... -->
                     </div>
                   </div>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
@@ -375,6 +376,7 @@
                     </div>
                   </div>
 
+<pre>{{personsPerComment[comment.id]}}</pre>
                   <div class="row" style="text-align: left; margin-bottom: 3px;">
                     <div class="col-xs-12">
                       <div class="dropdown">
@@ -402,8 +404,8 @@
                   </div>
                 </div>
                 <!--<div class="form-control" style="min-height: 180px; overflow-y:auto;" ng-bind-html="comment.content"></div>-->
-                <textarea class="form-control" ng-model="comment.content" style="min-height: 200px; overflow-y:auto;">
-                </textarea>
+                <div class="form-control" ng-bind-html="comment.content" style="min-height: 200px; overflow-y:auto;">
+                </div>
               </div>
             </div>
           </div>

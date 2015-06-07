@@ -81,9 +81,10 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
     console.log('APPLY PERSONS');
     $scope.personsLoading = false;
     $scope.persons = persons;
+console.info('PERSONS:', $scope.persons);
     $scope.personsList = sortObjectToList(persons, $scope.sieves.sort);
 console.info('SIEVES.SORT:', $scope.sieves.sort);
-console.info('PERSONS (' + $scope.personsList.length + '):', $scope.personsList);
+console.info('PERSONS LIST:', $scope.personsList);
 
 /*
 var list = $scope.personsList;
@@ -138,24 +139,30 @@ for (var i = 0; i < len; i++) {
            */
           //console.log('------------------------------ persons:', $scope.persons);
           var len = $scope.person.comments.length;
-          //console.log('length of comments for this person:', len);
+console.log('length of comments for this person:', len);
+console.log('comments for this person:', $scope.person.comments);
+console.log('persons:', $scope.persons);
           var commentId;
           for (var i = 0; i < len; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
             commentId = $scope.person.comments[i].id_comment;
             $scope.personsPerComment[commentId] = {};
-            //console.log('id of current ('+i+') comment:', commentId);
-            for (var personId in $scope.persons) { // loop through all persons
-              if ($scope.person.phone === $scope.persons[personId].phone) { // phone matches
-                //console.log(' +++ id of person with a matching phone:', personId);
+if (commentId === 7321) { console.log('loadPersons() - id of current ('+i+') comment:', commentId); }
+//            for (var personId in $scope.persons) { // loop through all persons
+//if (commentId == 7321) console.log('loadPersons() - personId: '+personId+', person:', $scope.person.id_person, $scope.person.name, $scope.person.phone);
+//              if ($scope.person.phone === $scope.persons[personId].phone) { // phone matches
+//if (commentId == 7321) console.log(' +++ id of person with a matching phone:', personId);
                 //console.log('     name of person with a matching phone:', $scope.persons[personId].name);
                 var active = false;
-                if ($scope.person.comments[i].id_person === personId) { // this comment has a specific id_person set: set that person as active
+                //if ($scope.person.comments[i].id_person === personId) { // this comment has a specific id_person set: set that person as active
+                if ($scope.person.comments[i].id_person === $scope.person.id_person) { // this comment has a specific id_person set: set that person as active
                   active = true;
                 }
-                $scope.personsPerComment[commentId][personId] = { name: $scope.persons[personId].name, active: active };
-              }
-            }
+                //$scope.personsPerComment[commentId][personId] = { name: $scope.persons[personId].name, active: active };
+                $scope.personsPerComment[commentId][$scope.person.id_person] = { name: $scope.person.name, active: active };
+//              }
+//            }
           }
+console.log('°°° loadPersons() - personsPerComment:', $scope.personsPerComment);
           //console.log('------------------------------');
         });
       }
@@ -211,49 +218,54 @@ for (var i = 0; i < len; i++) {
 
 // TODO: IGNORE persons with id_user !== 1 !!!
 
-    function id2indexBuild(iStart) {
+    function id2indexBuild(iStart, len) {
       for (var i = iStart; i < len; i++) { // rebuild id2index array
         id2index[list[i].id_person] = i;
       }
     }
 
+//console.info('XXX LIST:', list);
+
     // aggregate uniq persons
     var len = list.length;
     var id2index = {}; // id's to list indexes mapping
-    id2indexBuild(0);
+    id2indexBuild(0, len);
+//console.info('XXX ID2INDEX:', id2index);
+
     var i, j, src, dst, next;
     for (i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
         for (j = id2index[list[i].uniq_next]; j !== undefined; j = next) {
           next = id2index[list[j].uniq_next];
           src = j;
-          dst = ++i;
+          //dst = ++i; // NOOOOOOOOOOO
+          dst = i + 1;
           list.move(src, dst);
-          // TODO TEST MEEEEEEEEEEEEEEEEEEEEEEE
-          //id2indexBuild();
-          id2indexBuild(Math.min(src, dst));
+
+          id2indexBuild(Math.min(src, dst), len);
+          //id2indexBuild(0, len);
         }
       }
     }
 
-// TO BE DEBUGGED... ////////////////////////////////////////////////////////////////////
-console.log('id2index:', id2index);
+    /*
+     * pop up active persons in uniq chains, otherwise, if a not-active person is on
+     * top, all chain should be hidden when 'show only active persons' filter is set
+     */
+//console.log('id2index:', id2index);
     for (i = 0; i < len; i++) {
       if ((list[i].uniq_prev === null) && (list[i].uniq_next !== null)) { // a uniq primary
-console.log('i:', i, ' - a uniq primary found');
-        // pop up active persons in uniq chains, otherwise, if a not-active person is on
-        // top, all chain should be hidden when 'show only active persons' filter is set
-//console.log('list[i].active === 0:', list[i].active === '0' ? 'false' : 'true');
-console.log('pop up active persons in uniq chains - starting j:', i);
+//console.log('i:', i, ' - a uniq primary found');
+//console.log('pop up active persons in uniq chains - starting j:', i);
         for (j = i; j !== undefined && list[j].active === '0'; j = id2index[list[j].uniq_next]) {
           // nop
-console.log('pop up active persons in uniq chains - found j:', j);
+//console.log('pop up active persons in uniq chains - found j:', j);
         }
-console.log('pop up active persons in uniq chains FINISHED - j:', j);
+//console.log('pop up active persons in uniq chains FINISHED - j:', j);
         if (j !== undefined && j !== i) { // the first active person found is not the first on this chain
           src = j;
           dst = i;
-console.log('moving index ' + src + ' to index ' + dst + '.');
+//console.log('moving index ' + src + ' to index ' + dst + '.');
           list.move(src, dst); // swap first person (not active) with first active person
           // swap uniq flags, too
           var src_next = list[src].uniq_next;
@@ -265,30 +277,24 @@ console.log('moving index ' + src + ' to index ' + dst + '.');
           list[src].uniq_prev = src_next;
           list[dst].uniq_prev = src_prev;
 
-          /*
-          $scope.persons[list[src].id_person].uniq_next = dst_next;
-          $scope.persons[list[dst].id_person].uniq_next = dst_prev;
-          $scope.persons[list[src].id_person].uniq_prev = src_next;
-          $scope.persons[list[dst].id_person].uniq_prev = src_prev;
-          */
-          // TODO TEST MEEEEEEEEEEEEEEEEEEEEEEE
-          //id2indexBuild();
-          id2indexBuild(Math.min(src, dst));
-console.log('id2index:', id2index);
+          id2indexBuild(Math.min(src, dst), len);
+//console.log('id2index:', id2index);
         }
       }
     }
 
+/*
 console.log('-------------');
 for (i = 0; i < len; i++) {
   //console.log(list[i].name + ' active flag is ' + list[i].active);
-  if (list[i].uniq_next || list[i].uniq_prev) {
-    console.log('i: ' + i + ', active: ' + list[i].active + ', next: ' + (list[i].uniq_next ? list[i].uniq_next : 'X') + ', prev: ' + (list[i].uniq_prev ? list[i].uniq_prev : 'X') + ' => ' + list[i].name);
-  }
+  //if (list[i].uniq_next || list[i].uniq_prev) {
+    console.log('i: ' + i + ', id: ' + list[i].id_person + ', active: ' + list[i].active + ', next: ' + (list[i].uniq_next ? list[i].uniq_next : 'X') + ', prev: ' + (list[i].uniq_prev ? list[i].uniq_prev : 'X') + ' => ' + list[i].name);
+  //}
 }
 console.log('-------------');
-console.log('scope.persons: ', $scope.persons);
-console.log('-------------');
+*/
+//console.log('scope.persons: ', $scope.persons);
+//console.log('-------------');
 /////////////////////////////////////////////////////////////////////////////////////////
 
     return list;
@@ -335,8 +341,11 @@ console.log('-------------');
   };
 
   $scope.getPersonInCommentActive = function(commentId) {
+//if (commentId == 7321) console.log('°°° getPersonInCommentActive() - personsPerComment:', $scope.personsPerComment);
+//if (commentId == 7321) console.log('°°° getPersonInCommentActive() - commentId:', commentId);
     var personId;
     for (personId in $scope.personsPerComment[commentId]) {
+//if (commentId == 7321) console.log('°°° getPersonInCommentActive() - personId:', personId);
       if ($scope.personsPerComment[commentId][personId].active) { // one person is active, return her
         return $scope.personsPerComment[commentId][personId];
       }
@@ -409,6 +418,7 @@ console.log('-------------');
   };
 
   $scope.openInNewWindow = function(url) {
+    url = url.replace(/\.\.\//g, ''); // TODO: do this when saving photo urls...
     $window.open(url, '_blank');
   };
 
@@ -599,30 +609,22 @@ console.log('-------------');
   $scope.isUniqPrimary = function(personId) {
     var isUniqPrimary = false;
     if ($scope.persons[personId].uniq_prev === null) {
-      var id = personId;
-      var idNext;
-var n = 0;
+      //var id = personId;
+      var idNext = personId;
+      //var n = 0;
       do {
-        idNext = $scope.persons[id].uniq_next;
+        idNext = $scope.persons[idNext].uniq_next;
         if (idNext && $scope.persons[idNext] && $scope.persons[idNext].active) {
           isUniqPrimary = true;
           break;
         }
-//        break; // TODO: WITHOUT THIS BREAK LOOP COULD NEVER END... ????????????????
-if (++n > 10) {
-  console.error('isUniqPrimary('+personId+'): INFINITE LOOP DETECTED!');
-  break;
-}
-
+        //if (++n > 10) {
+        //  console.error('isUniqPrimary('+personId+'): INFINITE LOOP DETECTED!');
+        //  break;
+        //}
       } while (idNext && $scope.persons[idNext]);
     }
     return isUniqPrimary;
-/*
-    return (
-      ($scope.persons[personId].uniq_prev === null) &&
-      ($scope.persons[personId].uniq_next !== null)
-    );
-*/
   };
 
   $scope.isUniqSecondary = function(personId) {
@@ -983,7 +985,7 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     var geocoder = new google.maps.Geocoder();
     if (!address) {
       $scope.mapError = $scope.panoramaError = 'No address given';
-      console.warn('please specify an address...');
+      //console.warn('please specify an address...');
       return;
     }
     geocoder.geocode({ 'address': address }, function(results, status) {

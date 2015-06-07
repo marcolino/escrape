@@ -167,12 +167,12 @@ class CommentsController {
         foreach ($comments_text as $comment_text) { # loop through each comment
           $n++;
 
-          # parse author
-          if (preg_match($cd["patterns"]["author"], $comment_text, $matches)) {
-            $author = $this->cleanAuthor($matches[1]);
+          # parse author nick
+          if (preg_match($cd["patterns"]["author-nick"], $comment_text, $matches)) {
+            $author_nick = $this->cleanAuthor($matches[1]);
           } else {
-            $author = null;
-            $this->router->log("error", "no author found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            $author_nick = null;
+            $this->router->log("error", "no author nick found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
             continue;
           }
       
@@ -214,13 +214,13 @@ class CommentsController {
             $commentMaster = [];
             $timestamp = date_to_timestamp($date);
             $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
-            $key = $timestamp . "-" . md5("topic:[$topic], author:[$author], content:[$content]"); # a sortable, univoque index
+            $key = $timestamp . "-" . md5("topic:[$topic], author:[$author_nick], content:[$content]"); # a sortable, univoque index
             $commentMaster["phone"] = $phone;
             $commentMaster["topic"] = $topic;
-            $commentMaster["date"] = date("Y-m-d H:i:s", $timestamp);
+            //$commentMaster["date"] = date("Y-m-d H:i:s", $timestamp);
             $commentMaster["timestamp"] = $timestamp;
             $commentMaster["timestamp_last_sync"] = $timestampNow;
-            $commentMaster["author"] = $author;
+            $commentMaster["author_nick"] = $author_nick;
             $commentMaster["author_karma"] = $author_karma;
             $commentMaster["author_posts"] = $author_posts;
             $commentMaster["content"] = $content;
@@ -243,7 +243,7 @@ class CommentsController {
             $this->router->log("debug", "comment by key [$key] is new, inserting");
             $commentMaster["key"] = $key; // set univoque key only when adding person
             $commentMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
-            $commentMaster["new"] = true; // set new flag to true (TODO: do we need this?)
+            #$commentMaster["new"] = true; // set new flag to true (TODO: do we need this?)
             $commentId = $this->add($commentMaster, $commentDetail, null);
             $count++;
           }
