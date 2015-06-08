@@ -110,7 +110,7 @@ for (var i = 0; i < len; i++) {
 
   function loadPerson() { // load single person
     //$rootScope.openedId = $scope.personId;
-//console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
+    //console.info(' $rootScope.openedId after PERSON OPENED: ', $rootScope.openedId);
     Persons.getPerson($scope.personId, $scope.userId).then(function(person) {
       //angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       $scope.person = person;
@@ -137,33 +137,31 @@ for (var i = 0; i < len; i++) {
            * if they lack "id_person" field, they could be relative to another person
            * with the same phone.
            */
-          //console.log('------------------------------ persons:', $scope.persons);
-          var len = $scope.person.comments.length;
-console.log('length of comments for this person:', len);
-console.log('comments for this person:', $scope.person.comments);
-console.log('persons:', $scope.persons);
-          var commentId;
-          for (var i = 0; i < len; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
-            commentId = $scope.person.comments[i].id_comment;
-            $scope.personsPerComment[commentId] = {};
-if (commentId === 7321) { console.log('loadPersons() - id of current ('+i+') comment:', commentId); }
-//            for (var personId in $scope.persons) { // loop through all persons
-//if (commentId == 7321) console.log('loadPersons() - personId: '+personId+', person:', $scope.person.id_person, $scope.person.name, $scope.person.phone);
-//              if ($scope.person.phone === $scope.persons[personId].phone) { // phone matches
-//if (commentId == 7321) console.log(' +++ id of person with a matching phone:', personId);
-                //console.log('     name of person with a matching phone:', $scope.persons[personId].name);
-                var active = false;
-                //if ($scope.person.comments[i].id_person === personId) { // this comment has a specific id_person set: set that person as active
-                if ($scope.person.comments[i].id_person === $scope.person.id_person) { // this comment has a specific id_person set: set that person as active
-                  active = true;
+          Persons.getPersonsByPhone($scope.person.phone, $scope.userId).then(function(persons) {
+            //console.log('------------------------------ persons:', persons);
+            var len = $scope.person.comments.length;
+            console.log('length of comments for this person:', len);
+            console.log('comments for this person:', $scope.person.comments);
+            console.log('persons:', persons);
+            var commentId;
+            for (var i = 0; i < len; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
+              commentId = $scope.person.comments[i].id_comment;
+              $scope.personsPerComment[commentId] = {};
+              //if (commentId === 7321) { console.log('loadPersons() - id of current ('+i+') comment:', commentId); }
+              for (var personId in persons) { // loop through all persons whith the same phone
+                //if (commentId == 7321) console.log('loadPersons() - personId: '+personId+', person:', $scope.person.id_person, $scope.person.name, $scope.person.phone);
+                if ($scope.person.phone === persons[personId].phone) { // phone matches
+                  //console.log('     name of person with a matching phone:', $scope.persons[personId].name);
+                  $scope.personsPerComment[commentId][$scope.person.id_person] = {
+                    name: $scope.person.name,
+                    active: ($scope.person.comments[i].id_person === $scope.person.id_person), // this comment has a specific id_person set: set that person as active
+                  };
                 }
-                //$scope.personsPerComment[commentId][personId] = { name: $scope.persons[personId].name, active: active };
-                $scope.personsPerComment[commentId][$scope.person.id_person] = { name: $scope.person.name, active: active };
-//              }
-//            }
-          }
-console.log('°°° loadPersons() - personsPerComment:', $scope.personsPerComment);
-          //console.log('------------------------------');
+              }
+            }
+            console.log('°°° loadPersons() - personsPerComment:', $scope.personsPerComment);
+            //console.log('------------------------------');
+          });
         });
       }
     });
@@ -346,7 +344,7 @@ console.log('-------------');
     var personId;
     for (personId in $scope.personsPerComment[commentId]) {
 //if (commentId == 7321) console.log('°°° getPersonInCommentActive() - personId:', personId);
-      if ($scope.personsPerComment[commentId][personId].active) { // one person is active, return her
+      if ($scope.personsPerComment[commentId][personId].active) { // one person is active, return that
         return $scope.personsPerComment[commentId][personId];
       }
     }

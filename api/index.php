@@ -142,6 +142,14 @@ class Router {
           $this->error($e);
         }
       });
+      $this->app->get("/getByPhone/:phone/:userId", function($phone, $userId) {
+        try {
+          $persons = new PersonsController($this);
+          $this->success($persons->getByPhone($phone, $userId));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
     }); # ===================================================================
 
     # comments group ========================================================

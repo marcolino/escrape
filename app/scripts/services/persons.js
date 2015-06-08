@@ -116,12 +116,20 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+    getPersonsByPhone: function(phone, userId) {
+      return $http({
+        method: 'GET',
+        url: apiUri + 'getByPhone' + '/' + phone + '/' + userId
+      }).then(handleSuccess, handleError);
+    },
+
+    /*
     getPersonsPerComment: function(commentId) {
       return $http({
         method: 'GET',
         url: apiUri + 'getPersonsPerComment' + '/' + commentId,
       }).then(handleSuccess, handleError);
     },
-
+    */
   };
 });

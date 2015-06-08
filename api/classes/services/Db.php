@@ -681,17 +681,19 @@ $this->router->log("debug", " NEW UNIQCODE");
     isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment" . "_" . "detail";
-    $groupByField = "id_comment";
+    $groupByDetailField = "id_comment";
+    $orderByMasterField = "id";
     try {
       $sql = "
         SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
         FROM {$tableMaster}
         JOIN {$tableDetail}
-        ON {$tableMaster}.id = {$tableDetail}.{$groupByField}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByDetailField}
         WHERE $fieldName = :$fieldName
       ";
       $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
-      $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByDetailField}";
+      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue);
 #$this->router->log("debug", " db->getCommentByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));

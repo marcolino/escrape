@@ -214,7 +214,7 @@ class CommentsController {
             $commentMaster = [];
             $timestamp = date_to_timestamp($date);
             $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
-            $key = $timestamp . "-" . md5("topic:[$topic], author:[$author_nick], content:[$content]"); # a sortable, univoque index
+            $key = $timestamp . "-" . md5($topic . $author_nick . $content); # a sortable, univoque index
             $commentMaster["phone"] = $phone;
             $commentMaster["topic"] = $topic;
             //$commentMaster["date"] = date("Y-m-d H:i:s", $timestamp);
