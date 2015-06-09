@@ -139,6 +139,7 @@ class CommentsController {
         $url .= "?nowap"; # on wap version we don't get some data (author? date?)
         #$comment_page = $this->getUrlContents($url);
         #if ($comment_page === FALSE) {
+sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
         if (($comment_page = $this->network->getUrlContents($url)) === FALSE) {
           $this->router->log("error", "can't get url [$url] contents on comments definition provider [$commentDefinitionId]");
           continue;
@@ -236,9 +237,12 @@ class CommentsController {
           $commentId = null;
          #if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
           if (($comment = $this->db->getCommentByField("key", $key))) { # old key
+            $this->router->log("debug", "[][][] comment by key [$key] is old, SHOULD NOT HAPPEN, SKIPPING!");
+/*
             $this->router->log("debug", "comment by key [$key] is old, updating");
             $commentId = $comment[0]["id"];
             $this->set($commentId, $commentMaster, $commentDetail, null);
+*/
           } else {
             $this->router->log("debug", "comment by key [$key] is new, inserting");
             $commentMaster["key"] = $key; // set univoque key only when adding person

@@ -252,7 +252,11 @@ class SimpleSocket extends SimpleStickyError {
      */
     function close() {
         $this->is_open = false;
-        return fclose($this->handle);
+        if (is_resource($this->handle)) {
+          return fclose($this->handle);
+        } else {
+          return false;
+        }
     }
 
     /**
