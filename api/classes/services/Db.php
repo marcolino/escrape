@@ -693,7 +693,7 @@ $this->router->log("debug", " NEW UNIQCODE");
       ";
       $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
       $sql .= " GROUP BY {$tableDetail}.{$groupByDetailField}";
-      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC";
+      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue);
 #$this->router->log("debug", " db->getCommentByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));

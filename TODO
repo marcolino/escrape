@@ -16,8 +16,8 @@ TODO 1.0:
  - rethink about countries/cities/category
  - rethink about authentication / sieves / persons view/controllers relationships...
  - when syncing persons, and two photos are equal, update photo path...
- - when syncing comments, start with the first message of first page in thread... (in getCommentByField(), added "ORDER BY {$tableMaster}.id ASC", TOBETESTED @HOME)
  - avoid duplicated comments SET problems...
+ - page comments to 100 max?
  
  - solve all these TODO's
 
@@ -214,3 +214,4 @@ DONE:
  - handle person's race ('oriente' / 'sudamerica') ... (?) (currently we ignore it... we could extend countries service to handle "custom countries" (or ethnicity) ... (like "europe-east", "america-south", "east", ...)
  - if photos are a little zoomed, no match is found: find a solution to however find a match, or allow user to add uniqueness flag... IDEA: if the phone matches, use a lower similarity factor... (DONE, TO BE TESTED @HOME)
  - sometimes unique persons in persons view are not one next to the other...
+ - when syncing comments, start with the first message of first page in thread... (in getCommentByField(), added "ORDER BY {$tableMaster}.id ASC", TOBETESTED @HOME)

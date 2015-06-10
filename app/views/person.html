@@ -322,7 +322,8 @@
             </span>
           </h5>
         </span>
-        <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">
+<!--    <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">-->
+        <div ng-repeat="(n, comment) in person.comments" class="row row-gap">
           <div class="form-group">
             <div class="col-xs-12">
               <div class="input-group">

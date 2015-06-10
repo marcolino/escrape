@@ -187,20 +187,22 @@ for (var i = 0; i < len; i++) {
           } else
           if (crit === 'comments') {
             crit = 'comments_count';
-          }
-          if (crit === 'vote' && (object[a][crit] === null)) {
-            aval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
+            aval = parseInt(object[a][crit]);
+            bval = parseInt(object[b][crit]);
           } else {
-            aval = object[a][crit] || '~'; // replace null values with '~', which comes after all ASCII characters
-            //console.log('aval:', aval);
+            if (crit === 'vote' && (object[a][crit] === null)) {
+              aval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
+            } else {
+              aval = object[a][crit] || '~'; // replace null values with '~', which comes after all ASCII characters
+              //console.log('aval:', aval);
+            }
+            if (crit === 'vote' && (object[b][crit] === null)) {
+              bval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
+            } else {
+              bval = object[b][crit] || '~'; // replace null values with '~', which comes after all ASCII characters
+              //console.log('bval:', bval);
+            }
           }
-          if (crit === 'vote' && (object[b][crit] === null)) {
-            bval = (cfg.person.vote.max - cfg.person.vote.min) / 2;
-          } else {
-            bval = object[b][crit] || '~'; // replace null values with '~', which comes after all ASCII characters
-            //console.log('bval:', bval);
-          }
-
           if (dir === 'ascending') {
             if (aval > bval) { return 1; }
             if (aval < bval) { return -1; }
