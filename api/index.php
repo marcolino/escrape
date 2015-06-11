@@ -95,8 +95,17 @@ class Router {
       $this->app->post("/getPhotoOccurrences", function() {
         try {
           $persons = new PersonsController($this);
-          $data = json_decode($this->app->request()->getBody()); // content-type: application/json
+          $data = json_decode($this->app->request()->getBody());
           $this->success($persons->getPhotoOccurrences($data->id, $data->url));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/assertPhotoAvailability", function() {
+        try {
+          $persons = new PersonsController($this);
+          $data = json_decode($this->app->request()->getBody());
+          $this->success($persons->assertPhotoAvailability($data->url));
         } catch (Exception $e) {
           $this->error($e);
         }

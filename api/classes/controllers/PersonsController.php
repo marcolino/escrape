@@ -618,10 +618,32 @@ if (
   public function get($id, $userId = null) {
     $person = $this->db->getPerson($id, $userId);
     $photos = $this->db->getByField("photo", "id_person", $id, $userId);
+/*
+    TODO: THIS IS TOO SLOW TO BE PERFORMED HERE: REMOVE THIS CODE...
+    for ($i = 0; $i < count($photos); $i++) { // assert photos current availabilty
+      $photos[$i]["available"] = $this->assertPhotoAvailability($photos[$i]);
+    }
+*/
     $person["photos"] = $photos;
     return $person;
   }
   
+  /**
+   * assert photo current availabilty
+   */
+  public function assertPhotoAvailability($photoUrl) {
+    if (($headers = @get_headers($photoUrl, true)) === false) {
+      $retval = false;
+    } else {
+      $type = $headers["Content-Type"];
+      if (is_array($type)) {
+        $type = $type[0];
+      }
+      $retval = (substr($type, 0, strlen('image')) === 'image');
+    }
+    return $retval;
+  }
+
   public function getByPhone($phone, $userId = null) {
     if (!$phone) {
       return [];
@@ -1034,37 +1056,50 @@ if (
 #     return false; // same Last-Modified tag found
 #   }
 
+    $found = false;
+
     // check if photo is an exact duplicate
-    if ($this->photoCheckDuplication($photo, $photos)) {
-      return false; // duplicate found
-    }
-
-    // check if photo has similarities
-    $photo->signature();
-    if ($this->photoCheckSimilarity($photo, $photos)) {
+    if (($p = $this->photoCheckDuplication($photo, $photos)) !== null) {
       // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!
-      return false; // similarity found
+      $found = true; // duplicate found
+    } else {
+      // check if photo has similarities
+      $photo->signature();
+      if (($p = $this->photoCheckSimilarity($photo, $photos)) !== null) {
+        // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!
+        $found = true; // similarity found
+      } else {
+        $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING TO DB...");
+      }
     }
-    $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING TO DB...");
 
-    # TODO: test this new showcase strategy
-    $photo->showcase = (count($photos) === 0); // set showcase flag to true if this is the first image
-
-    $photo->idPerson($personId);
-    $photo->domain();
-    $photo->sum();
-    $photo->timestampCreation(time());
-    $photo->thruthful("unknown"); // this is an offline-set property (it's very expensive to calculate)
-   
-    // store this photo
-    if (($number = $this->photoStore($personId, $photo)) === false) {
-      $this->router->log("error", "photo " . $photo->url() . " for person id " . $personId . " could not be stored locally");
-      return false; // error storing photo locally
+    if (!$found) { // this photo was not found in database: add it
+      # showcase strategy: the forst photo is set for showcase
+      $photo->showcase = (count($photos) === 0); // set showcase flag to true if this is the first image
+  
+      $photo->idPerson($personId);
+      $photo->domain();
+      $photo->sum();
+      $photo->timestampCreation(time());
+      $photo->thruthful("unknown"); // this is an offline-set property (it's very expensive to calculate)
+     
+      // store this photo
+      if (($number = $this->photoStore($personId, $photo)) === false) {
+        $this->router->log("error", "photo " . $photo->url() . " for person id " . $personId . " could not be stored locally");
+        return false; // error storing photo locally
+      }
+      $photo->number($number);
+  
+      // add this photo to database
+      $retval = $this->db->add("photo", $this->photo2Data($photo));
+    } else { // this photo was found in database: check if url did change
+      if ($p["url"] !== $photo->url()) { // update this photo "url" field into database
+        $retval = $this->db->set("photo", $p["id"], $p["url"]);
+        $this->router->log("debug", "photo " . $p["url"] . " for person id " . $personId . ": updating changed url [XXX]");
+      } else { // no change even in url field
+        $retval = false;
+      }
     }
-    $photo->number($number);
-
-    // add this photo to database
-    $retval = $this->db->add("photo", $this->photo2Data($photo));
 
     // delete the photo object
     unset($photo);
@@ -1152,18 +1187,18 @@ if (
    * Check for photo exact duplication
    *
    * @param  Photo: $photo       the photo object to check for duplication
-   * @return boolean: true       if photo is a duplicate
-   *                  false      if photo is not a fuplicate
+   * @return array: $photos[]    if photo is a duplicate
+   *         null                if photo is not a fuplicate
    */
   private function photoCheckDuplication($photo, $photos) {
     if ($photos !== []) {
       foreach ($photos as $p) {
         if ($p["sum"] === $photo->sum()) { // the checksum matches
-          return true;
+          return $p;
         }
       }
     }
-    return false;
+    return null;
   }
 
   /**
@@ -1171,21 +1206,21 @@ if (
    *
    * @param  Photo: $photo       the photo object to check for similarity
    * @param  array: $photos      the array of photos to be checkd against
-   * @return boolean: true       if photo is similar to some else photo
-   *                  false      if photo is not similar to some else photo
+   * @return array: $photos[]    if photo is similar to some else photo
+   *         null                if photo is not similar to some else photo
    */
   private function photoCheckSimilarity($photo, $photos) {
-    $retval = false;
+    $retval = null;
     if ($photos !== []) {
       foreach ($photos as $p) {
         try {
           $photo2 = new Photo($this->router, [ "data" => $p ]);
         } catch (Exception $e) {
           $this->router->log("error", "can't create new photo from data: " . $e->getMessage());
-          return false;
+          break;
         }
         if ($photo->checkSimilarity($photo2)) {
-          $retval = true;
+          $retval = $p;
           break;
         }
       }

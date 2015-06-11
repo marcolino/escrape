@@ -237,7 +237,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
           $commentId = null;
          #if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
           if (($comment = $this->db->getCommentByField("key", $key))) { # old key
-            $this->router->log("debug", "[][][] comment by key [$key] is old, SHOULD NOT HAPPEN, SKIPPING!");
+            $this->router->log("debug", "[][][] comment by key [$key] is old, SHOULD NOT HAPPEN ON FIRST SYNC, SKIPPING!");
 /*
             $this->router->log("debug", "comment by key [$key] is old, updating");
             $commentId = $comment[0]["id"];

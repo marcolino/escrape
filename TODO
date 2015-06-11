@@ -15,10 +15,13 @@ TODO 1.0:
  - revise sieves.options handling...
  - rethink about countries/cities/category
  - rethink about authentication / sieves / persons view/controllers relationships...
- - when syncing persons, and two photos are equal, update photo path...
  - avoid duplicated comments SET problems...
  - page comments to 100 max?
+ - add thread level to person comments view
  
+ - when syncing persons, and two photos are equal, update photo path... (DONE, TO BE TESTED @HOME)
+ - avoid duplicated comments SET problems... (DONE, SKIPPING OLD COMMENTS, TO BE TESTED @HOME)
+
  - solve all these TODO's
 
 TODO 1.1:

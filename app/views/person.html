@@ -237,8 +237,15 @@
               <div class="form-group" style="vertical-align:bottom">
                 <div class="col-xs-12">
                   <br>
-                  <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
-                  <button ng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfullness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>
+                  <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfulness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
+                  <button
+                    ng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')"
+                    ng-disabled="!photo.available"
+                    class="btn btn-success"
+                    title="Check for this photo thruthfulness on the whole web"
+                  >
+                    <i ng-show="photo.available" class="glyphicon glyphicon-ok"></i> {{photo.available ? 'Check' : 'unavailable'}}
+                  </button>
                 </div>
               </div>
             </div>
@@ -322,6 +329,27 @@
             </span>
           </h5>
         </span>
+
+        <!-- Topics -->
+        <div ng-repeat="(key, topic) in person.topics" class="row row-gap">
+          <div class="form-group">
+            <div class="col-xs-12">
+              <div class="input-group">
+                <div class="input-group-addon" Xstyle="vertical-align: top; min-width:250px; font-size: 12px;" title="Comment">
+                  <div class="row" Xstyle="text-align: left; margin-bottom: 3px;">
+                    <div class="col-xs-12" Xstyle="padding-left: 5px;">
+                      <div>[+] {{1+$index}}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-control">
+                  <i>{{topic}}</i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
 <!--    <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">-->
         <div ng-repeat="(n, comment) in person.comments" class="row row-gap">
           <div class="form-group">

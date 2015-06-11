@@ -115,8 +115,19 @@ for (var i = 0; i < len; i++) {
       //angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       $scope.person = person;
 
-      console.log('PERSON:', $scope.person);
-      //$scope.person.street_region = 'it'; // TODO: get street_region from setup/cfg ?
+      // assert photos availability
+      for (var i = 0; i < $scope.person.photos.length; i++) {
+        /* jshint loopfunc: true */
+        (function(i) {
+          Persons.assertPhotoAvailability($scope.person.photos[i].url).then(function(available) {
+            $scope.person.photos[i].available = (available === 'true');
+          });
+        })(i);
+        /* jshint loopfunc: false */
+      }
+
+      //console.log('PERSON:', $scope.person);
+
       // watch for person street address changes
       $scope.$watch('person.street_address', function() {
         $scope.mapError = $scope.panoramaError = null;
@@ -132,6 +143,19 @@ for (var i = 0; i < len; i++) {
         Comments.getCommentsByPhone($scope.person.phone, $scope.userId).then(function(comments) {
           //console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
+
+          // loop through all comments to find topics
+          $scope.person.topics = {};
+          var len = $scope.person.comments.length;
+          for (var i = 0; i < len; i++) {
+            var topic = $scope.person.comments[i].topic;
+            if (!(topic in $scope.person.topics)) {
+              $scope.person.topics[topic] = topic;
+            }
+          }
+          $scope.person.topics['pippo'] = 1; // TODO: DEBUG-ONLY
+          $scope.person.topics['pluto'] = 1; // TODO: DEBUG-ONLY
+
           /*
            * $scope.person.comments contains all comments linked to the person's phone;
            * if they lack "id_person" field, they could be relative to another person
@@ -139,7 +163,7 @@ for (var i = 0; i < len; i++) {
            */
           Persons.getPersonsByPhone($scope.person.phone, $scope.userId).then(function(persons) {
             //console.log('------------------------------ persons:', persons);
-            var len = $scope.person.comments.length;
+            var len = $scope.person.comments.length; // TODO: use the 'len' variable set above???
             console.log('length of comments for this person:', len);
             console.log('comments for this person:', $scope.person.comments);
             console.log('persons:', persons);
@@ -789,6 +813,36 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     // TODO: try to avoid carousel sliding on carousel loading...
     $scope.tabSelected = tabName;
   };
+
+  // TODO: photoOccurrences is obsoleted, remove anything related...
+
+/* TODO: we check photo availability server-side, DELETE THIS CODE...
+  $scope.checkImageUrl = function(url) {
+    var callback = function (url, result) {
+      console.log("result for image at " + url + " is " + result);
+    };
+    var timeout = 5 * 1000; // 5 seconds
+    var timedOut = false, timer;
+    var img = new Image();
+    img.onerror = img.onabort = function() {
+      if (!timedOut) {
+        clearTimeout(timer);
+        callback(url, "error");
+      }
+    };
+    img.onload = function() {
+      if (!timedOut) {
+        clearTimeout(timer);
+        callback(url, "success");
+      }
+    };
+    img.src = url;
+    timer = setTimeout(function() {
+      timedOut = true;
+      callback(url, "timeout");
+    }, timeout); 
+  };
+*/
 
   $scope.getPhotoOccurrences = function(id, url) {
     $scope.tabSelected = 'photosOccurrences';

@@ -84,6 +84,16 @@ app.service('Persons', function($http, $q, cfg, notify) {
       }).then(handleSuccess, handleError);
     },
 
+    assertPhotoAvailability: function (url) {
+      return $http({
+        method: 'POST',
+        url: apiUri + 'assertPhotoAvailability',
+        data: {
+          url: url,
+        },
+      }).then(handleSuccess, handleError);
+    },
+
     getPhotoOccurrences: function (id, url) {
       return $http({
         method: 'POST',
