@@ -60,19 +60,7 @@ class CommentsController {
       setlocale(LC_ALL, $cd["locale"]);
       date_default_timezone_set($cd["timezone"]);
 
-/*
-      $post = [
-        $cd["usernameTag"] => $cd["username"],
-        $cd["passwordTag"] => $cd["password"],
-      ];
-      $page = $this->network->getUrlContents($cd["urlLogin"], $cd["charset"], $post, false, true);
-      if ($page === FALSE) {
-        $this->router->log("error", "can't get login page contents on comments definition provider [$commentDefinitionId]");
-        continue;
-      }
-*/
       $browser = &new SimpleBrowser();
-      #$browser->useProxy(Network::TOR_HOST . ":" . Network::TOR_PORT, null, null);
       $browser->get($cd["url-login"]);
       $browser->setField($cd["username-field-name"], $cd["username"]);
       $browser->setField($cd["password-field-name"], $cd["password"]);
@@ -102,50 +90,28 @@ class CommentsController {
         }
       }
       
-      # loop through all comment pages urls returned
+      // loop through all comment pages urls returned
       foreach ($searchResultsUrls as $url) {
-      #foreach ($commentPageUrls as $url) {
   
         $this->router->log("info", "url: [$url]");
 
-        /*
-        # TODO: remove this test if domain=$domain works fine...
-        # skip result with different domains
-        if (parse_url($url)["host"] !== $cd["domain"]) {
-          $this->router->log("debug", "skipping url because " . parse_url($url)["host"] . " !== " . $cd["domain"]);
-          continue;
-        }
-        */
-
-        /*
-        # transform possible "next" pages to the "first" one
-        if (preg_match("/^(.*)\/\d+\/?$/s", $url, $matches)) {
-          $url = $matches[1];
-        }
-        */
-  
         next_comments_page:
-        /*
-        $url = preg_replace("/\/?$/", "", $url); # remove trailing slash
-        $url = preg_replace("/\?PHPSESSID=.*    /", "", $url); # remove SESSION ID
-        */
         if (isset($this->syncUrls[$url])) { # this url has been visited already, skip it
           $this->router->log("debug", "skipping already visited url [$url] on comments definition provider [$commentDefinitionId]");
           continue;
         }
 
-        $this->syncUrls[$url] = 1; # remember this url, to avoid future possible duplications
+        $this->syncUrls[$url] = 1; // remember this url, to avoid future possible duplications
   
-        $url .= "?nowap"; # on wap version we don't get some data (author? date?)
-        #$comment_page = $this->getUrlContents($url);
-        #if ($comment_page === FALSE) {
-sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
+        $url .= "?nowap"; # // wap version we don't get some data (author? date?)
+
+        sleep(rand(3, 6)); # try avoiding sentinels... TODO: BYPASS-ME...
         if (($comment_page = $this->network->getUrlContents($url)) === FALSE) {
           $this->router->log("error", "can't get url [$url] contents on comments definition provider [$commentDefinitionId]");
           continue;
         }
 
-        # parse topic
+        // parse topic
         if (preg_match($cd["patterns"]["topic"], $comment_page, $matches)) {
           $topic = $matches[1];
         } else {
@@ -154,7 +120,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
           continue;
         }
   
-        # all comments blocks
+        // all comments blocks
         if (preg_match_all($cd["patterns"]["block"], $comment_page, $matches)) {
           $comments_text = $matches[1];
         } else {
@@ -168,7 +134,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
         foreach ($comments_text as $comment_text) { # loop through each comment
           $n++;
 
-          # parse author nick
+          // parse author nick
           if (preg_match($cd["patterns"]["author-nick"], $comment_text, $matches)) {
             $author_nick = $this->cleanAuthor($matches[1]);
           } else {
@@ -177,7 +143,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
             continue;
           }
       
-          # parse author karma
+          // parse author karma
           if (preg_match($cd["patterns"]["author-karma"], $comment_text, $matches)) {
             $author_karma = $matches[1];
           } else {
@@ -185,7 +151,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
             $this->router->log("error", "no author karma found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
           }
       
-          # parse author posts
+          // parse author posts
           if (preg_match($cd["patterns"]["author-posts"], $comment_text, $matches)) {
             $author_posts = $matches[1];
           } else {
@@ -193,7 +159,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
             $this->router->log("error", "no author posts found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
           }
 
-          # parse date
+          // parse date
           if (preg_match($cd["patterns"]["date"], $comment_text, $matches)) {
             $date = $this->cleanDate($matches[1]);
           } else {
@@ -202,7 +168,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
             continue;
           }
       
-          # parse content
+          // parse content
           if (preg_match($cd["patterns"]["content"], $comment_text, $matches)) {
             $content = $this->cleanContent($matches[1], $commentDefinitionId);
           } else {
@@ -211,14 +177,13 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
             continue;
           }
       
-          if ($content) { # empty comments are not useful...
+          if ($content) { // empty comments are not useful
             $commentMaster = [];
             $timestamp = date_to_timestamp($date);
             $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
             $key = $timestamp . "-" . md5($topic . $author_nick . $content); # a sortable, univoque index
             $commentMaster["phone"] = $phone;
             $commentMaster["topic"] = $topic;
-            //$commentMaster["date"] = date("Y-m-d H:i:s", $timestamp);
             $commentMaster["timestamp"] = $timestamp;
             $commentMaster["timestamp_last_sync"] = $timestampNow;
             $commentMaster["author_nick"] = $author_nick;
@@ -233,27 +198,45 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
             continue;
           }
 
-          # check if comment is new or not ####################################################
+          // check if comment is new or not /////////////////////////////////////////////////////
           $commentId = null;
-         #if (($comment = $this->db->getByField("comment", "key", $key))) { # old key
-          if (($comment = $this->db->getCommentByField("key", $key))) { # old key
-            $this->router->log("debug", "[][][] comment by key [$key] is old, SHOULD NOT HAPPEN ON FIRST SYNC, SKIPPING!");
+          if (($comments = $this->db->getCommentsByField("key", $key))) { // old comment
+            $this->router->log("debug", "[][][] comment by key [$key] is old, not saving to database (SHOULD NOT HAPPEN ON FIRST SYNC!)");
+            if ($n <= 1) { // on first old comment, try to skip to last page already scraped
+              $this->router->log("debug", "££££££ on first old comment, trying to skip to last page already scraped");
+              $commentsInTopic = $this->db->getCommentsByField("topic", $topic);
+              $length = count($commentsInTopic);
+              $this->router->log("debug", "££££££ [$length] comments found for topic [$topic]");
+              $urlToSkipTo = "";
+              for ($i = 0; $i < $length; $i++) { // scan comments with current topic
+                $comment = $commentsInTopic[$i];
+                # TODO: don't use "!==", but a function to match thread part of url...
+                if ($commentsInTopic[$i]["url"] !== $url) { // if url is from a distinct thread (same topic for distinct threads), skip this comment
+                  continue;
+                }
+                $urlToSkipTo = $commentsInTopic[$i]["url"];
+              }
+              if ($urlToSkipTo) {
+                $this->router->log("debug", "££££££ FOUND URL TO SKIP TO: [$urlToSkipTo]");
+                $url = $urlToSkipTo;
+                goto next_comments_page; # directly jump to found url
+              }
+            }
 /*
             $this->router->log("debug", "comment by key [$key] is old, updating");
             $commentId = $comment[0]["id"];
             $this->set($commentId, $commentMaster, $commentDetail, null);
 */
-          } else {
+          } else { // new comment
             $this->router->log("debug", "comment by key [$key] is new, inserting");
             $commentMaster["key"] = $key; // set univoque key only when adding person
             $commentMaster["timestamp_creation"] = $timestampNow; // set current timestamp as creation timestamp
-            #$commentMaster["new"] = true; // set new flag to true (TODO: do we need this?)
             $commentId = $this->add($commentMaster, $commentDetail, null);
             $count++;
           }
         }
   
-        # match next comments page link
+        // match next comments page link
         preg_match($cd["patterns"]["next-link"], $comment_page, $matches);
         if ($matches) {
           $url = $matches[1];
@@ -284,7 +267,7 @@ sleep(rand(7, 12)); # TRY AVOIDING AUTOMATED SENTINELS... TODO: REMOVE-ME...
       return [];
     }
 #$this->router->log("debug", "getByPhone() - phone: [$phone]");
-    return $this->db->getCommentByField("phone", $phone, $userId);
+    return $this->db->getCommentsByField("phone", $phone, $userId);
   }
   
   public function countByPhone($phone) {

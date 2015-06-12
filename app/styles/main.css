@@ -179,7 +179,19 @@ body {
   margin-top: 2px;
 }
 
-/* Listing page */
+/* comments topics */
+.li-gap {
+  padding: 1px 0 1px 0;
+}
+.topic-horizontal-spacer {
+  margin-right: 5px;
+}
+.topic-title {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* listing page */
 .row-gap {
   padding: 5px 0 5px 0;
   border-top: 1px solid #e0e0e0;

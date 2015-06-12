@@ -153,8 +153,8 @@ for (var i = 0; i < len; i++) {
               $scope.person.topics[topic] = topic;
             }
           }
-          $scope.person.topics['pippo'] = 1; // TODO: DEBUG-ONLY
-          $scope.person.topics['pluto'] = 1; // TODO: DEBUG-ONLY
+$scope.person.topics['pippo'] = "il titolo del primo topic sul numero '33333333'"; // TODO: DEBUG-ONLY
+$scope.person.topics['pluto'] = "il titolo del secondo topic sul numero '33333333'"; // TODO: DEBUG-ONLY
 
           /*
            * $scope.person.comments contains all comments linked to the person's phone;

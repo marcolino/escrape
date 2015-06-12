@@ -331,6 +331,32 @@
         </span>
 
         <!-- Topics -->
+        <ul ng-repeat="(key, topic) in person.topics" class="nav nav-pills nav-stacked">
+          <li class="li-gap">
+            <div class="form-control">
+              <span class="NOshowcase-left" title="Open topic">
+                <a href="" ng-click="uniqShow('{{::person.id_person}}')" class="no-text-decoration">
+                  <i class="fa fa-fw"
+                    ng-class="{
+                    'fa-plus-square': isTopicClosed('{{key}}'),
+                    'fa-minus-square': !isTopicClosed('{{key}}'),
+                   }"></i>
+                </a>
+              </span>
+              <span class="badge badge-default" title="topic number">
+                {{1+$index}}
+              </span>
+              <span class="label label-info" title="the number of comments in the topic">
+                33
+              </span>
+              <span class="topic-horizontal-spacer"></span>
+              <span class="topic-title" title="the topic title">
+                {{topic}}
+              </span>
+            </div>
+          </li>
+        </ul>
+<!-- OLD MARKUP
         <div ng-repeat="(key, topic) in person.topics" class="row row-gap">
           <div class="form-group">
             <div class="col-xs-12">
@@ -349,6 +375,7 @@
             </div>
           </div>
         </div>
+-->
 
 <!--    <div ng-repeat="(n, comment) in person.comments | orderBy: ['topic', 'date']" class="row row-gap">-->
         <div ng-repeat="(n, comment) in person.comments" class="row row-gap">

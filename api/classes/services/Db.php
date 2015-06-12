@@ -677,7 +677,7 @@ $this->router->log("debug", " NEW UNIQCODE");
     }
   }
 
-  public function getCommentByField($fieldName, $fieldValue, $userId = null) {
+  public function getCommentsByField($fieldName, $fieldValue, $userId = null) {
     isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "comment";
     $tableDetail = "comment" . "_" . "detail";
@@ -696,10 +696,10 @@ $this->router->log("debug", " NEW UNIQCODE");
       $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue);
-#$this->router->log("debug", " db->getCommentByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
+#$this->router->log("debug", " db->getCommentsByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->execute();
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#$this->router->log("debug", " db->getCommentByField() - count(result):" . "\n" . count($result));
+#$this->router->log("debug", " db->getCommentsByField() - count(result):" . "\n" . count($result));
       return $result;
     } catch (PDOException $e) {
       throw new Exception("can't get person data: " . $e->getMessage());
