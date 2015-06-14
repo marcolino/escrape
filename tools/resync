@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+# Erase dababase (DB + photos) and re-sync it
+
+usage() {
+  echo "\
+Usage: $0  [ OPTIONS ]  MODE
+
+           OPTIONS:
+             [ -i | --images-forced (force download of all persons images) ] |
+             [ -d | --drop (drop db and re-sync) ]
+
+           MODE:
+             [ all       (resync anything)      ] |
+             [ persons   (resync only persons)  ] |
+             [ comments  (resync only comments) ]
+" 1>&2
+  exit 1
+}
+
+while getopts ":di" o; do
+  case "${o}" in
+    d)
+      drop=1
+      ;;
+    i)
+      #i=${OPTARG}
+      images=1
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+what=${@:$OPTIND:1}
+
+clear
+if [[ $what =~ ^all$ ]]; then
+  :
+else
+  if [[ $what =~ ^persons$ ]]; then
+    :
+  else
+    if [[ $what =~ ^comments$ ]]; then
+      :
+    else
+      usage
+    fi
+  fi
+fi
+
+if [ -n "$drop" ]; then
+  read -p "Are you sure to erase the whole database and photos [y/N]? " -n 1 -r
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "dropping database..."
+    db_backup_path="/var/www/html/escrape/api/db-backup/`date +%Y-%m-%d_%H:%M:%S`"
+    mkdir -p "$db_backup_path"
+    mv /var/www/html/escrape/api/db/* "$db_backup_path"
+  fi
+fi
+
+if [[ $what =~ ^all$ || $what =~ ^persons$ ]]; then
+  if [ -n "$images" ]; then
+    echo "re-syncing persons (download of all images forced)"
+    time curl -X GET -i localhost/escrape/api/persons/sync/full
+  else
+    echo "re-syncing persons"
+    time curl -X GET -i localhost/escrape/api/persons/sync
+  fi
+fi
+if [[ $what =~ ^all$ || $what =~ ^comments$ ]]; then
+  echo "re-syncing comments"
+  time curl -X GET -i localhost/escrape/api/comments/sync
+fi
+echo

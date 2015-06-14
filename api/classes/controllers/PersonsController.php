@@ -29,7 +29,7 @@
    * @return boolean:            true if everything successful, false if any error occurred
    */
   public function sync($fullSync = false) {
-    $this->router->log("info", "---------- sync ----------");
+    $this->router->log("info", "---------- persons sync ----------");
     $timestampStart = time();
     $error = false; // track errors while sync'ing for activity assertion
 
@@ -259,7 +259,7 @@
     // assert persons uniqueness after sync completed
     $error = !$this->assertPersonsUniqueness($timestampStart) || $error;
 
-    $this->router->log("info", "---------- /sync ----------");
+    $this->router->log("info", "---------- /persons sync ----------");
     return !$error;
   }
 
@@ -632,6 +632,7 @@ if (
    * assert photo current availabilty
    */
   public function assertPhotoAvailability($photoUrl) {
+    $photoUrl = str_replace("../", "", $photoUrl); // normalize urls - TODO: REMOVE ME, SHOULD BE DONE IN $this->photoAdd() ...
     if (($headers = @get_headers($photoUrl, true)) === false) {
       $retval = false;
     } else {
@@ -1033,9 +1034,8 @@ if (
    */
   public function photoAdd($personId, $photoUrl, $source) {
     // make absolute and relative urls uniform
-    if (is_absolute_url($photoUrl)) { // absolute photo url
-      $photoUrl = str_replace("../", "", $photoUrl); // normalize absolute urls
-    } else { // make absolute from relative photo url
+    $photoUrl = str_replace("../", "", $photoUrl); // normalize urls
+    if (!is_absolute_url($photoUrl)) { // make absolute from relative photo url
       $photoUrl = $source["url"] . "/" . $photoUrl;
     }
 
@@ -1094,8 +1094,7 @@ if (
       $retval = $this->db->add("photo", $this->photo2Data($photo));
     } else { // this photo was found in database: check if url did change
       if ($p["url"] !== $photo->url()) { // update this photo "url" field into database
-        $retval = $this->db->set("photo", $p["id"], $p["url"]);
-        $this->router->log("debug", "photo " . $p["url"] . " for person id " . $personId . ": updating changed url [XXX]");
+        $retval = $this->db->set("photo", $p["id"], [ "url" => $p["url"] ]);
       } else { // no change even in url field
         $retval = false;
       }

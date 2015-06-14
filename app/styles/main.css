@@ -182,13 +182,13 @@ body {
 /* comments topics */
 .li-gap {
   padding: 1px 0 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .topic-horizontal-spacer {
   margin-right: 5px;
 }
 .topic-title {
-  white-space: nowrap;
-  overflow: hidden;
 }
 
 /* listing page */

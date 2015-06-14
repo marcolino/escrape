@@ -18,6 +18,7 @@ TODO 1.0:
  - avoid duplicated comments SET problems...
  - page comments to 100 max?
  - add thread level to person comments view
+ - when changing address in person view, street view and street indications SOMETIMES show error: Waiting for address geo-codification ...
  
  - when syncing persons, and two photos are equal, update photo path... (DONE, TO BE TESTED @HOME)
  - avoid duplicated comments SET problems... (DONE, SKIPPING OLD COMMENTS, TO BE TESTED @HOME)

@@ -696,10 +696,41 @@ $this->router->log("debug", " NEW UNIQCODE");
       $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":" . $fieldName, $fieldValue);
-#$this->router->log("debug", " db->getCommentsByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->execute();
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#$this->router->log("debug", " db->getCommentsByField() - count(result):" . "\n" . count($result));
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+
+  public function getCommentsByFields($array, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "comment";
+    $tableDetail = "comment" . "_" . "detail";
+    $groupByDetailField = "id_comment";
+    $orderByMasterField = "id";
+    try {
+      $where = "";
+      foreach ($array as $key => $value) {
+        $where .= ($where ? " AND " : "") . $key . " = " . ":" . $key;
+      }
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByDetailField}
+        WHERE $where
+      ";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByDetailField}";
+      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
+      $statement = $this->db->prepare($sql);
+      foreach ($array as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
       return $result;
     } catch (PDOException $e) {
       throw new Exception("can't get person data: " . $e->getMessage());
@@ -1053,7 +1084,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       $sql = "
         UPDATE {$table}
         SET $set
-        f id = :id
+        WHERE id = :id
       ";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(':id', $id, PDO::PARAM_INT);
@@ -1066,7 +1097,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
         throw new Exception("update into table $table for id [$id] did update " . $statement->rowCount() . " records");
       }
     } catch (PDOException $e) {
-      throw new Exception("can't update record to $table: " . $e->getMessage());
+      throw new Exception("can't update record to $table: " . $e->getMessage() . "(sql: $sql)");
     }
     return $id;
   }

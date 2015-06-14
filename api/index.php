@@ -226,8 +226,7 @@ class Router {
           $this->error($e);
         }
       });
-      $this->app->post("/sync", function() {
-        # TODO: why POST???? GET!!!
+      $this->app->get("/sync", function() {
         try {
           $comments = new CommentsController($this);
           $this->success($comments->sync());

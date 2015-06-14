@@ -93,4 +93,21 @@
     return preg_match("/^https?:\/\//", $string);
   }
 
+/**
+  * Checks if a string ends with another on
+  *
+  * @param string $string   the whole string
+  * @param ending $string   the string the whole string should be ending with
+  * @return boolean         true  if the whole string ends with the ending string
+  *                         false otherwise 
+  */
+  function ends_with($string, $ending) {
+    $strlen = strlen($string);
+    $endinglen = strlen($ending);
+    if ($endinglen > $strlen) {
+      return false;
+    }
+    return substr_compare($string, $ending, $strlen - $endinglen, $endinglen) === 0;
+  }
+
  ?>
