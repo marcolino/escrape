@@ -60,6 +60,16 @@ class CommentsController {
   public function searchByPhone($phones) {
     require_once(__DIR__ . "/../../lib/simpletest/browser.php");
 
+/*
+# DEBUG: WRITE:
+if (strlen((string)$content >= 5000000) {
+  file_put_contents("/tmp/ADDCONTENT.TRACE", "CONTENT STRING IN addContent() in SimpleTag CLASS IN simpletest LIB IS BIGGER THAN %M!!!\n\n" . (string)$content);
+  exit;
+}
+
+ON LINE 164 IN addContent() in SimpleTag CLASS IN simpletest LIB !!!!
+*/
+
     #$this->router->log("debug", "searchByPhone($phone) [$phone]");
 
 $memory_limit = ini_get('memory_limit')/1024/1024;
