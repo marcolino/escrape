@@ -31,15 +31,19 @@ class CommentsController {
     $persons = $this->db->getPersons();
     $timestampStart = time();
     $phones = [];
+    $nn = 0;
+    $tott = count($persons;
     foreach ($persons as $person) {
       $phone = $person["phone"];
       if (!$phone or in_array($phone, $phones)) { // skip empty or already processed phones
         continue;
       }
       $phones[] = $phone;
+$commentsCount = $this->searchByPhone($phone, $nn, $tott);
+      $nn++;
     }
 
-    $commentsCount = $this->searchByPhone($phones);
+#    $commentsCount = $this->searchByPhone($phones);
 
     $this->router->log("info", "---------- /comments sync ----------");
     return true;
@@ -57,25 +61,16 @@ class CommentsController {
    * @return integer $count:   number of comments found
    *         boolean false:    error
    */
-  public function searchByPhone($phones) {
+  public function searchByPhone($phone/*s*/, $nn, $tott) {
     require_once(__DIR__ . "/../../lib/simpletest/browser.php");
-
-/*
-# DEBUG: WRITE:
-if (strlen((string)$content >= 5000000) {
-  file_put_contents("/tmp/ADDCONTENT.TRACE", "CONTENT STRING IN addContent() in SimpleTag CLASS IN simpletest LIB IS BIGGER THAN %M!!!\n\n" . (string)$content);
-  exit;
-}
-
-ON LINE 164 IN addContent() in SimpleTag CLASS IN simpletest LIB !!!!
-*/
 
     #$this->router->log("debug", "searchByPhone($phone) [$phone]");
 
-$memory_limit = ini_get('memory_limit')/1024/1024;
+$memory_limit = ini_get('memory_limit');
 $this->router->log("debug", "sBP {0} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
     $this->syncUrls = []; # array to store already sync'ed urls
-    $tot = count($phones);
+    #$tot = count($phones);
+    $tot = 1;
     $n = 0;
 #$time_start = $this->microtime_float();
     foreach ($this->commentsDefinitions as $commentDefinitionId => $cd) {
@@ -85,7 +80,6 @@ $this->router->log("debug", "sBP {0} [MEM: ".(memory_get_usage(true)/1024/1024).
       setlocale(LC_ALL, $cd["locale"]);
       date_default_timezone_set($cd["timezone"]);
   
-      $browser = null;
       $browser = &new SimpleBrowser();
       $browser->get($cd["url-login"]); # SLOW-OP
       $browser->setField($cd["username-field-name"], $cd["username"]);
@@ -97,22 +91,19 @@ $this->router->log("debug", "sBP {0} [MEM: ".(memory_get_usage(true)/1024/1024).
         return false;
       }
         
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {2} [$time]");
-#$this->router->log("debug", "sBP {2} [".memory_get_usage()."]");
-
-      foreach ($phones as $phone) { // loop through all phones
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {3a} [$time]");
-
+      $browserClean = clone $browser;
+      #foreach ($phones as $phone) { // loop through all phones
+$this->router->log("debug", "sBP {0a} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+        unset($browser);
+$this->router->log("debug", "sBP {0b} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+        $browser = $browserClean;
+$this->router->log("debug", "sBP {0c} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
         $page = $browser->get($cd["url-search"]); # SLOW-OP
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {3b} [$time]");
+$this->router->log("debug", "sBP {0d} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
         $browser->setField($cd["search-field-name"], $phone);
+$this->router->log("debug", "sBP {0e} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
         $page = $browser->click($cd["search-tag"]); # SLOW-OP
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {3c} [$time]");
-        
+$this->router->log("debug", "sBP {0f} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
         if (!preg_match($cd["patterns"]["search-ok"], $page)) {
           $this->router->log("error", "can't get search results on comments definition provider [$commentDefinitionId]");
           return false;
@@ -120,8 +111,6 @@ $this->router->log("debug", "sBP {0} [MEM: ".(memory_get_usage(true)/1024/1024).
 $this->router->log("debug", "sBP {1} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
 
         $searchResultsUrls = [];
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {3d} [$time]");
         if (preg_match_all($cd["patterns"]["comment-link"], $page, $matches)) {
           $searchResults = $matches[1];
           foreach ($searchResults as $url) {
@@ -130,11 +119,10 @@ $this->router->log("debug", "sBP {1} [MEM: ".(memory_get_usage(true)/1024/1024).
             }
           }
         }       
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {3e} [$time]");
-#$this->router->log("debug", "sBP {4} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {2} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
 
         // loop through all comment pages urls returned
+        $count = 0;
         foreach ($searchResultsUrls as $url) {
     
           #$this->router->log("info", "url: [$url]");
@@ -149,17 +137,12 @@ $this->router->log("debug", "sBP {1} [MEM: ".(memory_get_usage(true)/1024/1024).
     
           if (!ends_with($url, "?nowap")) $url .= "?nowap"; # // wap version we don't get some data (author? date?)
   
-###sleep(rand(1, 2)); # try avoiding sentinels... TODO: BYPASS-ME...
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {4} [$time]");
-$this->router->log("debug", "sBP {5} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {3} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
           if (($comment_page = $this->network->getUrlContents($url)) === FALSE) {
             $this->router->log("error", "can't get url [$url] contents on comments definition provider [$commentDefinitionId]");
             continue;
           }
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {5} [$time]");
-$this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {4} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
   
           // parse topic
           if (preg_match($cd["patterns"]["topic"], $comment_page, $matches)) {
@@ -180,10 +163,8 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
           }
     
           $comment_next_page_url = "";
-          $count = 0;
           foreach ($comments_text as $comment_text) { # loop through each comment
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {6} [$time]");
+#$this->router->log("debug", "sBP {5} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
 
             // parse author nick
             if (preg_match($cd["patterns"]["author-nick"], $comment_text, $matches)) {
@@ -228,7 +209,7 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
               continue;
             }
         
-#$this->router->log("debug", "sBP {7} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {6} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
             if ($content) { // empty comments are not useful
               $commentMaster = [];
               $timestamp = date_to_timestamp($date);
@@ -249,7 +230,7 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
               #$this->router->log("info", "empty comment found on url [$url] on comments definition provider [$commentDefinitionId]");
               continue;
             }
-#$this->router->log("debug", "sBP {8} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {7} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
   
             // check if comment is new or not /////////////////////////////////////////////////////
             $commentId = null;
@@ -282,12 +263,7 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
                   goto next_comments_page; # directly jump to last url for this topic
                 }
               }
-#$this->router->log("debug", "sBP {9} [".memory_get_usage()."]");
-/*
-              $this->router->log("debug", "comment by key [$key] is old, updating");
-              $commentId = $comment[0]["id"];
-              $this->set($commentId, $commentMaster, $commentDetail, null);
-*/
+#$this->router->log("debug", "sBP {8} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
             } else { // new comment
               $this->router->log("debug", "inserting new comment with topic [$topic] for phone [$phone], date: [$date]");
               $commentMaster["key"] = $key; // set univoque key only when adding person
@@ -296,9 +272,8 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
               $count++;
             }
           }
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {8} [$time]");
-    
+#$this->router->log("debug", "sBP {9} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+
           // match next comments page link
           preg_match($cd["patterns"]["next-link"], $comment_page, $matches);
           if ($matches) {
@@ -306,15 +281,16 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
             goto next_comments_page; # do a supplementary loop with next url
           }
          
-#$time_end = $this->microtime_float(); $time = $time_end - $time_start;
-#$this->router->log("debug", "sBP {9} [$time]");
+#$this->router->log("debug", "sBP {10} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
         }
 
-#$this->router->log("debug", "sBP {10} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {11} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
         $n++;
-        $this->router->log("debug", "[$n / $tot ] - person with phone [$phone] has $count new comments");
-      }
+        #$this->router->log("debug", "[$n / $tot ] - person with phone [$phone] has $count new comments");
+        $this->router->log("debug", "[$nn / $tott ] - person with phone [$phone] has $count new comments");
+      #}
     }
+    $this->router->log("debug", "returning from searchByPhone..............");
   }
 
   public function getAll($userId = null) {

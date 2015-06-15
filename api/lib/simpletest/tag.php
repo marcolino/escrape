@@ -161,10 +161,6 @@ class SimpleTag {
      *    @access public
      */
     function addContent($content) {
-if (strlen((string)$content >= 5000000) {
-  file_put_contents("/tmp/ADDCONTENT.TRACE", "CONTENT STRING IN addContent() in SimpleTag CLASS IN simpletes LIB IS BIGGER THAN %M!!!\n\n" . (string)$content);
-  exit;
-}
         $this->content .= (string)$content;
         return $this;
     }
