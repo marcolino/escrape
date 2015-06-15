@@ -62,7 +62,8 @@ class CommentsController {
 
     #$this->router->log("debug", "searchByPhone($phone) [$phone]");
 
-$this->router->log("debug", "sBP {0} [".memory_get_usage()."]");
+$memory_limit = ini_get('memory_limit')/1024/1024;
+$this->router->log("debug", "sBP {0} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
     $this->syncUrls = []; # array to store already sync'ed urls
     $tot = count($phones);
     $n = 0;
@@ -70,10 +71,11 @@ $this->router->log("debug", "sBP {0} [".memory_get_usage()."]");
     foreach ($this->commentsDefinitions as $commentDefinitionId => $cd) {
 #$time_end = $this->microtime_float(); $time = $time_end - $time_start;
 #$this->router->log("debug", "sBP {1} [$time]");
-$this->router->log("debug", "sBP {1} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {1} [".memory_get_usage()."]");
       setlocale(LC_ALL, $cd["locale"]);
       date_default_timezone_set($cd["timezone"]);
   
+      $browser = null;
       $browser = &new SimpleBrowser();
       $browser->get($cd["url-login"]); # SLOW-OP
       $browser->setField($cd["username-field-name"], $cd["username"]);
@@ -87,7 +89,7 @@ $this->router->log("debug", "sBP {1} [".memory_get_usage()."]");
         
 #$time_end = $this->microtime_float(); $time = $time_end - $time_start;
 #$this->router->log("debug", "sBP {2} [$time]");
-$this->router->log("debug", "sBP {2} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {2} [".memory_get_usage()."]");
 
       foreach ($phones as $phone) { // loop through all phones
 #$time_end = $this->microtime_float(); $time = $time_end - $time_start;
@@ -105,7 +107,7 @@ $this->router->log("debug", "sBP {2} [".memory_get_usage()."]");
           $this->router->log("error", "can't get search results on comments definition provider [$commentDefinitionId]");
           return false;
         }
-$this->router->log("debug", "sBP {3} [".memory_get_usage()."]");
+$this->router->log("debug", "sBP {1} [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
 
         $searchResultsUrls = [];
 #$time_end = $this->microtime_float(); $time = $time_end - $time_start;
@@ -118,9 +120,9 @@ $this->router->log("debug", "sBP {3} [".memory_get_usage()."]");
             }
           }
         }       
-$this->router->log("debug", "sBP {4} [".memory_get_usage()."]");
 #$time_end = $this->microtime_float(); $time = $time_end - $time_start;
 #$this->router->log("debug", "sBP {3e} [$time]");
+#$this->router->log("debug", "sBP {4} [".memory_get_usage()."]");
 
         // loop through all comment pages urls returned
         foreach ($searchResultsUrls as $url) {
@@ -216,7 +218,7 @@ $this->router->log("debug", "sBP {6} [".memory_get_usage()."]");
               continue;
             }
         
-$this->router->log("debug", "sBP {7} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {7} [".memory_get_usage()."]");
             if ($content) { // empty comments are not useful
               $commentMaster = [];
               $timestamp = date_to_timestamp($date);
@@ -237,7 +239,7 @@ $this->router->log("debug", "sBP {7} [".memory_get_usage()."]");
               #$this->router->log("info", "empty comment found on url [$url] on comments definition provider [$commentDefinitionId]");
               continue;
             }
-$this->router->log("debug", "sBP {8} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {8} [".memory_get_usage()."]");
   
             // check if comment is new or not /////////////////////////////////////////////////////
             $commentId = null;
@@ -270,7 +272,7 @@ $this->router->log("debug", "sBP {8} [".memory_get_usage()."]");
                   goto next_comments_page; # directly jump to last url for this topic
                 }
               }
-$this->router->log("debug", "sBP {9} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {9} [".memory_get_usage()."]");
 /*
               $this->router->log("debug", "comment by key [$key] is old, updating");
               $commentId = $comment[0]["id"];
@@ -298,7 +300,7 @@ $this->router->log("debug", "sBP {9} [".memory_get_usage()."]");
 #$this->router->log("debug", "sBP {9} [$time]");
         }
 
-$this->router->log("debug", "sBP {10} [".memory_get_usage()."]");
+#$this->router->log("debug", "sBP {10} [".memory_get_usage()."]");
         $n++;
         $this->router->log("debug", "[$n / $tot ] - person with phone [$phone] has $count new comments");
       }
