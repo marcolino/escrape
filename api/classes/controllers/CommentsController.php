@@ -32,7 +32,7 @@ class CommentsController {
     $timestampStart = time();
     $phones = [];
     $nn = 0;
-    $tott = count($persons;
+    $tott = count($persons);
     foreach ($persons as $person) {
       $phone = $person["phone"];
       if (!$phone or in_array($phone, $phones)) { // skip empty or already processed phones
