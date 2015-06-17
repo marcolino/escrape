@@ -137,26 +137,13 @@ for (var i = 0; i < len; i++) {
 
       //$scope.personCountryFilter = $scope.countries.getCountryName(person.nationality);
       $scope.personsPerComment = {};
+      $scope.person.topics = {};
       if (!$scope.person.phone) { // empty phone, do not load comments
         $scope.person.comments = [];
       } else { // phone is present, do load comments
         Comments.getCommentsByPhone($scope.person.phone, $scope.userId).then(function(comments) {
-          //console.log('comments for ' + $scope.person.phone + ':', comments);
           $scope.person.comments = comments;
-
-          // loop through all comments to find topics
-          $scope.person.topics = {};
-          var len = $scope.person.comments.length;
-          for (var i = 0; i < len; i++) {
-            var topic = $scope.person.comments[i].topic;
-            if (!(topic in $scope.person.topics)) {
-              $scope.person.topics[topic] = topic;
-            }
-          }
-/*
-$scope.person.topics['pippo'] = "il titolo del primo topic sul numero '33333333'"; // TODO: DEBUG-ONLY
-$scope.person.topics['pluto'] = "il titolo del secondo topic sul numero '33333333'"; // TODO: DEBUG-ONLY
-*/
+          //console.log('comments for ' + $scope.person.phone + ':', comments);
 
           /*
            * $scope.person.comments contains all comments linked to the person's phone;
@@ -165,28 +152,106 @@ $scope.person.topics['pluto'] = "il titolo del secondo topic sul numero '3333333
            */
           Persons.getPersonsByPhone($scope.person.phone, $scope.userId).then(function(persons) {
             //console.log('------------------------------ persons:', persons);
-            var len = $scope.person.comments.length; // TODO: use the 'len' variable set above???
-            console.log('length of comments for this person:', len);
+            var commentsCount = $scope.person.comments.length;
+            console.log('number of comments for this person:', commentsCount);
             console.log('comments for this person:', $scope.person.comments);
+            console.log('!!! ==> number of persons with this same phone:', persons.length);
             console.log('persons:', persons);
-            var commentId;
-            for (var i = 0; i < len; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
-              commentId = $scope.person.comments[i].id_comment;
-              $scope.personsPerComment[commentId] = {};
-              //if (commentId === 7321) { console.log('loadPersons() - id of current ('+i+') comment:', commentId); }
-              for (var personId in persons) { // loop through all persons whith the same phone
-                //if (commentId == 7321) console.log('loadPersons() - personId: '+personId+', person:', $scope.person.id_person, $scope.person.name, $scope.person.phone);
-                if ($scope.person.phone === persons[personId].phone) { // phone matches
-                  //console.log('     name of person with a matching phone:', $scope.persons[personId].name);
-                  $scope.personsPerComment[commentId][$scope.person.id_person] = {
-                    name: $scope.person.name,
-                    active: ($scope.person.comments[i].id_person === $scope.person.id_person), // this comment has a specific id_person set: set that person as active
-                  };
-                }
+            for (var i = 0; i < commentsCount; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
+
+              // build personsPerComment
+              var comment = $scope.person.comments[i];
+              // TODO: REMOVE $scope.personsPerComment, use comment.feasiblePersons...
+              $scope.personsPerComment[comment.id_comment] = {};
+              comment.feasiblePersons = {}; // TODO: use instead of personsPerComment[comment.id_comment] ...
+              for (var person in persons) { // loop through all persons with the same phone as current person
+                // TODO: REMOVE $scope.personsPerComment, use comment.feasiblePersons...
+                $scope.personsPerComment[comment.id_comment][person.id_person] = {
+                  name: person.name,
+                  active: (comment.id_person === person.id_person), // this comment has id_person field equal to one of the persons with the same phone: set that personPerComment as active
+                };
+                comment.feasiblePersons[person.id_person] = {
+                  name: person.name,
+                  active: (comment.id_person === person.id_person), // this comment has id_person field equal to one of the persons with the same phone: set that personPerComment as active
+                };
+              }
+              // TODO: REMOVE $scope.personsPerComment, use comment.feasiblePersons...
+              if ($scope.personsPerComment[comment.id_comment].length < 1) { // assert at least one person per comment found
+                console.error('$scope.personsPerComment['+comment.id_comment+'].length < 1'); // TODO: DEBUG ONLY, REMOVE ME!!!
+              }
+              if ($scope.personsPerComment[comment.id_comment].length === 1) { // exactly one person for this commen't phone: set it as active
+                console.info('$scope.personsPerComment['+comment.id_comment+'].length === 1'); // TODO: DEBUG ONLY, REMOVE ME!!!
+                $scope.personsPerComment[comment.id_comment][person.id_person].active = true;
+              }
+              if ($scope.personsPerComment[comment.id_comment].length > 1) { // more than one person for this commen't phone: do nothing
+                console.info('$scope.personsPerComment['+comment.id_comment+'].length > 1'); // TODO: DEBUG ONLY, REMOVE ME!!!
+              }
+
+              if (comment.feasiblePersons.length < 1) { // assert at least one person per comment found
+                console.error('comment.feasiblePersons.length < 1'); // TODO: DEBUG ONLY, REMOVE ME!!!
+              }
+              if (comment.feasiblePersons.length === 1) { // exactly one person for this commen't phone: set it as active
+                console.info('comment.feasiblePersons.length === 1'); // TODO: DEBUG ONLY, REMOVE ME!!!
+                $scope.personsPerComment[comment.id_comment][person.id_person].active = true;
+              }
+
+              // build topics
+              var topicKey =
+                comment.topic + '-' +
+                comment.timestamp_creation + '-' +
+                comment.author_nick
+              ; // build a univoke key for this comment
+              if (!(topicKey in $scope.person.topics)) { // new topic, create it
+                $scope.person.topics[topicKey] = {};
+                $scope.person.topics[topicKey].title = comment.topic;
+                $scope.person.topics[topicKey].count = 0;
+                $scope.person.topics[topicKey].timestamp_creation = comment.timestamp; // TODO: do we need this???
+                $scope.person.topics[topicKey].phone = $scope.person.phone; // TODO: do we need this???
+                $scope.person.topics[topicKey].personsPerTopic = $scope.personsPerComment[comment.id_comment];
+                $scope.person.topics[topicKey].rating = 0;
+                $scope.person.topics[topicKey].items = [];
+              } else { // old topic, noop
+              }
+              $scope.person.topics[topicKey].items.push(comment);
+              $scope.person.topics[topicKey].count++;
+              $scope.person.topics[topicKey].rating += comment.rating;
+            }
+
+            // scan all topics for this person phone to set topic rating median value
+            for (var tKey in $scope.person.topics) {
+              if (!$scope.person.topics.hasOwnProperty(tKey)) { // TODO: DEBUG-ONLY, REMOVE-ME
+                console.error('§§§ (EXPECTED) §§§ - topic object with inherited property:', tKey);
+              }
+              if ($scope.person.topics.hasOwnProperty(tKey)) {
+                var topicRating = $scope.person.topics[tKey].count ?
+                  $scope.person.topics[tKey].rating / $scope.person.topics[tKey].count :
+                  null
+                ;
+                $scope.person.topics[tKey].rating = topicRating; // set new median rating value
               }
             }
-            console.log('°°° loadPersons() - personsPerComment:', $scope.personsPerComment);
-            //console.log('------------------------------');
+
+            console.log('°°° loadPerson() - personsPerComment:', $scope.personsPerComment);
+/*
+            $scope.person.topics = {};
+            var commentsCount = $scope.person.comments.length;
+            for (var i = 0, n = 0; i < commentsCount; i++) {
+              var comment = $scope.person.comments[i];
+              var key = comment.topic + '-' + comment.timestamp_creation + '-' + comment.author_nick;
+              if (!key in $scope.person.topics) { // create topic and add comment to new topic
+                $scope.person.topics[key] = {};
+                $scope.person.topics[key].topic = comment.topic;
+                $scope.person.topics[key].n = ++n;
+                $scope.person.topics[key].timestamp_creation = comment.timestamp; // TODO: do we need this???
+                $scope.person.topics[key].phone = $scope.person.phone; // TODO: do we need this???
+                $scope.person.topics[key].personsPerTopic = $scope.personsPerComment[comment.id_comment];
+                $scope.person.topics[key].rating = null;
+                $scope.person.topics[key].items = [];
+              } else { // topic already present
+              }
+              $scope.person.topics[key].items.push(comment);
+            }
+*/
           });
         });
       }
@@ -369,13 +434,37 @@ console.log('-------------');
     }
     $scope.savePersonComment(comment);
   };
+  $scope.flipPersonInCommentActive2 = function(commentId, personId) {
+    var len, i; //, active, person;
+    var active = false;
+    for (var pId in $scope.personsPerComment[commentId]) {
+      if (pId === personId) {
+        active = !$scope.personsPerComment[commentId][pId].active; // flip active flag
+        // set active flag in personsPerComment
+        $scope.personsPerComment[commentId][pId].active = active;
+      } else {
+        $scope.personsPerComment[commentId][pId].active = false;
+      }
+    }
+    // if a person is active, set id_person in person comments, otherwise reset it
+    len = $scope.person.comments.length;
+    var comment;
+    for (i = 0; i < len; i++) {
+      comment = $scope.person.comments[i];
+      if (comment.id_comment === commentId) {
+        if (active) {
+          comment.id_person = personId;
+        } else {
+          comment.id_person = null;
+        }
+      }
+    }
+    $scope.savePersonComment(comment);
+  };
 
   $scope.getPersonInCommentActive = function(commentId) {
-//if (commentId == 7321) console.log('°°° getPersonInCommentActive() - personsPerComment:', $scope.personsPerComment);
-//if (commentId == 7321) console.log('°°° getPersonInCommentActive() - commentId:', commentId);
     var personId;
     for (personId in $scope.personsPerComment[commentId]) {
-//if (commentId == 7321) console.log('°°° getPersonInCommentActive() - personId:', personId);
       if ($scope.personsPerComment[commentId][personId].active) { // one person is active, return that
         return $scope.personsPerComment[commentId][personId];
       }
@@ -388,6 +477,22 @@ console.log('-------------');
     // no person, return empty object (should not happen)
     return {};
   };
+  $scope.getPersonInCommentActive2 = function(commentId) {
+    var personId;
+    for (personId in $scope.personsPerComment[commentId]) {
+      if ($scope.personsPerComment[commentId][personId].active) { // one person is active, return that
+        return $scope.personsPerComment[commentId][personId];
+      }
+    }
+    // no person is active, return a dummy object with a blank name
+    for (personId in $scope.personsPerComment[commentId]) {
+      return { name: '' };
+      //return $scope.personsPerComment[commentId][personId];
+    }
+    // no person, return empty object (should not happen)
+    return {};
+  };
+
 
   $scope.isAnyPersonInCommentActive = function(commentId) {
     // search current person for given comment id and check if any active person in comment is present

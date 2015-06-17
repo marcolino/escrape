@@ -22,7 +22,8 @@ TODO 1.0:
  
  - when syncing persons, and two photos are equal, update photo path... (DONE, TO BE TESTED @HOME)
  - avoid duplicated comments SET problems... (DONE, SKIPPING OLD COMMENTS, TO BE TESTED @HOME)
-
+ - restore php mem_limit to 128MB...
+ 
  - solve all these TODO's
 
 TODO 1.1:

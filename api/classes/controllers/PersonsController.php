@@ -480,6 +480,7 @@ $this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["
 #################################################################################
 ### DEBUG ONLY: PRINT NEXT / PREV CHAINS...
 #################################################################################
+/*
     $persons = $this->db->getPersons();
     for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
       $personId = $persons[$i]["id_person"];
@@ -516,6 +517,7 @@ $this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["
       }
       $this->router->log("debug", "[$i] $chain");
     }
+*/
 #################################################################################
 
     return true;

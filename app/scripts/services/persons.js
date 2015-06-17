@@ -134,10 +134,10 @@ app.service('Persons', function($http, $q, cfg, notify) {
     },
 
     /*
-    getPersonsPerComment: function(commentId) {
+    get Persons Per Comment: function(commentId) {
       return $http({
         method: 'GET',
-        url: apiUri + 'getPersonsPerComment' + '/' + commentId,
+        url: apiUri + 'get Persons Per Comment' + '/' + commentId,
       }).then(handleSuccess, handleError);
     },
     */
