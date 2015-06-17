@@ -26,28 +26,50 @@ class CommentsController {
    * Sync comments
    */
   public function sync() {
+    $all = false;
+    $error = false;
     $this->router->log("info", "---------- comments sync ----------");
 
-    $persons = $this->db->getPersons();
+    # TODO: sieves2Sql() should accept empty sieves...
+    $sieves = [];
+    $sieves["search"] = [];
+    $sieves["filters"] = [];
+    $sieves["filters"]["nationality"] = null;
+    $sieves["filters"]["voteMin"] = 0;
+    $sieves["filters"]["voteMax"] = 10;
+    $sieves["filters"]["active"] = "yes";
+    $sieves["filters"]["commentsCountMin"] = 0;
+    $sieves["filters"]["age"] = [];
+    $sieves["filters"]["age"]["min"] = 0;
+    $sieves["filters"]["age"]["max"] = 100;
+    $persons = $this->db->getPersons($all ? null : $sieves);
     $timestampStart = time();
     $phones = [];
-    $n = 0;
     $personsCount = count($persons);
 $memory_limit = ini_get('memory_limit');
+    $phones = [];
+    $n = 0;
     foreach ($persons as $person) {
 $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
 
       $phone = $person["phone"];
-      if (!$phone or in_array($phone, $phones)) { // skip empty or already processed phones
+      if (!$phone or !$person["active"] or in_array($phone, $phones)) { // skip empty or already processed phones
         continue;
       }
+      #if (!$all) { // not all persons (even inactive ones) requested
+      #  if (!$person["active"]) { // skip not active persons
+      #    continue;
+      #  }
+      #}
       $phones[] = $phone;
-      $commentsCount = $this->searchByPhone($phone);
+      if (($commentsCount = $this->searchByPhone($phone)) === false) {
+        $error = true;
+      }
       $this->router->log("debug", "[" . ++$n . " / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
     }
 
     $this->router->log("info", "---------- /comments sync ----------");
-    return true;
+    return $error;
   }
 
   /**
@@ -60,9 +82,10 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
   public function searchByPhone($phone) {
     require_once(__DIR__ . "/../../lib/simpletest/browser.php");
 
-    #$this->router->log("debug", "searchByPhone($phone) [$phone]");
+    $this->router->log("debug", "searchByPhone($phone) [$phone]");
 
     $this->syncUrls = []; # array to store already sync'ed urls
+    $n = 0;
     foreach ($this->commentsDefinitions as $commentDefinitionId => $cd) {
       setlocale(LC_ALL, $cd["locale"]);
       date_default_timezone_set($cd["timezone"]);
@@ -74,15 +97,16 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
       $page = $browser->click($cd["login-tag"]); # SLOW-OP
       
       if (!preg_match($cd["patterns"]["login-ok"], $page)) {
-        $this->router->log("error", "can't login on comments definition provider [$commentDefinitionId]");
+        $this->router->log("error", "can't login on comments definition provider [".$cd['domain']."]");
         return false;
       }
         
-      $page = $browser->get($cd["url-search"]); # SLOW-OP
+      #$page = $browser->get($cd["url-search"]); # SLOW-OP
+      $browser->get($cd["url-search"]); # SLOW-OP
       $browser->setField($cd["search-field-name"], $phone);
       $page = $browser->click($cd["search-tag"]); # SLOW-OP
       if (!preg_match($cd["patterns"]["search-ok"], $page)) {
-        $this->router->log("error", "can't get search results on comments definition provider [$commentDefinitionId]");
+        $this->router->log("error", "can't get search results on comments definition provider [".$cd['domain']."]");
         return false;
       }
       $searchResultsUrls = [];
@@ -100,7 +124,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
   
         next_comments_page:
         if (isset($this->syncUrls[$url])) { # this url has been visited already, skip it
-          #$this->router->log("debug", "skipping already visited url [$url] on comments definition provider [$commentDefinitionId]");
+          #$this->router->log("debug", "skipping already visited url [$url] on comments definition provider [".$cd['domain']."]");
           continue;
         }
 
@@ -109,7 +133,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
         if (!ends_with($url, "?nowap")) $url .= "?nowap"; # // wap version we don't get some data (author? date?)
 
         if (($comment_page = $this->network->getUrlContents($url)) === FALSE) {
-          $this->router->log("error", "can't get url [$url] contents on comments definition provider [$commentDefinitionId]");
+          $this->router->log("error", "can't get url [$url] contents on comments definition provider [".$cd['domain']."]");
           continue;
         }
 
@@ -118,7 +142,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
           $topic = $matches[1];
         } else {
           $topic = null;
-          $this->router->log("error", "no topic found on url [$url] on comments definition provider [$commentDefinitionId]");
+          $this->router->log("error", "no topic found on url [$url] on comments definition provider [".$cd['domain']."]");
           continue;
         }
   
@@ -127,7 +151,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
           $comments_text = $matches[1];
         } else {
           $comments_text = null;
-          $this->router->log("error", "not any comment found on url [$url] on comments definition provider [$commentDefinitionId]");
+          $this->router->log("error", "not any comment found on url [$url] on comments definition provider [".$cd['domain']."]");
           return;
         }
   
@@ -138,7 +162,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
             $author_nick = $this->cleanAuthor($matches[1]);
           } else {
             $author_nick = null;
-            $this->router->log("error", "no author nick found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            $this->router->log("error", "no author nick found for comment [$n] on url [$url] on comments definition provider [".$cd['domain']."]");
             continue;
           }
       
@@ -147,7 +171,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
             $author_karma = $matches[1];
           } else {
             $author_karma = "?";
-            #$this->router->log("warning", "no author karma found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            #$this->router->log("warning", "no author karma found for comment [$n] on url [$url] on comments definition provider [".$cd['domain']."]");
           }
       
           // parse author posts
@@ -155,7 +179,7 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
             $author_posts = $matches[1];
           } else {
             $author_posts = "?";
-            #$this->router->log("warning", "no author posts found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            #$this->router->log("warning", "no author posts found for comment [$n] on url [$url] on comments definition provider [".$cd['domain']."]");
           }
 
           // parse date
@@ -163,16 +187,16 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
             $date = $this->cleanDate($matches[1]);
           } else {
             $date = null;
-            $this->router->log("error", "no date found for comment [$n] on url [$url]on comments definition provider [$commentDefinitionId]");
+            $this->router->log("error", "no date found for comment [$n] on url [$url]on comments definition provider [".$cd['domain']."]");
             continue;
           }
       
           // parse content
           if (preg_match($cd["patterns"]["content"], $comment_text, $matches)) {
-            $content = $this->cleanContent($matches[1], $commentDefinitionId);
+            $content = $this->cleanContent($matches[1], $cd["patterns"]["quote-signature"]);
           } else {
             $content = null;
-            $this->router->log("error", "no content found for comment [$n] on url [$url] on comments definition provider [$commentDefinitionId]");
+            $this->router->log("error", "no content found for comment [$n] on url [$url] on comments definition provider [".$cd['domain']."]");
             continue;
           }
       
@@ -309,6 +333,30 @@ $this->router->log("debug", "CommentsController::set: " . any2string([$id, $comm
     return $date;
   }
 
+  private function cleanContent($content, $quoteSignature) {
+    # strip anything outside "post" class div
+    $content_html = str_get_html($content);
+    $content = "";
+    foreach ($content_html->find('div') as $e) {
+      if (isset($e->attr["class"]) && $e->attr["class"] == "post") {
+        $content = $e->innertext;
+      }
+    }
+
+    # strip quotes (TODO!!!)
+    if (preg_match($quoteSignature, $content, $matches)) {
+      $content = $matches[1]; # comment with quotes stripped off
+    } else {
+      ; # comment without quotes
+    }
+
+    # strip leading and trailing blanks
+    $content = preg_replace("/^\s*(.*?)\s*$/", "$1", $content);
+
+    return $content;
+  }
+
+/*
   private function cleanContent($content, $definitionId) {
     # strip anything outside "post" class div
     $content_html = str_get_html($content);
@@ -331,6 +379,7 @@ $this->router->log("debug", "CommentsController::set: " . any2string([$id, $comm
 
     return $content;
   }
+*/
 
   /**
    * Destructor

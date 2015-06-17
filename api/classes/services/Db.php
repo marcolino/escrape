@@ -210,13 +210,9 @@ class DB extends PDO {
         $statement->bindParam(":" . $key, $value);
       }
       $statement->execute();
-#$this->router->log("debug", " db->getPersons() - sql: $sql");
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#$this->router->log("debug", "db->getPersons() - result length: " . count($result));
-#$this->router->log("debug", "db->getPersons() - userId: $userId - result:" . any2string($result));
       return $result;
     } catch (PDOException $e) {
-      #throw new Exception("error getting persons with filters", 0, $e); # TODO: SHOULD USE THIS??? 
       throw new Exception("can't get from $tableMaster, $tableDetail with filters: " . $e->getMessage()); # TODO: USE THIS METHOD EVERYWHERE!!!
     }
   }
@@ -239,7 +235,6 @@ class DB extends PDO {
       $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
       $statement = $this->db->prepare($sql);
       $statement->bindParam(":id", $id, PDO::PARAM_INT);
-      #$statement->bindParam(":id_user", $userId, PDO::PARAM_INT);
       $statement->execute();
       $result = $statement->fetch(PDO::FETCH_ASSOC);
       return $result;
