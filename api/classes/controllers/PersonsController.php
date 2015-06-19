@@ -192,7 +192,7 @@
         $personMaster["source_key"] = $sourceKey;
         $personMaster["url"] = $detailsUrl;
         $personMaster["timestamp_last_sync"] = $timestampNow;
-        $personMaster["page_cleaned"] = $pageDetailsCleaned;
+        #$personMaster["page_cleaned"] = $pageDetailsCleaned;
         $personMaster["page_sum"] = $pageSum;
         $personDetail = [];
         $personDetail["name"] = $name;

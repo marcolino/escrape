@@ -26,48 +26,51 @@ class CommentsController {
    * Sync comments
    */
   public function sync() {
-    $all = false;
+    $all = false; # TODO: get this flas as parameter
     $error = false;
     $this->router->log("info", "---------- comments sync ----------");
 
-    # TODO: sieves2Sql() should accept empty sieves...
-    $sieves = [];
-    $sieves["search"] = [];
-    $sieves["filters"] = [];
-    $sieves["filters"]["nationality"] = null;
-    $sieves["filters"]["voteMin"] = 0;
-    $sieves["filters"]["voteMax"] = 10;
-    $sieves["filters"]["active"] = "yes";
-    $sieves["filters"]["commentsCountMin"] = 0;
-    $sieves["filters"]["age"] = [];
-    $sieves["filters"]["age"]["min"] = 0;
-    $sieves["filters"]["age"]["max"] = 100;
-    $persons = $this->db->getPersons($all ? null : $sieves);
+    $persons = $this->db->getPersons($all ? null : [ "filters" => [ "active" => "yes" ] ]);
+    $personsCount = count($persons);
     $timestampStart = time();
     $phones = [];
-    $personsCount = count($persons);
 $memory_limit = ini_get('memory_limit');
-    $phones = [];
+
+    $this->syncUrls = []; # array to store already sync'ed urls
     $n = 0;
-    foreach ($persons as $person) {
-$this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+    foreach ($this->commentsDefinitions as $commentDefinitionId => $cd) {
+      setlocale(LC_ALL, $cd["locale"]);
+      date_default_timezone_set($cd["timezone"]);
+  
+      foreach ($persons as $person) {
+  $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+  
+        $phone = $person["phone"];
+        if (!$phone or in_array($phone, $phones)) { // skip empty or already processed phones
+          continue;
+        }
+  
+              # TODO: DEBUG_ONLY 
+              # assert we only get active persons, here...
+              if (!$all) { // not all persons (even inactive ones) requested
+                if (!$person["active"]) { // skip not active persons
+                  $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+                  return false;
+                }
+              }
+  
+        $phones[] = $phone;
+        if (($commentsCount = $this->searchByPhone($phone, $cd)) === false) {
+          $error = true;
+        }
+        $this->router->log("debug", "[" . ++$n . " / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
 
-      $phone = $person["phone"];
-      if (!$phone or !$person["active"] or in_array($phone, $phones)) { // skip empty or already processed phones
-        continue;
-      }
-      #if (!$all) { // not all persons (even inactive ones) requested
-      #  if (!$person["active"]) { // skip not active persons
-      #    continue;
-      #  }
-      #}
-      $phones[] = $phone;
-      if (($commentsCount = $this->searchByPhone($phone)) === false) {
-        $error = true;
-      }
-      $this->router->log("debug", "[" . ++$n . " / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
-    }
+      } // foreach persons end
 
+      $this->searchByPhone(null, null); // force browser unset for next comment definition
+
+    } // foreach commentsDefinitions end
+  
     $this->router->log("info", "---------- /comments sync ----------");
     return $error;
   }
@@ -76,35 +79,38 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
    * Search comments by phone
    *
    * @param  string $phone     the phone number to be searched
+   * @param  string $cd        the comment definition
    * @return integer $count:   number of comments found
    *         boolean false:    error
    */
-  public function searchByPhone($phone) {
+  public function searchByPhone($phone, $cd) {
     require_once(__DIR__ . "/../../lib/simpletest/browser.php");
+    static $browser;
+
+    if ($phone === null) { // unset browser, to force new log-in
+      unset($browser);
+      return true;
+    }
 
     $this->router->log("debug", "searchByPhone($phone) [$phone]");
 
-    $this->syncUrls = []; # array to store already sync'ed urls
-    $n = 0;
-    foreach ($this->commentsDefinitions as $commentDefinitionId => $cd) {
-      setlocale(LC_ALL, $cd["locale"]);
-      date_default_timezone_set($cd["timezone"]);
-  
-      $browser = &new SimpleBrowser();
-      $browser->get($cd["url-login"]); # SLOW-OP
-      $browser->setField($cd["username-field-name"], $cd["username"]);
-      $browser->setField($cd["password-field-name"], $cd["password"]);
-      $page = $browser->click($cd["login-tag"]); # SLOW-OP
-      
-      if (!preg_match($cd["patterns"]["login-ok"], $page)) {
-        $this->router->log("error", "can't login on comments definition provider [".$cd['domain']."]");
-        return false;
+      if (!isset($browser)) {
+        $browser = &new SimpleBrowser();
+        $browser->get($cd["url-login"]); # SLOW-OP
+        $browser->setField($cd["username-field-name"], $cd["username"]);
+        $browser->setField($cd["password-field-name"], $cd["password"]);
+        $page = $browser->click($cd["login-tag"]); # SLOW-OP     
+        if (!preg_match($cd["patterns"]["login-ok"], $page)) {
+          $this->router->log("error", "can't login on comments definition provider [".$cd['domain']."]");
+          return false;
+        }
+        #$page = $browser->get($cd["url-search"]); # SLOW-OP
+        $browser->get($cd["url-search"]); # SLOW-OP
       }
-        
-      #$page = $browser->get($cd["url-search"]); # SLOW-OP
-      $browser->get($cd["url-search"]); # SLOW-OP
-      $browser->setField($cd["search-field-name"], $phone);
-      $page = $browser->click($cd["search-tag"]); # SLOW-OP
+      $browserCloded = clone $browser;
+
+      $browserCloned->setField($cd["search-field-name"], $phone);
+      $page = $browserCloned->click($cd["search-tag"]); # SLOW-OP
       if (!preg_match($cd["patterns"]["search-ok"], $page)) {
         $this->router->log("error", "can't get search results on comments definition provider [".$cd['domain']."]");
         return false;
@@ -247,8 +253,8 @@ $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." M
           goto next_comments_page; # do a supplementary loop with next url
         }
        
-      }
-      $n++;
+      #}
+      #$n++;
     }
     $this->router->log("debug", "returning from searchByPhone..............");
     return $count;

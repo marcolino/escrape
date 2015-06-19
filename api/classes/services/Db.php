@@ -92,7 +92,7 @@ class DB extends PDO {
           url TEXT,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
-          page_cleaned TEXT, -- TO DEBUG ONLY...
+          -- page_cleaned TEXT,
           page_sum TEXT,
           active INTEGER,
           uniq_prev TEXT,
@@ -1141,14 +1141,14 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     }
   }
 
-  private function sieves2Sql($sieves = null) {
+  function sieves2Sql($sieves = null) {
     $sql = "";
     $params = [];
 
     if (
-      $sieves &&
-      $sieves["search"] &&
-      $sieves["search"]["term"]
+      isset($sieves) &&
+      isset($sieves["search"]) &&
+      isset($sieves["search"]["term"])
     ) {
       $params["searchTerm"] = $sieves["search"]["term"];
       $sql .= " AND ";
@@ -1161,9 +1161,9 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       )";
     }
     if (
-      $sieves &&
-      $sieves["filters"] &&
-      $sieves["filters"]["active"]
+      isset($sieves) &&
+      isset($sieves["filters"]) &&
+      isset($sieves["filters"]["active"])
     ) {
       if ($sieves["filters"]["active"] !== "any") {
         $params["active"] = ($sieves["filters"]["active"] === "yes") ? 1 : 0;
@@ -1172,41 +1172,45 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       }
     }
     if (
-      $sieves &&
-      $sieves["filters"] &&
-      $sieves["filters"]["nationality"]
+      isset($sieves) &&
+      isset($sieves["filters"]) &&
+      isset($sieves["filters"]["nationality"])
     ) {
       $params["nationality"] = $sieves["filters"]["nationality"];
       $sql .= " AND ";
       $sql .= "nationality = :nationality";
     }
     if (
-      $sieves &&
-      $sieves["filters"] &&
-      $sieves["filters"]["voteMin"]
+      isset($sieves) &&
+      isset($sieves["filters"]) &&
+      isset($sieves["filters"]["voteMin"])
     ) {
       $params["voteMin"] = $sieves["filters"]["voteMin"];
       $sql .= " AND ";
       $sql .= "vote >= :voteMin";
     }
     if (
-      $sieves &&
-      $sieves["filters"] &&
-      $sieves["filters"]["commentsCountMin"]
+      isset($sieves) &&
+      isset($sieves["filters"]) &&
+      isset($sieves["filters"]["commentsCountMin"])
     ) {
       $params["commentsCountMin"] = $sieves["filters"]["commentsCountMin"];
       $sql .= " AND ";
       $sql .= "(SELECT COUNT(*) FROM comment WHERE id_person = person.id) >= :commentsCountMin";
     }
     if (
-      $sieves &&
-      $sieves["filters"] &&
-      $sieves["filters"]["age"] &&
-      $sieves["filters"]["age"]["min"] &&
-      $sieves["filters"]["age"]["max"]
+      isset($sieves) &&
+      isset($sieves["filters"]) &&
+      isset($sieves["filters"]["age"])
     ) {
-      $params["ageMin"] = $sieves["filters"]["age"]["min"];
-      $params["ageMax"] = $sieves["filters"]["age"]["max"];
+      $params["ageMin"] = isset($sieves["filters"]["age"]["min"]) ?
+        $sieves["filters"]["age"]["min"] :
+        0
+      ;    
+      $params["ageMax"] = isset($sieves["filters"]["age"]["max"]) ?
+        $sieves["filters"]["age"]["max"] :
+        PHP_INT_MAX
+      ;
       $sql .= " AND ";
       $sql .= "((age IS NULL) OR (age >= :ageMin AND age <= :ageMax))";
     }
@@ -1225,6 +1229,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       }
     }
 */
+
     return [ $sql, $params ];
   }
 
