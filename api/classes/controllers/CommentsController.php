@@ -26,7 +26,7 @@ class CommentsController {
    * Sync comments
    */
   public function sync() {
-    $all = false; # TODO: get this flas as parameter
+    $all = false; # TODO: get this flag as parameter
     $error = false;
     $this->router->log("info", "---------- comments sync ----------");
 
@@ -54,7 +54,7 @@ $memory_limit = ini_get('memory_limit');
               # assert we only get active persons, here...
               if (!$all) { // not all persons (even inactive ones) requested
                 if (!$person["active"]) { // skip not active persons
-                  $this->router->log("debug", "sync [MEM: ".(memory_get_usage(true)/1024/1024)." MB, MEMPEAK: ".(memory_get_peak_usage(true)/1024/1024)." MB, MEMMAX: ".$memory_limit." MB]");
+                  $this->router->log("error", "not active person selected!");
                   return false;
                 }
               }
@@ -96,6 +96,7 @@ $memory_limit = ini_get('memory_limit');
     $this->router->log("debug", "searchByPhone($phone) [$phone]");
 
       if (!isset($browser)) {
+        $this->router->log("debug", "Instantiating NEW browser");
         $browser = &new SimpleBrowser();
         $browser->get($cd["url-login"]); # SLOW-OP
         $browser->setField($cd["username-field-name"], $cd["username"]);
@@ -110,6 +111,7 @@ $memory_limit = ini_get('memory_limit');
       }
       $browserCloned = clone $browser;
 
+$this->router->log("debug", "setting new search field on old browser");
       $browserCloned->setField($cd["search-field-name"], $phone);
       $page = $browserCloned->click($cd["search-tag"]); # SLOW-OP
       if (!preg_match($cd["patterns"]["search-ok"], $page)) {
@@ -140,7 +142,7 @@ $memory_limit = ini_get('memory_limit');
         if (!ends_with($url, "?nowap")) $url .= "?nowap"; # // wap version we don't get some data (author? date?)
 
         if (($comment_page = $this->network->getUrlContents($url)) === FALSE) {
-          $this->router->log("error", "can't get url [$url] contents on comments definition provider [".$cd['domain']."]");
+          $this->router->log("warning", "can't get url [$url] contents on comments definition provider [".$cd['domain']."]");
           continue;
         }
 
@@ -149,7 +151,7 @@ $memory_limit = ini_get('memory_limit');
           $topic = $matches[1];
         } else {
           $topic = null;
-          $this->router->log("error", "no topic found on url [$url] on comments definition provider [".$cd['domain']."]");
+          $this->router->log("warning", "no topic found on url [$url] on comments definition provider [".$cd['domain']."]");
           continue;
         }
   
