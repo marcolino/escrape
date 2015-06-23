@@ -63,7 +63,8 @@ $memory_limit = ini_get('memory_limit');
         if (($commentsCount = $this->searchByPhone($phone, $cd)) === false) {
           $error = true;
         }
-        $this->router->log("debug", "[" . ++$n . " / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
+        $n++;
+        $this->router->log("debug", "[$n / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
 
       } // foreach persons end
 
@@ -107,7 +108,7 @@ $memory_limit = ini_get('memory_limit');
         #$page = $browser->get($cd["url-search"]); # SLOW-OP
         $browser->get($cd["url-search"]); # SLOW-OP
       }
-      $browserCloded = clone $browser;
+      $browserCloned = clone $browser;
 
       $browserCloned->setField($cd["search-field-name"], $phone);
       $page = $browserCloned->click($cd["search-tag"]); # SLOW-OP
@@ -229,7 +230,8 @@ $memory_limit = ini_get('memory_limit');
           // check if comment is new or not /////////////////////////////////////////////////////
           $commentId = null;
           if (($comments = $this->db->getCommentsByField("key", $key))) { // old comment
-            if ($n <= 1) { // on first old comment, try to skip to last page already scraped
+            #if ($n <= 1) { // on first old comment, try to skip to last page already scraped
+            if ($count <= 1) { // on first old comment, try to skip to last page already scraped
               $commentsInTopic = $this->db->getCommentsByFields([ "phone" => $phone, "topic" => $topic ]);
               $length = count($commentsInTopic);
               if ($length > 0) {

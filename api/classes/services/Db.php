@@ -1148,8 +1148,11 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     if (
       isset($sieves) &&
       isset($sieves["search"]) &&
-      isset($sieves["search"]["term"])
+      isset($sieves["search"]["term"]) &&
+      $sieves["search"]["term"]
     ) {
+#$this->router->log("debug", " sieves2Sql - search term: " . $sieves["search"]["term"]);
+#$this->router->log("debug", " sieves2Sql - search term: " . (isset($sieves["search"]["term"]) ? "Y" : "N"));
       $params["searchTerm"] = $sieves["search"]["term"];
       $sql .= " AND ";
       $sql .= "(
@@ -1163,7 +1166,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     if (
       isset($sieves) &&
       isset($sieves["filters"]) &&
-      isset($sieves["filters"]["active"])
+      isset($sieves["filters"]["active"]) &&
+      $sieves["filters"]["active"]
     ) {
       if ($sieves["filters"]["active"] !== "any") {
         $params["active"] = ($sieves["filters"]["active"] === "yes") ? 1 : 0;
@@ -1174,7 +1178,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     if (
       isset($sieves) &&
       isset($sieves["filters"]) &&
-      isset($sieves["filters"]["nationality"])
+      isset($sieves["filters"]["nationality"]) &&
+      $sieves["filters"]["nationality"]
     ) {
       $params["nationality"] = $sieves["filters"]["nationality"];
       $sql .= " AND ";
@@ -1183,7 +1188,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     if (
       isset($sieves) &&
       isset($sieves["filters"]) &&
-      isset($sieves["filters"]["voteMin"])
+      isset($sieves["filters"]["voteMin"]) &&
+      $sieves["filters"]["voteMin"]
     ) {
       $params["voteMin"] = $sieves["filters"]["voteMin"];
       $sql .= " AND ";
@@ -1192,7 +1198,8 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     if (
       isset($sieves) &&
       isset($sieves["filters"]) &&
-      isset($sieves["filters"]["commentsCountMin"])
+      isset($sieves["filters"]["commentsCountMin"]) &&
+      $sieves["filters"]["commentsCountMin"]
     ) {
       $params["commentsCountMin"] = $sieves["filters"]["commentsCountMin"];
       $sql .= " AND ";
@@ -1229,6 +1236,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
       }
     }
 */
+#$this->router->log("debug", " sieves2Sql - sql: [$sql], params:" . any2string($params));
 
     return [ $sql, $params ];
   }
