@@ -60,10 +60,10 @@ print "PHOTOS:"; var_dump($photos);
     }
 
     # check for photo truthfulness
-    if ($imagesTool->checkImageThruthfulness($photo["url"])) {
-      $photo["thruthfulness"] = true;
+    if ($imagesTool->checkImageTruthfulness($photo["url"])) {
+      $photo["truthfulness"] = true;
     } else {
-      $photo["thruthfulness"] = false;
+      $photo["truthfulness"] = false;
       $this->router->log("info", "photo " . $photo["url"] . " for person id " . $photo["id_person"] . " does not seem thrutful");
     }
 

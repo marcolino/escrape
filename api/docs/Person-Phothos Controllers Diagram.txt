@@ -27,7 +27,7 @@ PersonController
   photoShow($personId, $number, $type = "full")
   photoCheckDuplication($personId, $photo)
   photoCheckSimilarity($personId, $photo)
-  photoCheckThruthfulness($photo)
+  photoCheckTruthfulness($photo)
   photoGetCount($personId)
   photoGoogleSearch()
 

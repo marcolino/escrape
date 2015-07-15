@@ -119,7 +119,7 @@ class DB extends PDO {
           vote INTEGER,
           rating INTEGER,
           showcase INTEGER,
-          thruthful INTEGER -- TODO: do we need this field?
+          truthful INTEGER -- TODO: do we need this field?
          );
          CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
         "
@@ -168,7 +168,7 @@ class DB extends PDO {
           --timestamp_last_modification INTEGER, -- DO WE NEED THIS???
           signature VARCHAR(256),
           showcase INTEGER,
-          thruthful INTEGER
+          truthful INTEGER
          );
         "
       );

@@ -97,7 +97,7 @@ class Photo {
         ($property === "timestamp_last_modification") ||
         ($property === "signature") ||
         ($property === "showcase") ||
-        ($property === "thruthful")
+        ($property === "truthful")
       )
       $data[$property] = $value;
     }
@@ -292,13 +292,13 @@ class Photo {
     return $this->timestamp_creation = $value;
   }
 
-  public function thruthful($value = null) {
+  public function truthful($value = null) {
     if (!$value) {
-      if (isset($this->thruthful)) {
-        return $this->thruthful;
+      if (isset($this->truthful)) {
+        return $this->truthful;
       }
     }
-    return $this->thruthful = $value;
+    return $this->truthful = $value;
   }
 
   public function showcase($value = null) {

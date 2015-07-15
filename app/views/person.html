@@ -39,16 +39,16 @@
           <div class="col-xs-12">
             <div class="slider-horizontal">
               <span ng-repeat="(number, photo) in person.photos" class="slider-image">
-                <!--<pre>number:{{number}}, photo:{{photo}}</pre>-->
+                <!--<pre>number:{{number}}, photo:{{photo.truthful}}</pre>-->
                 <a href="" ng-click="tabSelect('photos', number)" class="no-text-decoration">
-                  <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" ng-class="{'img-fake': photo.thruthful === 'false'}" />
-                  <div ng-if="photo.thruthful === 'false'">
+                  <img ng-src="{{cfg.apiUri + '/' + photo.path_small}}" class="img-rounded img-clip" ng-class="{'img-fake': photo.truthful === 'false'}" />
+                  <div ng-if="photo.truthful === 'false'">
                     <img src="images/watermarks/fake-label.png" class="label-image" />
                   </div>
-                  <div ng-if="photo.thruthful === 'true'">
-                    <img src="images/watermarks/thruthful-label.png" class="label-image" />
+                  <div ng-if="photo.truthful === 'true'">
+                    <img src="images/watermarks/truthful-label.png" class="label-image" />
                   </div>
-                  <div ng-if="photo.thruthful === 'unknown' || photo.thruthful === null"><!-- TODO: set new photos with thruthful flag as 'unknown', OR alwasy use null... -->
+                  <div ng-if="photo.truthful === 'unknown' || !photo.truthful"><!-- TODO: set new photos with truthful flag as 'unknown', OR alwasy use null... -->
                     <img src="images/watermarks/unknown-label.png" class="label-image" />
                   </div>
                 </a>
@@ -229,32 +229,71 @@
       <div class="slides-control">
         <carousel disable-animation="false">
           <slide ng-repeat="photo in person.photos" active="photo.active">
-            <img ng-src="{{cfg.apiUri + '/' + photo.path_full}}" class="slideX" />
+            <img ng-src="{{cfg.apiUri + '/' + photo.path_full}}" class="slide" />
             <div class="carousel-caption">
               <p>{{slide.text}}</p>
             </div>
             <div class="carousel-toolbar">
-              <div class="form-group" style="vertical-align:bottom">
-                <div class="col-xs-12">
-                  <br>
-                  <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo thruthfulness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
+            </div>
+
+            <div class="row" style="margin-top:1.0em;">
+              <div class="col-lg-2"></div>
+              <div class="col-lg-3">
+                <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check forthis       photo   truthfulness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
+                <button
+                  ng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')"
+                  ng-disabled="!photo.available"
+                  class="btn btn-primary"
+                  title="Check for this photo truthfulness on the whole web"
+                >
+                  <i ng-show="photo.available" class="glyphicon glyphicon-ok"></i> {{photo.available ? 'Check' : 'unavailable'}}
+                </button>
+              </div>
+              <div class="col-lg-5">
+                <div class="btn-group">
                   <button
-                    ng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')"
-                    ng-disabled="!photo.available"
-                    class="btn btn-success"
-                    title="Check for this photo thruthfulness on the whole web"
+                    ng-click="photoSetTruthful($index)"
+                    class="btn btn-success" ng-class="{'btn-dim': !photoIsTruthful($index)}"
+                    title="This photo seems truthful"
                   >
-                    <i ng-show="photo.available" class="glyphicon glyphicon-ok"></i> {{photo.available ? 'Check' : 'unavailable'}}
+                    <i class="glyphicon glyphicon-thumbs-up"></i> Truthful
+                  </button>
+                  <button
+                    ng-click="photoSetUnknown($index)"
+                    class="btn btn-default" ng-class="{'btn-dim': !photoIsUnknown($index)}"
+                    title="This photo can't be told nor truthful nor fake"
+                  >
+                    <i class="glyphicon glyphicon-questionmark"></i> Unknown
+                  </button>
+                  <button
+                    ng-click="photoSetUntruthful($index)"
+                    class="btn btn-danger" ng-class="{'btn-dim': !photoIsUntruthful($index)}"
+                    title="This photo seems a fake!"
+                  >
+                    <i class="glyphicon glyphicon-thumbs-down"></i> Fake
+                  </button>
+                </div>
+                  <button
+                    ng-show="photoIsUntruthful($index) || photoIsTruthful($index)"
+                    ng-click="photoSetTruthfulAllAs($index)"
+                    class="btn" ng-class="{'btn-success': photoIsTruthful($index), 'btn-danger': photoIsUntruthful($index)}"
+                    title="Set all other photos (without truthfulness) as this one"
+                  >
+                    <i ng-show="photoIsTruthful($index)" class="glyphicon glyphicon-thumbs-up"> All&nbsp;Truthful </i>
+                    <i ng-show="photoIsUntruthful($index)" class="glyphicon glyphicon-thumbs-down"> All Fake </i>
                   </button>
                 </div>
               </div>
+              <div class="col-lg-2"></div>
             </div>
+
           </slide>
         </carousel>
       </div>
     </div>
 
     <!-- photosOccurrences pill -->
+    <!--
     <div class="tab-content" ng-show="tabSelected === 'photosOccurrences' && !tabs['photosOccurrences'].hidden">
       <div class="jumbotron" ng-show="photosOccurrencesLoading">
         <div class="text-center">
@@ -263,7 +302,7 @@
       </div>
       <div id="photos-occurrences-toolbar" ng-hide="photosOccurrencesLoading">
         <hr>
-        <button ng-click="photosOccurrencesThruthful()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Truthful</button>
+        <button ng-click="photosOccurrencesTruthful()" class="btn btn-success"><i class="glyphicon glyphicon-ok"></i> Truthful</button>
         <button ng-click="photosOccurrencesFake()" class="btn btn-danger"><i class="glyphicon glyphicon-ban-circle"></i> Fake</button>
         <button ng-click="photosOccurrencesUndecided()" class="btn btn-warning"><i class="glyphicon glyphicon-question-sign"></i> Don't know</button>
         <hr>
@@ -295,10 +334,11 @@
       </NOdiv>
       <div ng-show="!photosOccurrencesLoading && photosOccurrences.length === 0">
         <h5>
-          No other occurrences of this photo found in the whole web: it is presumably thruthful.
+          No other occurrences of this photo found in the whole web: it is presumably truthful.
         </h5>
       </div>
     </div>
+    -->
 
     <!-- comments pill -->
     <div class="tab-content" ng-show="tabSelected === 'comments' && !tabs['comments'].hidden">
@@ -331,6 +371,7 @@
         </span>
 
         <!-- Topics -->
+<!-- SOMETHING IS GROSSLY WRONG, HERE...
         <ul ng-repeat="(key, topic) in person.topics" class="nav nav-pills nav-stacked">
           <li class="li-gap">
             <div class="form-control">
@@ -372,6 +413,7 @@
               </span>
             </div>
           </li>
+-->
 
           <!-- Each topic comments -->
           <div ng-repeat="(n, comment) in person.comments" class="row row-gap">

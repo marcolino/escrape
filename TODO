@@ -1,12 +1,12 @@
 TODO 1.0:
  - google search:
     - separate tabs for photos slideshow and google search...
-    - duplicate photo table in photo + photo_detail tables, to save thruthful/un-thruthful flag per person... (A LOT OF WORK... :-()
+    - duplicate photo table in photo + photo_detail tables, to save truthful/un-truthful flag per person... (A LOT OF WORK... :-()
     - in search results page, add a "white list" handling (list/add(?), remove, ...)
     - add a 'x' small button to secondary uniq persons, to cut their secondary uniqueness...
-    - before google search, check image has already thruthful flag...
-    - test un-thruthful images rendering in views...
-    - handle thruthful/un-thruthful flag storing
+    - before google search, check image has already truthful flag...
+    - test un-truthful images rendering in views...
+    - handle truthful/un-truthful flag storing
  - handle all exceptions at least with notify.error() ...
  - move style="..." from all views to style.css...
  - if a user changes the phone number of a person, person uniqueness should be re-asserted (assertPersonsUniqueness())...
@@ -18,11 +18,8 @@ TODO 1.0:
  - page comments to 100 max?
  - add thread level to person comments view
  - when changing address in person view, street view and street indications SOMETIMES show error: Waiting for address geo-codification...
- - when updating a person's phone, if new phone is unavailable, verify we keep old number, and set active to false...
- - when syncing persons, and two photos are equal, update photo path... (DONE, TO BE TESTED @HOME)
-
- - remove "page_cleaned" column from "person_detail" (@HOME)
-
+ - when updating a person's phone, if new phone is unavailable, verify we keep old number, and set active to false... (NO, WE BLANK OLD PHONE... IS IT OK???)
+ - when trying to detect same persons, should compare a constant threshold value with the median value of photos differences, not with each photo difference
  - solve all these TODO's
 
 TODO 1.1:
@@ -95,12 +92,12 @@ DONE:
  - after login() and logout(), issue a persons-reload()...
  - DB::getAllSieved(): select SYSTEM and USER fields...???!!!
  - throw new Exception("error getting persons with filters", 0, $e): PDO.$e not reported...
- - handle css fake on persons view (at least one fake photo ? fake : thruthful)
+ - handle css fake on persons view (at least one fake photo ? fake : truthful)
  - when saving photo url, normalize it (strip "../../"...) - DONE - TO BE TESTED @home
  - analize 2015-22-03.log ...
  - $this->sitesDefinitions = [ "..." => [ ... "charset" => "utf-8", "accepts-tor" => <boolean>,
  - pass user id from authentication to service.js, and to API (BUT, WHAT WAS THE REASON?? ... however, no, we could use username ('*' ...))
- - thruthfulness => thrutful /g
+ - truthfulness => thrutful /g
  - handle flag to close 'options', more than 'filters'...
  - add 'api/setup' to .gitignore @HOME (.gitignore is not committed...)
  - profile @HOME (enabling apd_set_pprof_trace() at the bottom of index.php) @HOME (can't run Pecl/apd with PHP 5.6 (from Remi) on Centos 6.6 @OFFICE... :-() (No, using xdebug @HOME)
@@ -113,7 +110,7 @@ DONE:
  - $scope.person.timestamp_creation = 0; $scope.person.timestamp_last_sync = 0; => CAMELCASE? (NO)
  - design a nicer layout for persons view... :-()
  - PHP Fatal error:  Call to undefined function mb_detect_encoding() @OFFICE (sudo yum --enablerepo=remi install php-mbstring)
- - thruthful "unknown" => undefined, thruthful in persons and person views => "yes", "no", undefined... (set 'thruthful' field to person_detail table...)
+ - truthful "unknown" => undefined, truthful in persons and person views => "yes", "no", undefined... (set 'truthful' field to person_detail table...)
  - save Sublime Text 3 (3080) license key (saved to Dropbox/Privata/Sublime-Text/)
  - remove "person-img-url" from setup/persons.php @HOME
  - sgi/esc.../annuncio/adv2945: check phone pattern... @HOME (on 2015-03-29 it is fine...)
@@ -208,7 +205,7 @@ DONE:
  - Kelly (id: 180) person view has "previous" button, but "+" does not open... (because it is not active... OK? No, make a js function which check activity of uniq_next's... ) (DONE: CHECK isUniqPrimary()...)
  - when sorting, consider null votes as a median value (4.5?) (DONE, TO BE CHECKED)
  - Mila Se... e Mila Sc... mix when uniq-next is opened... :-(
- - id: 317, person view photos in two groups, the first upper, the second lower... ??? :-( ("thruthful" flag empty, and not "unknown")
+ - id: 317, person view photos in two groups, the first upper, the second lower... ??? :-( ("truthful" flag empty, and not "unknown")
  - remove file logging for curl (and remove curl.log)...
  - login: wrong password => hide loading gif...
  - toe: load all images ("?p=1, ?p=2, ...)
@@ -222,3 +219,5 @@ DONE:
  - when syncing comments, start with the first message of first page in thread... (in getCommentsByField(), added "ORDER BY {$tableMaster}.id ASC", TOBETESTED @HOME)
  - restore php mem_limit to 128MB...
  - avoid duplicated comments SET problems... (DONE, SKIPPING OLD COMMENTS, TO BE TESTED @HOME)
+ - remove "page_cleaned" column from "person_detail" (@HOME)
+ - when syncing persons, and two photos are equal, update photo path... (DONE, TO BE TESTED @HOME) (SHOULD CONFIRM IT'S WORKING...)

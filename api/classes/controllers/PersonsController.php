@@ -7,6 +7,7 @@
  */
 
   class PersonsController {
+  
   const PHOTOS_PATH = "db/photos/";
   const TIMEOUT_BETWEEN_DOWNLOADS = 30;
   const RETRIES_MAX_FOR_DOWNLOADS = 3;
@@ -86,9 +87,9 @@
         if (($persons = $this->db->getPersonsByField("key", $key))) { # old key
           $person = $persons[0];
           $personId = $person["id_person"];
-          $this->router->log("debug", "old person: $key, id: $personId [$n/$tot]");
+          $this->router->log("debug", "old person - [$n/$tot], id: $personId, key: [$key]");
         } else {
-          $this->router->log("debug", "new person: $key, id: $personId [$n/$tot]");
+          $this->router->log("debug", "new person - [$n/$tot], id: $personId, key: [$key]");
         }
 
         // get person details url
@@ -240,7 +241,7 @@
           ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
           foreach ($photosUrls as $photoUrl) { // add photos
-            $this->router->log("debug", "PersonsController::sync() - photo $photoUrl");
+            #$this->router->log("debug", "PersonsController::sync() - photo $photoUrl");
             $this->photoAdd($personId, $photoUrl, $source);
           }
         }
@@ -607,7 +608,7 @@ if (
       $result[$personId] = $person;
 
       // fields "calculated"
-      //$result[$personId]["thruthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
+      //$result[$personId]["truthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
       $showcase = $this->photoGetByShowcase($personId, true);
       $showcase = (isset($showcase["path_small"])) ? $showcase["path_small"] : null;
       $result[$personId]["photo_path_small_showcase"] = $showcase;
@@ -631,7 +632,7 @@ if (
   }
   
   /**
-   * assert photo current availabilty
+   * assert photo current availability
    */
   public function assertPhotoAvailability($photoUrl) {
     $photoUrl = str_replace("../", "", $photoUrl); // normalize urls - TODO: REMOVE ME, SHOULD BE DONE IN $this->photoAdd() ...
@@ -1071,7 +1072,7 @@ if (
         // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!
         $found = true; // similarity found
       } else {
-        $this->router->log("debug", "photoAdd() [$photoUrl] for person id " . $personId . " SEEMS NEW, ADDING TO DB...");
+        $this->router->log("debug", "photo [$photoUrl] for person id " . $personId . " is new");
       }
     }
 
@@ -1083,7 +1084,7 @@ if (
       $photo->domain();
       $photo->sum();
       $photo->timestampCreation(time());
-      $photo->thruthful("unknown"); // this is an offline-set property (it's very expensive to calculate)
+      $photo->truthful("unknown"); // this is an offline-set property (it's very expensive to calculate)
      
       // store this photo
       if (($number = $this->photoStore($personId, $photo)) === false) {
@@ -1177,7 +1178,7 @@ if (
         ($property === "timestamp_creation") ||
         ($property === "signature") ||
         ($property === "showcase") ||
-        ($property === "thruthfulness")
+        ($property === "truthfulness")
       )
       $data[$property] = $value;
     }
@@ -1329,9 +1330,9 @@ if (
    *                 "no"        if photo is not uniqu on the web
    *                 "unknown"   if photo uniqueness on the web is unknown
    */
-  public function photoCheckThruthfulness($personId, $number) {
+  public function photoCheckTruthfulness($personId, $number) {
     $photo = $this->photoGetByNumber($personId, $number);
-    return $photo["thruthful"];
+    return $photo["truthful"];
   }
 
   /**

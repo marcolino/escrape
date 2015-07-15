@@ -84,7 +84,7 @@ print "IMAGES:\n"; var_dump($images);
    * @return boolean: true    if photo is not duplicated on the web
    *                  false   if photo is duplicated on the web
    */
-  public function checkImageThruthfulness($imageUrl) {
+  public function checkImageTruthfulness($imageUrl) {
     $domain = parse_url($imageUrl)['host'];
     $similarUrls = $this->googleSearchImage($imageUrl, $domain);
     if (count($similarUrls) > 0) { // same image found

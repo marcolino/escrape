@@ -61,6 +61,11 @@ body {
   padding-bottom: 5px;
 }
 
+.btn-dim {
+  opacity: 0.4;
+  filter: alpha(opacity=40);
+}
+
 /* element rotation - 90° clock-wise */
 .rotate90cw {
   -webkit-transform:rotate(90deg);
@@ -248,17 +253,17 @@ body {
   max-height: 18px;
 }
 /*
-.img-thruthful-yes { 
+.img-truthful-yes { 
           box-shadow: 1px 1px 3px 0px #143a04;
   -webkit-box-shadow: 1px 1px 3px 0px #143a04;
      -moz-box-shadow: 1px 1px 3px 0px #143a04;
 }
-.img-thruthful-no { 
+.img-truthful-no { 
           box-shadow: 1px 1px 3px 0px #7c0202;
   -webkit-box-shadow: 1px 1px 3px 0px #7c0202;
      -moz-box-shadow: 1px 1px 3px 0px #7c0202;
 }
-.img-thruthful-unknown { 
+.img-truthful-unknown { 
           box-shadow: 1px 1px 3px 0px #888888;
   -webkit-box-shadow: 1px 1px 3px 0px #888888;
      -moz-box-shadow: 1px 1px 3px 0px #888888;

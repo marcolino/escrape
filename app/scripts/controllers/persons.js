@@ -144,7 +144,7 @@ for (var i = 0; i < len; i++) {
         Comments.getCommentsByPhone($scope.person.phone, $scope.userId).then(function(comments) {
           $scope.person.comments = comments;
           //console.log('comments for ' + $scope.person.phone + ':', comments);
-
+//return;
           /*
            * $scope.person.comments contains all comments linked to the person's phone;
            * if they lack "id_person" field, they could be relative to another person
@@ -853,7 +853,7 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
       'vote',
       'rating',
       'showcase',
-      'thruthful',
+      'truthful',
     ];
     var personDetail = {};
     angular.forEach(person, function(value, key) {
@@ -955,6 +955,7 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
   };
 */
 
+/*
   $scope.getPhotoOccurrences = function(id, url) {
     $scope.tabSelected = 'photosOccurrences';
     $scope.tabs.photosOccurrences.hidden = false;
@@ -997,17 +998,17 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     }
   };
 
-  /**
+  / **
    * whitelist filter
-   */
+   * /
   $scope.whitelist = function(element) {
     // TODO: load whitelist from somewhere... (add a photos-occurrences-domains-whitelist service...)
     $scope.resizeForce = true;
     return ($scope.photosOccurrencesWhitelist.indexOf(element.href.parseUrl().hostname) === -1);
   };
 
-  $scope.photosOccurrencesThruthful = function() {
-    //console.log('It is thruthful!');
+  $scope.photosOccurrencesTruthful = function() {
+    //console.log('It is truthful!');
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
@@ -1025,6 +1026,54 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     $scope.tabSelected = 'photos';
     $scope.photosOccurrences = [];
     $scope.tabs.photosOccurrences.hidden = true;
+  };
+*/
+
+  $scope.photoIsTruthful = function(n) {
+    //console.log('Checking if photo '+n+' is truthful');
+    return $scope.person.photos[n].truthful === 'true';
+  };
+
+  $scope.photoIsUnknown = function(n) {
+    //console.log('Checking if photo '+n+' is unknown');
+    return (!$scope.person.photos[n].truthful) || ($scope.person.photos[n].truthful === 'unknown');
+  };
+
+  $scope.photoIsUntruthful = function(n) {
+    //console.log('Checking if photo '+n+' is fake');
+    return $scope.person.photos[n].truthful === 'false';
+  };
+
+  $scope.photoSetTruthful = function(n) {
+    console.log('Setting photo '+n+' as truthful');
+    $scope.person.photos[n].truthful = 'true';
+  };
+
+  $scope.photoSetUnknown = function(n) {
+    console.log('Setting photo '+n+' as unknown');
+    $scope.person.photos[n].truthful = 'unknown';
+  };
+
+  $scope.photoSetUntruthful = function(n) {
+    console.log('Setting photo '+n+' as fake');
+    $scope.person.photos[n].truthful = 'false';
+  };
+
+  $scope.photoSetTruthfulAllAs = function(n) {
+    console.log('Setting all truthfulness unset potos as photo '+n+'');
+    var thisTruthfulness = $scope.person.photos[n].truthful;
+    var count = 0;
+    for (var i = 0; i < $scope.person.photos.length; i++) {
+      if ($scope.photoIsUnknown(i)) {
+        $scope.person.photos[i].truthful = thisTruthfulness;
+        count++;
+      }
+    }
+    if (count > 0) {
+      notify.info(count + ' photo' + (count === 1 ? '' : 's') + ' marked as ' + (thisTruthfulness === 'true' ? 'truthful' : thisTruthfulness === 'false' ? 'fake' : 'unknown'));
+    } else {
+      notify.info('All photos already had their truthfulnes flag set');
+    }
   };
 
   $scope.nameChange = function() {
