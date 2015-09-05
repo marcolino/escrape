@@ -7,7 +7,7 @@ app.controller('AuthenticationController',
     $scope.Sieves = Sieves;
 
     $scope.init = function () {
-      Sieves.load();
+      //Sieves.load();
       $scope.loadActiveCountries();
     };
 
@@ -16,10 +16,11 @@ app.controller('AuthenticationController',
         templateUrl: 'views/sidemenu.html',
         placement: position,
         size: 'sm', // 'sm': small / 'lg': large
-        backdrop: true, // don't close if user clicks outside this panel
+        backdrop: true, // gray-out background
+        animation: false, // TODO: just to remove backdrop on close (only until angular-animate fully supports angular 1.4...)
         controller: function($scope, $modalInstance) {
           $scope.close = function(e) {
-            $modalInstance.close();
+            $modalInstance.close(true);
             if (e) {
               e.stopPropagation();
             }
@@ -30,7 +31,7 @@ app.controller('AuthenticationController',
       }).result.then(
         function () { // aside modal closed
         },
-        function () { // aside modal dismissed (backdrop): force a reload
+        function () { // aside modal dismissed (backdrop): finalize sieves
           Sieves.finalize(Sieves.changed()); // set force flag if sieves did change
         }
       );
@@ -75,9 +76,28 @@ app.controller('AuthenticationController',
     };
 
     $scope.logout = function () {
+/*
       //console.log('logout()');
       Authentication.clearCredentials();
-      Sieves.load(true); // reload sieves, (forcing the reloading)
+var key = 'globals';
+$rootScope.globals = $cookies.getObject(key) || {};
+      Sieves.load(false); // reload sieves, (forcing the reloading)
+*/
+      $scope.dataLoading = true;
+      Authentication.clearCredentials();
+      Authentication.logout(
+        function(response) {
+          console.log('logout() success:', response);
+          $scope.dataLoading = false;
+          if (response.success) {
+            Sieves.reset();
+            Sieves.load(true); // reload sieves, (forcing the reloading)
+            $location.path('/#');
+          } else {
+            $scope.error = response.message;
+          }
+        }
+      );
     };
 
     $scope.signedIn = function () {
@@ -173,6 +193,7 @@ app.controller('AuthenticationController',
     $scope.loadActiveCountries = function () {
       var userId = $scope.getUserId();
       Persons.getActiveCountries(userId).then(function(countries) {
+/*
         countries.unshift('');
         // transform array of countryCodes to array of objects { countryCode: countryName }
         $scope.activeCountries = {};
@@ -182,6 +203,16 @@ app.controller('AuthenticationController',
             this[value] = name;
           }
         }, $scope.activeCountries);
+*/
+        $scope.activeCountries = [];
+        for (var i = 0; i < countries.length; ++i) {
+          var code = countries[i];
+          var name = $scope.getCountryName(code);
+          if (name) { // skip empty country names
+            $scope.activeCountries.push({ 'code': code, 'name': name });
+          }
+        }
+
       });
     };
     

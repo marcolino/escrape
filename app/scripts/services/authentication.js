@@ -1,6 +1,6 @@
 'use strict';
  
-app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope, $q, cfg, notify) {
+app.factory('Authentication', function (Base64, $http, $cookies, $rootScope, $q, cfg, notify) {
   var service = {};
   var apiUri = cfg.apiUri + '/users/';
   //var sievesDigest = '';
@@ -57,8 +57,19 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
     });
   };
 
+  service.logout = function (callback) {
+    $rootScope.globals = {};
+    callback({ success: true });
+  };
+
   service.setCredentials = function (id, username, password, role) {
-    var authdata = Base64.encode(username + ':' + password);
+    var authdata = Base64.encode(username + ':' + password),
+        key = 'globals',
+        now = new Date(),
+        expirationDate = new Date(now.getFullYear() + 10, now.getMonth(), now.getDate()); // this will set the expiration to 10 years
+
+    $rootScope.expires = { expires: expirationDate };
+
     $rootScope.globals = {
       currentUser: {
         id: id,
@@ -70,12 +81,13 @@ app.factory('Authentication', function (Base64, $http, $cookieStore, $rootScope,
 //console.warn('service.setCredentials() - globals:', $rootScope.globals);
 
     $http.defaults.headers.common['Authorization'] = 'Basic' + ' ' + authdata; // jshint ignore:line
-    $cookieStore.put('globals', $rootScope.globals);
+console.warn('service.setCredentials() - $cookies.putObject', key, $rootScope.globals, $rootScope.expires);
+    $cookies.putObject(key, $rootScope.globals, $rootScope.expires);
   };
 
   service.clearCredentials = function () {
     $rootScope.globals = {};
-    $cookieStore.remove('globals');
+    $cookies.remove('globals');
     $http.defaults.headers.common.Authorization = 'Basic'; // + ' '; # ???
   };
 
@@ -97,6 +109,36 @@ console.log('service.setSievesDigest :', sievesDigest);
       (typeof $rootScope.globals.currentUser !== 'undefined') &&
       (typeof $rootScope.globals.currentUser.username !== 'undefined')
     );
+  };
+
+  service.apiUriExternal = function(callback) {
+    var apiUriUty = cfg.apiUri + '/uty/';
+    $http.get(apiUriUty + 'external-ip')
+      .success(function (response) {
+        //console.log('response:', response);
+        callback(response);
+        if (!response.success && response.message) {
+          notify.error(response.message);
+          return($q.reject(response.message));
+        }
+      })
+      .error(function (response) {
+        if (
+          ! angular.isObject(response.data) ||
+          ! response.data.message
+        ) {
+          var message = 'An unknown error occurred in external-ip service';
+          notify.error(message);
+          response.message = message; // TODO: test this...
+          callback(response); // TODO: test this...
+          return($q.reject(message));
+        }
+        notify.error(response.data.message);
+        callback(response); // TODO: test this...
+        return($q.reject(response.data.message));
+      })
+    ;
+    //return 'http://' + '79.50.120.133';
   };
 
   return service;

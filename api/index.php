@@ -4,10 +4,11 @@ require "vendor/autoload.php";
 require "classes/controllers/UsersController.php";
 require "classes/controllers/PersonsController.php";
 require "classes/controllers/CommentsController.php";
+require "classes/controllers/PhotosController.php";
 require "classes/services/Network.php";
 require "classes/services/Photo.php";
 require "classes/services/Db.php";
-require "classes/services/GoogleSearch.php";
+#require "classes/services/GoogleSearch.php";
 
 class Router {
 
@@ -236,6 +237,36 @@ class Router {
       });
     }); # ===================================================================
 
+    # photos group ========================================================
+    $this->app->group("/photos", function () {
+      $this->app->get("/get/:userId", function($userId) {
+        try {
+          $photos = new PhotosController($this);
+          $this->success($photos->getAll($userId));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->get("/get/:id/:userId", function($id, $userId) {
+        try {
+          $photos = new PhotosController($this);
+          $this->success($photos->get($id));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+      $this->app->post("/set", function() {
+        try {
+          $photos = new PhotosController($this);
+          $data = json_decode($this->app->request()->getBody(), true); // second parameter uses associative arrays instead of stdClass
+#$this->log("debug", "photos/set - data:" . any2string($data));
+          $this->success($photos->set($data["id"], [], $data["photo_detail"], $data["id_user"]));
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+    }); # ===================================================================
+
     # === users group =======================================================
     $this->app->group("/users", function () {
       $this->app->post("/register", function() {
@@ -271,6 +302,18 @@ class Router {
         }
       });
     }); # ===================================================================
+
+    # === utilities group ===================================================
+    $this->app->group("/uty", function () {
+      $this->app->get("/external-ip", function() {
+        try {
+          $this->success([ "ip" => external_ip() ]);
+        } catch (Exception $e) {
+          $this->error($e);
+        }
+      });
+    }); # ===================================================================
+
 
     $this->app->options("/.+", function() { $this->success(null); }); # DEBUG: only to allow *all* CORS requests... (grunt / apache)
     $this->app->error(function(Exception $e) { $this->error($e); }); # app->

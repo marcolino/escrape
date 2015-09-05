@@ -2,6 +2,8 @@
 #
 # Erase dababase (DB + photos) and resync it
 
+xdebug="--cookie 'XDEBUG_SESSION=sublime.xdebug'"
+
 usage() {
   echo "\
 Usage: $0  [ OPTIONS ]  MODE
@@ -65,19 +67,20 @@ fi
 if [[ $what =~ ^all$ || $what =~ ^persons$ ]]; then
   if [ -n "$images" ]; then
     echo "resyncing persons (resync of all images forced)"
-    time curl -X GET -i localhost/escrape/api/persons/sync/full
+    time curl $xdebug -X GET -i localhost/escrape/api/persons/sync/full
   else
     echo "resyncing persons"
-    time curl -X GET -i localhost/escrape/api/persons/sync
+    time curl $xdebug -X GET -i localhost/escrape/api/persons/sync
   fi
 fi
 if [[ $what =~ ^all$ || $what =~ ^comments$ ]]; then
   if [ -n "$inactivetoo" ]; then
     echo "resyncing comments (resync of all persons comments forced)"
-    time curl -X GET -i localhost/escrape/api/comments/sync/all
+    # TODO: passing 'all' to comments/sync ...
+    time curl $xdebug -X GET -i localhost/escrape/api/comments/sync
   else
     echo "resyncing comments"
-    time curl -X GET -i localhost/escrape/api/comments/sync
+    time curl $xdebug -X GET -i localhost/escrape/api/comments/sync
   fi
 fi
 echo

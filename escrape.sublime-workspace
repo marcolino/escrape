@@ -1,0 +1,1168 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"backgro",
+				"background-color"
+			],
+			[
+				"p",
+				"phone"
+			],
+			[
+				"sourceK",
+				"sourceKey"
+			],
+			[
+				"any",
+				"any2string"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "TODO",
+			"settings":
+			{
+				"buffer_size": 17858,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/classes/services/Db.php",
+			"settings":
+			{
+				"buffer_size": 64437,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/classes/controllers/PhotosController.php",
+			"settings":
+			{
+				"buffer_size": 723,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/classes/controllers/CommentsController.php",
+			"settings":
+			{
+				"buffer_size": 15637,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/classes/controllers/PersonsController.php",
+			"settings":
+			{
+				"buffer_size": 60622,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/classes/services/Utilities.php",
+			"settings":
+			{
+				"buffer_size": 4693,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/scripts/controllers/persons.js",
+			"settings":
+			{
+				"buffer_size": 51309,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/scripts/services/cfg.js",
+			"settings":
+			{
+				"buffer_size": 1786,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/scripts/services/persons.js",
+			"settings":
+			{
+				"buffer_size": 3706,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/scripts/services/authentication.js",
+			"settings":
+			{
+				"buffer_size": 7114,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/scripts/controllers/authentication.js",
+			"settings":
+			{
+				"buffer_size": 7813,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/index.php",
+			"settings":
+			{
+				"buffer_size": 17284,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "api/classes/services/Photo.php",
+			"settings":
+			{
+				"buffer_size": 22057,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/views/person.html",
+			"settings":
+			{
+				"buffer_size": 29822,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "app/views/persons.html",
+			"settings":
+			{
+				"buffer_size": 15288,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 294.0,
+		"last_filter": "Package Control: ",
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"	",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Preferences: Browse Packages"
+			]
+		],
+		"width": 349.0
+	},
+	"console":
+	{
+		"height": 123.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = 'eb2297e1a458f27d836c04bb0cbaf282' + 'd0e7a3098092775ccb37ca9d6b2e4b7d'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/var/www/html/escrape",
+		"/var/www/html/escrape/api",
+		"/var/www/html/escrape/api/classes",
+		"/var/www/html/escrape/api/classes/controllers",
+		"/var/www/html/escrape/api/classes/services",
+		"/var/www/html/escrape/app",
+		"/var/www/html/escrape/app/scripts",
+		"/var/www/html/escrape/app/scripts/controllers",
+		"/var/www/html/escrape/app/scripts/services",
+		"/var/www/html/escrape/app/styles",
+		"/var/www/html/escrape/app/views",
+		"/var/www/html/escrape/tools"
+	],
+	"file_history":
+	[
+		"/var/www/html/escrape/app/scripts/services/cfg.js",
+		"/var/www/html/escrape/app/styles/main.css",
+		"/var/www/html/escrape/tools/resync",
+		"/var/www/html/escrape/app/scripts/services/persons.js",
+		"/var/www/html/escrape/api/classes/services/Utilities.php",
+		"/var/www/html/escrape/app/scripts/services/comments.js",
+		"/var/www/html/escrape/app/scripts/services/photos.js",
+		"/var/www/html/escrape/app/scripts/controllers/persons.js",
+		"/var/www/html/escrape/api/index.php",
+		"/var/www/html/escrape/tools/torSwitchIdentity.php",
+		"/var/www/html/escrape/api/classes/controllers/PhotosController.php",
+		"/var/www/html/escrape/app/scripts/directives/cut.js",
+		"/var/www/html/escrape/api/db/escrape.sqlite-journal",
+		"/var/www/html/escrape/app/index.html",
+		"/var/www/html/escrape/api/setup/comments.php",
+		"/var/www/html/escrape/app/views/persons.html",
+		"/var/www/html/escrape/api/classes/services/GoogleSearch.php",
+		"/var/www/html/escrape/app/scripts/services/authentication.js",
+		"/var/www/html/escrape/app/scripts/services/sieves.js",
+		"/var/www/html/escrape/app/scripts/controllers/authentication.js",
+		"/var/www/html/escrape/app/scripts/app.js",
+		"/var/www/html/escrape/api/classes/services/Photo.php",
+		"/var/www/html/escrape/api/vendor/slim/slim/Slim/Route.php",
+		"/var/www/html/escrape/api/classes/controllers/PersonsController.php",
+		"/var/www/html/escrape/api/vendor/slim/slim/Slim/Slim.php",
+		"/var/www/html/escrape/api/classes/controllers/CommentsController.php",
+		"/var/www/html/escrape/api/classes/services/Db.php",
+		"/var/www/html/escrape/api/setup/persons.php",
+		"/var/www/html/escrape/app/scripts/controllers/footer.js",
+		"/var/www/html/escrape/app/views/header.html",
+		"/var/www/html/escrape/test.html",
+		"/var/www/html/escrape/app/views/person.html",
+		"/var/www/html/escrape/app/views/sidemenu.html",
+		"/var/www/html/escrape/app/scripts/directives/orderObjectBy.js",
+		"/var/www/html/escrape/bower.json",
+		"/var/www/html/escrape/app/views/sidemenu2.html",
+		"/var/www/html/escrape/.bowerrc",
+		"/var/www/html/escrape/app/views/aside.html",
+		"/var/www/html/escrape/bower_components/bootstrap/.bower.json",
+		"/var/www/html/escrape/api/classes/services/Network.php",
+		"/var/www/html/escrape/Gruntfile.js",
+		"/var/www/html/escrape/bower_components/bootstrap/bower.json"
+	],
+	"find":
+	{
+		"height": 29.0
+	},
+	"find_in_files":
+	{
+		"height": 75.0,
+		"where_history":
+		[
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log, -old/",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log -old/**",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log -old/*",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log -old/",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"api/lib/*",
+			"api/lib/",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"api/lib/simpletest",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"/var/www/html/escrape/api,/var/www/html/escrape/app,-/var/www/html/escrape/api/logs/*,-/var/www/html/escrape/api/docs/*,",
+			"/var/www/html/escrape/api,/var/www/html/escrape/app,-/var/www/html/escrape/api/logs/*",
+			"/var/www/html/escrape/api,/var/www/html/escrape/app,-/var/www/html/escrape/api/logs",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"cook",
+			"scope.error",
+			"apiUri",
+			"openInNewWindow",
+			"franc",
+			"savePersonPhoto",
+			"setPhoto(",
+			"setPhoto() will insert record",
+			"photoGetTruthfulness",
+			"photosGetAllShowcase",
+			"photoGetShowcase",
+			"ShowCase",
+			"photoGetShowcase",
+			"photosGetAllShowCase",
+			"photoGetShowcase",
+			"hotosGet",
+			"photosGetA",
+			"photoGetShowcase",
+			"@param",
+			"m  idPer",
+			"photoGetShowcase",
+			"hotosGet",
+			"getPhotos",
+			"photosGet",
+			"<?",
+			"getPhotosByField",
+			"photosGet",
+			"photoGetByShowcase",
+			"photosGet",
+			"getPhotosByField",
+			"photosGet",
+			"getPhotosByField",
+			"DEBUG O",
+			"ONCE",
+			" setPhoto() - detail",
+			"photoGetShowcase",
+			"photosG",
+			"photoGetByShowcase",
+			"getAll",
+			"getPersons",
+			"truthful",
+			"isPhoneActive",
+			"adding phot",
+			"personsCheckSamePhotos",
+			"photoAdd",
+			"getPhotosByField",
+			"DEBUG -  getPhotosByField",
+			"personsCheckSamePhotos",
+			"photoSetTruthful",
+			"id_pe",
+			"personsCheckSamePhotos",
+			"photoCheckSimilarity",
+			"personsCheckSamePhotos",
+			"photoCheckSimilarity",
+			"personsCheckSamePhotos",
+			"photoCheckSim",
+			"personsCheckSamePhotos",
+			"is new",
+			"PersonsController::sync() - adding photo ",
+			"setPhoto() - master",
+			"photoCheckSimilarity",
+			"setPh",
+			"Detail",
+			"photoAdd",
+			"$person",
+			"old ",
+			"photo2Data",
+			"photo2Dat",
+			"photo2Data",
+			"setPhoto",
+			"photo2Data",
+			"add\\(.photo",
+			"add(.photo",
+			"comment",
+			"add",
+			"photoAdd",
+			"photo",
+			"max",
+			"log",
+			"getPhotosB",
+			"comment",
+			"ByField",
+			"getAll",
+			"photo",
+			"fake",
+			"untruthful",
+			"truthful",
+			"comment",
+			"any2",
+			"savePersonPhoto",
+			"savePersonComment",
+			"savePersonPhoto",
+			"number of persons with this same pho",
+			"Check",
+			"Ce",
+			"95",
+			"available",
+			"unavailable",
+			"savePersonPhoto",
+			"savePersonPhotos",
+			"savePersonC",
+			"comment",
+			"ByFields",
+			"byFields",
+			"ByField",
+			"setByF",
+			"try ",
+			"n get",
+			"photos",
+			"savePerson(",
+			"ratingChange",
+			"comment",
+			"comment_idx",
+			"getCommentsByFields",
+			"comment",
+			"truth",
+			"thrut",
+			"truthful",
+			"person.namde",
+			"shorten",
+			"itle_h3_query",
+			"img_file_name",
+			"'",
+			"importScr",
+			"get_first_span_tex",
+			"et_first_title",
+			"get_span_texts_dom",
+			"et_titles_dom"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": true,
+		"regex": false,
+		"replace_history":
+		[
+			"Master",
+			"photo",
+			"photo_idx",
+			"photo",
+			"  ",
+			"GoogleSearch",
+			"  ",
+			"Truth",
+			"truth",
+			"memory_get_usage",
+			"ending",
+			"toI",
+			"', name: '', type: 'region' },",
+			"  ",
+			"Prev",
+			"  ",
+			"commentMaster",
+			"_container",
+			")|(alla) )",
+			")|(amica) )",
+			") )",
+			"(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza))",
+			"/\\b(?<!(c((or)|(\\.))?so)|(via(le)?)|(strada)(p(ia)|(\\.))?za)\\s+))",
+			"$this->router->log(",
+			"$this->log(",
+			"comment",
+			" {",
+			"",
+			"comment",
+			"fullSync",
+			"url",
+			"$set",
+			"",
+			"openedId",
+			"service",
+			"service.",
+			"",
+			"this",
+			"Sieves.original",
+			"defaults",
+			"After",
+			"  ",
+			"",
+			"$array",
+			"\", \"",
+			"",
+			"$array"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 5,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "TODO",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 17858,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1932,
+								1932
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 178.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "api/classes/services/Db.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 64437,
+						"regions":
+						{
+							"bookmarks":
+							{
+								"flags": 144,
+								"icon": "bookmark",
+								"regions":
+								[
+									[
+										42149,
+										42149
+									]
+								],
+								"scope": "bookmarks"
+							}
+						},
+						"selection":
+						[
+							[
+								45664,
+								45664
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 17721.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "api/classes/controllers/PhotosController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 723,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								584,
+								584
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 124.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "api/classes/controllers/CommentsController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15637,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2042,
+								2042
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 825.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "api/classes/controllers/PersonsController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 60622,
+						"regions":
+						{
+							"bookmarks":
+							{
+								"flags": 144,
+								"icon": "bookmark",
+								"regions":
+								[
+									[
+										18676,
+										18676
+									],
+									[
+										24845,
+										24867
+									],
+									[
+										27110,
+										27110
+									],
+									[
+										44306,
+										44316
+									],
+									[
+										44771,
+										44771
+									],
+									[
+										50068,
+										50088
+									],
+									[
+										54957,
+										54957
+									]
+								],
+								"scope": "bookmarks"
+							}
+						},
+						"selection":
+						[
+							[
+								33821,
+								33821
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 13285.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "api/classes/services/Utilities.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4693,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								92,
+								92
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "app/scripts/controllers/persons.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 51309,
+						"regions":
+						{
+							"bookmarks":
+							{
+								"flags": 144,
+								"icon": "bookmark",
+								"regions":
+								[
+									[
+										23380,
+										23380
+									]
+								],
+								"scope": "bookmarks"
+							}
+						},
+						"selection":
+						[
+							[
+								23800,
+								23800
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 8224.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "app/scripts/services/cfg.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1786,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1301,
+								1301
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": -0.0,
+						"translation.y": 45.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "app/scripts/services/persons.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3706,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1050,
+								1050
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "app/scripts/services/authentication.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7114,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2832,
+								2832
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 918.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "app/scripts/controllers/authentication.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7813,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1847,
+								1847
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 463.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "api/index.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 17284,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								11666,
+								11666
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3079.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "api/classes/services/Photo.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 22057,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								9663,
+								9663
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4924.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "app/views/person.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 29822,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								13901,
+								13901
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 3465.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "app/views/persons.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15288,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								12660,
+								12660
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4182.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 29.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.xdebug":
+	{
+		"height": 223.0
+	},
+	"pinned_build_system": "",
+	"project": "escrape.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 294.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 901.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+		"xdebug":
+		{
+			"hide_conflict": false,
+			"restore_index":
+			{
+				"17":
+				{
+					"group": 0,
+					"index": 0
+				},
+				"18":
+				{
+					"group": 0,
+					"index": 1
+				},
+				"19":
+				{
+					"group": 0,
+					"index": 2
+				},
+				"20":
+				{
+					"group": 0,
+					"index": 3
+				},
+				"21":
+				{
+					"group": 0,
+					"index": 4
+				},
+				"22":
+				{
+					"group": 0,
+					"index": 8
+				},
+				"23":
+				{
+					"group": 0,
+					"index": 9
+				},
+				"31":
+				{
+					"group": 0,
+					"index": 10
+				},
+				"32":
+				{
+					"group": 0,
+					"index": 6
+				},
+				"34":
+				{
+					"group": 0,
+					"index": 7
+				},
+				"46":
+				{
+					"group": 0,
+					"index": 5
+				}
+			},
+			"restore_layout":
+			{
+				"cells":
+				[
+					[
+						0,
+						0,
+						1,
+						1
+					]
+				],
+				"cols":
+				[
+					0.0,
+					1.0
+				],
+				"rows":
+				[
+					0.0,
+					1.0
+				]
+			}
+		}
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 189.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

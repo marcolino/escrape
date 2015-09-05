@@ -30,7 +30,7 @@
    * @return boolean:            true if everything successful, false if any error occurred
    */
   public function sync($fullSync = false) {
-    $this->router->log("info", "---------- persons sync ----------");
+    $this->router->log("info", "---------- persons sync (full sync: " . ($fullSync ? "yes" : "no") . ") ----------");
     $timestampStart = time();
     $error = false; // track errors while sync'ing for activity assertion
 
@@ -59,7 +59,7 @@
         if ($source["path-next"] and $pageNext > 1) { // path-next is defined, and we are on a page next to the first one
           continue;
         } else {
-          $this->router->log("error", "not any person pattern found on source [$sourceKey], giving up with this source");
+          $this->router->log("error", "not any person pattern found on source [$sourceKey], giving up with this source [persons_page: {$persons_page}]");
           $error = true;
           continue;
         }
@@ -75,9 +75,13 @@
         // get person id
         if (preg_match($source["patterns"]["person-id"], $person_cell, $matches) >= 1) {
           $id = $matches[1];
+          if ($id === "") {
+            $this->router->log("warning", "person $n id is empty on source [$sourceKey], giving up with this person");
+            continue;
+          }
           $key = $sourceKey . "-" . $id;
         } else {
-          $this->router->log("error", "person $n ($key) id not found on source [$sourceKey], giving up with this person");
+          $this->router->log("error", "person $n id not found on source [$sourceKey], giving up with this person");
           $error = true;
           continue;
         }
@@ -94,9 +98,9 @@
 
         // get person details url
         if (preg_match($source["patterns"]["person-details-url"], $person_cell, $matches) >= 1) {
-          $detailsUrl = $source["url"] . "/" . $matches[1];
+          $detailsUrl = $source["url-details"] . "/" . $matches[1];
         } else {
-          $this->router->log("error", "person $n ($key) details url not found, giving up with this person");
+          $this->router->log("error", "person $n ($key) details url ($detailsUrl) not found, giving up with this person");
           $error = true;
           continue;
         }
@@ -108,6 +112,7 @@
           $error = true;
           continue;
         }
+
         // remove all patterns to be removed (what changes on every load) from body before sum
         $pageDetailsCleaned = $this->normalizePage($page_details, $sourceKey);
         $pageSum = md5($pageDetailsCleaned);
@@ -241,7 +246,7 @@
           ($personMaster["page_sum"] !== $person["page_sum"]) // page sum did change
         ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change
           foreach ($photosUrls as $photoUrl) { // add photos
-            #$this->router->log("debug", "PersonsController::sync() - photo $photoUrl");
+            #$this->router->log("debug", " adding photo $photoUrl");
             $this->photoAdd($personId, $photoUrl, $source);
           }
         }
@@ -253,12 +258,10 @@
     }
 
     // assert persons activity status
-    $error = !$this->assertPersonsActivity($timestampStart, $sourceKey, $error) || $error;
-
-    # TODO: read success/error return value, and OR it with $error, or pass $error to function.... (DONE, TEST ME...)
+    $error |= !$this->assertPersonsActivity($timestampStart, $sourceKey, $error);
 
     // assert persons uniqueness after sync completed
-    $error = !$this->assertPersonsUniqueness($timestampStart) || $error;
+    $error |= !$this->assertPersonsUniqueness($timestampStart);
 
     $this->router->log("info", "---------- /persons sync ----------");
     return !$error;
@@ -318,11 +321,11 @@
    * Assert persons activity: compare person's last sync'd timestamp with a given timestamp
    *  ("timestampStart" parameter), the timestamp last (or this) sync started.
    */
-  private function assertPersonsActivity($timestampStart, $sourceKey, $error) {
+  private function assertPersonsActivity($timestampStart, $error) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
       $active = null;
-      $activeFromSource = $this->isPhoneActive($person["phone"], $sourceKey);
+      $activeFromSource = $this->isPhoneActive($person["phone"]);
       if (!$activeFromSource) {
         // this person was found as explicitly "inactive" from source page
         $active = false;
@@ -371,11 +374,15 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     $persons = $this->db->getPersons();
     $photos = $this->db->getAll("photo");
 
+#$ii=-1;
+#$jj=-1
     # build an array of persons indexed by id
     $persons_count = count($persons);
     $photos_count = count($photos);
     for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array
       $personId = $persons[$i]["id_person"];
+#if ($personId == 823) $ii = $i;
+#if ($personId == 825) $jj = $i;
       $personsById[$personId] = $persons[$i];
       $personsById[$personId]["photos"] = [];
       for ($j = 0; $j < $photos_count; $j++) { // add person photos array to persons-by-id array
@@ -384,15 +391,23 @@ if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
       }
     }
+#$this->router->log("debug", "ii: $ii, jj: $jj");
 
     # check every couple of persons (avoiding permutations)
     for ($i = 0; $i < $persons_count/* - 1*/; $i++) {
+#$i = $ii; # TODO: DEBUG!!!
       // check only persons photos from system user (TODO: TEST THIS!)
       if ($persons[$i]["id_user"] !== $this->db->systemUserId()) {
-$this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["id_user"] . ") IS NOT A SYSTEM RECORD, SKIPPING (SHOULD NOT HAPPEN)");
+        $this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["id_user"] . ") IS NOT A SYSTEM USER RECORD, SKIPPING (SHOULD NOT HAPPEN)");
         continue;
       }
 
+if (
+  $persons[$i]["id_person"] == "854"
+  ) {
+  # Juliana Balbino
+  ;
+}
       // check only persons which are new (TODO: TEST THIS!)
       if ($persons[$i]["timestamp_creation"] < $timestampStart) {
         #$this->router->log("debug", " person n°: $i (userId: " . $persons[$i]["id_user"] . ") timestamp_creation (" . $persons[$i]["timestamp_creation"] . " < timestamp (" . $timestampStart . "), IS OLD");
@@ -407,7 +422,9 @@ $this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["
       $this->router->log("debug", " [".(1+$i)."/$persons_count]");
 
       for ($j = $i + 1; $j < $persons_count; $j++) {
+#$j = $jj; # TODO: DEBUG!!!
         $relationship = false;
+
         if ($this->personsCheckSamePhone($persons[$i], $persons[$j])) {
           # same phone, te persons probably have some relationship
           $relationship = true;
@@ -472,6 +489,9 @@ $this->router->log("debug", " person n°: ".(1+$i)." (userId: " . $persons[$i]["
             return false;
           }
         }
+## TODO: DEBUG!!!
+#$this->router->log("debug", "DEBUG, RETURN");
+#return true;
       }
     }
 
@@ -575,6 +595,7 @@ if (
           return true;
         }
         $distance = $photo->compareSignatures($photo1["signature"], $photo2["signature"]);
+
         if ($distance <= $minDistance) { // duplicate found
           $this->router->log("debug", "  SIMIL PHOTO - \"" . $person1["name"] . "\" & \"" . $person2["name"] . "\"");
           return true;
@@ -595,6 +616,8 @@ if (
     $comments = new CommentsController($this->router);
 
     $persons = $this->db->getPersons($sieves, $userId);
+    ###$photos = $this->photosGetAll();
+    $photosShowcase = $this->photosGetAllShowcase($userId);
     foreach ($persons as $person) {
       // N.B: here we (could) get multiple records for each person id
       $personId = $person["id_person"];
@@ -607,20 +630,21 @@ if (
       // store each person by it's person id ("id" field is relative to details table)
       $result[$personId] = $person;
 
-      // fields "calculated"
-      //$result[$personId]["truthful"] = "unknown"; # TODO: if at least one photo is !thrustful, person is !thrustful...
-      $showcase = $this->photoGetByShowcase($personId, true);
-      $showcase = (isset($showcase["path_small"])) ? $showcase["path_small"] : null;
-      $result[$personId]["photo_path_small_showcase"] = $showcase;
-      $result[$personId]["comments_count"] = $comments->countByPhone($person["phone"]);
-      $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId);
+      // fields which are "calculated"
+      ###$photos = $this->photosGet($personId);
+      $showcase = $this->photoGetShowcase($photosShowcase, $personId);
+      $result[$personId]["photo_path_small_showcase"] = (isset($showcase["path_small"])) ? $showcase["path_small"] : null;
+      $result[$personId]["truthful"] = $this->photoGetTruthfulness($photosShowcase, $personId);
+      $result[$personId]["comments_count"] = $comments->countByPhone($person["phone"]); ### 17.0s ###
+      $result[$personId]["comments_average_rating"] = $comments->getAverageRating($personId); ### 1.7s ###
     }
     return $result;
   }
 
   public function get($id, $userId = null) {
     $person = $this->db->getPerson($id, $userId);
-    $photos = $this->db->getByField("photo", "id_person", $id, $userId);
+    #$photos = $this->db->getByField("photo", "id_person", $id, $userId);
+    $photos = $this->db->getPhotosByField("id_person", $id, $userId);
 /*
     TODO: THIS IS TOO SLOW TO BE PERFORMED HERE: REMOVE THIS CODE...
     for ($i = 0; $i < count($photos); $i++) { // assert photos current availabilty
@@ -660,13 +684,30 @@ if (
   }
 
   public function set($id, $personMaster, $personDetail = null, $userId = null) {
-    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);
+    try {
+      $this->db->setPerson($id, $personMaster, $personDetail, $userId);
+      return true;
+    } catch (Exception $e) {
+      $this->router->log("error", "can't set person with id [$id]: " . $e->getMessage());
+      return false;
+    }
+
+    $photos = $person["photos"];
+    try {
+      $this->db->setByField("photo", "id_person", $id, $userId);
+      return true;
+    } catch (Exception $e) {
+      $this->router->log("error", "can't set photo for person with id [$id]: " . $e->getMessage());
+      return false;
+    }
   }
+
 
   public function delete($id, $userId = null) {
     return $this->db->deletePerson($id, $userId);
   }
   
+/*
   public function getPhotoOccurrences($id, $imageUrl) {
     $person = $this->db->getPerson($id);
     $personDomain = $person["url"];
@@ -692,6 +733,7 @@ if (
     unset($googleSearch);
     return $response;
   }
+*/
 
   private function normalizePage($page, $sourceKey) {
     $source = $this->sourcesDefinitions[$sourceKey];
@@ -710,6 +752,7 @@ if (
     $value = preg_replace("/\s+$/", "", $value); // ignore trailing blanks
     $value = preg_replace("/\n+/", "\n", $value); // remove empty lines
     $value = ucwords(strtolower($value)); // only initials upper case
+    $value = preg_replace("/[,.;!].*$/", "", $value); // ignore anything after a punctuation character and after
     return $value;
   }
 
@@ -737,7 +780,7 @@ if (
     return $phone;
   }
 
-  private function isPhoneActive($phone, $sourceKey) {
+  private function isPhoneActive($phone) {
     return $phone ? true : false;
   }
 
@@ -1094,12 +1137,15 @@ if (
       $photo->number($number);
   
       // add this photo to database
-      $retval = $this->db->add("photo", $this->photo2Data($photo));
+      #$retval = $this->db->add("photo", $this->photo2Data($photo));
+      $retval = $this->db->addPhoto($this->photo2DataMaster($photo), $this->photo2DataDetail($photo));
     } else { // this photo was found in database: check if url did change
       if ($p["url"] !== $photo->url()) { // update this photo "url" field into database
-        $retval = $this->db->set("photo", $p["id"], [ "url" => $p["url"] ]);
+        #$retval = $this->db->set("photo", $p["id"], [ "url" => $p["url"] ]);
+        $retval = $this->db->setPhoto($p["id"], [ "url" => $p["url"] ], []);
       } else { // no change even in url field
         $retval = false;
+        ###$retval = $this->db->setPhoto($p["id"], [ "url" => $p["url"] ], []); # TODO: ONCE ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       }
     }
 
@@ -1160,12 +1206,12 @@ if (
 */
 
   /**
-   * Extract from a Photo object all properties to be stored to database, as array
+   * Extract from a Photo object all master properties to be stored to database, as array
    *
-   * @param  Photo: $photo       the photo object to check for duplication
-   * @return array:              the array with all fields to be stored to database
+   * @param  Photo: $photo       the photo object to get master properties from
+   * @return array:              the array with all master fields to be stored to database
    */
-  private function photo2Data($photo) {
+  private function photo2DataMaster($photo) {
     $data = [];
     foreach($photo as $property => $value) {
       if (
@@ -1177,8 +1223,24 @@ if (
         ($property === "sum") ||
         ($property === "timestamp_creation") ||
         ($property === "signature") ||
-        ($property === "showcase") ||
-        ($property === "truthfulness")
+        ($property === "showcase")
+      )
+      $data[$property] = $value;
+    }
+    return $data;
+  }
+
+  /**
+   * Extract from a Photo object all detail properties to be stored to database, as array
+   *
+   * @param  Photo: $photo       the photo object to get detail properties from
+   * @return array:              the array with all detail fields to be stored to database
+   */
+  private function photo2DataDetail($photo) {
+    $data = [];
+    foreach($photo as $property => $value) {
+      if (
+        ($property === "truthful")
       )
       $data[$property] = $value;
     }
@@ -1263,12 +1325,12 @@ if (
     }
 
     // store the full and small bitmaps to file-system
-#$this->router->log("debug", "photoStore() - 1 - bitmapFull path: ", $pathnameFull);
+    #$this->router->log("debug", "photoStore() - 1 - bitmapFull path: ", $pathnameFull);
     if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {
       $this->router->log("error", "can't save photo to file [$pathnameFull]");
       return false;
     }
-#$this->router->log("debug", "photoStore() - 2 - bitmapSmall path: ", $pathnameSmall);
+    #$this->router->log("debug", "photoStore() - 2 - bitmapSmall path: ", $pathnameSmall);
     if ((file_put_contents($pathnameSmall, $photo->bitmapSmall())) === false) {
       $this->router->log("error", "can't save photo to file [$pathnameSmall]");
       return false;
@@ -1336,17 +1398,123 @@ if (
   }
 
   /**
+   * Get showcase photos of all person
+   *
+   * @param  integer $userId   the id of the current nuser
+   * @return array             the photos array
+   */
+  private function photosGetAllShowcase($userId) {
+    return $this->db->getPhotosShowcase($userId);
+  }
+
+/*
+  / **
+   * Get photos of person
+   *
+   * @param  integer $personId   the id of the person whose photo to load
+   * @return array               the photos array
+   * /
+  private function photosGet($personId) {
+    return $this->db->getPhotosByField("id_person", $personId);
+  }
+*/
+
+  /**
+   * Get showcase photo of person
+   *
+   * @param  array[] $photos   the array of the photos of the person
+   * @param  integer $personId the id of the person whose photo to load
+   * @return array             the photo array
+   */
+  private function photoGetShowcase($photos, $personId) {
+    ##$start = $this->binary_search($photos, "id_person", $personId);
+    for ($i = 0; $i < count($photos); $i++) {
+      if ($photos[$i]["id_person"] === $personId) {
+        return $photos[$i];
+      }
+    }
+    return [];
+  }
+
+/*
+/ **
+ * Iterative binary search by a field of a two-levels array (fields are sorted but can be multiple)
+ *
+ * @param  array  $list     the sorted array
+ * @param  string $field    the name of the second level field to search for the key
+ * @param  int    $target   the target integer to search
+ * @return int              the index of the target key if found, otherwise -1 
+ * /
+  private function binary_search_by_field($list, $field, $target) {
+    $left = 0;
+    $right = count($list) - 1;
+  
+    while ($left <= $right) {
+      $mid = ($left + $right) / 2;
+
+      if ($list[$mid][$field] === $target) {
+        $mid = intval($mid);
+        while (($mid > 0) && ($list[$mid][$field] === $target)) { // rewind till the first element with the target key
+          $mid--;
+        }
+        return $mid;
+      } elseif ($list[$mid][$field] > $target) {
+        $right = $mid - 1;
+      } elseif ($list[$mid][$field] < $target) {
+        $left = $mid + 1;
+      }
+    }
+  
+    return -1;
+  }
+*/
+
+  /**
+   * Get truthfulness of the photos of a person
+   *
+   * @param  array[] $photos   the array of the photos of the person
+   * @return string            "true" if all the photos are truthful
+   *                           "almost-true" if 1 to half of the photos are truthful
+   *                           "false" if all the photos are not truthful
+   *                           "almost-false" if 1 to half of the photos are not truthful
+   *                           "unknown" if all the photos are unknown
+   */
+  private function photoGetTruthfulness($photos, $personId) {
+    $count = count($photos);
+    $true = $false = 0;
+    for ($i = 0; $i < count($photos); $i++) {
+      if ($photos[$i]["id_person"] === $personId) {
+        if ($photos[$i]["truthful"] === "true") {
+          $true++;
+        } elseif ($photos[$i]["truthful"] === "false") {
+          $false++;
+        }
+        break;
+      }
+    }
+    if ($true) {
+      return "true";
+    } elseif ($false) {
+      return "false";
+    } else {
+      return "unknown";
+    }
+  }
+
+/*
+  / **
    * Get photos of person given their showcase flag
    *
    * @param  integer $personId   the id of the person whose photo to load
    * @param  integer $showcase   showcase flag (true / false)
    * @return array   the photo structure
-   */
+   * /
   private function photoGetByShowcase($personId, $showcase) {
     $photos = $this->db->getByFields("photo", [ "id_person" => $personId, "showcase" => $showcase ]);
     #return (is_array($photos) && count($photos) > 0) ? $photos[0] : [];
     return (count($photos) > 0) ? $photos[0] : [];
   }
+*/
 
   /**
    * Get count of photos of person

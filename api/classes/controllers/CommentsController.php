@@ -27,7 +27,7 @@ class CommentsController {
    * Sync comments
    */
   public function sync() {
-    $all = false; # TODO: get this flag as parameter
+    $all = true; # TODO: get this flag as parameter
     $error = false;
     $this->router->log("info", "---------- comments sync ----------");
 
@@ -42,7 +42,16 @@ class CommentsController {
       setlocale(LC_ALL, $cd["locale"]);
       date_default_timezone_set($cd["timezone"]);
   
-      $browser = new SimpleBrowser();
+
+# TODO: TEST THIS!!!
+#print date_to_timestamp($this->cleanDate('2015 Giugno 12, 14:35:24'));
+#print "\n";
+#print date_to_timestamp($this->cleanDate('<strong>Today</strong> at 09:39:30'));
+#print "\n";
+#exit;
+
+
+      #$browser = new SimpleBrowser();
       #$this->router->log("debug", "Instantiating NEW browser");
       $browser = &new SimpleBrowser();
       $browser->get($cd["url-login"]); # SLOW-OP
@@ -59,7 +68,6 @@ class CommentsController {
         $phone = $person["phone"];
         $commentsCount = 0;
         if ($phone and !in_array($phone, $phones)
-#and ($phone === "3892404135")
         ) { // process only non-empty or not-already processed phones
           $phones[] = $phone;
           if (($commentsCount = $this->searchByPhone($browser, $phone, $cd)) === false) {
@@ -68,7 +76,9 @@ class CommentsController {
           }
         }
         $n++;
-        $this->router->log("debug", "[$n / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
+        if ($phone) {
+          $this->router->log("debug", "[$n / $personsCount ] - person with phone [$phone] has $commentsCount new comments");
+        }
       } // foreach persons end
 
       $this->searchByPhone(null, null, null); // force browser unset for next comment definition
@@ -93,7 +103,7 @@ class CommentsController {
       return true;
     }
 
-    $this->router->log("debug", "searchByPhone($phone) [$phone]");
+    #$this->router->log("debug", "searchByPhone($phone) [$phone]");
     $browserCloned = clone $browser; // clone browser to keep this (login+search) status
 
     #$this->router->log("debug", "setting new search field on old browser");
@@ -101,7 +111,7 @@ class CommentsController {
     #$this->router->log("debug", "browser click START");
     $page = $browserCloned->click($cd["search-tag"]); # SLOW-OP
     if (!preg_match($cd["patterns"]["search-ok"], $page)) {
-      $this->router->log("error", "can't get search results on comments definition provider [".$cd['domain']."]");
+      $this->router->log("error", "can't get search results for phone [$phone] on comments definition provider [".$cd['domain']."]");
       return false;
     }
     #$this->router->log("debug", "browser click END");
@@ -116,7 +126,7 @@ class CommentsController {
     }
     $searchResultsCount = count($searchResultsUrls);
     if ($searchResultsCount > 0) {
-      $this->router->log("debug", "searchResultsCount: [$searchResultsCount]");
+      #$this->router->log("debug", "searchResultsCount: [$searchResultsCount]");
     }
 
     // loop through all comment pages urls returned
@@ -146,13 +156,22 @@ class CommentsController {
         continue;
       }
   
+      // parse section
+      if (preg_match($cd["patterns"]["section"], $comment_page, $matches)) {
+        $section = $matches[1];
+      } else {
+        $section = null;
+        $this->router->log("warning", "no section found on url [$url] on comments definition provider [".$cd['domain']."]");
+        continue;
+      }
+
       // all comments blocks
       if (preg_match_all($cd["patterns"]["block"], $comment_page, $matches)) {
         $comments_text = $matches[1];
       } else {
         $comments_text = null;
         $this->router->log("error", "not any comment found on url [$url] on comments definition provider [".$cd['domain']."]");
-        return;
+        return 0;
       }
   
       $comment_next_page_url = "";
@@ -185,6 +204,7 @@ class CommentsController {
 
         // parse date
         if (preg_match($cd["patterns"]["date"], $comment_text, $matches)) {
+$ORIGINALdate = $matches[1];
           $date = $this->cleanDate($matches[1]);
         } else {
           $date = null;
@@ -205,9 +225,13 @@ class CommentsController {
           $commentMaster = [];
           $timestamp = date_to_timestamp($date);
           $timestampNow = time(); // current timestamp, sources usually don't set page last modification date...
+if ($timestamp == "0") {
+  $this->router->log("error", "timestamp is [0], ORIGINAL date was [$ORIGINALdate], date was [$date] !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+}
           $key = $timestamp . "-" . md5($topic . $author_nick . $content); # a sortable, univoque index
           $commentMaster["phone"] = $phone;
           $commentMaster["topic"] = $topic;
+          $commentMaster["section"] = $section;
           $commentMaster["timestamp"] = $timestamp;
           $commentMaster["timestamp_last_sync"] = $timestampNow;
           $commentMaster["author_nick"] = $author_nick;
@@ -226,7 +250,7 @@ class CommentsController {
         $commentId = null;
         if (($comments = $this->db->getCommentsByField("key", $key))) { // old comment
           if ($n <= 1) { // on first old comment, try to skip to last page already scraped
-              $commentsInTopic = $this->db->getCommentsByFields([ "phone" => $phone, "topic" => $topic ]);
+            $commentsInTopic = $this->db->getCommentsByFields([ "phone" => $phone, "topic" => $topic ]);
             $length = count($commentsInTopic);
             if ($length > 0) {
               $lastUrl = $commentsInTopic[$length - 1]["url"];
@@ -249,7 +273,7 @@ class CommentsController {
       preg_match($cd["patterns"]["next-link"], $comment_page, $matches);
       if ($matches) {
         $url = $matches[1];
-        $this->router->log("debug", "£££ jumping to NEXT LINK: $url");
+        #$this->router->log("debug", "£££ jumping to NEXT LINK: $url");
         goto next_comments_page; # do a supplementary loop with next url
       }
        
@@ -313,7 +337,7 @@ class CommentsController {
   }
 
   public function set($id, $commentMaster = null, $commentDetail = null, $userId = null) {
-$this->router->log("debug", "CommentsController::set: " . any2string([$id, $commentMaster, $commentDetail, $userId]));
+    #$this->router->log("debug", "CommentsController::set: " . any2string([$id, $commentMaster, $commentDetail, $userId]));
     # TODO: we have a "id_user" field both in $commentDetail and in $userId... Do we nee both of them? Nuuu...
     return $this->db->setComment($id, $commentMaster, $commentDetail, $userId);
   }

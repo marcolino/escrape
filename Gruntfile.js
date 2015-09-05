@@ -347,7 +347,7 @@ module.exports = function (grunt) {
       ],
       dist: [
         'copy:styles',
-        'imagemin',
+        //'imagemin', // imagemin currenty errors with EACCESS... :-(
         'svgmin'
       ]
     },

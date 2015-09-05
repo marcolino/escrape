@@ -1,0 +1,17 @@
+{
+    "folders":
+    [
+        {
+            "follow_symlinks": true,
+            "path": "."
+        }
+    ],
+    "settings": {
+        "xdebug": {
+            "url": "http://127.0.0.1:9090:/#/",
+            //"path_mapping": {
+            //    "/var/www/html/escrape/api/" : "api/"
+            //}
+        }
+    }
+}

@@ -1,6 +1,7 @@
 'use strict';
 
 var apiUri = 'http://0.0.0.0'; // server is local
+var apiPath = '/escrape/api';
 
 // DEBUG ONLY ////////////////////////////////////////////////////
 function atHome() {
@@ -35,7 +36,8 @@ app.constant('cfg', {
     browser: navigator.userAgent,
   },
 */
-  apiUri: apiUri + '/escrape/api',
+  apiUri: apiUri + apiPath,
+  apiPath: apiPath,
   fake: fake, // DEBUG ONLY
   notify: {
     toastr: true,

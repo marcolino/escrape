@@ -20,6 +20,10 @@ TODO 1.0:
  - when changing address in person view, street view and street indications SOMETIMES show error: Waiting for address geo-codification...
  - when updating a person's phone, if new phone is unavailable, verify we keep old number, and set active to false... (NO, WE BLANK OLD PHONE... IS IT OK???)
  - when trying to detect same persons, should compare a constant threshold value with the median value of photos differences, not with each photo difference
+ - when user saves not being logged-in, notify with a warning, and skip the save op...
+ - when logging out, guest fields ordering in persons view is not restored...
+ - nei commenti, aggiungere il campo 'section' (city)...
+ - when deleting search, no apply is marked...
  - solve all these TODO's
 
 TODO 1.1:
@@ -56,7 +60,6 @@ TODO 2.0:
      }
    </script>
  - move to https (see: <https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps>)
- - in list view show only one page of results (20?, 30?); then, when user is close to scroll to the end of page, load next page
  - enable "Google Analytics" in index.html
 
 DONE:
@@ -97,7 +100,7 @@ DONE:
  - analize 2015-22-03.log ...
  - $this->sitesDefinitions = [ "..." => [ ... "charset" => "utf-8", "accepts-tor" => <boolean>,
  - pass user id from authentication to service.js, and to API (BUT, WHAT WAS THE REASON?? ... however, no, we could use username ('*' ...))
- - truthfulness => thrutful /g
+ - truthfulness => truthful /g
  - handle flag to close 'options', more than 'filters'...
  - add 'api/setup' to .gitignore @HOME (.gitignore is not committed...)
  - profile @HOME (enabling apd_set_pprof_trace() at the bottom of index.php) @HOME (can't run Pecl/apd with PHP 5.6 (from Remi) on Centos 6.6 @OFFICE... :-() (No, using xdebug @HOME)
@@ -221,3 +224,5 @@ DONE:
  - avoid duplicated comments SET problems... (DONE, SKIPPING OLD COMMENTS, TO BE TESTED @HOME)
  - remove "page_cleaned" column from "person_detail" (@HOME)
  - when syncing persons, and two photos are equal, update photo path... (DONE, TO BE TESTED @HOME) (SHOULD CONFIRM IT'S WORKING...)
+ - remove "E***rt Torino" from beginning of name from TE
+ - in list view show only one page of results (20?, 30?); then, when user is close to scroll to the end of page, load next page

@@ -1,0 +1,713 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"backgro",
+				"background-color"
+			],
+			[
+				"p",
+				"phone"
+			],
+			[
+				"sourceK",
+				"sourceKey"
+			],
+			[
+				"any",
+				"any2string"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/var/www/html/escrape/TODO",
+			"settings":
+			{
+				"buffer_size": 17676,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/var/www/html/escrape/api/classes/services/Db.php",
+			"settings":
+			{
+				"buffer_size": 44980,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/var/www/html/escrape/api/index.php",
+			"settings":
+			{
+				"buffer_size": 15633,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "<?php\n/**\n * Persons controller\n * \n * @package PersonsController\n * @author  Marco Solari <marcosolari@gmail.com>\n */\n\n  class PersonsController {\n  \n  const PHOTOS_PATH = \"db/photos/\";\n  const TIMEOUT_BETWEEN_DOWNLOADS = 30;\n  const RETRIES_MAX_FOR_DOWNLOADS = 3;\n\n  /**\n   * Constructor\n   */\n  function __construct($router) {\n    require_once \"setup/persons.php\"; // persons setup\n    $this->router = $router;\n    $this->network = new Network();\n    $this->db = $router->db;\n    $this->DEBUG_UNIQ = 0; # DEBUG-UNIQ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n  }\n\n  /**\n   * Sync persons\n   *\n   * @param  boolean $fullSync   if true sync fully all persons, do not skip photos for old persons (default: false)\n   * @return boolean:            true if everything successful, false if any error occurred\n   */\n  public function sync($fullSync = false) {\n    $this->router->log(\"info\", \"---------- persons sync ----------\");\n    $timestampStart = time();\n    $error = false; // track errors while sync'ing for activity assertion\n\n    foreach ($this->sourcesDefinitions as $sourceKey => $source) {\n      $useTor = $source[\"accepts-tor\"]; // use TOR proxy to sync\n      $pageNext = 1;\n\n      page_next:\n      $pathNext = $source[\"path-next\"] ? sprintf($source[\"path-next\"], $pageNext) : null;\n\n      # TODO: handle country / city / category (instead of a fixed path)\n      $url = $source[\"url\"] . \"/\" . $source[\"path\"] . $pathNext;\n\n      // get person details page\n      $page = $this->getUrlContents($url, $source[\"charset\"], $useTor);\n      if ($page === false) {\n        $this->router->log(\"error\", \"can't get main page for source [$sourceKey], giving up with this source\");\n        $error = true;\n        continue;\n      }\n\n      $persons_page = $page;\n      if (preg_match_all($source[\"patterns\"][\"person\"], $persons_page, $matches)) {\n        $person_cells = $matches[1];\n      } else {\n        if ($source[\"path-next\"] and $pageNext > 1) { // path-next is defined, and we are on a page next to the first one\n          continue;\n        } else {\n          $this->router->log(\"error\", \"not any person pattern found on source [$sourceKey], giving up with this source\");\n          $error = true;\n          continue;\n        }\n      }\n      \n      $persons = [];\n      $n = 0;\n      $tot = count($person_cells);\n      foreach ($person_cells as $person_cell) {\n        $person = [];\n        $n++;\n\n        // get person id\n        if (preg_match($source[\"patterns\"][\"person-id\"], $person_cell, $matches) >= 1) {\n          $id = $matches[1];\n          $key = $sourceKey . \"-\" . $id;\n        } else {\n          $this->router->log(\"error\", \"person $n ($key) id not found on source [$sourceKey], giving up with this person\");\n          $error = true;\n          continue;\n        }\n\n        // check if person key is new or not\n        $personId = null;\n        if (($persons = $this->db->getPersonsByField(\"key\", $key))) { # old key\n          $person = $persons[0];\n          $personId = $person[\"id_person\"];\n          $this->router->log(\"debug\", \"old person - [$n/$tot], id: $personId, key: [$key]\");\n        } else {\n          $this->router->log(\"debug\", \"new person - [$n/$tot], id: $personId, key: [$key]\");\n        }\n\n        // get person details url\n        if (preg_match($source[\"patterns\"][\"person-details-url\"], $person_cell, $matches) >= 1) {\n          $detailsUrl = $source[\"url\"] . \"/\" . $matches[1];\n        } else {\n          $this->router->log(\"error\", \"person $n ($key) details url not found, giving up with this person\");\n          $error = true;\n          continue;\n        }\n\n        // get person details page\n        $page_details = $this->getUrlContents($detailsUrl, $source[\"charset\"], $useTor);\n        if ($page_details === false) {\n          $this->router->log(\"error\", \"can't get person $n ($key) details url, giving up with this person\");\n          $error = true;\n          continue;\n        }\n        // remove all patterns to be removed (what changes on every load) from body before sum\n        $pageDetailsCleaned = $this->normalizePage($page_details, $sourceKey);\n        $pageSum = md5($pageDetailsCleaned);\n\n        // get person phone\n        if (preg_match($source[\"patterns\"][\"person-phone\"], $page_details, $matches) >= 1) {\n          $phone = $this->normalizePhone($matches[1], $sourceKey);\n        } else {\n          $this->router->log(\"error\", \"person $n ($key) phone not found, giving up with this person\");\n          $error = true;\n          continue;\n        }\n\n        // get person phone\n        if (preg_match_all($source[\"patterns\"][\"person-photo\"], $page_details, $matches) >= 1) {\n          $photosUrls = $matches[1];\n        } else {\n          $this->router->log(\"error\", \"person $n ($key) photo pattern not found, giving up with this person\");\n          $error = true;\n          continue;\n        }\n\n        // get person name\n        if (preg_match($source[\"patterns\"][\"person-name\"], $page_details, $matches) >= 1) {\n          $name = $this->normalizeName($matches[1]);\n        } else {\n          #$this->router->log(\"warning\", \"person $n name not found on source [$sourceKey]\");\n          $name = \"\";\n        }\n\n        // get person sex\n        if (preg_match($source[\"patterns\"][\"person-sex\"], $page_details, $matches) >= 1) {\n          $sex = $matches[1];\n        } else {\n          #$this->router->log(\"warning\", \"person $n sex not found on source [$sourceKey]\");\n          $sex = \"\";\n        }\n\n        // get person zone\n        if (preg_match($source[\"patterns\"][\"person-zone\"], $page_details, $matches) >= 1) {\n          $zone = $matches[1];\n        } else {\n          #$this->router->log(\"info\", \"person $n zone not found on source [$sourceKey]\");\n          $zone = \"\";\n        }\n        \n        // get person description\n        if (preg_match($source[\"patterns\"][\"person-description\"], $page_details, $matches) >= 1) {\n          $description = $this->normalizeDescription($matches[1]);\n        } else {\n          #$this->router->log(\"warning\", \"person $n description not found on source [$sourceKey]\");\n          $description = \"\";\n        }\n \n        // get person street address\n        if (preg_match($source[\"patterns\"][\"person-street-address\"], $page_details, $matches) >= 1) {\n          $streetAddress = $this->normalizeStreetAddress($matches[1]);\n        } else {\n          #$this->router->log(\"warning\", \"person $n description not found on source [$sourceKey]\");\n          $streetAddress = null;\n        }\n\n        /*\n        # TODO: IGNORE NATIONALITY ON SITE, USE NAME/DESCRIPTION TO DETECT IT!\n        // get person nationality\n        if (preg_match($source[\"patterns\"][\"person-nationality\"], $page_details, $matches) >= 1) {\n          $nationality = $this->normalizeNationality($matches[1]);\n          #$nationality = $this->detectNationality($nationality, $description, $this->router->cfg[\"sourcesCountryCode\"]);\n          $nationality = $this->detectNationality($name, $description, $this->router->cfg[\"sourcesCountryCode\"]);\n        } else {\n          #$this->router->log(\"warning\", \"person $n nationality not found on source [$sourceKey]\");\n          #$nationality = \"\";\n          $nationality = $this->detectNationality($name, $description, $this->router->cfg[\"sourcesCountryCode\"]);\n        }\n        */\n\n        $age = null;\n        $vote = null;\n        $timestampNow = time();\n        $nationality = $this->detectNationality($name, $description, $this->router->cfg[\"sourcesCountryCode\"]);\n\n        $personMaster = [];\n        $personMaster[\"source_key\"] = $sourceKey;\n        $personMaster[\"url\"] = $detailsUrl;\n        $personMaster[\"timestamp_last_sync\"] = $timestampNow;\n        #$personMaster[\"page_cleaned\"] = $pageDetailsCleaned;\n        $personMaster[\"page_sum\"] = $pageSum;\n        $personDetail = [];\n        $personDetail[\"name\"] = $name;\n        $personDetail[\"sex\"] = $sex;\n        $personDetail[\"zone\"] = $zone;\n        $personDetail[\"street_address\"] = $streetAddress;\n        $personDetail[\"description\"] = $description;\n        $personDetail[\"phone\"] = $phone;\n        $personDetail[\"nationality\"] = $nationality;\n        $personDetail[\"age\"] = $age;\n        $personDetail[\"vote\"] = $vote;\n        #if ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n        #$personDetail[\"uniq_prev\"] = null; // reset all uniq_prev fields, will be recalculated\n        #$personDetail[\"uniq_next\"] = null; // reset all uniq_next fields, will be recalculated\n        #}\n\n        if ($personId) { # old key, update it\n          $this->set($personId, $personMaster, $personDetail);\n          #######################################################################\n          # TODO: TEST IF *BODY* PAGE SUM DOES NOT CHANGE IF PAGE IS NOT UPDATED\n          #######################################################################\n          if ($personMaster[\"page_sum\"] !== $person[\"page_sum\"]) {\n            $this->router->log(\"debug\", \"PersonsController::sync() - body sum is changed\");\n          /*\n            if (($person[\"page_cleaned\"] !== null) and ($personMaster[\"page_cleaned\"] !== null)) {\n              file_put_contents(\"/tmp/person-old.html\", $person[\"page_cleaned\"]);\n              file_put_contents(\"/tmp/person-new.html\", $personMaster[\"page_cleaned\"]);\n              $diff = shell_exec(\"diff --context=0 '/tmp/person-old.html' '/tmp/person-new.html'\");\n              $this->router->log(\"debug\", \"PersonsController::sync() - DEBUG ME - diff:\\n\\n$diff\");\n            }\n          */\n          } else {\n          #  $this->router->log(\"debug\", \"PersonsController::sync() - body sum did not change\");\n          }\n          #######################################################################\n        } else { # new key, insert it\n          $personMaster[\"key\"] = $key; // set univoque key only when adding person\n          $personMaster[\"timestamp_creation\"] = $timestampNow; // set current timestamp as creation timestamp\n          $personId = $this->add($personMaster, $personDetail);\n        }\n\n        if (\n          empty($person) or // person is new\n          $fullSync or // a full sync was requested (TODO: if \"page sum\" method works, fullSync option is not useful anymore...)\n          ($personMaster[\"page_sum\"] !== $person[\"page_sum\"]) // page sum did change\n        ) { // add photos if person is new, or if full sync was requested, or if details page checksum did change\n          foreach ($photosUrls as $photoUrl) { // add photos\n            #$this->router->log(\"debug\", \"PersonsController::sync() - photo $photoUrl\");\n            $this->photoAdd($personId, $photoUrl, $source);\n          }\n        }\n      }\n      if ($source[\"path-next\"]) {\n        $pageNext++;\n        goto page_next;\n      }\n    }\n\n    // assert persons activity status\n    $error = !$this->assertPersonsActivity($timestampStart, $sourceKey, $error) || $error;\n\n    # TODO: read success/error return value, and OR it with $error, or pass $error to function.... (DONE, TEST ME...)\n\n    // assert persons uniqueness after sync completed\n    $error = !$this->assertPersonsUniqueness($timestampStart) || $error;\n\n    $this->router->log(\"info\", \"---------- /persons sync ----------\");\n    return !$error;\n  }\n\n  private function getUrlContents($url, $charset, $useTor) {\n    $retry = 1;\n    retry:\n    try {\n      $data = $this->network->getUrlContents($url, $charset, null, false, $useTor);\n      if (strpos($data, \"La pagina che hai tentato di visualizzare non esiste\") !== false) {\n        $this->router->log(\"warning\", \"can't get page [$url]: \" . \"does not exist\");\n        return false;\n      } else { // check for possible problems from unexpected contents\n        $problem = null;\n        if (preg_match(\"/<link rel=\\\"stylesheet\\\" href=\\\"http:\\/\\/m\\..*?\\\"/s\", $data) >= 1) {\n          # TODO: why does this sometimes happen?\n          $problem = \"source unexpectedly returned page for mobile\";\n        } else {\n          if (\n            (strpos($data, \"Why do I have to complete a CAPTCHA?\") !== false) or\n            (strpos($data, \"has banned your access\") !== false)\n          ) {\n            $problem = \"access denied\";\n          }\n        }\n        if ($problem) {\n          $this->router->log(\"warning\", \"can't get page [$url]: \" . $problem);\n          if ($retry < self::RETRIES_MAX_FOR_DOWNLOADS) { // sleep a random number of seconds\n            if ($problem === \"access denied\") {\n              $sleep = self::TIMEOUT_BETWEEN_DOWNLOADS * $retry;\n              $this->router->log(\"warning\", \"sleeping $sleep seconds before retrying...\");\n              sleep($sleep);\n            }\n            $retry++;\n            goto retry;\n          } else {\n            $this->router->log(\"error\", \"url [$url] retries exausted, giving up\");\n            return false;\n          }\n        }\n      }\n    } catch(Exception $e) {\n      $message = $e->getMessage();\n      $this->router->log(\"error\", \"url [$url] contents not found\");\n      return false;\n    }\n    if (strlen($data) <= 0) {\n      $this->router->log(\"error\", \"url [$url] contents is empty\");\n      return false;\n    }\n    return $data;\n  }\n\n\n  /**\n   * Assert persons activity: compare person's last sync'd timestamp with a given timestamp\n   *  (\"timestampStart\" parameter), the timestamp last (or this) sync started.\n   */\n  private function assertPersonsActivity($timestampStart, $sourceKey, $error) {\n    $this->router->log(\"info\", \"asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)\");\n    foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {\n      $active = null;\n      $activeFromSource = $this->isPhoneActive($person[\"phone\"], $sourceKey);\n      if (!$activeFromSource) {\n        // this person was found as explicitly \"inactive\" from source page\n        $active = false;\n      } else {\n        // set activity flag based on the time of last sync for this person, compared to the time of this full sync,\n        // but only if there were no error during sync, to avoid marking all persons as not-active when a source is not available...\n        if (!$error) { # TODO: try to find a better way to avoid marking all persons as not-active when a source is not available\n          $timestampLastSyncPerson = $person[\"timestamp_last_sync\"];\n          #$this->router->log(\"info\", \" person \" . $person[\"key\"] . \"(\" . $person[\"name\"] . \")\" . \" - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: \" . ($active ? \"1\" : \"0\"));\n          // set active flag to true if the time of last sync for this person is newer than\n          // the time of this sync start\n          $active = ($timestampLastSyncPerson >= $timestampStart);\n        }\n      }\n      if ($active !== null) {\n        $activeOld = ($person[\"active\"] === \"1\");\n        if ($active != $activeOld) { # TO BE TESTED...\n          $this->router->log(\"info\", \" person \" . $person[\"key\"] . \" - setting active field to \" . ($active ? \"true\" : \"false\"));\n          $this->db->setPerson($person[\"id_person\"], [ \"active\" => $active ], []);\n        }\n      }\n    }\n    $this->router->log(\"debug\", \"asserting persons activity finished\");\n    return true;\n  }\n\n  /**\n   * Assert persons uniqueness\n   */\n  public function assertPersonsUniqueness($timestampStart) {\n    $this->router->log(\"info\", \"asserting persons uniqueness (checking for field matching for every couple of persons)\");\n\nif ($this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n  $this->router->log(\"info\", \" RESETTING PERSONS UNIQ PREV/NEXT\");\n  $persons = $this->db->getPersons();\n  $persons_count = count($persons);\n  for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array\n    $persons[$i][\"uniq_prev\"] = null; // reset all uniq_prev fields, will be recalculated\n    $persons[$i][\"uniq_next\"] = null; // reset all uniq_next fields, will be recalculated\n    $this->db->setPerson($persons[$i][\"id_person\"], [ \"uniq_prev\" => null, \"uniq_next\" => null ], null);\n  }\n  $this->router->log(\"info\", \" RESETTING PERSONS UNIQ PREV/NEXT - DONE\");\n}\n# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n    $persons = $this->db->getPersons();\n    $photos = $this->db->getAll(\"photo\");\n\n    # build an array of persons indexed by id\n    $persons_count = count($persons);\n    $photos_count = count($photos);\n    for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array\n      $personId = $persons[$i][\"id_person\"];\n      $personsById[$personId] = $persons[$i];\n      $personsById[$personId][\"photos\"] = [];\n      for ($j = 0; $j < $photos_count; $j++) { // add person photos array to persons-by-id array\n        if ($photos[$j][\"id_person\"] === $personId) {\n          array_push($personsById[$personId][\"photos\"], $photos[$j]);\n        }\n      }\n    }\n\n    # check every couple of persons (avoiding permutations)\n    for ($i = 0; $i < $persons_count/* - 1*/; $i++) {\n      // check only persons photos from system user (TODO: TEST THIS!)\n      if ($persons[$i][\"id_user\"] !== $this->db->systemUserId()) {\n$this->router->log(\"debug\", \" person n°: \".(1+$i).\" (userId: \" . $persons[$i][\"id_user\"] . \") IS NOT A SYSTEM RECORD, SKIPPING (SHOULD NOT HAPPEN)\");\n        continue;\n      }\n\n      // check only persons which are new (TODO: TEST THIS!)\n      if ($persons[$i][\"timestamp_creation\"] < $timestampStart) {\n        #$this->router->log(\"debug\", \" person n°: $i (userId: \" . $persons[$i][\"id_user\"] . \") timestamp_creation (\" . $persons[$i][\"timestamp_creation\"] . \" < timestamp (\" . $timestampStart . \"), IS OLD\");\n        if (!$this->DEBUG_UNIQ) { # TODO: DEBUG-UNIQ ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n          #$this->router->log(\"debug\", \" person n°: $i NOT DEBUG_UNIQ: SKIPPING\");\n          continue;\n        } else {\n          #$this->router->log(\"debug\", \" person n°: $i DEBUG_UNIQ: NOT SKIPPING\");\n        }\n      }\n \n      $this->router->log(\"debug\", \" [\".(1+$i).\"/$persons_count]\");\n\n      for ($j = $i + 1; $j < $persons_count; $j++) {\n        $relationship = false;\n        if ($this->personsCheckSamePhone($persons[$i], $persons[$j])) {\n          # same phone, te persons probably have some relationship\n          $relationship = true;\n        }\n        if (\n          $this->personsCheckSamePhotos($personsById, $persons[$i][\"id_person\"], $persons[$j][\"id_person\"], $relationship)\n        ) { // these two persons are to be unified\n          $id1 = $persons[$i][\"id_person\"];\n          $id2 = $persons[$j][\"id_person\"];\n\n          if ($id1 === $id2) { # TODO: DEBUG-ONLY, IT REALLY CAN'T HAPPEN! REMOVE-ME\n            $this->router->log(\"error\", \"id1 and id2 are EQUAL ($id1 === $id2)!!! BAILING OUT!!!\");\n            return false;\n          }\n\n          // get $id1 top chain id in $id1Top\n          $id = $id1Top = $id1;\n          $n = 0;\n          while ($id) {\n            $id1Top = $id;\n            $id = $personsById[$id][\"uniq_prev\"];\n            if ($id2 === $id) { continue; } // $id2 in $id1 chain: continue to next person\n            if (++$n >= 10) { $this->router->log(\"error\", \"LOOP DETECTED IN ID1 TOP SEARCH (id: [$id], id1: [$id1], id2: [$id2], id1Top: [$id1Top])\"); return false; }\n          }\n          // get $id1 bottom chain id in $id1Bot\n          $id = $id1Bot = $id1;\n          $n = 0;\n          while ($id) {\n            $id1Bot = $id;\n            $id = $personsById[$id][\"uniq_next\"];\n            if ($id2 === $id) { continue; } // $id2 in $id1 chain: continue to next person\n            if (++$n >= 10) { $this->router->log(\"error\", \"LOOP DETECTED IN ID1 BOT SEARCH (id: [$id], id1: [$id1], id2: [$id2], id1Bot: [$id1Bot])\"); return false; }\n          }\n\n          // get $id2 top chain id in $id2Top\n          $id = $id2Top = $id2;\n          $n = 0;\n          while ($id) {\n            $id2Top = $id;\n            $id = $personsById[$id][\"uniq_prev\"];\n            if ($id1 === $id) { continue; } // $id1 in $id2 chain: continue to next person\n            if ($id2 === $id) { continue; } // $id1 in $id2 chain: continue to next person\n            if (++$n >= 10) { $this->router->log(\"error\", \"LOOP DETECTED IN ID2 TOP SEARCH (id: [$id], id1: [$id1], id2: [$id2], id2Top: [$id2Top])\"); return false; }\n          }\n          // get $id2 bottom chain id in $id2Bot\n          $id = $id2Bot = $id1;\n          $n = 0;\n          while ($id) {\n            $id2Bot = $id;\n            $id = $personsById[$id][\"uniq_next\"];\n            if ($id1 === $id) { continue; } // $id1 in $id2 chain: continue to next person\n            if ($id2 === $id) { continue; } // $id1 in $id2 chain: continue to next person\n            if (++$n >= 10) { $this->router->log(\"error\", \"LOOP DETECTED IN ID2 BOT SEARCH (id: [$id], id1: [$id1], id2: [$id2], id2Bot: [$id2Bot])\"); return false; }\n          }\n\n          // $id1 is not in $id2 chain, and $id2 is not in $id1 chain: attach $id2Top to $id1Bot\n          if ($id1Bot !== $id2Top) { // avoid linking ids to themselves\n            $this->db->setPerson($id1Bot, [ \"uniq_next\" => $id2Top ], null);\n            $this->db->setPerson($id2Top, [ \"uniq_prev\" => $id1Bot ], null);\n          } else { # TODO: PERHAPS WE CAN REMOVE THIS ELSE CLAUSE...\n            $this->router->log(\"error\", \" ££££££££££ LOOP DETECTED JUST BEFORE SET-PERSON!!! THIS HAPPENS!!! (id1Top: [$id1Top], id2Bot: [$id2Bot])\");\n            return false;\n          }\n        }\n      }\n    }\n\n    $this->router->log(\"debug\", \"asserting persons uniqueness finished\");\n\n\n#################################################################################\n### DEBUG ONLY: PRINT NEXT / PREV CHAINS...\n#################################################################################\n/*\n    $persons = $this->db->getPersons();\n    for ($i = 0; $i < $persons_count; $i++) { // build a persons-by-id array\n      $personId = $persons[$i][\"id_person\"];\n      $personsById[$personId] = $persons[$i];\n      $personsById[$personId][\"photos\"] = [];\n      for ($j = 0; $j < $photos_count; $j++) { // add person photos array to persons-by-id array\n        if ($photos[$j][\"id_person\"] === $personId) {\n          array_push($personsById[$personId][\"photos\"], $photos[$j]);\n        }\n      }\n    }\n    $this->router->log(\"debug\", \"DEBUG - NEXT CHAIN:\");\n    for ($i = 0; $i < $persons_count; $i++) {\n      $id = $persons[$i][\"id_person\"];\n      $chain = \"\";\n      $n = 0;\n      while ($id) {\n        $chain .= \"$id =N=> \";\n        $id = $personsById[$id][\"uniq_next\"];\n        if (++$n >= 10) { $this->router->log(\"error\", \"LOOP DETECTED IN NEXT CHAIN (id: $id)\"); break; }\n      }\n      $this->router->log(\"debug\", \"[$i] $chain\");\n    }\n\n    $this->router->log(\"debug\", \"DEBUG - PREV CHAIN:\");\n    for ($i = 0; $i < $persons_count; $i++) {\n      $id = $persons[$i][\"id_person\"];\n      $chain = \"\";\n      $n = 0;\n      while ($id) {\n        $chain .= \"$id =P=> \";\n        $id = $personsById[$id][\"uniq_prev\"];\n        if (++$n >= 10) { $this->router->log(\"error\", \"LOOP DETECTED IN PREV CHAIN (id: $id)\"); break; }\n      }\n      $this->router->log(\"debug\", \"[$i] $chain\");\n    }\n*/\n#################################################################################\n\n    return true;\n  }\n\n  /**\n   * Check two persons uniqueness comparing their phone numbers\n   *\n   * @param  array $person1    the first person\n   * @param  array $person2    the second person\n   * @return integer: true     the persons are uniq (same phone)\n   *                  false    the persons are not uniq\n   */\n  private function personsCheckSamePhone($person1, $person2) {\n/*\nif (\n  ($person1[\"phone\"] && $person2[\"phone\"]) &&\n  ($person1[\"phone\"] === $person2[\"phone\"])\n) {\n    $this->router->log(\"debug\", \"  SAME PHONE - \\\"\" . $person1[\"name\"] . \"\\\" & \\\"\" . $person2[\"name\"] . \"\\\"\");\n}\n*/\n    return (\n      ($person1[\"phone\"] && $person2[\"phone\"]) &&\n      ($person1[\"phone\"] === $person2[\"phone\"])\n    );\n  }\n\n  /**\n   * Check two persons uniqueness comparing their photos\n   *\n   * @param  array $personsById      the array of persons, by id\n   * @param  integer $id1            the id of the first person\n   * @param  integer $id2            the id of the second person\n   * @param  boolean $relationship   true if persons have some relationship\n   * @return integer: true           the persons are uniq (some photo in common)\n   *                  false          the persons are not uniq\n   */\n  private function personsCheckSamePhotos($personsById, $id1, $id2, $relationship) {\n    $person1 = $personsById[$id1];\n    $person2 = $personsById[$id2];\n\n    $photo = new Photo($this->router, [ \"data\" => [] ]);\n    $minDistance = $photo->getOption($relationship ?\n      \"signatureDuplicationMinRelatedDistance\" :\n      \"signatureDuplicationMinUnrelatedDistance\"\n    );\n\n    foreach ($person1[\"photos\"] as $photo1) {\n      foreach ($person2[\"photos\"] as $photo2) {\n        if ($photo1[\"sum\"] === $photo2[\"sum\"]) { // the checksum matches\n          $this->router->log(\"debug\", \" \" . $person1[\"name\"] . \" and \" . $person2[\"name\"] . \" have EQUAL photos\");\n          $this->router->log(\"debug\", \"  EQUAL PHOTO - \\\"\" . $person1[\"name\"] . \"\\\" & \\\"\" . $person2[\"name\"] . \"\\\"\");\n          return true;\n        }\n        $distance = $photo->compareSignatures($photo1[\"signature\"], $photo2[\"signature\"]);\n        if ($distance <= $minDistance) { // duplicate found\n          $this->router->log(\"debug\", \"  SIMIL PHOTO - \\\"\" . $person1[\"name\"] . \"\\\" & \\\"\" . $person2[\"name\"] . \"\\\"\");\n          return true;\n        }\n      }\n    }\n    return false;\n  }\n\n  /**\n   * get all persons, filtered with given data sieves\n   *\n   * @param  array $data\n   * @return array\n   */\n  public function getAll($sieves = null, $userId = null) {\n$this->router->log(\"debug\", \"PersonsController::getAll(): just started.\");\n    $result = [];\n    $comments = new CommentsController($this->router);\n\n    $persons = $this->db->getPersons($sieves, $userId);\n$this->router->log(\"debug\", \"PersonsController::getAll(): db->getPersons() just returned.\");\n    foreach ($persons as $person) {\n      // N.B: here we (could) get multiple records for each person id\n      $personId = $person[\"id_person\"];\n      if (!isset($result[$personId])) {\n        $result[$personId] = []; // initialize this person array in results\n      } else { # TODO: should never happen, we select grouping by id_person...\n        throw new Exception(\"Assertion failed: getAll(): (isset(\\$result[\\$personId]), personId: $personId, \" . any2string($result[$personId])); # TODO: JUST TO DEBUG!\n      }\n      \n      // store each person by it's person id (\"id\" field is relative to details table)\n      $result[$personId] = $person;\n\n      // fields \"calculated\"\n      //$result[$personId][\"truthful\"] = \"unknown\"; # TODO: if at least one photo is !thrustful, person is !thrustful...\n      $showcase = $this->photoGetByShowcase($personId, true);\n      $showcase = (isset($showcase[\"path_small\"])) ? $showcase[\"path_small\"] : null;\n      $result[$personId][\"photo_path_small_showcase\"] = $showcase;\n      $result[$personId][\"comments_count\"] = $comments->countByPhone($person[\"phone\"]);\n      $result[$personId][\"comments_average_rating\"] = $comments->getAverageRating($personId);\n    }\n$this->router->log(\"debug\", \"PersonsController::getAll(): just finished.\");\n    return $result;\n  }\n\n  public function get($id, $userId = null) {\n    $person = $this->db->getPerson($id, $userId);\n    $photos = $this->db->getByField(\"photo\", \"id_person\", $id, $userId);\n/*\n    TODO: THIS IS TOO SLOW TO BE PERFORMED HERE: REMOVE THIS CODE...\n    for ($i = 0; $i < count($photos); $i++) { // assert photos current availabilty\n      $photos[$i][\"available\"] = $this->assertPhotoAvailability($photos[$i]);\n    }\n*/\n    $person[\"photos\"] = $photos;\n    return $person;\n  }\n  \n  /**\n   * assert photo current availability\n   */\n  public function assertPhotoAvailability($photoUrl) {\n    $photoUrl = str_replace(\"../\", \"\", $photoUrl); // normalize urls - TODO: REMOVE ME, SHOULD BE DONE IN $this->photoAdd() ...\n    if (($headers = @get_headers($photoUrl, true)) === false) {\n      $retval = false;\n    } else {\n      $type = $headers[\"Content-Type\"];\n      if (is_array($type)) {\n        $type = $type[0];\n      }\n      $retval = (substr($type, 0, strlen('image')) === 'image');\n    }\n    return $retval;\n  }\n\n  public function getByPhone($phone, $userId = null) {\n    if (!$phone) {\n      return [];\n    }\n    return $this->db->getPersonsByField(\"phone\", $phone, $userId);\n  }\n  \n  public function add($personMaster, $personDetail = null, $userId = null) {\n    return $this->db->addPerson($personMaster, $personDetail, $userId);\n  }\n\n  public function set($id, $personMaster, $personDetail = null, $userId = null) {\n    return $this->db->setPerson($id, $personMaster, $personDetail, $userId);\n  }\n\n  public function delete($id, $userId = null) {\n    return $this->db->deletePerson($id, $userId);\n  }\n  \n  public function getPhotoOccurrences($id, $imageUrl) {\n    $person = $this->db->getPerson($id);\n    $personDomain = $person[\"url\"];\n    $googleSearch = new GoogleSearch();\n    $numPages = 3;\n    $response = [];\n    $response[\"bestGuess\"] = null;\n    $response[\"searchResults\"] = [];\n\n    if ($results = $googleSearch->searchImage($imageUrl, $numPages)) {\n      if ($results[\"best_guess\"]) {\n        $response[\"bestGuess\"] = $results[\"best_guess\"];\n      }\n      if ($results[\"search_results\"]) {\n        foreach ($results[\"search_results\"] as $result) {\n          if (parse_url($result[\"href\"])[\"host\"] !== parse_url($personDomain)[\"host\"]) { // consider only images from different domains\n            $response[\"searchResults\"][] = $result;\n          }\n        }\n      } else { // no occurrences found\n      }\n    }\n    unset($googleSearch);\n    return $response;\n  }\n\n  private function normalizePage($page, $sourceKey) {\n    $source = $this->sourcesDefinitions[$sourceKey];\n    $pageCleaned = $page;\n    foreach ($source[\"patterns\"][\"person-patterns-to-remove-before-sum\"] as $pattern) {\n      $pageCleaned = preg_replace($pattern, \"\", $pageCleaned);\n    }\n    return $pageCleaned;\n  }\n\n  private function normalizeName($value) {\n    $value = preg_replace(\"/[,.;!].*$/\", \"\", $value); // ignore anything after a punctuation character and after\n    $value = preg_replace(\"/[()]/\", \"\", $value); // ignore not meaningful characters\n    $value = preg_replace(\"/\\s+/\", \" \", $value); // squeeze blanks to one space\n    $value = preg_replace(\"/^\\s+/\", \"\", $value); // ignore leading blanks\n    $value = preg_replace(\"/\\s+$/\", \"\", $value); // ignore trailing blanks\n    $value = preg_replace(\"/\\n+/\", \"\\n\", $value); // remove empty lines\n    $value = ucwords(strtolower($value)); // only initials upper case\n    $value = preg_replace(\"/[,.;!].*$/\", \"\", $value); // ignore anything after a punctuation character and after\n    return $value;\n  }\n\n  private function normalizeDescription($value) {\n    $value = preg_replace(\"/(<br\\s*\\/?>)+/\", \"\\n\", $value); // convert <br>'s to newlines\n    $value = strip_tags($value); // strip all other html tags from source\n    return $value;\n  }\n\n  private function normalizeStreetAddress($value) {\n    return $value;\n  }\n\n  private function normalizePhone($phone, $sourceKey) {\n    $source = $this->sourcesDefinitions[$sourceKey];\n    if (preg_match($source[\"patterns\"][\"person-phone-vacation\"], $phone)) {\n      $phone = \"\";\n    } else {\n      if (preg_match($source[\"patterns\"][\"person-phone-unavailable\"], $phone)) {\n        $phone = \"\";\n      } else {\n        $phone = preg_replace(\"/[^\\d]*/\", \"\", $phone); // ignore not number characters\n      }\n    }\n    return $phone;\n  }\n\n  private function isPhoneActive($phone, $sourceKey) {\n    return $phone ? true : false;\n  }\n\n  private function normalizeNationality($nationality) {\n    # TODO: do we get any nationality value from sources? If we do, which is the format?\n    $nationalityCleaned = preg_replace(\"/<i.*?>(.*?)<\\/i>/s\", \"\", $nationality);\n    return $nationalityCleaned;\n  }\n\n  private function detectNationality($name, $description, $languageCode) {\n    $patterns = [\n      \"it\" => [\n        \"countries-female-nationalities\" => [\n          \"alban(ia|ese)\" => \"al\",\n          \"argentina\" => \"ar\",\n          \"australi(a|ana)\" => \"au\",\n          \"barbados\" => \"bb\",\n          \"belg(a|io)\" => \"be\",\n          \"bolivi(a|ana)\" => \"bo\",\n          \"bosni(a|aca)\" => \"ba\",\n          \"brasil(e|iana)\" => \"br\",\n          \"bulgar(a|ia)\" => \"bu\",\n          \"canad(a|ese)\" => \"ca\",\n          \"capo\\s*verd(e|iana)\" => \"cv\",\n          \"ch?il(e|ena)\" => \"cl\",\n          \"ch?in(a|ese)\" => \"cn\",\n          \"orient(e|ale)\" => \"asia\",\n          \"colombi(a|ana)\" => \"co\",\n          \"costa\\s*ric(a|he..)\" => \"cr\",\n          \"croa([tz]ia|ta)\" => \"hr\",\n          \"cub(a|ana)\" => \"cu\",\n          \"c(zech|eca)\" => \"cz\",\n          \"dan(imarca|ese)\" => \"dk\",\n          \"dominic(a|ana)\" => \"do\",\n          \"ecuador(e..)?\" => \"ec\",\n          \"eston(ia|e)\" => \"ee\",\n          \"finland(ia|ese)\" => \"fi\",\n          \"franc(ia|ese|esina)\" => \"fr\",\n          \"(germania|tedesc(a|ina))\" => \"de\",\n          \"(gran bretagna|ing(hilterra|les(e|ina)))\" => \"en\",\n          \"grec(a|ia)\" => \"gr\",\n          \"greanad(a|iana)\" => \"gd\",\n          \"guatemal(a|teca)\" => \"gt\",\n          \"hait(i|iana)\" => \"ht\",\n          \"h?ondur(as|e(...)?)\" => \"hn\",\n          \"ungher(ia|ese)\" => \"hu\",\n          \"island(a|ese)\" => \"is\",\n          \"indi(a|ana)\" => \"in\",\n          \"indonesi(a|ana)\" => \"id\",\n          \"irland(a|ese)\" => \"ie\",\n          \"israel(e|iana)\" => \"ie\",\n          \"italian(a|issima)\" => \"it\",\n          \"(j|gi)amaic(a|ana)\" => \"jm\",\n          \"(japan)|(giappon(e|ese))\" => \"jp\",\n          \"ken[iy](a|ana)\" => \"ke\",\n          \"core(a|ana)\" => \"kr\",\n          \"lituan(a|ia)\" => \"lt\",\n          \"liban(o|ese)\" => \"lb\",\n          \"letton(ia|e)\" => \"lv\",\n          \"lussemburg(o|hese)\" => \"lu\",\n          \"macedon(ia|e)\" => \"mk\",\n          \"malta\" => \"mt\",\n          \"me(x|ss)ic(o|ana)\" => \"mx\",\n          \"moldov(a|iana)\" => \"md\",\n          \"monaco\" => \"mc\",\n          \"mongol(ia|a)\" => \"mn\",\n          \"montenegr(o|ina)\" => \"me\",\n          \"m([ao]rocco)|(arocchina)\" => \"ma\",\n          \"oland(a|ese)\" => \"nl\",\n          \"(neo|nuova)[\\s-]?zeland(a|ese)\" => \"nz\",\n          \"nicaragu(a|e...)\" => \"ni\",\n          \"niger\" => \"ne\",\n          \"nigeri(a|ana)\" => \"ng\",\n          \"norveg(ia|ese)\" => \"no\",\n          \"pa(k|ch)istan(a)?\" => \"pk\",\n          \"panam(a|ense)\" => \"pa\",\n          \"paragua(y|iana)\" => \"py\",\n          \"peru(viana)?\" => \"pe\",\n          \"(ph|f)ilippin(e|a)\" => \"ph\",\n          \"pol(onia|acca)\" => \"pl\",\n          \"portoric(o|ana)\" => \"pr\",\n          \"portog(allo|hese)\" => \"pt\",\n          \"r(omania|(o|u)mena)\" => \"ro\",\n          \"d[ae]ll[\\s']est\" => \"ro\",\n          \"russ(i)?a\" => \"ru\",\n          \"san[\\s-]?marin(o|ese)\" => \"sm\",\n          \"arab(i)?a\" => \"sa\",\n          \"senegal(ese)?\" => \"sn\",\n          \"serb(i)?a\" => \"rs\",\n          \"se[yi]chelles\" => \"sc\",\n          \"sierra[\\s-]?leone\" => \"sl\",\n          \"singapore\" => \"sg\",\n          \"slovacch(i)?a\" => \"sk\",\n          \"sloven(i)?a\" => \"si\",\n          \"somal(i)?a\" => \"so\",\n          \"spagn(a)\" => \"es\", // \"spagnola\" ignored on purpose\n          \"sve(zia|dese)\" => \"se\",\n          \"svizzera\" => \"ch\",\n          \"s[yi]ria(na)?\" => \"sy\",\n          \"taiwan(ese)?\" => \"tw\",\n          \"t(h)?ai(land(ia|ese)?)?\" => \"th\",\n          \"trinidad\" => \"tt\",\n          \"tunisi(a|ina)\" => \"tn\",\n          \"turc(hia|a)\" => \"tr\",\n          \"u[kc]raina\" => \"ua\",\n          \"urugua([yi])|(gia)|([yi]ana)\" => \"uy\",\n          \"america(na)?\" => \"us\",\n          \"venezuela(na)?\" => \"ve\",\n          \"vietnam(ita)?\" => \"vn\",\n          \"asia(tica)?\" => \"asia\",\n          \"africa(na)?\" => \"africa\",\n          \"america[\\s-]?centrale\" => \"central-america\",\n          \"caraibi(ca)?\" => \"caribbean\",\n          \"nord[\\s-]?america(na)?\" => \"north-america\",\n          \"europa[\\s-]+orientale]\" => \"eastern-europe\",\n          \"europea\" => \"europe\",\n          \"orient[e|(ale)]\" => \"asia\",\n          \"medio[\\s-]?orientale\" => \"middle-east\",\n          \"oceania\" => \"oceania\",\n          \"sud[\\s-]?america(na)?\" => \"south-america\",\n        ],\n        \"negative-lookbehind\" => [\n          \"alla\",\n          \"amica\",\n          \"autostrada\",\n          \"area\",\n          \"belvedere\",\n          \"borgata\",\n          \"borgo\",\n          \"calata\",\n          \"campo\",\n          \"carraia\",\n          \"cascina\",\n          \"circonvallazione\",\n          \"circumvallazione\",\n          \"contrada\",\n          \"c\\.so\",\n          \"corso\",\n          \"cso\",\n          \"diramazione\",\n          \"frazione\",\n          \"isola\",\n          \"largo\",\n          \"lido\",\n          \"litoranea\",\n          \"loc\\.\",\n          \"località\",\n          \"lungo\",\n          \"masseria\",\n          \"molo\",\n          \"parallela\",\n          \"parco\",\n          \"passaggio\",\n          \"passo\",\n          \"p\\.za\",\n          \"p\\.zza\",\n          \"piazza\",\n          \"piazzale\",\n          \"piazzetta\",\n          \"ponte\",\n          \"quartiere\",\n          \"regione\",\n          \"rione\",\n          \"rio\",\n          \"riva\",\n          \"riviera\",\n          \"rondò\",\n          \"rotonda\",\n          \"salita\",\n          \"scalinata\",\n          \"sentiero\",\n          \"sopraelevata\",\n          \"sottopassaggio\",\n          \"sottopasso\",\n          \"spiazzo\",\n          \"strada\",\n          \"stradone\",\n          \"stretto\",\n          \"svincolo\",\n          \"superstrada\",\n          \"tangenziale\",\n          \"traforo\",\n          \"traversa\",\n          \"v\\.\",\n          \"via\",\n          \"viale\",\n          \"vicolo\",\n          \"viottolo\",\n          \"zona\",\n        ],\n      ],\n    ];\n\n    if (array_key_exists($languageCode, $patterns)) {\n      foreach ([ null, $name, $description ] as $field) {\n        if ($field) {\n          foreach ($patterns[$languageCode][\"countries-female-nationalities\"] as $countryPattern => $countryCode) {\n            $pattern = \"/\\b\" . $countryPattern . \"\\b/si\";\n            if (preg_match($pattern, $field)) { // country pattern matched\n              $falsePositive = false;\n              // check it doesn't match with negative lookbehind\n              foreach ($patterns[$languageCode][\"negative-lookbehind\" ] as $negativeLookbehind) {\n                $pattern = \"/\\b\" . $negativeLookbehind . \"\\s+\" . $countryPattern . \"\\b/si\";\n                if (preg_match($pattern, $field)) { // country pattern matched with a negative lookbehind\n                  $falsePositive = true;\n                  break;\n                }\n              }\n              if (!$falsePositive) { // no negative lookbehind matched for this country pattern and for this field\n                return $countryCode; // return on first match\n              }\n            }\n          }\n        }\n      }\n    }\n    return null;\n  }\n\n  /**\n   * Get all defined countries in sources\n   *\n   * @return array: all countries defined\n   */\n  public function getSourcesCountries() {\n    $countries = [];\n    # TODO: save to db \"global\" table, to avoid re-scraping on every request...\n    $countries = [ # TODO: ...\n      \"it\" => [\n        \"name\" => \"Italy\",\n        \"path\" => \"e...../italy\",\n        \"cityCodeDefault\" => \"to\",\n      ],\n      \"ch\" => [\n        \"name\" => \"Swizerland\",\n        \"path\" => \"e...../switzerland\",\n        \"cityCodeDefault\" => \"zh\",\n      ],\n    ];\n    return $countries;\n  }\n\n  /**\n   * Get all defined cities in sources for specified country code\n   *\n   * @return array: all cities defined for specified country code\n   */\n  public function getSourcesCities($countryCode) {\n    $cities = [];\n    # TODO: save to db \"global\" table, to avoid re-scraping on every request...\n    if ($countryCode === \"it\") {\n      $cities = [\n        \"to\" => [\n          \"name\" => \"Torino\",\n          \"path\" => \"e...../torino\",\n        ],\n        \"mi\" => [\n          \"name\" => \"Milano\",\n          \"path\" => \"e...../milano\",\n        ],\n      ];\n    }\n    if ($countryCode === \"ch\") {\n      $cities = [\n        \"zh\" => [\n          \"name\" => \"Zurich\",\n          \"path\" => \"e...../zurich\",\n        ],\n        \"ge\" => [\n          \"name\" => \"Genevre\",\n          \"path\" => \"e...../genevre\",\n        ],\n      ];\n    }\n    return $cities;\n  }\n\n  /**\n   * Get all countries defined on persons\n   *\n   * @param integer $userId   user id\n   * @return array            all countries defined\n   */\n  public function getActiveCountries($userId = null) {\n    $result = $this->db->getFieldDistinctValues(\"person_detail\", \"nationality\", $userId);\n    return $result;\n  }\n\n  /**\n   * Add a photo\n   *\n   * @param  integer $personId the id of the person's photo\n   * @param  string $photoUrl  the url of the photo\n   * @param  object $source    photo source data\n   * @return integer: false    photo not added (duplication / similarity)\n   *                  >= 0     photo added to filesystem and to database\n   */\n  public function photoAdd($personId, $photoUrl, $source) {\n    // make absolute and relative urls uniform\n    $photoUrl = str_replace(\"../\", \"\", $photoUrl); // normalize urls\n    if (!is_absolute_url($photoUrl)) { // make absolute from relative photo url\n      $photoUrl = $source[\"url\"] . \"/\" . $photoUrl;\n    }\n\n    // build photo object from url\n    try {\n      $photo = new Photo($this->router, [ \"url\" => $photoUrl ]);\n    } catch (Exception $e) {\n      $this->router->log(\"error\", \"can't create new photo from url [$photoUrl]: \" . $e->getMessage());\n      return false;\n    }\n\n    $photos = $this->db->getByField(\"photo\", \"id_person\", $personId);\n\n#   CURRENTLY, NO SOURCE SITE GIVES A VALID LAST-MODIFICATION-TIMESTAMP FOR THE PHOTOS...\n#   // check if photo url did not change from last download\n#   if ($this->photoCheckLastModified($personId, $photo, $photos)) {\n#     $this->router->log(\"debug\", \"photoAdd [$photoUrl] for person id \" . $personId . \" is not changed, ignoring\");\n#     return false; // same Last-Modified tag found\n#   }\n\n    $found = false;\n\n    // check if photo is an exact duplicate\n    if (($p = $this->photoCheckDuplication($photo, $photos)) !== null) {\n      // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!\n      $found = true; // duplicate found\n    } else {\n      // check if photo has similarities\n      $photo->signature();\n      if (($p = $this->photoCheckSimilarity($photo, $photos)) !== null) {\n        // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!\n        $found = true; // similarity found\n      } else {\n        $this->router->log(\"debug\", \"photo [$photoUrl] for person id \" . $personId . \" is new\");\n      }\n    }\n\n    if (!$found) { // this photo was not found in database: add it\n      # showcase strategy: the forst photo is set for showcase\n      $photo->showcase = (count($photos) === 0); // set showcase flag to true if this is the first image\n  \n      $photo->idPerson($personId);\n      $photo->domain();\n      $photo->sum();\n      $photo->timestampCreation(time());\n      $photo->truthful(\"unknown\"); // this is an offline-set property (it's very expensive to calculate)\n     \n      // store this photo\n      if (($number = $this->photoStore($personId, $photo)) === false) {\n        $this->router->log(\"error\", \"photo \" . $photo->url() . \" for person id \" . $personId . \" could not be stored locally\");\n        return false; // error storing photo locally\n      }\n      $photo->number($number);\n  \n      // add this photo to database\n      $retval = $this->db->add(\"photo\", $this->photo2Data($photo));\n    } else { // this photo was found in database: check if url did change\n      if ($p[\"url\"] !== $photo->url()) { // update this photo \"url\" field into database\n        $retval = $this->db->set(\"photo\", $p[\"id\"], [ \"url\" => $p[\"url\"] ]);\n      } else { // no change even in url field\n        $retval = false;\n      }\n    }\n\n    // delete the photo object\n    unset($photo);\n\n    return $retval;\n  }\n\n/*\n    CURRENTLY, NO SOURCE SITE GIVES A VALID LAST-MODIFICATION-TIMESTAMP FOR THE PHOTOS...\n  / **\n   * Check photo last modification timestamp\n   *\n   * @param  integer $personId:     the id of person to check for photo last modification\n   * @param  Photo: $photo          the photo object to check for last modification\n   * @param  Photo array: $photos   the photos array of this person\n   * @return boolean: true          if photo has not been modified\n   *                  false         if photo has been modified (and should be downloaded)\n   * /\n  private function photoCheckLastModified($personId, $photo, $photos) {\n    $photoLastModificationTimestamp = $photo->getLastModificationTimestamp();\n    if ($photos !== []) {\n      #if (is_array_multi($photos)) { // more than one result returned\n        foreach ($photos as $p) {\n##$this->router->log(\"debug\", \"p[url]:\" . $p[\"url\"] . \", photo[url]:\" . $photo->url());\n##$this->router->log(\"debug\", \"p[t_l_p]: (\" . $p[\"timestamp_last_modification\"] . \") =?= (\" . $photoLastModificationTimestamp . \")\");\n          if ($p[\"url\"] === $photo->url()) {\n##$this->router->log(\"debug\", \"p[url]:\" . $p[\"url\"] . \" FOUNDDDDDDDDDD\");\n            if ($p[\"timestamp_last_modification\"] && $photoLastModificationTimestamp) {\n              if ($p[\"timestamp_last_modification\"] != $photoLastModificationTimestamp) {\n                // the last modification timestamp of existing photo is greater or equal to\n                // the last modification timestamp of the photo to be downloaded\n                #$this->router->log(\"debug\", \"photoCheckLastModified: LastModificationTime CHANGED, RE-DOWNLOAD (??? !!!)\");\n                #$this->router->log(\"debug\", \"- photoCheckLastModified() RETURNING TRUE\");\n                return true;\n              } else {\n                // the last modification timestamp of existing photo did not change\n                $this->router->log(\"debug\", \"photoCheckLastModified: LastModificationTime did not change, SKIP it £££££\");\n              }\n            } else {\n              // the last modification timestamp of existing photo was not already set, new photo\n              $this->router->log(\"debug\", \"photoCheckLastModified: LastModificationTime NOT SET, NEW PHOTO, DOWNLOAD\");\n            }\n          } else {\n            // this is not the photo we are checking\n            #$this->router->log(\"debug\", \"photoCheckLastModified - photo->url(): \" . $photo->url() . \": LastModificationTime not this url...\");\n          }\n        }\n      #} else { // not more than one result returned\n      #  # TODO: check if this is possible...\n      #  throw new Exception(\"photoCheckLastModified(): returned one-level array: \".var_export($photos, true).\" (SHOULD NOT BE POSSIBLE!!!)\");\n      #}\n    }\n    #$this->router->log(\"debug\", \"- photoCheckLastModified() RETURNING FALSE: photoLastModificationTimestamp !!!\");\n    return false;\n  }\n*/\n\n  /**\n   * Extract from a Photo object all properties to be stored to database, as array\n   *\n   * @param  Photo: $photo       the photo object to check for duplication\n   * @return array:              the array with all fields to be stored to database\n   */\n  private function photo2Data($photo) {\n    $data = [];\n    foreach($photo as $property => $value) {\n      if (\n        ($property === \"id_person\") ||\n        ($property === \"number\") ||\n        ($property === \"url\") ||\n        ($property === \"path_full\") ||\n        ($property === \"path_small\") ||\n        ($property === \"sum\") ||\n        ($property === \"timestamp_creation\") ||\n        ($property === \"signature\") ||\n        ($property === \"showcase\") ||\n        ($property === \"truthfulness\")\n      )\n      $data[$property] = $value;\n    }\n    return $data;\n  }\n\n  /**\n   * Check for photo exact duplication\n   *\n   * @param  Photo: $photo       the photo object to check for duplication\n   * @return array: $photos[]    if photo is a duplicate\n   *         null                if photo is not a fuplicate\n   */\n  private function photoCheckDuplication($photo, $photos) {\n    if ($photos !== []) {\n      foreach ($photos as $p) {\n        if ($p[\"sum\"] === $photo->sum()) { // the checksum matches\n          return $p;\n        }\n      }\n    }\n    return null;\n  }\n\n  /**\n   * Check for photo similarity\n   *\n   * @param  Photo: $photo       the photo object to check for similarity\n   * @param  array: $photos      the array of photos to be checkd against\n   * @return array: $photos[]    if photo is similar to some else photo\n   *         null                if photo is not similar to some else photo\n   */\n  private function photoCheckSimilarity($photo, $photos) {\n    $retval = null;\n    if ($photos !== []) {\n      foreach ($photos as $p) {\n        try {\n          $photo2 = new Photo($this->router, [ \"data\" => $p ]);\n        } catch (Exception $e) {\n          $this->router->log(\"error\", \"can't create new photo from data: \" . $e->getMessage());\n          break;\n        }\n        if ($photo->checkSimilarity($photo2)) {\n          $retval = $p;\n          break;\n        }\n      }\n    }\n    unset($photo2);\n    return $retval;\n  }\n\n  /**\n   * Store a photo on local file system\n   *\n   * @param  integer $personId   the id of the person for which to store photo\n   * @param  Photo $photo        the photo to be stored\n   * @return integer: >= 0       the progressive number of the photo\n   */\n  public function photoStore($personId, $photo) {\n    $keyPerson = $this->db->get(\"person\", $personId)[\"key\"];\n    $personPhotosCount = $this->photoGetCount($personId);\n    $number = $personPhotosCount + 1;\n    $dirname = self::PHOTOS_PATH . $keyPerson . \"/\";\n    $filename = sprintf(\"%03d\", $number);\n    $fileext = $photo->type();\n    $dirnameFull = $dirname . \"full\" . \"/\";\n    $dirnameSmall = $dirname . \"small\" . \"/\";\n    $pathnameFull = $dirnameFull . $filename . \".\" . $fileext;\n    $pathnameSmall = $dirnameSmall . $filename . \".\" . $fileext;\n\n    // assure photos directories existence\n    foreach ([ $dirnameFull, $dirnameSmall ] as $d) {\n      if (!file_exists($d)) {\n        if (!mkdir($d, 0777, true)) { # TODO: let everybody (developer) to write dir: DEBUG ONLY!\n          throw new Exception(\"can't create folder $d\");\n        }\n        #$this->router->log(\"debug\", \"the directory $d has been created\");\n      } else {\n        ; # directory already exists, not the first photo for this person\n      }\n    }\n\n    // store the full and small bitmaps to file-system\n#$this->router->log(\"debug\", \"photoStore() - 1 - bitmapFull path: \", $pathnameFull);\n    if ((file_put_contents($pathnameFull, $photo->bitmapFull())) === false) {\n      $this->router->log(\"error\", \"can't save photo to file [$pathnameFull]\");\n      return false;\n    }\n#$this->router->log(\"debug\", \"photoStore() - 2 - bitmapSmall path: \", $pathnameSmall);\n    if ((file_put_contents($pathnameSmall, $photo->bitmapSmall())) === false) {\n      $this->router->log(\"error\", \"can't save photo to file [$pathnameSmall]\");\n      return false;\n    }\n\n    // store paths in photo structure\n    $photo->pathFull($pathnameFull);\n    $photo->pathSmall($pathnameSmall);\n\n    return $number;\n  }\n\n/*\n  / **\n   * Get all photos of person\n   *\n   * @param  integer $personId the person id of the photo\n   * @return array[][]         if photos found\n   *         null              if photos not found\n   * /\n  private function photoGetAll($personId) {\n    $photos = $this->db->get(\"photo\", $personId);\n\n# DO WE NEED UNIQUENESS MERGE HERE ??? ##################################################\n    $userId = 2; # TODO: get logged user id (from \"authdata\"?) ...\n    $uniqcodes = $this->db->getPersonsUniqcodes($userId);\n    foreach ($uniqcodes as $uniqcode) { // scan all uniqcodes\n      if ($personId == $uniqcode[\"id_person_1\"]) {\n        // append photos fron the other 'uniq' person\n        / *\n        $result = $photos;\n        $photos = $result + $this->db->get(\"photo\", $uniqcode[\"id_person_2\"]);\n        * /\n        $photos += $this->db->get(\"photo\", $uniqcode[\"id_person_2\"]);\n      }\n    }\n#########################################################################################\n    return $photos;\n  }\n*/\n\n  /**\n   * Get a photo of person given it's number\n   *\n   * @param  integer $personId   the id of the person whose photo to load\n   * @param  integer $number     the progressive number of the photo\n   * @return array   the photo structure\n   */\n  private function photoGetByNumber($personId, $number) {\n    $photos = $this->db->getByFields(\"photo\", [ \"id_person\" => $personId, \"number\" => $number ]);\n    return $photos[0];\n  }\n\n  /**\n   * Get a photo truthfulness\n   *\n   * @param  string: photo url\n   * @return string: \"yes\"       if photo is unique on the web\n   *                 \"no\"        if photo is not uniqu on the web\n   *                 \"unknown\"   if photo uniqueness on the web is unknown\n   */\n  public function photoCheckTruthfulness($personId, $number) {\n    $photo = $this->photoGetByNumber($personId, $number);\n    return $photo[\"truthful\"];\n  }\n\n  /**\n   * Get photos of person given their showcase flag\n   *\n   * @param  integer $personId   the id of the person whose photo to load\n   * @param  integer $showcase   showcase flag (true / false)\n   * @return array   the photo structure\n   */\n  private function photoGetByShowcase($personId, $showcase) {\n    $photos = $this->db->getByFields(\"photo\", [ \"id_person\" => $personId, \"showcase\" => $showcase ]);\n    #return (is_array($photos) && count($photos) > 0) ? $photos[0] : [];\n    return (count($photos) > 0) ? $photos[0] : [];\n  }\n\n  /**\n   * Get count of photos of person\n   *\n   * @param  integer $personId the id of the person's photo\n   * @return integer           the number of photos of this person\n   */\n  public function photoGetCount($personId) {\n    $count = $this->db->countByField(\"photo\", \"id_person\", $personId);\n    #$this->router->log(\"debug\", \"photoGetCount($personId): $count\");\n    return $count;\n  }\n\n  /**\n   * Show a photo of person\n   *\n   * @param  integer $personId the id of the person's photo\n   * @param  integer $number   the progressive number of the photo in the person's photos collection\n   * @param  string $type      the type of the photo:\n   *                             - \"full\"    shows the full version (default)\n   *                             - \"small\"   shows the small version\n   * @return void              outputs photo with MIME header\n   *\n   * TODO: do we need this function, or will always use \"<img ns-src='{{person.photo_path}}'>\" ?\n   */\n  public function photoShow($personId, $number, $type = \"full\") {\n    $photo = $this->db->getByFields(\"photo\", [\"id_person\" => $personId, \"number\" => $number ]);\n    if (!empty($photo)) {\n      header(\"Content-Type: \" . $photo[\"mime\"]);\n      switch ($type) {\n        default:\n        case \"full\":\n          print $photo[\"bitmap\"];\n          break;\n        case \"small\":\n          print $photo[\"bitmapSmall\"];\n          break;\n      }\n    } else {\n      $this->photoShowEmpty();\n    }\n  }\n\n  private function photoShowEmpty() {\n    header(\"Content-Type: \" . \"image/jpeg\");\n    $image = imagecreate(128, 256);\n    $background_color = imagecolorallocate($image, 0, 0, 0);\n    $text_color = imagecolorallocate($image, 233, 14, 91);\n    imagestring($im, 1, 5, 5, \"Empty photo\", $text_color);\n    imagejpeg($image);\n    imagedestroy($image);\n  }\n\n  /**\n   * Destructor\n   */\n  function __destruct() {\n  }\n\n}\n\n# TODO: ONLY TO DEBUG ###############################################\n#require \"classes/services/Network.php\";\n#$r = new stdClass(); $r->db = null;\n#$pc = new PersonsController($r);\n#\n#$des = \"uno<br><br><br/>due\";\n#$nordes = $pc->normalizeDescription($des);\n#print \"Description: [$des] => [$nordes]\\n\";\n#\n#$name = \"Amina russa\";\n#$description = \"xyz...\";\n#$nationality = $pc->detectNationality($name, $description, \"it\");\n#print(\"Nationality [$nationality] was detected for [$name], [$description]\\n\");\n#exit;\n#####################################################################\n\n?>",
+			"file": "/var/www/html/escrape/api/classes/controllers/PersonsController.php",
+			"file_size": 55708,
+			"file_write_time": 130822899834540337,
+			"settings":
+			{
+				"buffer_size": 55800,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "<?php\n  $this->sourcesDefinitions = [\n    \"sexyguidaitalia\" => [\n      \"url\" => \"http://www.sexyguidaitalia.com\",\n      \"path\" => \"escort/torino\", # TODO: get path from selected city...\n      \"path-next\" => null,\n      \"charset\" => \"utf-8\",\n      \"accepts-tor\" => true,\n      \"patterns\" => [\n        \"ban-text\" => \"/Please complete the security check to access/s\",\n        \"person\" => \"/<DIV class=\\\"(?:top|thumbsUp)\\\".*?>(.*?)<\\/DIV>/s\",\n        \"person-id\" => \"/<div .*?class=\\\"wraptocenter\\\">.*?<a href=\\\".*?\\/([^\\/\\\"]+)\\\".*?>.*?<\\/div>/s\",\n        \"person-details-url\" => \"/<div .*?class=\\\"wraptocenter\\\">.*?<a href=\\\"(.*?)\\\".*?>.*?<\\/div>/s\",\n        \"person-name\" => \"/<td id=\\\"ctl00_content_CellaNome\\\".*?><span.*?>(.*?)<\\/span>.*?<\\/td>/s\",\n        \"person-sex\" => \"/<td id=\\\"ctl00_content_CellaSesso\\\".*?>(.*?)<\\/td>/s\",\n        \"person-zone\" => \"/<td id=\\\"ctl00_content_CellaZona\\\".*?>(.*?)<\\/td>/s\",\n        \"person-description\" => \"/<td id=\\\"ctl00_content_CellaDescrizione\\\".*?>(.*?)(?:\\s+)?(?:<br \\/>.*?)?<\\/td>/s\",\n        \"person-phone\" => \"/<td id=\\\"ctl00_content_CellaTelefono\\\".*?><span.*?>(.*?)<\\/span>.*?<\\/td>/s\",\n        \"person-phone-vacation\" => \"/In arrivo dopo le vacanze !!/s\",\n        \"person-phone-unavailable\" => \"/UNFORESEEN/s\", # TODO\n        \"person-nationality\" => \"/UNFORESEEN/s\", # TODO\n        \"person-street-address\" => \"/UNFORESEEN/s\",\n        \"person-photo\" => \"/<a rel='group' class='fancybox' href=(.*?)>.*?<\\/a>/s\",\n        \"person-patterns-to-remove-before-sum\" => [\n          \"/^.*?<body.*?>/s\",\n          \"/<\\/body>.*/s\",\n          \"/<div id=\\\"headerright\\\">.*?<\\/div>/s\",\n          \"/<img src=\\\".*?\\/testalino_homepage\\d+.jpg\\\"/s\",\n          \"/Visite:\\s+<\\/td><td><div>\\s+\\d+\\s+<\\/div><\\/td>/s\",\n          \"/\\?t=\\d+/s\",\n          \"/email-protection#.+\\\"/s\",\n          \"/<span itemprop=\\\"rating\\\".*?><span.*?>.*?<\\/span><\\/span>.*?\\(.*?\\)/s\",\n          \"/<a class=\\\"__cf_email__\\\".*?>.*?<\\/a>/s\",\n          \"/<span id=\\\"ctl00_utentiRegistrati\\\".*?>.*?<\\/span>/s\",\n          \"/<table id=\\\"ctl00_content_tableCommenti\\\".*?>.*?<\\/table>/s\",\n          \"/<script.*?>.*?<\\/script>/s\",\n        ],\n      ],\n    ],\n    \"torinoerotica\" => [\n      \"url\" => \"http://www.torinoerotica.com\",\n      \"charset\" => \"utf-8\",\n      \"path\" => \"annunci-escort-donna\", # TODO: get path from selected city...\n      \"path-next\" => \"/?p=%d\",\n      \"accepts-tor\" => true,\n      \"patterns\" => [\n        \"ban-text\" => \"/TODO SECURITY CHECK/s\", # TODO\n        \"person\" => \"/<!-- item -->(.*?)<!-- \\/item -->/s\",\n        \"person-id\" => \"/<a href=\\\"\\.\\/annuncio\\?id=(.*?)\\\"/s\",\n        \"person-details-url\" => \"/<a href=\\\"\\.\\/(annuncio\\?id=.*?)\\\"/s\",\n        \"person-name\" => \"/<h1 class=\\\".*?titolo\\\">(.*?)<\\/h1>/s\",\n        \"person-sex\" => \"/<li><span.*?><\\/span>Orientamento:.*?<span.*?><span.*?>(.*?)<\\/span><\\/span><\\/li>/s\",\n        \"person-zone\" => \"/<a .*?Location \\((.*?)\\)<\\/a>/s\",\n        \"person-description\" => \"/<p class=\\\"annuncio\\\">(.*?)<\\/p>/s\",\n        \"person-phone\" => \"/<span title=\\\"Telefono .*?\\\">(.*?)<\\/span>/s\",\n        \"person-phone-vacation\" => \"/on vacation/s\", # TODO\n        \"person-phone-unavailable\" => \"/Questa ...... ha disabilitato temporaneamente il suo annuncio/s\",\n        \"person-nationality\" => \"/<li><span.*?><\\/span>Etnia:.*?<span.*?><span.*?>(.*?)<\\/span><\\/span><\\/li>/s\",\n        \"person-street-address\" => \"/data-map-address=\\\"\\s*(.*?)\\s*\\\".*?>/s\",\n        \"person-photo\" => \"/<a href=\\\"(photo-escort\\/.*?)\\\".*?>/s\",\n        \"person-patterns-to-remove-before-sum\" => [\n          \"/^.*?<body.*?>/s\",\n          \"/<\\/body>.*/s\",\n          \"/<span.*?>Visite:<\\/span>\\s*<span.*?>\\s*\\d+<\\/span>/s\",\n          \"/<span.*?>Impression:<\\/span>\\s*<span.*?>.*?<\\/span>/s\",\n          \"/<i class=\\\"icon-clock\\\"><\\/i>\\s*\\d+\\/\\d+\\/\\d+\\s*\\d+:\\d+:\\d+/s\",\n          \"/<script.*?>.*?<\\/script>/s\",\n        ],\n      ],\n    ],\n    /*\n    \"torinoerotica-up-to-2015-04-09\" => [\n      \"url\" => \"http://www.torinoerotica.com\",\n      \"charset\" => \"CP1252\",\n      \"path\" => \"annunci_Escort_singole_Piemonte_Torino.html\", # TODO: get path from selected city...\n      \"accepts-tor\" => true,\n      \"patterns\" => [\n        \"ban-text\" => \"/TODO SECURITY CHECK/s\", # TODO\n        \"person\" => \"/<!-- Inizio Anteprima ...... -->(.*?)<!-- Fine Anteprima ...... -->/s\",\n        \"person-id\" => \"/<a href=\\\".*?([^\\_]*?)\\.html\\\".*?>.*?<\\/a>/s\",\n        \"person-details-url\" => \"/<a href=\\\"(.*?)\\\".*?>.*?<\\/a>/s\",\n        \"person-name\" => \"/<h\\d class=\\\"nome\\\">\\s*(.*?)\\s*<\\/h\\d>/s\",\n        \"person-sex\" => \"/<h\\d class=\\\"sesso\\\">\\s*(.*?)\\s*&nbsp;.*?<\\/h\\d>/s\",\n        \"person-zone\" => \"/(?:<a href=\\\"#quartiere\\\".*?>(.*?)<\\/a>)/s\",\n        \"person-description\" => \"/<meta name=\\\"description\\\".*?content=\\\"(.*?)\\\".*?\\/>/s\",\n        \"person-phone\" => \"/<h\\d class=\\\"phone\\\">\\s*(?:<img.*? \\/>)\\s*(.*?)\\s*<\\/h\\d>/s\",\n        \"person-phone-vacation\" => \"/TODO/s\", # TODO\n        \"person-phone-unavailable\" => \"/Questa ...... ha disabilitato temporaneamente il suo annuncio/s\",\n        \"person-nationality\" => \"/TODO NATIONALITY/s\", # TODO\n        \"person-photo\" => \"/<a\\s+style=\\\"cursor:pointer;\\\"\\s+href=\\\"(.*?)\\\" rel=\\\"prettyPhoto\\[galleria\\]\\\".*?<\\/a>/s\",\n      ],\n    ],\n    */\n    /*\n    \"escortforumit\" => [\n      \"url\" => \"http://www.escortforumit.xxx/escorts/city_it_torino\",\n    ],\n    */\n    /*\n    \"dolciincontri\" => [\n      \"url\" => \"http://www.dolciincontri.net/annunci-personali_torino.html\",\n    ],\n    */\n  ];\n?>",
+			"file": "persons.php",
+			"file_size": 5498,
+			"file_write_time": 130822952908831860,
+			"settings":
+			{
+				"buffer_size": 5445,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 294.0,
+		"last_filter": "Package Control: ",
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"	",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Preferences: Browse Packages"
+			]
+		],
+		"width": 349.0
+	},
+	"console":
+	{
+		"height": 123.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = 'eb2297e1a458f27d836c04bb0cbaf282' + 'd0e7a3098092775ccb37ca9d6b2e4b7d'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/var/www/html/escrape",
+		"/var/www/html/escrape/api",
+		"/var/www/html/escrape/api/classes",
+		"/var/www/html/escrape/api/classes/controllers",
+		"/var/www/html/escrape/api/classes/services",
+		"/var/www/html/escrape/api/setup",
+		"/var/www/html/escrape/app/scripts",
+		"/var/www/html/escrape/app/scripts/controllers",
+		"/var/www/html/escrape/app/scripts/services"
+	],
+	"file_history":
+	[
+		"/var/www/html/escrape/api/setup/escrape.sublime-project",
+		"/var/www/html/escrape/app/scripts/services/sieves.js",
+		"/var/www/html/escrape-angular-1.4/bower.json",
+		"/var/www/html/escrape-angular-1.4/README.md",
+		"/var/www/html/escrape-angular-1.4/TODO",
+		"/var/www/html/escrape/api/index.php",
+		"/var/www/html/escrape/Gruntfile.js",
+		"/var/www/html/escrape/api/classes/controllers/UsersController.php",
+		"/var/www/html/escrape/app/views/header.html",
+		"/var/www/html/escrape/app/scripts/controllers/authentication.js",
+		"/var/www/html/escrape/app/index.html",
+		"/var/www/html/escrape/package.json",
+		"/var/www/html/escrape/app/scripts/services/filter.js",
+		"/var/www/html/escrape/app/views/person.html",
+		"/var/www/html/escrape/app/styles/main.css",
+		"/var/www/html/escrape/api/classes/controllers/PersonsController.php",
+		"/var/www/html/escrape/app/scripts/services/options.js",
+		"/var/www/html/escrape/app/scripts/services/persons.js",
+		"/var/www/html/escrape/api/docs/Person-Phothos Controllers Diagram.txt",
+		"/var/www/html/escrape/api/classes/services/Db.php",
+		"/var/www/html/escrape/api/classes/services/Photo.php",
+		"/var/www/html/escrape/api/db/escrape.sqlite",
+		"/var/www/html/escrape/app/views/persons.html",
+		"/var/www/html/escrape/old/api/classes/controllers/PhotosController-REMOVEME.php",
+		"/var/www/html/escrape/old/api/classes/controllers/PhotosControllerFS.php",
+		"/var/www/html/escrape/old/app/views/persosn-with-backgrund-fake.html",
+		"/var/www/html/escrape/old/api/classes/services/ImagesToolsREMOVEME.php",
+		"/home/marco/apps/simple-todos/.meteor/local/cordova-build/plugins/org.apache.cordova.splashscreen/README.md",
+		"/var/www/html/escrape/app/scripts/controllers/persons.js",
+		"/var/www/html/escrape/TODO",
+		"/tmp/1-config.php",
+		"/var/www/html/escrape/api/setup/comments.php",
+		"/var/www/html/escrape/api/classes/controllers/CommentsController.php",
+		"/var/www/html/escrape/tools/resync",
+		"/tmp/1-index.html",
+		"/var/www/html/escrape/api/classes/controllers/CommentsController-2015-06-16.php",
+		"/var/www/html/escrape/api/classes/controllers/CommentsController-2015-06-17.php",
+		"/var/www/html/escrape/error.html",
+		"/var/www/html/escrape/api/lib/simpletest/browser.php",
+		"/var/www/html/escrape/api/lib/simpletest/tag.php",
+		"/var/www/html/escrape/.gitignore",
+		"/var/www/html/escrape/api/lib/simpletest/php_parser.php",
+		"/var/www/html/escrape/api/setup/persons.php",
+		"/var/www/html/escrape/api/classes/services/Utilities.php",
+		"/var/www/html/escrape/x.php",
+		"/var/www/html/escrape/api/classes/services/Network.php",
+		"/var/www/html/escrape/api/lib/simpletest/socket.php",
+		"/var/www/html/escrape/api/classes/services/GoogleSearch.php",
+		"/var/www/html/escrape/app/scripts/prototypes.js",
+		"/home/marco/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/var/www/html/escrape/api/logs/2015-06-05.log",
+		"/var/www/html/escrape/bower.json",
+		"/var/www/html/escrape/app/scripts/services/countries.js",
+		"/var/www/html/escrape/bower_components/world-flags-extended-sprite/stylesheets/flags16.css",
+		"/var/www/html/escrape/bower_components/world-flags-extended-sprite/bower.json",
+		"/var/www/html/escrape/tools/tor/myip",
+		"/var/www/html/escrape/tools/tor/test_socks.php",
+		"/var/www/html/escrape/tools/tor/tor1.php",
+		"/var/www/html/escrape/tools/torSwitchIdentity.php",
+		"/var/www/html/escrape/DEBUG_ACTIVE_INACTIVE.txt",
+		"/var/www/html/escrape/api/logs/curl.cookie",
+		"/var/www/html/escrape/api/logs/curl.log",
+		"/var/www/html/escrape/tools/resyncdb",
+		"/var/www/html/escrape/api/logs/2015-05-23.log",
+		"/var/www/html/escrape/ol",
+		"/var/www/html/escrape/new",
+		"/var/www/html/escrape/api/logs/2015-05-22.log",
+		"/var/www/html/escrape/uniq-collisions.trace",
+		"/usr/local/bin/sexy",
+		"/var/www/html/escrape/tools/devel",
+		"/var/www/html/escrape/old/debug/pam.php",
+		"/var/www/html/escrape/pam2.html",
+		"/var/www/html/escrape/pam1.html",
+		"/var/www/html/escrape/pam.diff",
+		"/var/www/html/escrape/irina2body.html",
+		"/var/www/html/escrape/irina-diff.txt",
+		"/var/www/html/escrape/irina1body.html",
+		"/var/www/html/escrape/api/setup/cfg.php",
+		"/var/www/html/escrape/app/views/footer.html",
+		"/var/www/html/escrape/app/scripts/controllers/footer.js",
+		"/var/www/html/escrape/escrape.sublime-project",
+		"/var/www/html/escrape/api/.htaccess",
+		"/home/marco/.config/sublime-text-3/Packages/Xdebug Client/Xdebug.sublime-settings",
+		"/home/marco/.config/sublime-text-3/Packages/User/Xdebug.sublime-settings",
+		"/var/www/html/escrape/api/logs/2015-05-16.log",
+		"/var/www/html/escrape/app/scripts/app.js",
+		"/var/www/html/escrape/pano.html",
+		"/var/www/html/escrape/app/scripts/directives/resize.js",
+		"/var/www/html/escrape/api/logs/2015-05-03.log",
+		"/var/www/html/escrape/app/scripts/services/comments.js",
+		"/var/www/html/escrape/old/backup/misc.php",
+		"/var/www/html/escrape/.jshintrc",
+		"/var/www/html/escrape/api/docs/Class-Specific-DB-Methods-List.txt",
+		"/var/www/html/escrape/app/scripts/services/cfg.js",
+		"/var/www/html/escrape/api/setup-comments.php",
+		"/var/www/html/escrape/hash/hash.php",
+		"/var/www/html/escrape/hash/gflogin.php",
+		"/var/www/html/escrape.bak/api/setup/comments.php",
+		"/var/www/html/escrape/hash/hash5.php",
+		"/var/www/html/escrape/app/scripts/services/authentication.js",
+		"/var/www/html/escrape/hash.php",
+		"/var/www/html/escrape/hash3.php",
+		"/var/www/html/escrape/hash5.php",
+		"/var/www/html/escrape/hash2.php",
+		"/var/www/html/escrape/app/views/sidemenu.html",
+		"/var/www/html/escrape/app/scripts/services/notify.js",
+		"/var/www/html/escrape/api/logs/2015-04-10.log",
+		"/tmp/index.php",
+		"/var/www/html/escrape/app/scripts/directives/keepScroll.js",
+		"/var/www/html/escrape/api/gi.php",
+		"/var/www/html/escrape/gi.html",
+		"/var/www/html/escrape/test/spec/controllers/persons.js",
+		"/var/www/html/escrape/test/karma.conf.js",
+		"/usr/local/bin/touchpad-off",
+		"/var/www/html/escrape/test/mock/test1/test1.js"
+	],
+	"find":
+	{
+		"height": 29.0
+	},
+	"find_in_files":
+	{
+		"height": 75.0,
+		"where_history":
+		[
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log, -old/",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log -old/**",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log -old/*",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log -old/",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"api/lib/*",
+			"api/lib/",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"api/lib/simpletest",
+			"TODO, app/, api/, -api/lib/, -api/vendor/, -*.log",
+			"/var/www/html/escrape/api,/var/www/html/escrape/app,-/var/www/html/escrape/api/logs/*,-/var/www/html/escrape/api/docs/*,",
+			"/var/www/html/escrape/api,/var/www/html/escrape/app,-/var/www/html/escrape/api/logs/*",
+			"/var/www/html/escrape/api,/var/www/html/escrape/app,-/var/www/html/escrape/api/logs",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"normalizeName",
+			"getAll",
+			"log",
+			"$cook",
+			"css",
+			"original",
+			"sort",
+			"cookie",
+			"cookieProvider",
+			"cookieStore",
+			"cookieS",
+			"sieves",
+			"cookieS",
+			"cookieStore.put",
+			"cookieSt",
+			"cookieStore",
+			"rootScope.globals",
+			"cookies",
+			"rootScope.globals",
+			"rootScope.globals.currentUser",
+			"signedIn",
+			"setCredentials",
+			"login",
+			"shell",
+			"toast",
+			"phototoast",
+			"photo",
+			"truthfu",
+			"photo",
+			"photoIsTruthf",
+			"available",
+			"saveP",
+			"Thruth",
+			"thruth",
+			"ruthful",
+			"splash",
+			"TODO",
+			"isPhoneA",
+			"lizePho",
+			"old p",
+			"memory_l",
+			"SEEMS ",
+			"photoAdd",
+			"fullSync",
+			"n su",
+			" - photo ",
+			"browser",
+			"><",
+			"getPersons",
+			"getPers",
+			"sieves2",
+			"ieves",
+			"getPersons",
+			"$n",
+			"new SimpleTag",
+			"new Tag",
+			"$memory_get_usage",
+			"## ins",
+			"$n",
+			"browser",
+			"#######",
+			"photoAdd",
+			"log(",
+			"test",
+			"getCommentsByField",
+			"getByFields",
+			"ByFields",
+			"getCommentsBy",
+			"gteCommentsBy",
+			"ByFields",
+			"assertPhotoAva",
+			"normalizePh",
+			"photoAdd",
+			"\\.\\.",
+			"assertPhotoAva",
+			"available",
+			"photo.available",
+			"photo.unavailable",
+			"unavailable",
+			" ...\";",
+			"XXX",
+			"WHERE id",
+			"SET ",
+			"Billi",
+			"ORDER",
+			"close",
+			"browser",
+			"fclose",
+			"getUrlCo",
+			"getPhotoOccurrences",
+			"Check",
+			"active",
+			"°°°",
+			"personsPerComment",
+			"getPersonInCommentActive",
+			"1000",
+			"loadMapAndPano",
+			"getPersonInCommentActive",
+			"Median rating of comment",
+			"author",
+			"date",
+			"getUrl",
+			"id2indexB",
+			"fromI",
+			"+=",
+			"Mora",
+			"i:",
+			"DEBUG_UN",
+			"getUrlC",
+			"$person",
+			"photosUrls",
+			"3838",
+			"3735",
+			"path_next",
+			"saveP",
+			"uniq_prev",
+			"setPerson",
+			"uniq_prev",
+			"\\{b.*$",
+			"sortObjectToList",
+			"NOT N",
+			"sourceK",
+			"detect",
+			"lizeNat",
+			"preg_repl",
+			"PageCl",
+			"lizeNat",
+			"pageCleaned"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"Truth",
+			"truth",
+			"memory_get_usage",
+			"ending",
+			"toI",
+			"', name: '', type: 'region' },",
+			"  ",
+			"Prev",
+			"  ",
+			"commentMaster",
+			"_container",
+			")|(alla) )",
+			")|(amica) )",
+			") )",
+			"(<!(corso)!(c.so)|(cso)|(via)|(piazza)|(p.za)|(p.zza))",
+			"/\\b(?<!(c((or)|(\\.))?so)|(via(le)?)|(strada)(p(ia)|(\\.))?za)\\s+))",
+			"$this->router->log(",
+			"$this->log(",
+			"comment",
+			" {",
+			"",
+			"comment",
+			"fullSync",
+			"url",
+			"$set",
+			"",
+			"openedId",
+			"service",
+			"service.",
+			"",
+			"this",
+			"Sieves.original",
+			"defaults",
+			"After",
+			"  ",
+			"",
+			"$array",
+			"\", \"",
+			"",
+			"$array"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 4,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/var/www/html/escrape/TODO",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 17676,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1807,
+								1807
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/var/www/html/escrape/api/classes/services/Db.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 44980,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6981,
+								6981
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2643.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/var/www/html/escrape/api/index.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15633,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1725,
+								1725
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 270.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/var/www/html/escrape/api/classes/controllers/PersonsController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 55800,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								30704,
+								30704
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 10278.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "persons.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5445,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2665,
+								2665
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/PHP/PHP.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 495.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 29.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.xdebug":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "escrape.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+		"xdebug":
+		{
+			"hide_conflict": false
+		}
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 189.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

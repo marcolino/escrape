@@ -13,7 +13,8 @@ class DB extends PDO {
   const DB_PASS = null;
   const DB_CHARSET = "utf8";
   const DB_SYSTEM_USER_ID = "1";
-  private $db;
+  #private $db;
+  public $db; # TODO: ONCE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   public function __construct($router) {
     $this->router = $router;
@@ -57,7 +58,7 @@ class DB extends PDO {
           field_name TEXT,
           field_value TEXT
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS field_name_idx ON global (field_name);
+         CREATE UNIQUE INDEX IF NOT EXISTS global_field_name_idx ON global (field_name);
          -- populate with default values --
          INSERT INTO global (field_name, field_value)
          VALUES ('last_sync_full', '');
@@ -73,7 +74,7 @@ class DB extends PDO {
           email TEXT,
           role TEXT
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS username_idx ON user (username);
+         CREATE UNIQUE INDEX IF NOT EXISTS user_username_idx ON user (username);
          -- populate with default system user --
          INSERT INTO user (username, password, email, role)
          VALUES ('*', '-', '', 'system');
@@ -98,7 +99,7 @@ class DB extends PDO {
           uniq_prev TEXT,
           uniq_next TEXT
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON person (key);
+         CREATE UNIQUE INDEX IF NOT EXISTS person_key_idx ON person (key);
         "
       );
       $this->db->exec(
@@ -121,7 +122,9 @@ class DB extends PDO {
           showcase INTEGER,
           truthful INTEGER -- TODO: do we need this field?
          );
-         CREATE INDEX IF NOT EXISTS phone_idx ON person_detail (phone);
+         CREATE INDEX IF NOT EXISTS person_detail_id_person_idx ON person_detail (id_person);
+         CREATE INDEX IF NOT EXISTS person_detail_id_user_idx ON person_detail (id_user);
+         CREATE INDEX IF NOT EXISTS person_detail_phone_idx ON person_detail (phone);
         "
       );
       $this->db->exec(
@@ -130,6 +133,7 @@ class DB extends PDO {
           key VARCHAR(32),
           phone VARCHAR(16),
           topic TEXT,
+          section TEXT,
           timestamp INTEGER,
           timestamp_creation INTEGER,
           timestamp_last_sync INTEGER,
@@ -139,10 +143,11 @@ class DB extends PDO {
           content TEXT,
           url TEXT
          );
-         CREATE UNIQUE INDEX IF NOT EXISTS key_idx ON comment (key);
-         CREATE UNIQUE INDEX IF NOT EXISTS phone_idx ON comment (phone);
-         CREATE INDEX IF NOT EXISTS timestamp_idx ON comment (timestamp);
-         CREATE INDEX IF NOT EXISTS topic_idx ON comment (topic);
+         CREATE UNIQUE INDEX IF NOT EXISTS comment_key_idx ON comment (key);
+         CREATE INDEX IF NOT EXISTS comment_phone_idx ON comment (phone);
+         CREATE INDEX IF NOT EXISTS comment_timestamp_idx ON comment (timestamp);
+         CREATE INDEX IF NOT EXISTS comment_topic_idx ON comment (topic);
+         CREATE INDEX IF NOT EXISTS comment_section_idx ON comment (section);
         "
       );
       $this->db->exec(
@@ -153,6 +158,9 @@ class DB extends PDO {
           id_person INTEGER,
           content_rating INTEGER
          );
+         CREATE UNIQUE INDEX IF NOT EXISTS comment_detail_id_comment_idx ON comment_detail (id_comment);
+         CREATE INDEX IF NOT EXISTS comment_detail_id_user_idx ON comment_detail (id_user);
+         CREATE INDEX IF NOT EXISTS comment_detail_id_person_idx ON comment_detail (id_person);
         "
       );
       $this->db->exec(
@@ -167,9 +175,20 @@ class DB extends PDO {
           timestamp_creation INTEGER,
           --timestamp_last_modification INTEGER, -- DO WE NEED THIS???
           signature VARCHAR(256),
-          showcase INTEGER,
-          truthful INTEGER
+          showcase INTEGER
          );
+         CREATE INDEX IF NOT EXISTS photo_id_person_idx ON photo (id_person);
+        "
+      );
+      $this->db->exec(
+        "CREATE TABLE IF NOT EXISTS photo_detail (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_photo INTEGER,
+          id_user INTEGER,
+          truthful VARCHAR(16)
+         );
+         CREATE INDEX IF NOT EXISTS photo_detail_id_photo_idx ON photo_detail (id_photo);
+         CREATE INDEX IF NOT EXISTS photo_detail_id_user_idx ON photo_detail (id_user);
         "
       );
     } catch (PDOException $e) {
@@ -205,6 +224,7 @@ class DB extends PDO {
       // group by $groupByField
       $sql .= " GROUP BY {$tableDetail}.{$groupByField}";
 
+      #$this->router->log("debug", " db->getPersons() - sql:" . "\n" . $sql);
       $statement = $this->db->prepare($sql);
       foreach ($params as $key => &$value) {
         $statement->bindParam(":" . $key, $value);
@@ -263,8 +283,8 @@ class DB extends PDO {
 #$this->router->log("debug", " db->getPersonsByField() - sql: [$sql]" . "\n" . any2string([$fieldName, $fieldValue]));
       $statement->execute();
       $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-#$this->router->log("debug", " db->getPersonsByField() - count(result):" . "\n" . count($result));
       return $result;
+#$this->router->log("debug", " db->getPersonsByField() - count(result):" . "\n" . count($result));
     } catch (PDOException $e) {
       throw new Exception("can't get person data: " . $e->getMessage());
     }
@@ -830,7 +850,7 @@ $this->router->log("debug", " NEW UNIQCODE");
 
     $groupByField = "id_comment";
     if (!empty($arrayDetail)) {
-$this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDetail));
+#$this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDetail));
       $set = "";
       $ins_fields = $ins_values = "";
       foreach ($arrayDetail as $key => $value) {
@@ -924,6 +944,416 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     }
   }
 
+  /*
+   ***********************************************************************************************************************
+   * section: photo-specific table functions
+   ***********************************************************************************************************************
+   */
+
+/*
+  public function getPhotos($userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "photo";
+    $tableDetail = "photo" . "_" . "detail";
+    $groupByDetailField = "id_photo";
+    $orderByMasterField = "id";
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByDetailField}
+      ";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByDetailField}";
+      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
+      #$this->router->log("debug", " getPhotosByField() - sql: [$sql]");
+      $statement = $this->db->prepare($sql);
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+      #$this->router->log("debug", " getPhotosByField() - result: " . any2string($result));
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+*/
+
+  public function getPhotosByField($fieldName, $fieldValue, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "photo";
+    $tableDetail = "photo" . "_" . "detail";
+    $groupByDetailField = "id_photo";
+    $orderByMasterField = "id";
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByDetailField}
+        WHERE $fieldName = :$fieldName
+      ";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByDetailField}";
+      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
+      #$this->router->log("debug", " getPhotosByField() - sql: [$sql]");
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(":" . $fieldName, $fieldValue);
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+      #$this->router->log("debug", " getPhotosByField() - result: " . any2string($result));
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+
+  public function getPhotosShowcase($userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "photo";
+    $tableDetail = "photo" . "_" . "detail";
+    $groupByDetailField = "id_photo";
+    $orderByMasterField = "id";
+    try {
+      $sql = "
+        SELECT {$tableMaster}.*, {$tableDetail}.*, max({$tableDetail}.id_user)
+        FROM {$tableMaster}
+        JOIN {$tableDetail}
+        ON {$tableMaster}.id = {$tableDetail}.{$groupByDetailField}
+        WHERE showcase = 1
+      ";
+      $sql .= " AND ({$tableDetail}.id_user = {$this->userIdSystem} OR {$tableDetail}.id_user = {$userId})";
+      $sql .= " GROUP BY {$tableDetail}.{$groupByDetailField}";
+      $sql .= " ORDER BY {$tableMaster}.{$orderByMasterField} ASC"; # TODO: this is probably useless...
+      #$this->router->log("debug", " getPhotosByField() - sql: [$sql]");
+      $statement = $this->db->prepare($sql);
+      $statement->execute();
+      $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+      #$this->router->log("debug", " getPhotosByField() - result: " . any2string($result));
+      return $result;
+    } catch (PDOException $e) {
+      throw new Exception("can't get person data: " . $e->getMessage());
+    }
+  }
+
+  public function addPhoto($arrayMaster, $arrayDetail = null, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "photo";
+    $tableDetail = "photo" . "_" . "detail";
+    $groupByField = "id_photo";
+    try { // add master data
+      $fields = $values = "";
+      foreach ($arrayMaster as $key => $value) {
+        $fields .= ($fields ? ", " : "") . $key;
+        $values .= ($values ? ", " : "") . ":" . $key;
+      }
+      $sql = "
+        INSERT INTO {$tableMaster}
+        ($fields)
+        VALUES
+        ($values)
+      ";
+      $statement = $this->db->prepare($sql);
+      foreach ($arrayMaster as $key => &$value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($count != 1) {
+        throw new Exception("can't add record to table $tableMaster (added $count records)");
+      }
+      $lastMasterInsertId = $this->db->lastInsertId();
+    } catch (PDOException $e) {
+      throw new Exception("can't add record to table $tableMaster: " . $e->getMessage());
+    }
+
+    if (!empty($arrayDetail)) {
+      $arrayDetail[$groupByField] = $lastMasterInsertId; // add master person id to this detail record
+      $arrayDetail["id_user"] = $userId; // add user id to this detail record
+      try { // add details data
+        $fields = $values = "";
+        foreach ($arrayDetail as $key => $value) {
+          $fields .= ($fields ? ", " : "") . $key;
+          $values .= ($values ? ", " : "") . ":" . $key;
+        } 
+        $sql = "
+          INSERT INTO {$tableDetail}
+          ($fields)
+          VALUES
+          ($values)
+        ";
+#throw new Exception("detail sql: [$sql], arrayDetail:" . var_export($arrayDetail, true));
+        $statement = $this->db->prepare($sql);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't add record to table $tableDetail (added $count records)");
+        }
+        $lastDetailInsertId = $this->db->lastInsertId();
+      } catch (PDOException $e) {
+        throw new Exception("can't add record to table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $lastMasterInsertId;
+  }
+
+  public function setPhoto($id, $arrayMaster = null, $arrayDetail = null, $userId = null) {
+    $this->router->log("debug", " setPhoto() - id: [$id], aM: " . any2string($arrayMaster) . ", aD: " . any2string($arrayDetail) . ", userId: $userId");
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "photo";
+    $tableDetail = "photo_detail";
+    $groupByField = "id";
+
+    if (!empty($arrayMaster)) {
+      try {
+        $set = "";
+        foreach ($arrayMaster as $key => $value) {
+          $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+        }
+        $sql = "
+          UPDATE {$tableMaster}
+          SET $set
+          WHERE $groupByField = :$groupByField
+        ";
+        #$this->router->log("debug", " setPhoto() - master - sql: [$sql] (id_photo: [$id])");
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        foreach ($arrayMaster as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($statement->rowCount() != 1) {
+          throw new Exception("update into table $tableMaster for id [$id] did update " . $statement->rowCount() . " records");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't update record to table $tableMaster: " . $e->getMessage());
+      }
+    }
+
+    $groupByField = "id_photo";
+    if (!empty($arrayDetail)) {
+      $set = "";
+      $ins_fields = $ins_values = "";
+      foreach ($arrayDetail as $key => $value) {
+        if ($key != $groupByField) {
+          $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+          $ins_fields .= ($ins_fields ? ", " : "") . $key;
+          $ins_values .= ($ins_values ? ", " : "") . ":" . $key;
+        }
+      }
+
+      try { // check if details data should be inserted or updated
+        $sql = "
+          SELECT count(*) as count FROM {$tableDetail}
+          WHERE
+           $groupByField = :$groupByField
+          AND
+           id_user = :id_user
+        ";
+        #$this->router->log("debug", " setPhoto() - detail - sql: [$sql] (id_photo: [$arrayDetail[$groupByField]], id_user: $userId");
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $arrayDetail[$groupByField], PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        $mode = null;
+        if ($result["count"] === "0") {
+          $mode = "insert";
+          #$this->router->log("debug", " setPhoto() will insert record (".$result["count"].")");
+        } else {
+          $mode = "update";
+          #$this->router->log("debug", " setPhoto() will update record (".$result["count"].")");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't check record in table $tableDetail: " . $e->getMessage());
+      }
+
+      try { // add details data
+        if ($mode === "update") { // update
+          $sql = "
+            UPDATE {$tableDetail}
+            SET $set
+            WHERE
+             $groupByField = :$groupByField
+            AND
+             id_user = :id_user
+          ";
+        } else { // insert
+          $sql = "
+            INSERT INTO {$tableDetail}
+            ($groupByField, id_user, $ins_fields)
+            VALUES
+            (:$groupByField, :id_user, $ins_values)
+          ";
+        }
+        #$this->router->log("debug", " setPhoto() - detail - sql: [$sql] (id_photo: [$arrayDetail[$groupByField]], id_user: $userId, truthful: " . $arrayDetail["truthful"]);
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $arrayDetail[$groupByField], PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't $mode record in table $tableDetail (updated $count records)");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't $mode record in table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $id;
+  }
+
+/*
+  public function setPhoto_TO_INSER_RECORD_IM_MASTER_UNUSEFUL($id, $arrayMaster = null, $arrayDetail = null, $userId = null) {
+#$this->router->log("debug", " setPhoto() - id: [$id], aM: " . any2string($arrayMaster) . ", aD: " . any2string($arrayDetail) . ", userId: $userId");
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    $tableMaster = "photo";
+    $tableDetail = "photo_detail";
+    $groupByField = "id";
+
+    if (!empty($arrayMaster)) {
+       $set = "";
+       $ins_fields = $ins_values = "";
+       foreach ($arrayMaster as $key => $value) {
+         $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+         $ins_fields .= ($ins_fields ? ", " : "") . $key;
+         $ins_values .= ($ins_values ? ", " : "") . ":" . $key;
+       }
+        
+      try { // check if master data should be inserted or updated
+        $sql = "
+          SELECT count(*) as count FROM {$tableMaster}
+          WHERE
+           $groupByField = :$groupByField
+        ";
+$this->router->log("debug", " setPhoto() - sql: [$sql]");
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+$this->router->log("debug", " setPhoto() - check result:" . any2string($result));
+        $mode = null;
+        if ($result["count"] === "0") {
+          $mode = "insert";
+          $this->router->log("debug", " setPhoto() - will INSERT master record for id [$id]");
+        } else {
+          $mode = "update";
+          $this->router->log("debug", " setPhoto() - will UPDATE master record for id [$id]");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't check record in table $tableMaster: " . $e->getMessage());
+      }
+
+      try { // add master data
+        if ($mode === "insert") { // insert
+          $sql = "
+            INSERT INTO {$tableMaster}
+            ($groupByField, id_user, $ins_fields)
+            VALUES
+            (:$groupByField, :id_user, $ins_values)
+          ";
+        } else {
+          $sql = "
+            UPDATE {$tableMaster}
+            SET $set
+            WHERE $groupByField = :$groupByField
+          ";
+        }
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        foreach ($arrayMaster as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't $mode record in table $tableMaster (updated $count records)");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't $mode record in table $tableMaster: " . $e->getMessage());
+      }
+    }
+
+    $groupByField = "id_photo";
+    if (!empty($arrayDetail)) {
+      #$this->router->log("debug", " setPhoto() - arrayDetail:" . any2string($arrayDetail));
+      $set = "";
+      $ins_fields = $ins_values = "";
+      foreach ($arrayDetail as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+        $ins_fields .= ($ins_fields ? ", " : "") . $key;
+        $ins_values .= ($ins_values ? ", " : "") . ":" . $key;
+      }
+
+      try { // check if details data should be inserted or updated
+        $sql = "
+          SELECT count(*) as count FROM {$tableDetail}
+          WHERE
+           $groupByField = :$groupByField
+          AND
+           id_user = :id_user
+        ";
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        $statement->execute();
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        #$this->router->log("debug", " setPhoto() - check result:" . any2string($result));
+        $mode = null;
+        if ($result["count"] === "0") {
+          $mode = "insert";
+          $this->router->log("debug", " setPhoto() - will INSERT record");
+        } else {
+          $mode = "update";
+          $this->router->log("debug", " setPhoto() - will UPDATE record");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't check record in table $tableDetail: " . $e->getMessage());
+      }
+
+      try { // add details data
+        if ($mode === "update") { // update
+          $sql = "
+            UPDATE {$tableDetail}
+            SET $set
+            WHERE
+             $groupByField = :$groupByField
+            AND
+             id_user = :id_user
+          ";
+        } else { // insert
+          $sql = "
+            INSERT INTO {$tableDetail}
+            ($groupByField, id_user, $ins_fields)
+            VALUES
+            (:$groupByField, :id_user, $ins_values)
+          ";
+        }
+        #$this->router->log("debug", " setPhoto() - sql: [$sql]");
+        $statement = $this->db->prepare($sql);
+        $statement->bindParam(':' . $groupByField, $id, PDO::PARAM_INT);
+        $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+        foreach ($arrayDetail as $key => &$value) {
+          $statement->bindParam(":" . $key, $value);
+        }
+        $statement->execute();
+        $count = $statement->rowCount();
+        if ($count != 1) {
+          throw new Exception("can't $mode record in table $tableDetail (updated $count records)");
+        }
+      } catch (PDOException $e) {
+        throw new Exception("can't $mode record in table $tableDetail: " . $e->getMessage());
+      }
+    }
+    return $id;
+  }
+*/
 
   /*
    ***********************************************************************************************************************
@@ -1097,7 +1527,38 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     return $id;
   }
 
-  public function setByField($table, $fieldName, $fieldValue) {
+  public function setByField($table, $fieldName, $fieldValue, $array, $userId = null) {
+    isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
+    try {
+      $setField = $fieldName . " = " . ":" . $fieldName;
+      $set = "";
+      foreach ($array as $key => $value) {
+        $set .= ($set ? ", " : "") . $key . " = " . ":" . $key;
+      }
+      $sql = "
+        UPDATE {$table}
+        SET $set
+        WHERE $setField
+      ";
+      $statement = $this->db->prepare($sql);
+      $statement->bindParam(':id', $id, PDO::PARAM_INT);
+      foreach ($array as $key => $value) {
+        $statement->bindParam(":" . $key, $value);
+      }
+      $statement->bindParam(":" . $fieldName, $fieldValue);
+      $statement->execute();
+      $count = $statement->rowCount();
+      if ($statement->rowCount() != 1) {
+        throw new Exception("update into table $table by field [$fieldName] did update " . $statement->rowCount() . " records");
+      }
+    } catch (PDOException $e) {
+      throw new Exception("can't update record to $table: " . $e->getMessage() . "(sql: $sql)");
+    }
+    return $id;
+  }
+
+/* OLD CODE; NEVER TESTED, WRONG
+  public function setByField($table, $id, $fieldName, $fieldValue, $userId = null) {
     try {
       $set = $fieldName . " = " . ":" . $fieldName;
       $sql = "
@@ -1119,6 +1580,7 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     }
     return $id;
   }
+*/
 
   public function delete($table, $id) {
     try {
@@ -1259,4 +1721,33 @@ $this->router->log("debug", " setComment() - arrayDetail:" . any2string($arrayDe
     $this->db = null;
   }
 }
+
+/*
+require "classes/services/Network.php";
+$r = new stdClass(); $r->db = null;
+$db = new DB($r);
+# 3032 = true
+# 10318 = true
+
+$userId = 1;
+$truthful = '';
+for ($i = 1; $i <= 10400; $i++) {
+  $sql = "
+            INSERT INTO 'photo_detail'
+            (id_photo, id_user, truthful)
+            VALUES
+            (:i, :id_user, :truthful)
+          ";
+  $statement = $db->db->prepare($sql);
+  $statement->bindParam(':i', $i, PDO::PARAM_INT);
+  $statement->bindParam(':id_user', $userId, PDO::PARAM_INT);
+  $statement->bindParam(':truthful', $truthful, PDO::PARAM_STR);
+  $statement->execute();
+  $count = $statement->rowCount();
+  if ($count != 1) {
+    throw new Exception("can't insert record in table photo_detail (updated $count records)");
+  }
+}
+exit;
+*/
 ?>

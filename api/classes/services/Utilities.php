@@ -6,7 +6,7 @@
  *
  */
 
-/**
+ /**
   * Converts a *http* date from format
   * "Weewkday, Year MonthName day hour:minute:second TIMEZONE" to UNIX timestamp
   *
@@ -34,12 +34,13 @@
   function date_to_timestamp($date) {
     # "2015 Marzo 27 12:24:55";
     $timestamp = "0";
+    $date1 = $date;
     for ($m = 1; $m <= 12; $m++) {
       $month_name = ucfirst(strftime("%B", mktime(0, 0, 0, $m)));
       if (strstr($date, $month_name)) {
-        $date = str_replace($month_name, $m, $date);
-        $date = preg_replace("/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})/", "$1-$2-$3", $date);
-        $timestamp = strtotime($date);
+        $date1 = str_replace($month_name, $m, $date1);
+        $date1 = preg_replace("/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})/", "$1-$2-$3", $date1);
+        $timestamp = strtotime($date1);
         break;
       }
     }
@@ -110,4 +111,46 @@
     return substr_compare($string, $ending, $strlen - $endinglen, $endinglen) === 0;
   }
 
- ?>
+/**
+  * Gets server current external IP address
+  *
+  * @return string         current IP address
+  *                        null if some error occurred (i.e.: no connectivity present)
+  */
+  function external_ip() {
+    $externalContent = @file_get_contents("http://checkip.dyndns.com/");
+    preg_match('/Current IP Address: \[?([:.0-9a-fA-F]+)\]?/', $externalContent, $matches);
+    $externalIp = null;
+    if (isset($matches[1])) {
+      $externalIp = $matches[1];
+    }
+    return $externalIp;
+  }
+
+/**
+ * Iterative binary search
+ *
+ * @param  array $list     the sorted array
+ * @param  int   $target   the target integer to search
+ * @return int             the index of the target key if found, otherwise -1 
+ */
+  function binary_search($list, $target) {
+    $left = 0;
+    $right = count($list) - 1;
+  
+    while ($left <= $right) {
+      $mid = ($left + $right) / 2;
+      
+      if ($list[$mid] == $target) {
+        return $mid;
+      } elseif ($list[$mid] > $target) {
+        $right = $mid - 1;
+      } elseif ($list[$mid] < $target) {
+        $left = $mid + 1;
+      }
+    }
+  
+    return -1;
+  }
+
+?>

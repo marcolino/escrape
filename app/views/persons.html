@@ -25,7 +25,7 @@
 
       <div class="row" style="padding-bottom:2px;">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-          <div class="btn btn-default btn-shorter" ng-attr-title="Order by the name of the person:{{::tooltipLegenda}}">
+          <div class="btn btn-default btn-shorter" Xstyle="padding: 0 15px 0 15px;" ng-attr-title="Order by the name of the person:{{::tooltipLegenda}}">
             <span class="persons-header-label">
               <span ng-if="!hasSortCriteria('name')">
                 <span ng-click="addSortCriteria('name')">
@@ -241,14 +241,18 @@
         </a>
       </div>
       <div class="showcase">
-        <div class="img-rounded img-clip-container">
+        <div class="img-rounded img-clip-container"
+          ng-class="{
+                'img-truthful-true': person.truthful === 'true',
+                'img-truthful-almost-true': person.truthful === 'almost-true',
+                'img-truthful-false': person.truthful === 'false',
+                'img-truthful-almost-false': person.truthful === 'almost-false',
+                'img-truthful-unknown': person.truthful === 'unknown',
+          }"
+        >
           <a href="" ng-click="openDetailsInNewWindow(person.id_person)" class="no-text-decoration">
             <img ng-src="{{::cfg.apiUri + '/' + person.photo_path_small_showcase}}" class="img-clip"
-              ng-class="{
-                'img-truthful-yes': person.truthful === 'yes',
-                'img-truthful-no': person.truthful === 'no',
-                'img-truthful-unknown': person.truthful === 'unknown',
-              }"
+              
             />
           </a>
         </div>
@@ -261,7 +265,7 @@
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
           <div class="person-name" ng-click="openDetailsInNewWindow(person.id_person)" ng-attr-title="{{::person.description}}">
             <!-- SUPERSCRIPT BADGE NEW: <span ng-show="isNew(person)" class="label label-as-badge label-as-badge-small label-danger">NEW</span>-->
-            <span style="text-align: left;">{{::shorten(person.name)}}</span>
+            <span style="text-align: left;">{{::person.name | cut:true:50}}</span>
           </div>
         </div>
       </div>

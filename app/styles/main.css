@@ -49,7 +49,7 @@ body {
 }
 
 .btn-shorter {
-  padding: 0 5px 0 5px;
+  padding: 0 15px 0 15px;
 }
 
 .btn-wider {
@@ -252,23 +252,31 @@ body {
   width: auto;
   max-height: 18px;
 }
-/*
-.img-truthful-yes { 
-          box-shadow: 1px 1px 3px 0px #143a04;
-  -webkit-box-shadow: 1px 1px 3px 0px #143a04;
-     -moz-box-shadow: 1px 1px 3px 0px #143a04;
+.img-truthful-true {
+          box-shadow: 1px 1px 7px 2px #0a8800;
+  -webkit-box-shadow: 1px 1px 7px 2px #0a8800;
+     -moz-box-shadow: 1px 1px 7px 2px #0a8800;
 }
-.img-truthful-no { 
-          box-shadow: 1px 1px 3px 0px #7c0202;
-  -webkit-box-shadow: 1px 1px 3px 0px #7c0202;
-     -moz-box-shadow: 1px 1px 3px 0px #7c0202;
+.img-truthful-almost-true {
+          box-shadow: 1px 1px 7px 2px #67ff5b;
+  -webkit-box-shadow: 1px 1px 7px 2px #67ff5b;
+     -moz-box-shadow: 1px 1px 7px 2px #67ff5b;
 }
-.img-truthful-unknown { 
-          box-shadow: 1px 1px 3px 0px #888888;
-  -webkit-box-shadow: 1px 1px 3px 0px #888888;
-     -moz-box-shadow: 1px 1px 3px 0px #888888;
+.img-truthful-false {
+          box-shadow: 1px 1px 7px 2px #7c0202;
+  -webkit-box-shadow: 1px 1px 7px 2px #7c0202;
+     -moz-box-shadow: 1px 1px 7px 2px #7c0202;
 }
-*/
+.img-truthful-almost-false {
+          box-shadow: 1px 1px 7px 2px #ff8168;
+  -webkit-box-shadow: 1px 1px 7px 2px #ff8168;
+     -moz-box-shadow: 1px 1px 7px 2px #ff8168;
+}
+.img-truthful-unknown {
+          box-shadow: 1px 1px 7px 3px #888888;
+  -webkit-box-shadow: 1px 1px 7px 3px #888888;
+     -moz-box-shadow: 1px 1px 7px 3px #888888;
+}
 /*
 .btn-vote {
   color: #fff;

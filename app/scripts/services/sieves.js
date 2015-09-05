@@ -1,6 +1,6 @@
 'use strict';
 
-app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentication) {
+app.service('Sieves', function($rootScope, $cookies, cfg, Persons, Authentication) {
   var service = {};
   
   service.sieves = {};
@@ -11,7 +11,7 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     },
     filters: {
       isopened: true,
-      active: 'any', // 'any' / 'yes' / 'no'
+      active: 'yes', // 'any' / 'yes' / 'no'
       voteMin: 0,
       commentsCountMin: 0,
       age: {
@@ -43,16 +43,17 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
   service.load = function (force) {
     service.sieves = {};
     //service.sourcesCities = {};
-    var key = cfg.site.name;
+    var key = 'user';
     if (Authentication.signedIn()) { // add authdata to key, if user is signed in
       key += '-' + $rootScope.globals.currentUser.authdata;
-      //console.log('loading sieves for user', $rootScope.globals.currentUser.username);
+      console.log('loading sieves for key ', key);
     } else {
-      //console.log('loading sieves for guest');
+      console.log('loading sieves for guest');
     }
-    service.sieves = $cookieStore.get(key);
+    service.sieves = $cookies.getObject(key);
+console.log('**** AFTER COOKIES.GETOBJECT, sieves:', service.sieves);
 
-    if (!service.sieves) {
+    if (typeof service.sieves !== 'object') {
       service.sieves = angular.copy(service.defaults);
       if (Authentication.signedIn()) {
         service.sieves.user.id = $rootScope.globals.currentUser.id;
@@ -62,8 +63,8 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
     //$rootScope.sieves = service.sieves;
 
     angular.copy(service.sieves, service.original); // save loaded sieves as sievesOriginal, to be able to check for modifications
-    //console.log('Sieves.original:', service.original);
 
+    console.log('calling Sieves finalize()');
     service.finalize(force);
 
     Persons.getSourcesCountries().then(function(response) {
@@ -73,16 +74,16 @@ app.service('Sieves', function($rootScope, $cookieStore, cfg, Persons, Authentic
   };
 
   service.store = function () { // TODO: handle section (?)
-    var key = cfg.site.name;
+    var key = 'user';
     if (Authentication.signedIn()) {
       key += '-' + $rootScope.globals.currentUser.authdata;
     }
-    $cookieStore.put(key, service.sieves);
-console.log('stored sieves:', service.sieves);
+    $cookies.putObject(key, service.sieves, $rootScope.expires);
+    //console.log('stored sieves:', service.sieves, 'for key:', key);
   };
 
   service.reset = function (section) {
-    var key = cfg.site.name;
+    var key = 'user';
     if (Authentication.signedIn()) {
       key += '-' + $rootScope.globals.currentUser.authdata;
     }
@@ -107,7 +108,7 @@ console.log('stored sieves:', service.sieves);
         angular.copy(service.defaults.sort, service.sieves.sort);
         break;
     }
-    $cookieStore.put(key, service.sieves);
+    $cookies.putObject(key, service.sieves, $rootScope.expires);
     //console.log('reset sieves to defaults for section ' + section + ':', service.sieves);
   };
 
@@ -115,6 +116,7 @@ console.log('stored sieves:', service.sieves);
    * store sieves (to local storage), and emit 'sievesChangedHard' or 'sievesChangedSoft' event
    */
   service.finalize = function (hard) {
+    console.log('in Sieves finalize()');
     service.store();
     $rootScope.$emit(hard ? 'sievesChangedHard' : 'sievesChangedSoft', null);
   };

@@ -24,9 +24,11 @@
       <li ng-class="{active: tabSelected === 'photos', hide: tabs['photos'].hidden}">
         <a href="" ng-click="tabSelected = 'photos'">{{tabs['photos'].description}}</a>
       </li>
+<!--
       <li ng-class="{active: tabSelected === 'photosOccurrences', hide: tabs['photosOccurrences'].hidden}">
         <a href="" ng-click="tabSelected = 'photosOccurrences'">{{tabs['photosOccurrences'].description}}</a>
       </li>
+-->
       <li ng-class="{active: tabSelected === 'comments', hide: tabs['comments'].hidden}">
         <a href="" ng-click="tabSelected = 'comments'">{{tabs['comments'].description}} <span class="badge">{{person.comments.length}}</a>
       </li>
@@ -239,15 +241,19 @@
             <div class="row" style="margin-top:1.0em;">
               <div class="col-lg-2"></div>
               <div class="col-lg-3">
-                <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check forthis       photo   truthfulness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
+                <!--<button ng-click="getPhotoOccurrences(person.id_person, '{{photo.url}}')" class="btn btn-success" title="Check for this photo truthfulness on the whole web"><i class="glyphicon glyphicon-ok"></i> Check</button>-->
                 <button
-                  ng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')"
-                  ng-disabled="!photo.available"
+                NOng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'{{photo.url}}')"
+                NOng-click="openInNewWindow('https://www.google.com/searchbyimage?&image_url='+'http://'+'79.17.125.198'+'/escrape/api/'+'{{photo.path_full}}')"
+                  ng-click="openInImageSearchWindow(photo)"
+                NOng-disabled="!photo.available"
                   class="btn btn-primary"
-                  title="Check for this photo truthfulness on the whole web"
+                  ng-attr-title="Check for this photo ({{photo.url}}) truthfulness on the whole web"
                 >
-                  <i ng-show="photo.available" class="glyphicon glyphicon-ok"></i> {{photo.available ? 'Check' : 'unavailable'}}
+                  <!-- <i ng-show="photo.available" class="glyphicon glyphicon-ok"></i> {{photo.available ? 'Check' : 'unavailable'}} -->
+                  <i ng-show="photo.available" class="glyphicon glyphicon-ok"></i>Check
                 </button>
+                <!--<pre>{{photo.id}}</pre>-->
               </div>
               <div class="col-lg-5">
                 <div class="btn-group">
@@ -420,7 +426,7 @@
             <div class="form-group">
               <div class="col-xs-12">
                 <div class="input-group">
-                  <div class="input-group-addon" style="vertical-align: top; min-width:250px; font-size: 12px;" title="Comment">
+                  <div class="input-group-addon" style="vertical-align: top; min-width: 362px; font-size: 12px;" xtitle="Comment">
                     <div class="row" style="text-align: left; margin-bottom: 3px;">
                       <div class="col-xs-4" style="padding-right: 0;">
                         <div class="pull-right"><i>N&deg;:</i></div>
@@ -434,7 +440,15 @@
                         <div class="pull-right"><i>Topic:</i></div>
                       </div>
                       <div class="col-xs-8" style="padding-left: 5px;">
-                        <div>{{comment.topic}}</div>
+                        <div ng-attr-title="{{comment.topic}}">{{comment.topic | cut:true:45 }}</div>
+                      </div>
+                    </div>
+                    <div class="row" style="text-align: left; margin-bottom: 3px;">
+                      <div class="col-xs-4" style="padding-right: 0;">
+                        <div class="pull-right"><i>Section:</i></div>
+                      </div>
+                      <div class="col-xs-8" style="padding-left: 5px;">
+                        <div>{{comment.section}}</div>
                       </div>
                     </div>
                     <div class="row" style="text-align: left; margin-bottom: 3px;">
@@ -496,7 +510,7 @@
                     </div>
                   </div>
                   <!--<div class="form-control" style="min-height: 180px; overflow-y:auto;" ng-bind-html="comment.content"></div>-->
-                  <div class="form-control" ng-bind-html="comment.content" style="min-height: 200px; overflow-y:auto;">
+                  <div class="form-control" ng-bind-html="comment.content" style="width: 99%; min-height: 200px; overflow-y:auto;">
                   </div>
                 </div>
               </div>

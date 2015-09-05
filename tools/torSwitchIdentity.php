@@ -4,7 +4,7 @@
 define("_COOKIE_FILE", "/var/run/tor/control.authcookie");
 
 /**
- * switch TOR to a new identity
+ * switch TOR to a new identity - TODO: THIS DOESN'T WORK...
  */
 function tor_new_identity($tor_ip = '127.0.0.1', $control_port = '9050', $auth_code = '') {
   $fp = fsockopen($tor_ip, $control_port, $errno, $errstr, 30);
@@ -27,7 +27,7 @@ print_r($response); exit;
   fclose($fp);
   return true;
 }
- 
+
 /**
  * load the TOR's "magic cookie" from a file and encode it in hexadecimal
  */

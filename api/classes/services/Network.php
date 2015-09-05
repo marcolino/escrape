@@ -126,7 +126,10 @@ class Network {
       $data = curl_exec($ch); // start curl operation
 
       if (($errno = curl_errno($ch))) { // handle timeouts with some retries
-        if ($errno === CURLE_OPERATION_TIMEDOUT) { // timeouts can be probably recovered...
+        if (
+             ($errno === CURLE_OPERATION_TIMEDOUT) ||
+             ($errno === CURLE_GOT_NOTHING)
+        ) { // empty replyes and timeouts probably can be recovered...
           # TODO: ensure timeouts can be recovered, otherwise remove this retries stuff...
           $retry++;
           if ($retry < self::RETRIES_MAX) {

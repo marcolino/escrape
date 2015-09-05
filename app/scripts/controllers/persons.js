@@ -1,6 +1,6 @@
 'use strict';
 
-app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $filter, $window, cfg, notify, Authentication, Countries, Persons, Comments, Sieves) {
+app.controller('PersonsController', function($scope, $rootScope, $routeParams, $modal, $timeout, $location, $anchorScroll, $filter, $window, cfg, notify, Authentication, Countries, Persons, Comments, Photos, Sieves) {
   $scope.persons = [];
   $scope.person = {};
   $scope.personId = $routeParams.personId;
@@ -14,11 +14,13 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
       'description': 'Photos',
       'hidden': false,
     },
+/*
     'photosOccurrences': { // TODO: think of a better name...
       'description': 'Photos occurrences',
       'hidden': true,
       'loading': false,
     },
+*/
     'comments': {
       'description': 'Comments',
       'hidden': false,
@@ -37,7 +39,9 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
   $scope.Sieves = Sieves;
   $scope.Sieves.load();
   $scope.sieves = Sieves.sieves; // TODO: 'Sieves.sieves' => 'Sieves.all' in sieves.js service... And use 'Sieves.all' instead of 'sieves' in controllers and views, deleting this row...
+  /*
   $scope.photosOccurrencesWhitelist = [];
+  */
   $scope.personsEmpty = false; // not yet loaded
   $scope.tooltipLegenda = '\n\ • click on this label to enable/disable the sort on this column\n\ • click on the arrow to flip the sort direction';
 
@@ -54,11 +58,11 @@ app.controller('PersonsController', function($scope, $rootScope, $routeParams, $
 
   // watch for sieves changes
   $rootScope.$on('sievesChangedHard', function(/*event, args*/) { // explicitly apply sieves changes
-    //console.log('SIEVES - sievesChanged HARD');
+    console.log('SIEVES - sievesChanged HARD');
     loadPersons(); // re-load persons list
   });
   $rootScope.$on('sievesChangedSoft', function(/*event, args*/) { // implicitly apply sieves changes
-    //console.log('SIEVES - sievesChanged SOFT');
+    console.log('SIEVES - sievesChanged SOFT');
     applyPersons($scope.persons); // re-apply persons list
   });
 
@@ -115,17 +119,18 @@ for (var i = 0; i < len; i++) {
       //angular.copy(person, $scope.person); // TODO: do we need angular.copy(), here?
       $scope.person = person;
 
+/*
       // assert photos availability
       for (var i = 0; i < $scope.person.photos.length; i++) {
-        /* jshint loopfunc: true */
+        /* jshint loopfunc: true * /
         (function(i) {
           Persons.assertPhotoAvailability($scope.person.photos[i].url).then(function(available) {
             $scope.person.photos[i].available = (available === 'true');
           });
         })(i);
-        /* jshint loopfunc: false */
+        /* jshint loopfunc: false * /
       }
-
+*/
       //console.log('PERSON:', $scope.person);
 
       // watch for person street address changes
@@ -155,7 +160,7 @@ for (var i = 0; i < len; i++) {
             var commentsCount = $scope.person.comments.length;
             console.log('number of comments for this person:', commentsCount);
             console.log('comments for this person:', $scope.person.comments);
-            console.log('!!! ==> number of persons with this same phone:', persons.length);
+            console.log('number of persons with this same phone:', persons.length);
             console.log('persons:', persons);
             for (var i = 0; i < commentsCount; i++) { // loop through all comments (possibly) linked to this person (effectively, to her phone)
 
@@ -434,6 +439,7 @@ console.log('-------------');
     }
     $scope.savePersonComment(comment);
   };
+
   $scope.flipPersonInCommentActive2 = function(commentId, personId) {
     var len, i; //, active, person;
     var active = false;
@@ -555,6 +561,21 @@ console.log('-------------');
   $scope.openInNewWindow = function(url) {
     url = url.replace(/\.\.\//g, ''); // TODO: do this when saving photo urls...
     $window.open(url, '_blank');
+  };
+
+  $scope.openInImageSearchWindow = function(photo) {
+    var imageSearchUrl = 'https://www.google.com/searchbyimage?image_url';
+    var windowName = '_image_search_window_';
+
+    Authentication.apiUriExternal(
+      function(response) {
+        if (response.ip) {
+          var imageUrl = 'http://' + response.ip + cfg.apiPath + '/' + photo.path_full;
+          var url = imageSearchUrl + '=' + imageUrl;
+          $window.open(url, windowName);
+        }
+      }
+    );
   };
 
 /*
@@ -726,14 +747,6 @@ console.log('-------------');
     }
   };
 
-  $scope.shorten = function(name) { // TODO: should do this depending on screen width? (in CSS?)
-    var maxlen = 40;
-    if (name.length > maxlen) {
-      name = name.substr(0, maxlen - 1) + '…';
-    }
-    return name;
-  };
-
   $scope.isUniq = function(personId) {
     return (
       ($scope.persons[personId].uniq_prev !== null) ||
@@ -896,6 +909,31 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     );
   };
 
+  $scope.savePersonPhoto = function(photo) {
+    var detailFields = [
+      'id_photo',
+      'truthful',
+    ];
+    var photoDetail = {};
+    angular.forEach(photo, function(value, key) {
+console.log('key:', key, ', value:', value);
+      if (detailFields.indexOf(key) !== -1) {
+        this[key] = value;
+      }
+    }, photoDetail);
+console.log('photoDetail:', photoDetail);
+console.log('photo:', photo);
+
+    Photos.setPhoto(photo.id, [], photoDetail, $scope.userId).then(
+      function() {
+        console.info('Photo saved correctly');
+      },
+      function(errorMessage) {
+        notify.error(errorMessage);
+      }
+    );
+  };
+
   $scope.addPerson = function() {
     Persons.addPerson($scope.personMaster, $scope.personDetail, $scope.userId).then(
       loadPersons,
@@ -1047,16 +1085,19 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
   $scope.photoSetTruthful = function(n) {
     console.log('Setting photo '+n+' as truthful');
     $scope.person.photos[n].truthful = 'true';
+    $scope.savePersonPhoto($scope.person.photos[n]); // save new truthfulness flag
   };
 
   $scope.photoSetUnknown = function(n) {
     console.log('Setting photo '+n+' as unknown');
     $scope.person.photos[n].truthful = 'unknown';
+    $scope.savePersonPhoto($scope.person.photos[n]); // save new truthfulness flag
   };
 
   $scope.photoSetUntruthful = function(n) {
     console.log('Setting photo '+n+' as fake');
     $scope.person.photos[n].truthful = 'false';
+    $scope.savePersonPhoto($scope.person.photos[n]); // save new truthfulness flag
   };
 
   $scope.photoSetTruthfulAllAs = function(n) {
@@ -1066,13 +1107,14 @@ if (++n >= 100) { console.error('uniqShow(): INFINITE LOOP!!!'); break; } // TOD
     for (var i = 0; i < $scope.person.photos.length; i++) {
       if ($scope.photoIsUnknown(i)) {
         $scope.person.photos[i].truthful = thisTruthfulness;
+        $scope.savePersonPhoto($scope.person.photos[i]); // save new truthfulness flag
         count++;
       }
     }
     if (count > 0) {
       notify.info(count + ' photo' + (count === 1 ? '' : 's') + ' marked as ' + (thisTruthfulness === 'true' ? 'truthful' : thisTruthfulness === 'false' ? 'fake' : 'unknown'));
     } else {
-      notify.info('All photos already had their truthfulnes flag set');
+      notify.info('All photos already had their truthfulness flag set');
     }
   };
 

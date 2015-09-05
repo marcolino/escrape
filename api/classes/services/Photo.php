@@ -10,7 +10,7 @@ class Photo {
   const INTERNAL_TYPE = "jpeg"; // internal type of bitmaps
   const SMALL_HEIGHT = 96; // small photo height (pixels)
   const SIGNATURE_DUPLICATION_MIN_UNRELATED_DISTANCE = 0.06; // minimum % distance for *unrelated* images similarity check
-  const SIGNATURE_DUPLICATION_MIN_RELATED_DISTANCE = 0.20; // minimum % distance for *related* images similarity check # TODO: tune-me
+  const SIGNATURE_DUPLICATION_MIN_RELATED_DISTANCE = 0.12; // minimum % distance for *related* images similarity check # TODO: tune-me
   const SIGNATURE_PIXELS_PER_SIDE = 10; // signature side (pixels)
   const TIMEOUT_BETWEEN_DOWNLOADS = 60;
   const RETRIES_MAX_FOR_DOWNLOADS = 3;
@@ -343,6 +343,7 @@ class Photo {
    */
   public function checkSimilarity($photo, $relationship = false) {
     if (!$photo) {
+      $this->router->log("warning", "null photo: can't check similarity...");
       return false;
     }
     $this->load();
@@ -417,7 +418,7 @@ class Photo {
    * Creates an image from text
    */
   public function createImageFromText($text, $mime) {
-    $font = "../../fonts/OpenSans-Bold.ttf"; // the font path (TODO: make both font path (?) and name parametrical)
+    $font = "fonts/OpenSans-Bold.ttf"; // the font path (TODO (?): make both font path and name parametrical)
     $fontSize = 32; // the font size
     $fontAngle = 0; // the font rotation angle
     $leftOffset = 120; // the text left offset (TODO: auto-center...)
@@ -449,16 +450,17 @@ class Photo {
     
     // create the image
     switch ($mime) {
-      case 'image/gif':
+      case 'gif':
         imagegif($im);
         break;
-      case 'image/jpeg':
+      case 'jpeg':
         imagejpeg($im);
         break;
-      case 'image/png':
+      case 'png':
         imagepng($im);
         break;
       default:
+        imagejpeg($im);
         break;
     }
 

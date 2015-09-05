@@ -15,22 +15,21 @@ function NavBarController($scope) {
 }
 */
 var app = angular.module('escrapeApp', [
-    'ngAnimate',
-    'ngAria',
-    'ngCookies',
-    'ngMessages',
-    'ngResource',
-    'ngRoute',
-    'ngSanitize',
-    'ngTouch',
-    'ngCookies',
-    'ngMap',
-    'ngAside',
-    'ui.bootstrap',
-    'ui-rangeSliderInline',
-    'toastr',
-    'infinite-scroll',
-  ]);
+  'ngAnimate',
+  'ngAria',
+  'ngCookies',
+  'ngMessages',
+  'ngResource',
+  'ngRoute',
+  'ngSanitize',
+  'ngTouch',
+  'ngMap',
+  'ngAside',
+  'ui.bootstrap',
+  'ui-rangeSliderInline',
+  'toastr',
+  'infinite-scroll',
+]);
 
 // configure routing system
 app.config(function ($routeProvider) {
@@ -88,9 +87,10 @@ app.config(function (toastrConfig) {
   });
 });
 
-app.run(function ($rootScope, $location, $cookieStore, $http) {
+app.run(function ($rootScope, $location, $cookies, $http) {
   // keep user logged in after page refresh
-  $rootScope.globals = $cookieStore.get('globals') || {};
+  var key = 'globals';
+  $rootScope.globals = $cookies.getObject(key) || {};
   if ($rootScope.globals.currentUser) {
     $http.defaults.headers.common['Authorization'] = 'Basic ' + $rootScope.globals.currentUser.authdata; // jshint ignore:line
   }
