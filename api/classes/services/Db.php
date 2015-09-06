@@ -1101,7 +1101,7 @@ $this->router->log("debug", " NEW UNIQCODE");
   }
 
   public function setPhoto($id, $arrayMaster = null, $arrayDetail = null, $userId = null) {
-    $this->router->log("debug", " setPhoto() - id: [$id], aM: " . any2string($arrayMaster) . ", aD: " . any2string($arrayDetail) . ", userId: $userId");
+    #$this->router->log("debug", " setPhoto() - id: [$id], aM: " . any2string($arrayMaster) . ", aD: " . any2string($arrayDetail) . ", userId: $userId");
     isset($userId) || $userId = self::DB_SYSTEM_USER_ID;
     $tableMaster = "photo";
     $tableDetail = "photo_detail";

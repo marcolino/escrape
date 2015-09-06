@@ -221,7 +221,7 @@
           # TODO: TEST IF *BODY* PAGE SUM DOES NOT CHANGE IF PAGE IS NOT UPDATED
           #######################################################################
           if ($personMaster["page_sum"] !== $person["page_sum"]) {
-            $this->router->log("debug", "PersonsController::sync() - body sum is changed");
+            #$this->router->log("debug", "PersonsController::sync() - body sum is changed");
           /*
             if (($person["page_cleaned"] !== null) and ($personMaster["page_cleaned"] !== null)) {
               file_put_contents("/tmp/person-old.html", $person["page_cleaned"]);
@@ -321,31 +321,58 @@
    * Assert persons activity: compare person's last sync'd timestamp with a given timestamp
    *  ("timestampStart" parameter), the timestamp last (or this) sync started.
    */
-  private function assertPersonsActivity($timestampStart, $error) {
+  private function assertPersonsActivity($timestampStart, $sourceKey, $error) {
     $this->router->log("info", "asserting persons activity (setting active / inactive flag to persons based on timestamp_last_sync)");
     foreach ($this->db->getPersons(/* no sieve, */ /* no user: system user */) as $person) {
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498]");
+}
       $active = null;
       $activeFromSource = $this->isPhoneActive($person["phone"]);
       if (!$activeFromSource) {
         // this person was found as explicitly "inactive" from source page
         $active = false;
-      } else {
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] activeFromSource is false");
+}
+     } else {
         // set activity flag based on the time of last sync for this person, compared to the time of this full sync,
         // but only if there were no error during sync, to avoid marking all persons as not-active when a source is not available...
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "error: $error");
+}
         if (!$error) { # TODO: try to find a better way to avoid marking all persons as not-active when a source is not available
           $timestampLastSyncPerson = $person["timestamp_last_sync"];
           #$this->router->log("info", " person " . $person["key"] . "(" . $person["name"] . ")" . " - last sync: $timestampLastSyncPerson, timestamp start: $timestampStart - active: " . ($active ? "1" : "0"));
           // set active flag to true if the time of last sync for this person is newer than
           // the time of this sync start
           $active = ($timestampLastSyncPerson >= $timestampStart);
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] activeFromSource is true");
+  $this->router->log("info", "person with phone [3662588498] $active = ($timestampLastSyncPerson >= $timestampStart)");
+}
         }
       }
       if ($active !== null) {
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] active is true");
+}
         $activeOld = ($person["active"] === "1");
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] person[active]:", $person["active"]);
+}
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] activeOld: $activeOld");
+}
+if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] active: $active");
+}
         if ($active != $activeOld) { # TO BE TESTED...
           $this->router->log("info", " person " . $person["key"] . " - setting active field to " . ($active ? "true" : "false"));
           $this->db->setPerson($person["id_person"], [ "active" => $active ], []);
-        }
+ if ($person["phone"] == "3662588498") {
+  $this->router->log("info", "person with phone [3662588498] active IS SET");
+}       }
       }
     }
     $this->router->log("debug", "asserting persons activity finished");
@@ -1115,7 +1142,7 @@ if (
         // TODO: CHECK IF PHOTO PATH DID CHANGE, IN THIS CASE UPDATE IT!!!
         $found = true; // similarity found
       } else {
-        $this->router->log("debug", "photo [$photoUrl] for person id " . $personId . " is new");
+        $this->router->log("debug", " - photo [$photoUrl] for person id " . $personId . " is new");
       }
     }
 
